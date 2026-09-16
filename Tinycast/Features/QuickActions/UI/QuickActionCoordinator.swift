@@ -346,6 +346,20 @@ final class QuickActionCoordinator {
         return Locale.Language(identifier: stored)
     }
 
+    /// The provider this action runs on: the model the reader bound to it, and the permissive
+    /// guardrails a transformation of the reader's own text needs. Shared for the same reason
+    /// `targetLanguage` is — a surface that hands the action to the chat must not let the chat
+    /// answer as the chat, or the binding and the guardrails are both silently lost.
+    func provider(for action: QuickAction) throws -> any AIProvider {
+        try core.quickActionProvider(for: action)
+    }
+
+    /// The instructions the reader replaced the built-in prompt with, if they did. Nil means the
+    /// built-in prompt stands, which is also why a custom action never reports one.
+    func instructionOverride(for action: QuickAction) -> String? {
+        store.settings.instructionOverride(for: action)
+    }
+
     /// Observed, not ignored: it arrives after the pane has painted, and the picker has to notice.
     private(set) var offeredLanguages: [Locale.Language] = []
     @ObservationIgnored private var languageLoad: Task<Void, Never>?

@@ -136,18 +136,23 @@ final class DeloresContextCoordinator {
                 quickAction, selection: selection.text, target: targetApplication)
             return
         }
-        // The Quick Action's own instructions already treat the selection as material, never as a
-        // request; the chat path borrows them rather than inventing a second, weaker boundary.
+        // The action brings what the chat cannot know: the instructions the reader wrote for it, and
+        // the provider carrying their model binding with the guardrails their own text needs. The
+        // Quick Action's prompts already treat the selection as material, never as a request.
         let instructions =
             QuickActionPrompt.chatInstructions(
                 for: quickAction,
-                targetLanguageName: TextTranslator.displayName(of: quickActions.targetLanguage))
+                targetLanguageName: TextTranslator.displayName(of: quickActions.targetLanguage),
+                override: quickActions.instructionOverride(for: quickAction))
             ?? QuickActionPrompt.instructions(for: quickAction)
+        // A model the reader has not chosen yet is the chat's to report, so its own provider stands.
+        let provider = try? quickActions.provider(for: quickAction)
         island.dismiss(notifying: false)
         clearContext()
         aiChat.ask(
             QuickActionPrompt.message(for: quickAction, selection: selection.text),
-            instructions: instructions)
+            instructions: instructions,
+            provider: provider)
     }
 
     /// AI off leaves the action with nowhere to converse, so the shared Quick Action path answers

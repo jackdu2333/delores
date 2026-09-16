@@ -68,9 +68,16 @@ enum QuickActionPrompt {
     ///
     /// The language arrives already named — `TextTranslator.displayName(of:)` owns that spelling,
     /// so this stays a pure builder with no locale of its own to consult.
+    ///
+    /// An `override` is the instructions the reader replaced the built-in prompt with, and it wins
+    /// over every case below. It keeps the boundary, which the panel path lets it drop: there the
+    /// reader is editing text they can see, while here the selection arrives from anywhere and the
+    /// model must still treat it as material. That is the same treatment a custom action's own
+    /// instructions already get.
     static func chatInstructions(
-        for action: QuickAction, targetLanguageName name: String
+        for action: QuickAction, targetLanguageName name: String, override: String? = nil
     ) -> String? {
+        if let override { return boundary + "\n\n" + override }
         guard action.builtInAction == .translate else { return nil }
         return boundary + "\n\n" + """
             Translate the text into \(name). Keep the writer's formatting and line breaks, and \

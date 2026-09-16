@@ -93,6 +93,18 @@ struct DeloresContextTest {
             translated != QuickActionPrompt.instructions(for: QuickAction.translate),
             "the chat lane says more than the panel lane's bare boundary")
 
+        require(
+            QuickActionPrompt.chatInstructions(
+                for: .translate, targetLanguageName: "Japanese", override: "Only the verbs.")
+                == boundary + "\n\n" + "Only the verbs.",
+            "the reader's instructions replace the built-in task but keep the chat lane's boundary")
+        require(
+            QuickActionPrompt.chatInstructions(
+                for: QuickAction.summarize, targetLanguageName: "Japanese",
+                override: "One line only.")
+                == boundary + "\n\n" + "One line only.",
+            "an action with no chat-only task of its own still carries the reader's instructions")
+
         for action in QuickAction.allBuiltIn
         where action.builtInAction != .translate {
             require(

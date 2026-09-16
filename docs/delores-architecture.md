@@ -16,9 +16,11 @@ selection gesture
 The Context Island does not own AI, clipboard or Accessibility implementation. It presents the
 actions; a press makes it grow in place and only then hands the captured selection over, so the
 answer arrives on the surface that already has follow-up turns, model switching and a reasoning
-channel. The action keeps its own instructions on that trip: `QuickActionPrompt` wraps the selection
-as material rather than instructions, and that boundary travels with the turn instead of being
-rewritten into AI Settings for one question.
+channel. The action keeps its own instructions, model and guardrails on that trip: `QuickActionPrompt`
+wraps the selection as material rather than instructions, and `QuickActionCoordinator.provider(for:)`
+resolves the model the reader bound to the action together with the permissive guardrails a
+transformation of their own text needs. The chat's default provider would judge that text as the
+chat's own question and, on the on-device model, refuse it outright.
 
 With AI off there is nowhere to converse, so the action falls through to the Quick Action route and
 its own result surface — the behaviour a selection gesture had before the chat took the action over.
