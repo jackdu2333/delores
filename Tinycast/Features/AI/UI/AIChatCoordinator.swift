@@ -63,6 +63,11 @@ final class AIChatCoordinator {
         paletteCoordinator.showPalette(mode: .ai)
     }
 
+    /// True while the chat surface is up. A surface that captured its own material reads this to
+    /// choose between joining the conversation on screen and opening a fresh one; the decision is
+    /// the caller's, this only reports the fact.
+    var isChatOnScreen: Bool { paletteCoordinator.isShowing(.ai) }
+
     /// ⇥ and the AI fallback: a fresh chat that carries the question, already asked.
     /// A surface that captured its own material brings the instructions for it too; they travel
     /// with the turn, so nothing in AI Settings is rewritten for one question. `provider` does the

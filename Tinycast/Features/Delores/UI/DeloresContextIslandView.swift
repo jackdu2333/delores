@@ -21,7 +21,30 @@ struct DeloresContextIslandView: View {
     /// The row keeps the height it was measured at, so opening the card never shifts it.
     let barHeight: CGFloat
     let onAction: (DeloresContextAction) -> Void
+    /// Reports the state it switched to, so the controller's copy can never drift from this one.
+    let onTogglePin: (Bool) -> Void
     let onDismiss: () -> Void
+
+    /// The toggle draws from here; the controller reads the value this reports back.
+    @State private var isPinned: Bool
+
+    init(
+        actions: [DeloresContextAction],
+        mode: DeloresContextIslandMode,
+        isPinned: Bool = false,
+        barHeight: CGFloat,
+        onAction: @escaping (DeloresContextAction) -> Void,
+        onTogglePin: @escaping (Bool) -> Void = { _ in },
+        onDismiss: @escaping () -> Void
+    ) {
+        self.actions = actions
+        self.mode = mode
+        self.barHeight = barHeight
+        self.onAction = onAction
+        self.onTogglePin = onTogglePin
+        self.onDismiss = onDismiss
+        _isPinned = State(initialValue: isPinned)
+    }
 
     /// The bar's wish, before the menu bar gets a say.
     static func preferredSize(for metrics: InterfaceMetrics) -> CGSize {
@@ -76,6 +99,20 @@ struct DeloresContextIslandView: View {
                     .foregroundStyle(Theme.Colors.textPrimary)
                     .lineLimit(1)
             }
+
+            // Present in every state: a pinned bar that lost its toggle would be a trap, since a
+            // pinned surface stops answering outside clicks and new selections alike.
+            Button {
+                isPinned.toggle()
+                onTogglePin(isPinned)
+            } label: {
+                Image(systemName: isPinned ? "pin.fill" : "pin")
+                    .font(.system(size: metrics.scaled(11), weight: .semibold))
+                    .frame(width: metrics.scaled(24), height: metrics.scaled(30))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(isPinned ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .accessibilityLabel(isPinned ? "Unpin Context Island" : "Pin Context Island")
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark")

@@ -219,10 +219,24 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - NSWindowDelegate
 
-    /// Not for one of our own dialogs: hiding would tear down a command mid-`confirmAlert`.
+    /// Not for one of our own windows: a dialog would tear down a command mid-`confirmAlert`, and a
+    /// pinned Context Surface takes the keyboard for its own bar while the chat behind it is still
+    /// what the reader is reading. A resign that left the application is a dismissal either way.
     func windowDidResignKey(_ notification: Notification) {
         guard isVisible, !core.isShowingDialog else { return }
-        core.paletteCoordinator.hidePalette(restoreFocus: false)
+        // Only a pinned Context Surface can hold the keyboard on purpose, so only that state pays for
+        // a runloop turn — the one thing that settles who holds it. Every other resign hides now.
+        guard core.isHoldingPinnedContext else {
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+            return
+        }
+        let panel = self.panel
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isVisible else { return }
+            // No key window of ours left means the reader went elsewhere, which is a dismissal.
+            if let key = NSApp.keyWindow, key !== panel { return }
+            self.core.paletteCoordinator.hidePalette(restoreFocus: false)
+        }
     }
 
     /// Re-bump a turn later: on the first show a synchronous bump lands before `onChange`.

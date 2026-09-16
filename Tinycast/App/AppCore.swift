@@ -636,6 +636,9 @@ final class AppCore {
     /// True while a dialog is up, so a surface behind one can tell it apart from losing focus.
     var isShowingDialog: Bool { dialogs.isPresenting }
 
+    /// The same question for the other surface that may be holding the keyboard on purpose.
+    var isHoldingPinnedContext: Bool { deloresCoordinator.isHoldingPinnedContext }
+
     /// `tone` styles the glyph, `confirmRole` the button; separate on purpose.
     func confirm(
         title: String, message: String?, symbol: String?, confirmTitle: String,

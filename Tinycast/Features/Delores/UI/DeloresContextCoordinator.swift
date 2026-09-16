@@ -21,6 +21,10 @@ final class DeloresContextCoordinator {
     private(set) var context: InvocationContext?
     private(set) var isMonitoring = false
 
+    /// True while the reader is holding a selection on the Context Surface. A surface behind it reads
+    /// this to tell "the keyboard moved to the reader's own pinned bar" apart from "the reader left".
+    var isHoldingPinnedContext: Bool { island.isPinned && island.isVisible }
+
     init(
         settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector,
         aiChat: AIChatCoordinator
@@ -63,6 +67,11 @@ final class DeloresContextCoordinator {
     }
 
     private func captureSelection(after gesture: SelectionGestureMonitor.Gesture) {
+        // A pinned island is holding a selection of its own, and the gesture that would replace it is
+        // dropped before it reads anything: the read would paste over the reader's clipboard to no
+        // purpose, and the selection state stays untouched rather than reporting text nobody sees.
+        guard !(island.isVisible && island.isPinned) else { return }
+
         guard settings.quickActionsEnabled, Permissions.isAccessibilityTrusted(),
             let target = NSWorkspace.shared.frontmostApplication,
             target.bundleIdentifier != Bundle.main.bundleIdentifier
@@ -147,12 +156,27 @@ final class DeloresContextCoordinator {
             ?? QuickActionPrompt.instructions(for: quickAction)
         // A model the reader has not chosen yet is the chat's to report, so its own provider stands.
         let provider = try? quickActions.provider(for: quickAction)
+        let prompt = QuickActionPrompt.message(for: quickAction, selection: selection.text)
+        // A chat the reader can already see is a conversation, not a blank page: a second action on
+        // the same selection joins it, so the answer they were reading stays where they left it.
+        // Only a pinned surface reaches this with the chat still up — every other route here
+        // dismissed the palette on the way in — and starting over is exactly what `ask` is for when
+        // it is not.
+        let continuing = aiChat.isChatOnScreen
+        releaseSurface()
+        if continuing {
+            aiChat.send(prompt, instructions: instructions, provider: provider)
+        } else {
+            aiChat.ask(prompt, instructions: instructions, provider: provider)
+        }
+    }
+
+    /// Lets go of the captured selection, unless the reader pinned it. Then the island stays put and
+    /// the next press lands on the same text, which is the whole of what pinning is for.
+    private func releaseSurface() {
+        guard !island.isPinned else { return }
         island.dismiss(notifying: false)
         clearContext()
-        aiChat.ask(
-            QuickActionPrompt.message(for: quickAction, selection: selection.text),
-            instructions: instructions,
-            provider: provider)
     }
 
     /// AI off leaves the action with nowhere to converse, so the shared Quick Action path answers
@@ -162,13 +186,11 @@ final class DeloresContextCoordinator {
     ) {
         switch quickActions.run(action, selection: selection, target: target) {
         case .started:
-            island.dismiss(notifying: false)
-            clearContext()
+            releaseSurface()
         case .busy:
             island.showBusy(metrics: settings.interfaceSize.metrics)
         case .disabled:
-            island.dismiss(notifying: false)
-            clearContext()
+            releaseSurface()
         }
     }
 

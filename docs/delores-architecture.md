@@ -53,6 +53,12 @@ itself on losing key (`PaletteWindowController.windowDidResignKey`,
 island, and a fresh selection over the palette drops the palette — neither has to know the other
 exists, and no single input closes both.
 
+The one exception is a pinned Context Surface, which is a window of ours taking the keyboard on
+purpose rather than the reader leaving the app. `PaletteWindowController.windowDidResignKey` asks
+`AppCore.isHoldingPinnedContext` and, only then, waits a runloop turn to see whether one of our own
+windows still holds key. A resign that left the application still hides the palette, so the chat is
+never left floating over another app.
+
 Escape follows the same rule, and is handled at the panel in both surfaces: the Command Surface in
 `PalettePanel.sendEvent`, the Context Surface in `DeloresContextIslandPanel.sendEvent`. Escape closes
 the surface that owns it and nothing else — a Quick Action still running behind the island's busy
@@ -64,10 +70,38 @@ visual decision of its own:
 
 - **Material.** The Context Surface draws with Liquid Glass (`Theme.frosted`), carried over from the
   toolbar it came from. The palette draws with `NSVisualEffectView(.hudWindow)` under a
-  reader-configurable scrim. The two are on screen together only across the hand-off's fade.
+  reader-configurable scrim. The two are on screen together only across the hand-off's fade, and
+  they were left as they are on that basis.
 - **Window level.** The island is at `.statusBar` so it sits over the menu bar it is anchored to; the
   palette is at `.floating`. Across the hand-off the outgoing island therefore draws over the
   incoming palette until its exit fade (`Theme.Duration.exit`) ends.
+
+## What Pin holds
+
+The Context Surface can be pinned from its own bar (`DeloresContextIslandController.isPinned`).
+The toolbar this island came from pinned the expanded panel that was holding an answer; here the
+answer is on the chat surface, so what a pin holds is the **selection**: the island stays put and the
+same captured text stays behind its actions. That is the state a reader wants when they are about to
+press a second action after reading the first answer.
+
+Pinned, and only while pinned:
+
+- A new selection passes by. `DeloresContextCoordinator.captureSelection` drops the gesture before
+  it reads anything, so neither the clipboard nor the recorded selection state is disturbed.
+- An outside click passes by. `windowDidResignKey` is the only way this surface used to leave without
+  being asked.
+- A press does not take the bar away. `handOff` skips the growth and hands the action over at once:
+  the growth exists to carry the reader *out* of the island, and a pinned island has nowhere to carry
+  them. `releaseSurface()` leaves the island and the captured context alone.
+
+Escape and the close button still get out, and either one clears the pin with the panel. The toolbar
+drew the same line: a pinned panel there still answered Escape.
+
+**An action pressed while the chat is already on screen joins it instead of starting over.** A chat
+the reader can see is a conversation, and replacing it would take away the answer they were reading.
+Only a pinned surface reaches this with the chat still up, because every other route dismissed the
+palette on the way in. `AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with
+`DeloresContextCoordinator`.
 
 ## Phase 1.5 boundary
 
@@ -88,6 +122,7 @@ explicit busy state otherwise.
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
 | Quick Action entry with a captured selection, and the language it translates into | `QuickActionCoordinator` | One small integration seam; the AI-off fallback for a context action |
 | Chat entry carrying a captured selection's instructions | `AIChatCoordinator`, `QuickActionPrompt` | One small integration seam |
+| Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
 | Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester` | Interactive windows only; pass-through overlays remain transparent |
 | Quick Action admission | `QuickActionStartResult`, `QuickActionCoordinator` | Shared capability returns an explicit start result |
@@ -127,7 +162,8 @@ Resolve conflicts in this order:
 
 1. Keep upstream changes in Tinycast-owned files unless they conflict with a listed seam.
 2. Reconcile only the Delores seams in `AppCore.swift`, `AIChatCoordinator.swift`,
-   `QuickActionPrompt.swift`, `QuickActionCoordinator.swift`, `project.yml` and `Info.plist`.
+   `QuickActionPrompt.swift`, `QuickActionCoordinator.swift`, `PaletteWindowController.swift`,
+   `project.yml` and `Info.plist`.
 3. Never copy a Delores file over an upstream file to resolve a conflict.
 4. Regenerate the Xcode project with XcodeGen after `project.yml` is settled.
 5. Run the upstream harnesses, the Delores model harness and the available Debug build checks.

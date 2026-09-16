@@ -36,6 +36,12 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     private var onAction: ((DeloresContextAction) -> Void)?
     private var onDismiss: (() -> Void)?
 
+    /// The reader's hold on this surface. While it is set the island keeps its selection: it does not
+    /// answer an outside click, and the coordinator lets a new selection pass by rather than replace
+    /// it. Escape and the close button still get out, which is where the toolbar this came from drew
+    /// the line too.
+    private(set) var isPinned = false
+
     /// Names the panel an asynchronous step belongs to. The opening card hands its action over after
     /// an animation, and a press outlives the panel whenever a new selection replaces it meanwhile.
     private var panelGeneration = UUID()
@@ -60,6 +66,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             onAction: { [weak self] action in
                 self?.handOff(action, actions: actions, in: context.screen, metrics: metrics)
             },
+            onTogglePin: { [weak self] pinned in self?.isPinned = pinned },
             onDismiss: { [weak self] in self?.dismiss() }
         )
         let hosted = root.environment(\.metrics, metrics)
@@ -100,6 +107,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         self.panel = panel
         self.onAction = onAction
         self.onDismiss = onDismiss
+        // A panel replaces the one before it, so the hold on that one dies with it.
+        isPinned = false
         panelGeneration = UUID()
 
         panel.fadeIn(duration: Theme.Duration.enter) {
@@ -114,8 +123,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let root = DeloresContextIslandView(
             actions: [],
             mode: .busy,
+            isPinned: isPinned,
             barHeight: size.height,
             onAction: { _ in },
+            onTogglePin: { [weak self] pinned in self?.isPinned = pinned },
             onDismiss: { [weak self] in self?.dismiss() })
         let hosting = DeloresFirstMouseHostingView(rootView: root.environment(\.metrics, metrics))
         hosting.sizingOptions = []
@@ -143,6 +154,13 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         in screen: InvocationScreen,
         metrics: InterfaceMetrics
     ) {
+        // A pinned island is staying, so there is nowhere for the growth to carry the reader out of.
+        // It exists to hand them to the chat and take the bar away behind them; here the bar stays,
+        // and the press is the whole gesture either way.
+        guard !isPinned else {
+            onAction?(action)
+            return
+        }
         guard let panel, panel.isVisible else {
             onAction?(action)
             return
@@ -197,14 +215,19 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let callback = onDismiss
         onAction = nil
         onDismiss = nil
+        isPinned = false
         closing.delegate = nil
         closing.onEscape = nil
         if notifying { callback?() }
         closing.fadeOut(duration: Theme.Duration.exit)
     }
 
+    /// An outside click, which is the one way this surface used to leave without being asked. A
+    /// pinned island sits it out — the reader said to hold this selection, and clicking away to read
+    /// the answer is exactly the case that was meant.
     func windowDidResignKey(_ notification: Notification) {
         guard let panel, notification.object as? NSWindow === panel else { return }
+        guard !isPinned else { return }
         dismiss()
     }
 }
