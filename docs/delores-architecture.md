@@ -30,6 +30,45 @@ both capabilities need the same Accessibility permission. A separate Context Sur
 only be introduced when the product needs independent control, so the consent semantics do not split
 prematurely.
 
+## The two entry points
+
+One capability set sits behind two summons, and each summon gets the Surface that fits the input
+rather than one surface with swapped contents. `CONTEXT.md` already names the rule under
+*Surface Arbitration* and *Action*; this is where it is carried out.
+
+| Summon | Surface | What it is for |
+| --- | --- | --- |
+| ⌥Space, or any hotkey bound to the palette | Command Surface | Summoning, searching, starting a task the reader has in mind |
+| A selection gesture | Context Surface | The minimum actions for text the reader has already selected |
+| A Context action press | Command Surface, in the chat | Following the answer up: more turns, another model, a reasoning channel |
+
+The Context Surface is a window of its own, not a compact mode of the palette. The palette's default
+anchor is a fraction of the way down the visible frame (`paletteTopMarginFraction`), while a context
+action belongs at the status bar; the two cannot share one window without moving where ⌥Space puts
+the palette.
+
+Arbitration is by the keyboard. Whichever Surface holds key answers the input, and each dismisses
+itself on losing key (`PaletteWindowController.windowDidResignKey`,
+`DeloresContextIslandController.windowDidResignKey`). Summoning the palette over the island drops the
+island, and a fresh selection over the palette drops the palette — neither has to know the other
+exists, and no single input closes both.
+
+Escape follows the same rule, and is handled at the panel in both surfaces: the Command Surface in
+`PalettePanel.sendEvent`, the Context Surface in `DeloresContextIslandPanel.sendEvent`. Escape closes
+the surface that owns it and nothing else — a Quick Action still running behind the island's busy
+state is not ours to cancel. While the card is opening it also cancels the press, because `onAction`
+does not fire until the growth ends.
+
+Two differences between the surfaces are recorded rather than resolved, because each direction is a
+visual decision of its own:
+
+- **Material.** The Context Surface draws with Liquid Glass (`Theme.frosted`), carried over from the
+  toolbar it came from. The palette draws with `NSVisualEffectView(.hudWindow)` under a
+  reader-configurable scrim. The two are on screen together only across the hand-off's fade.
+- **Window level.** The island is at `.statusBar` so it sits over the menu bar it is anchored to; the
+  palette is at `.floating`. Across the hand-off the outgoing island therefore draws over the
+  incoming palette until its exit fade (`Theme.Duration.exit`) ends.
+
 ## Phase 1.5 boundary
 
 `AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface

@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 private final class DeloresFirstMouseHostingView<Content: View>: NSHostingView<Content> {
@@ -8,8 +9,24 @@ private final class DeloresFirstMouseHostingView<Content: View>: NSHostingView<C
 }
 
 private final class DeloresContextIslandPanel: NSPanel {
+    /// Escape. Handled at the panel for the same reason the palette handles it there: it is the one
+    /// key the window owns itself, and a hosted view has no field editor to route it through.
+    /// Nil means this surface does not answer it and the event carries on.
+    var onEscape: (() -> Bool)?
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown,
+            Int(event.keyCode) == kVK_Escape,
+            event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
+            onEscape?() == true
+        {
+            return
+        }
+        super.sendEvent(event)
+    }
 }
 
 /// Owns the Context Surface window; feature policy stays in `DeloresContextCoordinator`.
@@ -71,6 +88,15 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
         let frame = DeloresContextIslandPlacement.collapsedFrame(in: context.screen, size: size)
         panel.setFrame(NSRect(origin: frame.origin, size: frame.size), display: false)
+        // Escape closes what this surface put up, and nothing else: a Quick Action still running
+        // behind `.busy` is not ours to cancel, so this only ever drops the island. While the card
+        // is opening it cancels the press as well, because `onAction` does not fire until the
+        // growth ends — the same generation token that guards a replaced panel guards this.
+        panel.onEscape = { [weak self] in
+            guard let self, self.isVisible else { return false }
+            self.dismiss()
+            return true
+        }
         self.panel = panel
         self.onAction = onAction
         self.onDismiss = onDismiss
@@ -172,6 +198,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onAction = nil
         onDismiss = nil
         closing.delegate = nil
+        closing.onEscape = nil
         if notifying { callback?() }
         closing.fadeOut(duration: Theme.Duration.exit)
     }
