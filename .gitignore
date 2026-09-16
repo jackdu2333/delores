@@ -1,0 +1,17 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/
+
+# 构建产物：整个 .app bundle 与裸二进制均由 build.sh 生成，不入库
+HuaciGongjuBin
+/划词小工具.app/
+
+# 发布产物：由 scripts/release.sh 生成的 dmg / zip，不入库（只留在 GitHub Releases 上）
+/dist/
+
+# WorkBuddy 工具内部数据（工作记忆等），不属于项目产物，不纳入版本控制
+.workbuddy/
+
