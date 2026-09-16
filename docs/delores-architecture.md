@@ -33,6 +33,7 @@ prematurely.
 | Product identity and build metadata | `project.yml`, generated project, `Info.plist` | Delores-owned seam |
 | Delores model gate | `.github/workflows/ci.yml`, `Scripts/run-delores-tests.sh` | Delores-owned seam |
 | Local packaging and release gate | `Scripts/build-delores-dmg.sh`, `docs/delores-release.md`, release workflow guard | Delores-owned seam |
+| Latest Huaci source and regression harness | `Integrations/HuaciGongju/`, `Scripts/run-huaci-integration-tests.sh` | Vendored integration; explicit adapter required |
 | Quick Actions consent copy | `Features/QuickActions/Settings/QuickActionsSettingsView.swift` | Delores-owned seam |
 
 Do not rename the upstream `Tinycast/` directory, upstream source files, or the generated project
@@ -74,12 +75,29 @@ If an upstream change makes a seam unnecessary, delete the seam and update this 
 change. If an upstream feature overlaps a Delores feature, stop and record the ownership decision
 before merging; do not silently keep two implementations.
 
+## Huaci integration workflow
+
+The latest local Huaci project is vendored at `Integrations/HuaciGongju/`. It is deliberately not
+compiled into the Tinycast application target yet: Huaci's app delegate, LLM service, selection
+monitor and settings store would otherwise become a second owner of existing Delores capabilities.
+The source and its tests are still part of the Delores repository and run independently:
+
+```sh
+./Scripts/run-huaci-integration-tests.sh
+```
+
+The source boundary and update procedure are recorded in
+[ADR 0002](adr/0002-vendor-huaci-latest-project.md). The next runtime step is an explicit adapter
+for the Spatial Surface, with a Delores-owned consent setting and lifecycle; it is not a silent
+activation of Huaci's global monitors.
+
 ## Verification after every sync
 
 ```sh
 ./Scripts/check-upstream-drift.sh
 ./Scripts/run-delores-tests.sh
 ./Scripts/run-tests.sh
+./Scripts/run-huaci-integration-tests.sh
 ```
 
 On a machine with Xcode 26 and SwiftLint installed, also run:

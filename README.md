@@ -29,6 +29,11 @@ Tinycast remains the upstream source tree so future updates can be merged withou
 Delores-owned code lives under `Tinycast/Features/Delores/`; the ownership and sync rules are in
 [docs/delores-architecture.md](docs/delores-architecture.md).
 
+The latest local Huaci project is preserved at `Integrations/HuaciGongju/` as a separately tested
+integration source. It is not compiled into the Tinycast application target yet; runtime activation
+will go through an explicit Delores adapter so Huaci does not create a second AppDelegate, LLM or
+selection pipeline. See [ADR 0002](docs/adr/0002-vendor-huaci-latest-project.md).
+
 The local branch is `integration/delores`, with the official Tinycast repository registered as
 `upstream`. See [CONTEXT.md](CONTEXT.md) and
 [docs/adr/0001-keep-tinycast-as-upstream-overlay.md](docs/adr/0001-keep-tinycast-as-upstream-overlay.md)
@@ -43,6 +48,7 @@ the pure Delores model harness with:
 
 ```sh
 ./Scripts/run-delores-tests.sh
+./Scripts/run-huaci-integration-tests.sh
 ```
 
 With Xcode 26 and the local signing identity available, a signed local DMG can be packaged with:
