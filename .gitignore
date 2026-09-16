@@ -57,6 +57,10 @@ node_modules/
 *.swp
 *.tmp
 *.orig
+
+# Agent workspace: memory and notes for this checkout. Never product code, and an untracked
+# directory here makes `check-upstream-drift.sh` report a dirty tree before every sync.
+.workbuddy/
 # Website (Next.js). `out/` is the static export, `.source/` is generated from
 # content/docs by fumadocs-mdx on install and build.
 website/.next/
