@@ -136,6 +136,15 @@ enum SettingsBackupCoverage {
         AppSettingsKey.quickActionInstructions.rawValue:
             "Custom model instructions change transformed results and must not move unseen.",
         AppSettingsKey.quickActionLanguage.rawValue:
-            "Follows the language the person at this Mac reads, not the one who wrote the backup."
+            "Follows the language the person at this Mac reads, not the one who wrote the backup.",
+        AppSettingsKey.deloresCompanionEnabled.rawValue:
+            "Starts a pet that watches the pointer and every window move, so it is consent to a "
+            + "resident monitor and never something an import may switch on.",
+        AppSettingsKey.deloresWindowSnappingEnabled.rawValue:
+            "Watches window drags across this Mac's displays; a flag that grants a capability is "
+            + "never carried by a backup.",
+        AppSettingsKey.deloresSplitDividerEnabled.rawValue:
+            "Draws a snap guide over whatever else is on screen, which no backup should decide for "
+            + "someone else's displays."
     ]
 }

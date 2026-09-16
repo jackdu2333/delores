@@ -19,6 +19,7 @@ struct SnippetsTests {
         try await testRepositoryConcurrency()
         try await testDeliveryQueueAndPasteboard()
         await testCopySelectionFallback()
+        await testCopySelectionRefusesHeavyBoard()
         try await testStoreWatcher()
         testTemplateExpansion()
         testDynamicPlaceholders()
@@ -595,6 +596,37 @@ struct SnippetsTests {
         check(
             "the reader's clipboard is restored afterwards",
             backing.string(forType: .string) == "Original")
+    }
+
+    /// Taking a selection by copy borrows the reader's whole board first, and a board holding a
+    /// screenshot is not worth two words of selected text. The fallback is a favour it can decline;
+    /// nothing has been cleared when it does, so nothing needs putting back.
+    private static func testCopySelectionRefusesHeavyBoard() async {
+        let injector = TextInjector(clipboardManager: ClipboardManager(), settings: AppSettings())
+        let backing = NSPasteboard(name: .init("tinycast-heavy-\(UUID().uuidString)"))
+        defer { backing.releaseGlobally() }
+        let pasteboard = StubPasteboard(backing: backing)
+
+        let screenshot = NSPasteboardItem()
+        screenshot.setData(Data(count: 512 * 1024), forType: .png)
+        backing.clearContents()
+        _ = backing.writeObjects([screenshot])
+        let changeCount = backing.changeCount
+
+        let refused = await injector.copySelection(from: nil, pasteboard: pasteboard)
+        check("a board holding an image is refused rather than read", refused == nil)
+        check("a refused board is not cleared", backing.changeCount == changeCount)
+        check(
+            "the image itself survives the refusal",
+            backing.data(forType: .png)?.count == 512 * 1024)
+
+        // A board under the budget still takes the fallback, so refusing is about bulk.
+        backing.clearContents()
+        let note = NSPasteboardItem()
+        note.setString("background notes", forType: .string)
+        _ = backing.writeObjects([note])
+        let small = PasteboardSnapshot(pasteboard: pasteboard, extent: .budgeted)
+        check("a textual board is still within budget", small != nil)
     }
 
     /// Our panels never activate, so the frontmost app is not where the typist's caret is.

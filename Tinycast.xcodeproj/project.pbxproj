@@ -48,6 +48,7 @@
 		0FC4608F65D69D465EFBBCE0 /* CalcFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E582B93EFB1A2AA85B048A87 /* CalcFormatter.swift */; };
 		0FCFCEA4477672D62A3295ED /* BackupApplier.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7FCA9FA81B1CF8B8C37E48A /* BackupApplier.swift */; };
 		0FD2528627DE63DC9C6B8793 /* EntryNaming.swift in Sources */ = {isa = PBXBuildFile; fileRef = B07F172974DA662EBE25422E /* EntryNaming.swift */; };
+		0FF8ECDD074AD4F3C9A89EA4 /* DeloresSpatialCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F71EA5719A1EF2609F743BC /* DeloresSpatialCoordinator.swift */; };
 		102448FF76CCCE6B8E3DBAFB /* ColorPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C214E40D42F4812F141C16A8 /* ColorPreview.swift */; };
 		106AF34CEAEB08CBCC924118 /* VolumeLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273827EB5CC04F1951C40387 /* VolumeLevel.swift */; };
 		109E27ACDAADDA42FE33E119 /* SettingsNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 364BEC0805A8F5C39444EAF5 /* SettingsNavigationState.swift */; };
@@ -260,6 +261,7 @@
 		606809BC14D6613B847036D0 /* ExtensionStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46CECB81C669337C8E6CF7FF /* ExtensionStorage.swift */; };
 		607D38D86E7C4763DD28C8D0 /* ReleaseNotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31757FAE5F3E9E06D9B77DCA /* ReleaseNotes.swift */; };
 		60A1949A691168B535B562C8 /* MeetingCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E475F373557FD3524086CE19 /* MeetingCalendar.swift */; };
+		60DB748ED47F620DB2F315B3 /* DeloresSpatialSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */; };
 		613827876C48EF88F2162C10 /* NotificationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FB75182A60F65BA1FB9BA8 /* NotificationToken.swift */; };
 		614DAAC9331F9C1DE4D76F0D /* EmojiScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B6CA2ED2DDD9A89C7EE874 /* EmojiScreen.swift */; };
 		6201D9ACD9A52B253AC5562F /* DeloresContextIslandController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521FEF035F743E5E3AEFF48D /* DeloresContextIslandController.swift */; };
@@ -585,6 +587,7 @@
 		EE6A9E899566ACCB8258D901 /* WindowManagementSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0A6DDC1C30A6E2C6DF7E7D /* WindowManagementSettingsView.swift */; };
 		EEB7F6A6AC8B53FDD607ED03 /* AIConversationOpenPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CEAD8FAB5CD097D8F1C851 /* AIConversationOpenPolicy.swift */; };
 		EEBE3490872F3A8D0400AC56 /* MenuSearchList.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2967B06D3E059BFB9F30DF /* MenuSearchList.swift */; };
+		EF0D68DF017F99AFA32A2D3F /* ContextAnswerAccumulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3930A199252FD78B5990F90 /* ContextAnswerAccumulator.swift */; };
 		EF140AD58F7CF2DB5190F543 /* DeloresCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CB7DA1B0385B1ABB258A01 /* DeloresCoordinator.swift */; };
 		F03DB7A7898F0388E821FDBB /* AppleIntelligenceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B5C0B83C3645AC90639B85 /* AppleIntelligenceProvider.swift */; };
 		F13789E3732E844EE7584561 /* ColorValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9287418DC6C04437FB4BAF /* ColorValue.swift */; };
@@ -768,6 +771,7 @@
 		2E5C752F98428A767405AD12 /* PasteboardFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardFiles.swift; sourceTree = "<group>"; };
 		2EC7DC9AD5E54C26387F29F6 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
 		2EE496AA4863086BB49CBF2E /* EventDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDraft.swift; sourceTree = "<group>"; };
+		2F71EA5719A1EF2609F743BC /* DeloresSpatialCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeloresSpatialCoordinator.swift; sourceTree = "<group>"; };
 		2FCD070CDE64691E5F6ED28D /* InputSourceSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceSwitcher.swift; sourceTree = "<group>"; };
 		301BA9123035D6BFB808F763 /* SnippetKeywordListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetKeywordListener.swift; sourceTree = "<group>"; };
 		30BBF211CE6A076EAF8D6C33 /* ExtensionManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionManifest.swift; sourceTree = "<group>"; };
@@ -866,6 +870,7 @@
 		582A70CF432F5E0144E57369 /* ExtensionRefreshState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRefreshState.swift; sourceTree = "<group>"; };
 		58D62BFB4EC604AE6171BBA3 /* CountryZoneData.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryZoneData.generated.swift; sourceTree = "<group>"; };
 		590A432CC25ED6372B453BFA /* ScheduleScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleScreen.swift; sourceTree = "<group>"; };
+		59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeloresSpatialSettingsView.swift; sourceTree = "<group>"; };
 		5A1E7B96668721F12170CD72 /* WindowActionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowActionMemory.swift; sourceTree = "<group>"; };
 		5A83359DA89BD4E1E6FC3087 /* FileSearchQuickLook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchQuickLook.swift; sourceTree = "<group>"; };
 		5ADCDDCEBA1EBB74810BDFC4 /* CustomQuickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomQuickAction.swift; sourceTree = "<group>"; };
@@ -1257,6 +1262,7 @@
 		F044A6A0C3C1CEC53D46497A /* ClipboardTextWorker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTextWorker.swift; sourceTree = "<group>"; };
 		F082FD6A3AC234F43735715D /* FeatureCommandsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureCommandsSection.swift; sourceTree = "<group>"; };
 		F097C9983DF27A99694C8BC5 /* Zlib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zlib.swift; sourceTree = "<group>"; };
+		F3930A199252FD78B5990F90 /* ContextAnswerAccumulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextAnswerAccumulator.swift; sourceTree = "<group>"; };
 		F3F97240A718D95DFD9343DB /* UpcomingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpcomingWindow.swift; sourceTree = "<group>"; };
 		F42BECB8234FEA49797B68F6 /* WindowSwitchQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSwitchQuery.swift; sourceTree = "<group>"; };
 		F5061C8D4F15F068C4EC5E7A /* DisabledApplicationsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisabledApplicationsSection.swift; sourceTree = "<group>"; };
@@ -1632,6 +1638,8 @@
 				521FEF035F743E5E3AEFF48D /* DeloresContextIslandController.swift */,
 				CD525401BB111969C5FA91E8 /* DeloresContextIslandView.swift */,
 				A8CB7DA1B0385B1ABB258A01 /* DeloresCoordinator.swift */,
+				2F71EA5719A1EF2609F743BC /* DeloresSpatialCoordinator.swift */,
+				59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -2131,6 +2139,7 @@
 			isa = PBXGroup;
 			children = (
 				D18D7E6E42E9E78E3C4189DB /* ContextAction.swift */,
+				F3930A199252FD78B5990F90 /* ContextAnswerAccumulator.swift */,
 				6565F5421C568E6CF069605C /* ContextIslandPlacement.swift */,
 				1461BE5C873C6168D8587EA2 /* InvocationContext.swift */,
 				D945578FD43A5B0C6C4ECB0A /* OwnSurfaceHitPolicy.swift */,
@@ -3287,6 +3296,7 @@
 				4640C7CC8DCA6E6FA49394A8 /* CommandsSettingsView.swift in Sources */,
 				1545F0D79421A893EA104C3A /* CompactFavoritesRow.swift in Sources */,
 				7EA8057463FE0CD5D4565667 /* ContextAction.swift in Sources */,
+				EF0D68DF017F99AFA32A2D3F /* ContextAnswerAccumulator.swift in Sources */,
 				E4A0DF2B81DB1818BAC1B91F /* ContextIslandPlacement.swift in Sources */,
 				A024F68213FEB918BEF31255 /* CountryZoneData.generated.swift in Sources */,
 				2EBB42C7EB17F37628765B17 /* CurrencyData.generated.swift in Sources */,
@@ -3305,6 +3315,8 @@
 				6201D9ACD9A52B253AC5562F /* DeloresContextIslandController.swift in Sources */,
 				317AD5CC0666F8A5D69A6763 /* DeloresContextIslandView.swift in Sources */,
 				EF140AD58F7CF2DB5190F543 /* DeloresCoordinator.swift in Sources */,
+				0FF8ECDD074AD4F3C9A89EA4 /* DeloresSpatialCoordinator.swift in Sources */,
+				60DB748ED47F620DB2F315B3 /* DeloresSpatialSettingsView.swift in Sources */,
 				F93CD1542844003929AB1BDB /* DialogChip.swift in Sources */,
 				AB500AC3DEBFF6EB1CE42812 /* DialogController.swift in Sources */,
 				C215695FE671BC591DC99C2B /* DialogPanel.swift in Sources */,

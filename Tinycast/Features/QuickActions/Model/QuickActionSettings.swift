@@ -33,6 +33,15 @@ struct QuickActionSettings: Equatable, Sendable {
         instructionOverrides[action]
     }
 
+    /// The same override, reached by id rather than by one catalogue's case.
+    ///
+    /// The Context Surface keeps a catalogue of its own, and only an id crosses between the two: an
+    /// action of ours whose name coincides with a Quick Action's gets the reader's wording back, and
+    /// one that is ours alone simply gets nil, which is "leave the prompt alone" rather than an error.
+    func instructionOverride(forActionID id: String) -> String? {
+        BuiltInQuickAction(rawValue: id).flatMap(instructionOverride(for:))
+    }
+
     mutating func setInstructionOverride(_ instructions: String?, for action: BuiltInQuickAction) {
         guard !action.usesTranslationFramework else { return }
         instructionOverrides[action] = instructions

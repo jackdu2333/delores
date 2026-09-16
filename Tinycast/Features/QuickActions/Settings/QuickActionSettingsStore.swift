@@ -46,7 +46,14 @@ final class QuickActionSettingsStore {
     }
 
     func model(for action: QuickAction) -> AIModelSelection? {
-        modelOverride(for: action) ?? model
+        model(forActionID: action.id)
+    }
+
+    /// The same binding, reached by id. The Context Surface's catalog is its own, so the two actions
+    /// it offers that no Quick Action backs still get a per-action route of their own rather than
+    /// falling through to whatever the last action was pointed at.
+    func model(forActionID id: String) -> AIModelSelection? {
+        modelOverrides[id] ?? model
     }
 
     func modelOverride(for action: QuickAction) -> AIModelSelection? {

@@ -5,10 +5,14 @@ import Foundation
 struct DeloresContextTest {
     static func main() {
         testSelectionPolicy()
+        testAnswerAccumulator()
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
         testQuickActionAdmission()
         testContextActions()
+        testCustomRowsOnTheBar()
+        testContextActionPrompts()
+        testSearchURL()
         testQuickActionPrompt()
         testPlacement()
         testInvocationContext()
@@ -48,23 +52,146 @@ struct DeloresContextTest {
     }
 
     private static func testContextActions() {
-        let actions = DeloresContextAction.defaults
-        require(actions.count == 5, "the context surface includes four native actions and Ask AI")
+        let actions = DeloresContextAction.catalog
         require(
-            actions.prefix(4).allSatisfy { !$0.requiresChatHandoff },
-            "native context actions do not escalate to chat")
+            actions.map(\.id) == ["translate", "explain", "summarize", "search"],
+            "the catalog is the four the reader asked for, in order")
         require(
-            actions.last?.requiresChatHandoff == true && actions.last?.id == "ask",
-            "only the explicit Ask action escalates to chat")
+            actions.allSatisfy { !$0.requiresChatHandoff },
+            "no bar action escalates to chat on its own")
         require(
-            actions.dropLast().compactMap(\.builtIn).count == 4,
-            "native context actions retain their built-in quick action identity")
+            actions.allSatisfy { !$0.title.isEmpty },
+            "every action carries a title for its pill")
+
+        require(actions.allSatisfy(\.isEnabled), "every default action is switched on")
+
         require(
-            DeloresContextAction.available(aiEnabled: false) == Array(actions.dropLast()),
-            "AI off removes only the explicit Ask action")
+            DeloresContextAction.available(aiEnabled: true).count == actions.count,
+            "AI on exposes the whole catalog")
         require(
-            DeloresContextAction.available(aiEnabled: true) == actions,
-            "AI on exposes the complete first context catalog")
+            DeloresContextAction.available(aiEnabled: false).map(\.id) == ["search"],
+            "AI off leaves the one action that never needed a model")
+
+        // Only the two that rewrite carry the flag. 解释 answering without being told to skip
+        // commentary is the whole difference it exists for.
+        require(
+            actions.filter(\.rewritesSelection).map(\.id) == ["translate", "summarize"],
+            "the rewriting actions are the two that can write back")
+
+        // 问 AI left the catalog as a duplicate of 解释, but the hand-off it used is still the only
+        // way the island reaches Chat, so the kind has to keep behaving for whatever row brings it
+        // back.
+        let handOff = DeloresContextAction(
+            id: "ask", title: "问 AI", symbol: "sparkles", kind: .ask, prompt: "",
+            rewritesSelection: false)
+        require(handOff.requiresChatHandoff, "the chat hand-off kind still declares itself")
+        require(handOff.needsModel, "a hand-off action still needs a model to answer it")
+        require(
+            handOff.progressTitle == "正在打开 AI 对话",
+            "the hand-off card says what it is doing rather than naming the action")
+    }
+
+    private static func testCustomRowsOnTheBar() {
+        let row = CustomQuickAction(name: "起标题", instructions: "为这段内容起五个标题")
+        require(row.symbol == CustomQuickAction.sfSymbol, "a row without an icon takes the default")
+
+        let withRow = DeloresContextAction.available(aiEnabled: true, customActions: [row])
+        require(withRow.count == 5, "a row written in Settings joins the four Delores ships")
+        require(withRow.last?.id == row.entryID, "the row keeps the id its model binding hangs from")
+        require(withRow.last?.title == "起标题", "the row keeps its own title")
+        require(
+            withRow.last?.rewritesSelection == false,
+            "a row the reader wrote does not take their document unasked")
+        require(withRow.last?.maxOutputTokens(selection: "x") == 128,
+                "a custom row answers at the same floor as any other model action")
+
+        require(
+            DeloresContextAction.available(aiEnabled: false, customActions: [row]).map(\.id)
+                == ["search"],
+            "AI off leaves search alone: a custom row is a prompt by definition")
+
+        let explained = DeloresContextAction(id: "summarize", title: "总结", symbol: "s", kind: .ai,
+                                            prompt: "ships with the app")
+        require(
+            explained.applying("按三点概括").prompt == "按三点概括",
+            "a prompt replaced in Settings reaches the bar")
+        require(
+            explained.applying(nil).prompt == "ships with the app",
+            "an untouched action keeps its shipped prompt")
+        require(
+            explained.applying("   ").prompt == "ships with the app",
+            "a blank replacement is not a replacement")
+        require(
+            explained.applying("按三点概括").id == "summarize",
+            "applying a prompt does not move the binding it is keyed by")
+    }
+
+    private static func testContextActionPrompts() {
+        let translate = require(
+            DeloresContextAction.catalog.first { $0.id == "translate" }, "translate is in the catalog")
+        require(
+            translate.instructions.hasPrefix(DeloresContextAction.materialRule),
+            "an action is always sent the material-not-instructions rule")
+        require(
+            translate.instructions.contains(DeloresContextAction.bareOutputRule),
+            "a rewriting action is sent the bare-output rule")
+        require(
+            translate.instructions.hasSuffix(translate.prompt) && !translate.prompt.isEmpty,
+            "the reader's own prompt comes last and is not reworded")
+        require(
+            translate.prompt.contains("绝对严禁输出英文或复读原文"),
+            "the toolbar's anti-repetition rule survives verbatim")
+        require(
+            translate.prompt.contains("LLMService"),
+            "the toolbar's treatment of code identifiers survives verbatim")
+
+        let explain = require(
+            DeloresContextAction.catalog.first { $0.id == "explain" }, "explain is in the catalog")
+        require(
+            !explain.instructions.contains(DeloresContextAction.bareOutputRule),
+            "an action that answers is not told to skip explaining")
+        require(
+            explain.instructions.contains(DeloresContextAction.materialRule),
+            "an answering action still treats the selection as material")
+
+        require(
+            translate.message(selection: "Body.") == "Text:\nBody.",
+            "the delimiter separates the selection from the instruction above it")
+
+        let search = require(
+            DeloresContextAction.catalog.first { $0.id == "search" }, "search is in the catalog")
+        require(search.instructions == "", "a search action sends no instructions")
+
+        require(
+            translate.maxOutputTokens(selection: "short") == 128,
+            "a tiny selection still gets room for a reply")
+        require(
+            translate.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 2_048,
+            "a long selection cannot lift the ceiling past the route's window")
+    }
+
+    private static func testSearchURL() {
+        let search = require(
+            DeloresContextAction.catalog.first { $0.id == "search" }, "search is in the catalog")
+        require(
+            search.searchURL(selection: "hello world")?.absoluteString
+                == "https://www.bing.com/search?q=hello%20world",
+            "a space is encoded rather than left to the engine")
+        require(
+            search.searchURL(selection: "a+b&c=d")?.absoluteString
+                == "https://www.bing.com/search?q=a%2Bb%26c%3Dd",
+            "a plus and an ampersand are encoded, so they stay part of what the reader selected")
+        require(
+            search.searchURL(selection: "中文")?.absoluteString
+                == "https://www.bing.com/search?q=%E4%B8%AD%E6%96%87",
+            "a non-ASCII selection is percent-encoded")
+
+        let translate = require(
+            DeloresContextAction.catalog.first { $0.id == "translate" },
+            "translate is in the catalog")
+        require(
+            translate.searchURL(selection: "x") == nil,
+            "an action that calls a model has no search address")
     }
 
     private static func testQuickActionPrompt() {
@@ -202,6 +329,79 @@ struct DeloresContextTest {
         require(
             grown.minX == frame.minX && grown.width == frame.width,
             "the card keeps the bar's horizontal placement")
+
+        testBarWidth(screen: screen)
+        testCardPlacement(screen: screen)
+    }
+
+    /// A card is wider than the bar it grows out of, and a card that kept the bar's left edge would
+    /// sit visibly off centre on a display the bar was centred on.
+    private static func testCardPlacement(screen: InvocationScreen) {
+        let bar = DeloresContextIslandPlacement.collapsedFrame(
+            in: screen, size: CGSize(width: 420, height: 48))
+
+        require(
+            DeloresContextIslandPlacement.resultWidth(barWidth: 300, in: screen)
+                == DeloresContextIslandPlacement.minimumReadingWidth,
+            "a bar narrower than a readable column is widened to one")
+        require(
+            DeloresContextIslandPlacement.resultWidth(barWidth: 520, in: screen) == 520,
+            "a bar already wider than the column keeps its own width")
+
+        let sameWidth = DeloresContextIslandPlacement.expandedFrame(
+            keepingTopEdgeOf: bar, size: CGSize(width: 420, height: 380), in: screen)
+        require(sameWidth.maxY == bar.maxY, "the card grows away from the bar's top edge")
+        require(sameWidth.minX == bar.minX, "a card the bar's own width keeps the bar's placement")
+
+        let wider = DeloresContextIslandPlacement.expandedFrame(
+            keepingTopEdgeOf: bar, size: CGSize(width: 520, height: 380), in: screen)
+        require(wider.midX == bar.midX, "a wider card stays centred on the display the bar sits on")
+        require(wider.height == 380, "a card is not capped to the menu bar the way the bar is")
+
+        let narrow = InvocationScreen(
+            frame: CGRect(x: 0, y: 0, width: 300, height: 900),
+            visibleFrame: CGRect(x: 0, y: 0, width: 300, height: 876),
+            menuBarFrame: CGRect(x: 0, y: 876, width: 300, height: 24),
+            auxiliaryTopRightArea: nil)
+        require(
+            DeloresContextIslandPlacement.resultWidth(barWidth: 280, in: narrow) == 280,
+            "a display too narrow for a reading column keeps the bar's own width")
+    }
+
+    /// The bar measures itself against a hosting view, and a hosting view that has not laid out
+    /// reports zero — so the fallback is the ordinary path on the first frame, not an edge case.
+    private static func testBarWidth(screen: InvocationScreen) {
+        require(
+            DeloresContextIslandPlacement.collapsedHeight(preferred: 38, in: screen) == 22,
+            "the bar lays out against the height it is given, not the one it asked for")
+
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: 0, in: screen)
+                == DeloresContextIslandPlacement.preferredWidth,
+            "an unmeasured bar falls back to the preferred width instead of clipping")
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: .nan, in: screen)
+                == DeloresContextIslandPlacement.preferredWidth,
+            "a nonsense measurement falls back the same way")
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: .infinity, in: screen)
+                == DeloresContextIslandPlacement.preferredWidth,
+            "an unbounded measurement falls back the same way")
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: 300, in: screen) == 300,
+            "a real measurement is used as it stands")
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: 1_200, in: screen) == 1_200,
+            "a long catalog widens the bar past the preferred width rather than crushing it")
+
+        let narrow = InvocationScreen(
+            frame: CGRect(x: 0, y: 0, width: 300, height: 900),
+            visibleFrame: CGRect(x: 0, y: 0, width: 300, height: 876),
+            menuBarFrame: CGRect(x: 0, y: 876, width: 300, height: 24),
+            auxiliaryTopRightArea: nil)
+        require(
+            DeloresContextIslandPlacement.barWidth(hugging: 1_200, in: narrow) == 280,
+            "a display too narrow for the catalog caps the bar at its own width less the margins")
     }
 
     private static func testOwnSurfaceHitPolicy() {
@@ -237,6 +437,36 @@ struct DeloresContextTest {
         require(
             QuickActionStartResult.admission(enabled: false, isRunning: false) == .disabled,
             "disabled Quick Action reports disabled")
+    }
+
+    private static func testAnswerAccumulator() {
+        var answer = DeloresAnswerAccumulator()
+        answer.append("你好")
+        answer.append("，世界")
+        require(answer.text == "你好，世界", "answer accumulates deltas in arrival order")
+        require(!answer.isCapped, "a short answer never reaches the ceiling")
+
+        let limit = DeloresAnswerAccumulator.maxCharacters
+        var capped = DeloresAnswerAccumulator()
+        capped.append(String(repeating: "甲", count: limit - 2))
+        require(!capped.isCapped, "room to spare leaves the answer open")
+
+        // The delta that crosses the line is cut at the line rather than dropped, so the reader
+        // keeps what there was room for and the notice is what marks it partial.
+        capped.append("乙丙丁")
+        require(capped.isCapped, "a delta past the ceiling caps the answer")
+        require(
+            capped.text.hasSuffix(DeloresAnswerAccumulator.truncationNotice),
+            "a capped answer says it stopped")
+        // Everything before the notice is kept body: the head plus as much of the crossing delta
+        // as there was room for, which together come to exactly the ceiling.
+        let body = capped.text.dropLast(DeloresAnswerAccumulator.truncationNotice.count)
+        require(body.count == limit, "the kept body stops exactly at the ceiling")
+        require(body.starts(with: "甲"), "the kept body starts with what arrived first")
+
+        let settled = capped.text
+        capped.append(String(repeating: "戊", count: 512))
+        require(capped.text == settled, "a capped answer takes no further deltas")
     }
 
     private static func testGesturePolicy() {

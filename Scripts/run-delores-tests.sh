@@ -12,6 +12,7 @@ swiftc \
     "$ROOT/Tinycast/Features/Delores/Model/InvocationContext.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/ContextAction.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/SelectionContextPolicy.swift" \
+    "$ROOT/Tinycast/Features/Delores/Model/ContextAnswerAccumulator.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/ContextIslandPlacement.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/SelectionGesturePolicy.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/OwnSurfaceHitPolicy.swift" \

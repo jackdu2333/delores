@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import UniformTypeIdentifiers
 
 /// Its own shape, not a caller's result type, so the injector stays owned by no one feature.
 struct InjectedText: Equatable, Sendable {
@@ -232,14 +233,19 @@ final class TextInjector {
         from targetApp: NSRunningApplication?, pasteboard: any PasteboardAccess
     ) async -> String? {
         clipboardManager.prepareForTinycastPasteboardMutation()
-        guard let original = PasteboardSnapshot(pasteboard: pasteboard) else { return nil }
+        // Refused rather than forced when the board is holding something heavy: the fallback is worth
+        // less than whatever the reader copied before selecting this text, and it is the only step
+        // here that would otherwise not happen without their asking. Returning here leaves the board
+        // untouched — nothing has been cleared yet.
+        guard let original = PasteboardSnapshot(pasteboard: pasteboard, extent: .budgeted)
+        else { return nil }
         defer { restore(original, to: pasteboard) }
 
         Paster.postCommandC(toPid: targetApp?.processIdentifier)
         for _ in 0..<Self.copyPollAttempts {
             guard await wait(for: Self.copyPollInterval) else { return nil }
             guard pasteboard.changeCount != original.changeCount else { continue }
-            guard let copied = PasteboardSnapshot(pasteboard: pasteboard),
+            guard let copied = PasteboardSnapshot(pasteboard: pasteboard, extent: .budgeted),
                 let data = copied.firstStringData
             else { return nil }
             return String(bytes: data, encoding: .utf8)
@@ -1086,7 +1092,9 @@ final class TemporaryPasteboardLease {
         pasteboard: any PasteboardAccess,
         onMutation: (Int) -> Void = { _ in }
     ) -> TemporaryPasteboardLease? {
-        guard let snapshot = PasteboardSnapshot(pasteboard: pasteboard),
+        // Whole, and deliberately so: this lease is a promise to hand every type back. Snapshotting
+        // part of an image-bearing board would drop everything the budget refused.
+        guard let snapshot = PasteboardSnapshot(pasteboard: pasteboard, extent: .whole),
             let temporaryItem = PasteboardSnapshot.temporaryItem(carrying: text),
             let originalItems = snapshot.pasteboardItems(),
             pasteboard.changeCount == snapshot.changeCount
@@ -1135,13 +1143,38 @@ struct PasteboardSnapshot {
         items.first?.values.first { $0.type == .string }?.data
     }
 
-    init?(pasteboard: any PasteboardAccess) {
+    /// How much of the board a snapshot is allowed to take. Every caller names one, because the two
+    /// answers differ: borrowing the board is a promise to give all of it back, while reading it for
+    /// a selection is a favour that can be refused.
+    enum Extent {
+        /// Everything, whatever it costs. For a caller about to clear the board and restore it, where
+        /// taking half means losing the other half permanently.
+        case whole
+        /// Up to `SnapshotBudget`, with volumous types refused by name. For a caller that reads the
+        /// board opportunistically and can simply do without the answer.
+        case budgeted
+    }
+
+    init?(pasteboard: any PasteboardAccess, extent: Extent) {
         let changeCount = pasteboard.changeCount
         var items: [Item] = []
+        var total = 0
         for pasteboardItem in pasteboard.pasteboardItems ?? [] {
+            // Types first, sizes second: a volumous type is refused by its name, before any read.
+            // Measuring a type's data is already the cost this budget exists to avoid.
+            if extent == .budgeted,
+               pasteboardItem.types.contains(where: { Self.isVoluminous($0) })
+            {
+                return nil
+            }
             var values: [(type: NSPasteboard.PasteboardType, data: Data)] = []
             for type in pasteboardItem.types {
                 guard let data = pasteboardItem.data(forType: type) else { return nil }
+                if extent == .budgeted {
+                    guard data.count <= SnapshotBudget.maxSingleTypeBytes else { return nil }
+                    total += data.count
+                    guard total <= SnapshotBudget.maxTotalBytes else { return nil }
+                }
                 values.append((type: type, data: data))
             }
             items.append(Item(values: values))
@@ -1149,6 +1182,34 @@ struct PasteboardSnapshot {
         guard pasteboard.changeCount == changeCount else { return nil }
         self.items = items
         self.changeCount = changeCount
+    }
+
+    /// What a snapshot may cost this process to take.
+    ///
+    /// Taking a selection by copy borrows the reader's whole pasteboard first, and that pasteboard
+    /// may hold a screenshot, a movie or an archive — a well-behaved resident tool should not weigh
+    /// 150MB because somebody selected two words next to what they copied earlier. Failing the
+    /// selection is the right trade: a snapshot is only ever taken to clear the board and put it
+    /// back, and losing all of it is far worse than losing this one read.
+    private enum SnapshotBudget {
+        /// Everything together, past which the fallback is abandoned whole.
+        static let maxTotalBytes = 2 * 1024 * 1024
+        /// One type on its own: "the total fits" is no cover for one enormous member.
+        static let maxSingleTypeBytes = 1024 * 1024
+    }
+
+    /// Whether a type announces bulk without being read. A promised type is refused outright: its
+    /// real size is whatever its provider says, and asking means starting that provider's process.
+    private static func isVoluminous(_ type: NSPasteboard.PasteboardType) -> Bool {
+        let raw = type.rawValue
+        if raw.localizedCaseInsensitiveContains("promised") { return true }
+        guard let declared = UTType(raw) else { return false }
+        return declared.conforms(to: .image)
+            || declared.conforms(to: .movie)
+            || declared.conforms(to: .audio)
+            || declared.conforms(to: .archive)
+            || declared.conforms(to: .executable)
+            || declared.conforms(to: .diskImage)
     }
 
     /// A kept `public.html` is the flavour a Chromium editor prefers, so we lend the text alone.

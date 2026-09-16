@@ -169,26 +169,6 @@ final class QuickActionCoordinator {
         return .started
     }
 
-    /// A Context Surface supplies a snapshot so the action cannot read a newer selection.
-    @discardableResult
-    func run(
-        _ action: QuickAction,
-        selection: String,
-        target: NSRunningApplication?,
-        keepingPaletteVisible: Bool = false
-    ) -> QuickActionStartResult {
-        let admission = QuickActionStartResult.admission(
-            enabled: settings.quickActionsEnabled, isRunning: running != nil)
-        guard admission == .started else { return admission }
-        if paletteCoordinator.isVisible, !keepingPaletteVisible {
-            paletteCoordinator.hidePalette(restoreFocus: false)
-        }
-        start { [weak self] in
-            await self?.begin(action, target: target, selectionOverride: selection)
-        }
-        return .started
-    }
-
     func cancel() {
         generation += 1
         running?.cancel()
@@ -208,24 +188,16 @@ final class QuickActionCoordinator {
         }
     }
 
-    private func begin(
-        _ action: QuickAction,
-        target: NSRunningApplication?,
-        selectionOverride: String? = nil
-    ) async {
+    private func begin(_ action: QuickAction, target: NSRunningApplication?) async {
         let selection: String
-        if let selectionOverride {
-            selection = selectionOverride
-        } else {
-            do {
-                selection = try await QuickActionRunner.selection(in: target, using: injector)
-            } catch let failure as QuickActionFailure {
-                reportRefusal(failure)
-                return
-            } catch {
-                core.showMessage(error.localizedDescription, tone: .danger)
-                return
-            }
+        do {
+            selection = try await QuickActionRunner.selection(in: target, using: injector)
+        } catch let failure as QuickActionFailure {
+            reportRefusal(failure)
+            return
+        } catch {
+            core.showMessage(error.localizedDescription, tone: .danger)
+            return
         }
         let state = QuickActionPanelState(
             action: action, original: selection, targetLanguage: targetLanguage)
@@ -357,11 +329,30 @@ final class QuickActionCoordinator {
         try core.quickActionProvider(for: action)
     }
 
+    /// The same route for an action this catalog does not own: the Context Surface carries its own
+    /// five, and reaches its provider through here rather than pretending to be a Quick Action. The
+    /// binding and the guardrails are the reason it must come through here at all.
+    func provider(forActionID id: String) throws -> any AIProvider {
+        try core.quickActionProvider(forActionID: id)
+    }
+
     /// The instructions the reader replaced the built-in prompt with, if they did. Nil means the
     /// built-in prompt stands, which is also why a custom action never reports one.
     func instructionOverride(for action: QuickAction) -> String? {
         store.settings.instructionOverride(for: action)
     }
+
+    /// The reader's wording for an action the Context Surface keeps under an id of its own. The bar
+    /// and this catalogue overlap without agreeing on every row, so only an id can ask.
+    func instructionOverride(forActionID id: String) -> String? {
+        store.settings.instructionOverride(forActionID: id)
+    }
+
+    /// The rows the reader wrote in Settings, in the order Settings keeps them.
+    ///
+    /// The Context Surface reads this list and nothing else: it copies the rows out rather than
+    /// taking the store, so neither catalogue can be rewritten by the surface that borrowed it.
+    var customQuickActionRows: [CustomQuickAction] { customActions.actions }
 
     /// Observed, not ignored: it arrives after the pane has painted, and the picker has to notice.
     private(set) var offeredLanguages: [Locale.Language] = []

@@ -89,8 +89,8 @@ visual decision of its own:
 The Context Surface can be pinned from its own bar (`DeloresContextIslandController.isPinned`).
 The toolbar this island came from pinned the expanded panel that was holding an answer; here the
 selection is the durable object: the island stays put and the same captured text stays behind its
-actions. That is the state a reader wants when they are about to press a second native action, or
-when they want to escalate the same selection to `Ask AI`.
+actions. That is the state a reader wants when they are about to press a second action on the same
+text.
 
 Pinned, and only while pinned:
 
@@ -98,19 +98,56 @@ Pinned, and only while pinned:
   it reads anything, so neither the clipboard nor the recorded selection state is disturbed.
 - An outside click passes by. `windowDidResignKey` is the only way this surface used to leave without
   being asked.
-- A native action press does not take the bar away. The Quick Action runs against the held selection,
-  and `releaseSurface()` leaves the island and captured context alone. An `Ask AI` press follows the
-  handoff path; its growth exists to carry the reader *out* of the island, while the pinned island
-  remains as the held context.
+- An action press does not take the bar away. Every catalog action answers in the island's own card
+  (`DeloresContextCoordinator.answer`), so `releaseSurface()` has nothing to do and the held selection
+  stays behind the bar. A press on the chat hand-off route is the one exception: its growth exists to
+  carry the reader *out* of the island, while the pinned island remains as the held context.
 
 Escape and the close button still get out, and either one clears the pin with the panel. The toolbar
 drew the same line: a pinned panel there still answered Escape.
 
-**An `Ask AI` action pressed while the chat is already on screen joins it instead of starting over.**
-A chat the reader can see is a conversation, and replacing it would take away the answer they were
-reading. Only a pinned surface reaches this with the chat still up, because every other route dismissed
-the palette on the way in. `AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with
-`DeloresContextCoordinator`.
+**The chat hand-off joins a chat that is already on screen instead of starting over.** A chat the
+reader can see is a conversation, and replacing it would take away the answer they were reading.
+`AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with `DeloresContextCoordinator`.
+No catalog row reaches this today — 问 AI was retired as a duplicate of 解释 — so what follows is the
+behaviour of a live seam rather than of a button, kept because it is the island's only route into Chat.
+
+## Asking again
+
+A card can be asked for more than one answer, which is most of why it is a card rather than a toast.
+
+- **Stop** ends a reply that is still arriving and keeps what it produced. Cancelling the task is the
+  whole mechanism — the streaming loop recognises the cancellation and settles the card itself, so there
+  is one place that decides what a stopped reply looks like. `cancelAnswer()` is a different thing and
+  stays that way: it invalidates the generation, so a card the reader has left behind never writes to the
+  surface that replaced it.
+- **Retry** asks the same action about the same text again, from the first turn. Carrying a half-answer
+  back into the request would ask the model to continue one, which is not what the press means.
+- **Follow-up** asks a further question on the same action and the same selection, carrying the exchanges
+  already settled. It stops at ten exchanges, and at eight thousand characters a turn, trimmed
+  oldest-first and in pairs: an unpaired question teaches a model to answer something nobody asked.
+
+None of them leave the island. The selection stays behind the bar, so a second go never means going back
+and selecting the text again — which is the same thing Pin is for, one press shorter.
+
+## Sizing the Context Island
+
+The bar hugs its controls, so its width is measured from its content — and that measurement is taken on
+a copy of the view that is never handed a frame, because a view told its own width cannot report what
+width it needs.
+
+The frame the controller then chooses is *imposed on the content*, not merely applied to the panel, and
+that is load-bearing rather than defensive. An `NSHostingView` installed in a window also sizes that
+window: SwiftUI's `windowDidLayout` runs `updateAnimatedWindowSize` and animates the panel to the ideal
+size of whatever it is hosting, the controller's frame included, and `sizingOptions = []` does not stop
+it. Measured on this machine before the fix: the controller set the panel to 497pt, the window server
+reported 428pt, the bar laid itself out at 428 where every title collapses to an ellipsis — and, a
+truncated bar being a narrower bar, the size SwiftUI then aimed for was the truncated one. Pinning the
+content to the vessel makes the two numbers identical, so there is nothing left to resize to.
+
+No unit test covers this: the island's UI layer is outside the harness's compile list. The check that
+does cover it is reading the panel's real bounds from outside the process
+(`CGWindowListCopyWindowInfo`) and comparing them with the size the controller chose.
 
 ## Phase 1.5 boundary
 
@@ -124,12 +161,28 @@ explicit busy state otherwise.
 
 ### Ownership map
 
+### Spatial / Companion adapter (Delores-owned)
+
+`Tinycast/Features/Delores/UI/DeloresSpatialCoordinator.swift` is the only runtime adapter for the vendored
+Companion and Spatial capabilities. It owns lazy `start/stop` for the desktop companion, window snapping and
+split divider; `AppCore` observes the three persisted switches and reprojects the adapter on every change.
+Companion mode is mutually exclusive with the two ghost window features. The adapter does not compile Huaci's
+`AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `main.swift`; Context remains owned by
+`DeloresCoordinator`, with the adapter receiving the latest captured selection and handing companion double-click
+back to the Context Surface. Settings live under the `Delores Spatial` pane. The first implementation is a
+Delores-owned vertical slice; visual/material parity with the vendored Huaci reference still requires manual
+acceptance, and Accessibility permission is required for cross-app window movement.
+
+
 | Area | Owner | Sync posture |
 | --- | --- | --- |
 | Palette, AI providers, Keychain, TextInjector, window engine | Tinycast | Inherit upstream |
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
-| Quick Action entry with a captured selection, and the language it translates into | `QuickActionCoordinator` | One small integration seam; the native execution path for Context actions |
+| Quick Action entry with a captured selection | `QuickActionCoordinator` | **Withdrawn**: the selection-aware `run` overload and its `begin(selectionOverride:)` were removed when the Context Surface stopped executing native Quick Actions — its catalog is its own, and the whole overload had no remaining caller |
+| Per-action route for a Context Surface action that no Quick Action backs | `AppCore.quickActionProvider(forActionID:)`, `QuickActionSettingsStore.model(forActionID:)`, `QuickActionCoordinator.provider(forActionID:)` | One small integration seam. Id-keyed, so a per-action model binding survives a catalog Delores owns; `quickActionProvider(for:)` and `model(for:)` now delegate to these, so no behaviour moved |
+| Reader-replaceable per-action prompt, reached by id | `QuickActionCoordinator.instructionOverride(forActionID:)`, `QuickActionSettings.instructionOverride(forActionID:)` | The Context Surface applies it to any catalog row whose id is also a `BuiltInQuickAction`, so a prompt rewritten in Settings reaches the bar. Id-keyed for the same reason the model route is: the two catalogues overlap without agreeing. `provider(for:)` and `targetLanguage` are **still unreferenced** — delete them the next time the chat handoff is designed and they remain unused |
+| Custom Quick Actions on the Context Surface | `QuickActionCoordinator.customQuickActionRows`, `DeloresContextAction.available(aiEnabled:customActions:)` | One-way: the bar copies the rows Settings owns and never writes one, so neither catalogue can be changed by the surface that borrowed it. The row's entry id is its binding key, so a model bound in Settings survives the trip |
 | Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
