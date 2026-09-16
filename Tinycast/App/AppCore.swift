@@ -171,6 +171,9 @@ final class AppCore {
         injector: textInjector, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
+    @ObservationIgnored private(set) lazy var deloresContextCoordinator =
+        DeloresContextCoordinator(
+            settings: settings, quickActions: quickActionCoordinator, injector: textInjector)
     @ObservationIgnored private(set) lazy var mcpCoordinator = MCPCoordinator(
         settings: settings, store: mcpSettings, manager: mcp, core: self)
     @ObservationIgnored private(set) lazy var aiChatCoordinator = AIChatCoordinator(
@@ -239,6 +242,7 @@ final class AppCore {
             // Before `hotKeys.start` even when off: the prune reads it.
             customQuickActions.load()
             quickActionCoordinator.applyEnabled()
+            deloresContextCoordinator.applyEnabled()
             customCommands.onChange = { [weak self] _ in
                 self?.customCommandCoordinator.applyCustomCommandsPresence()
             }
@@ -433,6 +437,7 @@ final class AppCore {
     }
 
     func prepareForTermination() {
+        deloresContextCoordinator.stop()
         clipboardTextIndexer?.stop()
         // Caps Lock first: its remap is the one teardown that outlives the process.
         hyperKeyTap.prepareForTermination()
@@ -531,7 +536,10 @@ final class AppCore {
             }, reproject: { $0.mcpCoordinator.applyEnabled() })
         track(
             { _ = $0.quickActionsEnabled },
-            reproject: { $0.quickActionCoordinator.applyEnabled() })
+            reproject: {
+                $0.quickActionCoordinator.applyEnabled()
+                $0.deloresContextCoordinator.applyEnabled()
+            })
         track(
             {
                 _ = $0.calendarEnabled

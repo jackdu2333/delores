@@ -77,7 +77,7 @@ final class QuickActionCoordinator {
                     message:
                         "Tinycast needs the Accessibility permission to read the text you have "
                         + "selected in other apps and replace it. Nothing is read until you press "
-                        + "a shortcut.",
+                        + "a shortcut or complete a selection gesture.",
                     symbol: "wand.and.sparkles", confirmTitle: "Continue", tone: .neutral,
                     confirmRole: .standard)
             else { return }
@@ -165,6 +165,19 @@ final class QuickActionCoordinator {
         start { [weak self] in await self?.begin(action, target: target) }
     }
 
+    /// A Context Surface supplies a snapshot so the action cannot read a newer selection.
+    func run(
+        _ action: QuickAction,
+        selection: String,
+        target: NSRunningApplication?
+    ) {
+        guard settings.quickActionsEnabled, running == nil else { return }
+        if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
+        start { [weak self] in
+            await self?.begin(action, target: target, selectionOverride: selection)
+        }
+    }
+
     func cancel() {
         generation += 1
         running?.cancel()
@@ -184,16 +197,24 @@ final class QuickActionCoordinator {
         }
     }
 
-    private func begin(_ action: QuickAction, target: NSRunningApplication?) async {
+    private func begin(
+        _ action: QuickAction,
+        target: NSRunningApplication?,
+        selectionOverride: String? = nil
+    ) async {
         let selection: String
-        do {
-            selection = try await QuickActionRunner.selection(in: target, using: injector)
-        } catch let failure as QuickActionFailure {
-            reportRefusal(failure)
-            return
-        } catch {
-            core.showMessage(error.localizedDescription, tone: .danger)
-            return
+        if let selectionOverride {
+            selection = selectionOverride
+        } else {
+            do {
+                selection = try await QuickActionRunner.selection(in: target, using: injector)
+            } catch let failure as QuickActionFailure {
+                reportRefusal(failure)
+                return
+            } catch {
+                core.showMessage(error.localizedDescription, tone: .danger)
+                return
+            }
         }
         let state = QuickActionPanelState(
             action: action, original: selection, targetLanguage: targetLanguage)

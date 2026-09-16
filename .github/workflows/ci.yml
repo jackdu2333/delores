@@ -39,6 +39,9 @@ jobs:
       - name: Run the harnesses
         run: ./Scripts/run-tests.sh
 
+      - name: Run the Delores context harness
+        run: ./Scripts/run-delores-tests.sh
+
       # `if: always()` so a failing harness still surfaces the lint annotations in the same run.
       # Warnings annotate the diff; only lint *errors* fail the job, matching a local run.
       - name: Lint

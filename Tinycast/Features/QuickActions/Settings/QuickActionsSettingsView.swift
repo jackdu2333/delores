@@ -22,8 +22,9 @@ struct QuickActionsSettingsView: View {
                 Toggle(isOn: enabledBinding) {
                     SettingsRowTitle(.quickActionsQuickActions, "Enable Quick Actions")
                     Text(
-                        "Act on the text you have selected in any app. Nothing is read until you "
-                            + "press a shortcut.")
+                        "Act on the text you have selected in any app. Delores reads a selection "
+                            + "only after a shortcut or a completed selection gesture, then shows "
+                            + "the Context Island.")
                 }
                 if appSettings.quickActionsEnabled, !isTrusted {
                     // Every shortcut fails without it; better said here than found one press later.

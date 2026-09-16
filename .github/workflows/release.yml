@@ -1,7 +1,11 @@
 name: Release
 
+# Delores overlay: this inherited Tinycast release lane stays disabled until a separate Delores
+# repository, feed, signing identity and distribution channel have been configured.
+# The source stays here so upstream release fixes remain easy to merge.
+
 # Shown in the Actions list instead of a bare "Release" — carries the version + channel.
-run-name: "Tinycast ${{ inputs.version }} · ${{ inputs.channel }} #${{ github.run_number }}"
+run-name: "Delores release gate · ${{ inputs.version }} · ${{ inputs.channel }} #${{ github.run_number }}"
 
 # Manually triggered from the Actions tab. Pick a channel and a base version;
 # beta builds get an auto-incrementing suffix so re-running never collides.
@@ -23,6 +27,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ vars.DELORES_RELEASE_ENABLED == 'true' }}
     runs-on: macos-26
     # Consumed by the `universal` job, so the channel identity is derived in exactly one place.
     outputs:
@@ -271,7 +276,7 @@ jobs:
   # nothing here can change what the Apple silicon job above publishes.
   universal:
     needs: build
-    if: github.event.inputs.channel == 'stable'
+    if: ${{ vars.DELORES_RELEASE_ENABLED == 'true' && github.event.inputs.channel == 'stable' }}
     runs-on: macos-26
     env:
       VERSION: ${{ needs.build.outputs.full_version }}
