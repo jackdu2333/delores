@@ -8,6 +8,7 @@ struct DeloresContextTest {
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
         testQuickActionAdmission()
+        testContextActions()
         testQuickActionPrompt()
         testPlacement()
         testInvocationContext()
@@ -44,6 +45,26 @@ struct DeloresContextTest {
         require(clipped.text.last == "界", "clipping does not split a character")
         require(clipped.fingerprint.length == longText.count,
                 "fingerprint keeps original length")
+    }
+
+    private static func testContextActions() {
+        let actions = DeloresContextAction.defaults
+        require(actions.count == 5, "the context surface includes four native actions and Ask AI")
+        require(
+            actions.prefix(4).allSatisfy { !$0.requiresChatHandoff },
+            "native context actions do not escalate to chat")
+        require(
+            actions.last?.requiresChatHandoff == true && actions.last?.id == "ask",
+            "only the explicit Ask action escalates to chat")
+        require(
+            actions.dropLast().compactMap(\.builtIn).count == 4,
+            "native context actions retain their built-in quick action identity")
+        require(
+            DeloresContextAction.available(aiEnabled: false) == Array(actions.dropLast()),
+            "AI off removes only the explicit Ask action")
+        require(
+            DeloresContextAction.available(aiEnabled: true) == actions,
+            "AI on exposes the complete first context catalog")
     }
 
     private static func testQuickActionPrompt() {

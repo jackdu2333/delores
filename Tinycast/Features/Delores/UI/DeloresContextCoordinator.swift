@@ -130,44 +130,32 @@ final class DeloresContextCoordinator {
 
         island.present(
             context: selection,
-            actions: DeloresContextAction.defaults,
+            actions: DeloresContextAction.available(aiEnabled: settings.aiEnabled),
             metrics: settings.interfaceSize.metrics,
             onAction: { [weak self] action in self?.run(action) },
             onDismiss: { [weak self] in self?.surfaceDismissed() })
     }
 
     private func run(_ action: DeloresContextAction) {
-        guard case .selection(let selection) = context, let targetApplication else { return }
-        let quickAction = QuickAction.builtIn(action.builtIn)
-        // A Context action is a question for the chat surface, so its answer can be followed up.
-        guard settings.aiEnabled else {
+        guard case .selection(let selection) = context else { return }
+        switch action {
+        case .quickAction(let builtIn):
+            guard let targetApplication else { return }
+            // Context actions preserve their native semantics: Translate uses Apple's framework,
+            // previews remain previews, and Replace/Diff keeps the Quick Action's own result path.
             runThroughQuickActions(
-                quickAction, selection: selection.text, target: targetApplication)
-            return
-        }
-        // The action brings what the chat cannot know: the instructions the reader wrote for it, and
-        // the provider carrying their model binding with the guardrails their own text needs. The
-        // Quick Action's prompts already treat the selection as material, never as a request.
-        let instructions =
-            QuickActionPrompt.chatInstructions(
-                for: quickAction,
-                targetLanguageName: TextTranslator.displayName(of: quickActions.targetLanguage),
-                override: quickActions.instructionOverride(for: quickAction))
-            ?? QuickActionPrompt.instructions(for: quickAction)
-        // A model the reader has not chosen yet is the chat's to report, so its own provider stands.
-        let provider = try? quickActions.provider(for: quickAction)
-        let prompt = QuickActionPrompt.message(for: quickAction, selection: selection.text)
-        // A chat the reader can already see is a conversation, not a blank page: a second action on
-        // the same selection joins it, so the answer they were reading stays where they left it.
-        // Only a pinned surface reaches this with the chat still up — every other route here
-        // dismissed the palette on the way in — and starting over is exactly what `ask` is for when
-        // it is not.
-        let continuing = aiChat.isChatOnScreen
-        releaseSurface()
-        if continuing {
-            aiChat.send(prompt, instructions: instructions, provider: provider)
-        } else {
-            aiChat.ask(prompt, instructions: instructions, provider: provider)
+                .builtIn(builtIn), selection: selection.text, target: targetApplication,
+                keepingPaletteVisible: island.isPinned && aiChat.isChatOnScreen)
+        case .ask:
+            // Chat is an explicit escalation, not the hidden destination of every small action.
+            let prompt = "Text:\n\(selection.text)"
+            let continuing = aiChat.isChatOnScreen
+            releaseSurface()
+            if continuing {
+                _ = aiChat.send(prompt)
+            } else {
+                aiChat.ask(prompt)
+            }
         }
     }
 
@@ -179,12 +167,16 @@ final class DeloresContextCoordinator {
         clearContext()
     }
 
-    /// AI off leaves the action with nowhere to converse, so the shared Quick Action path answers
-    /// it — the behaviour a selection gesture had before the chat took the action over.
+    /// Native Quick Action execution owns its result surface; a pinned Context can explicitly keep
+    /// the already-visible Chat behind it so the reader can continue both surfaces.
     private func runThroughQuickActions(
-        _ action: QuickAction, selection: String, target: NSRunningApplication
+        _ action: QuickAction, selection: String, target: NSRunningApplication,
+        keepingPaletteVisible: Bool = false
     ) {
-        switch quickActions.run(action, selection: selection, target: target) {
+        switch quickActions.run(
+            action, selection: selection, target: target,
+            keepingPaletteVisible: keepingPaletteVisible
+        ) {
         case .started:
             releaseSurface()
         case .busy:

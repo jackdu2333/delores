@@ -9,21 +9,24 @@ selection gesture
     → DeloresCoordinator
     → DeloresContextCoordinator
     → Context Island
-    → AIChatCoordinator
-    → the chat surface in the palette
+    ├─ native Quick Action → Quick Action result surface
+    └─ explicit Ask AI → AIChatCoordinator → chat surface in the palette
 ```
 
 The Context Island does not own AI, clipboard or Accessibility implementation. It presents the
-actions; a press makes it grow in place and only then hands the captured selection over, so the
-answer arrives on the surface that already has follow-up turns, model switching and a reasoning
-channel. The action keeps its own instructions, model and guardrails on that trip: `QuickActionPrompt`
-wraps the selection as material rather than instructions, and `QuickActionCoordinator.provider(for:)`
-resolves the model the reader bound to the action together with the permissive guardrails a
-transformation of their own text needs. The chat's default provider would judge that text as the
-chat's own question and, on the on-device model, refuse it outright.
+minimum actions for the captured selection. The four built-in actions remain native Quick Actions:
+Translate keeps Apple's Translation framework, Summarize keeps its preview, and Rewrite/Fix Grammar
+keep their diff/replace semantics. Their result arrives on the existing Quick Action result surface,
+regardless of whether AI Chat is enabled. This preserves one Action with one meaning across entries.
 
-With AI off there is nowhere to converse, so the action falls through to the Quick Action route and
-its own result surface — the behaviour a selection gesture had before the chat took the action over.
+Chat is an explicit escalation, not the hidden destination of every Context Action. The `Ask AI`
+action is the only Context button that grows the island and hands the captured selection to
+`AIChatCoordinator`; it is the entry for follow-up turns, model switching and reasoning. The existing
+handoff infrastructure still carries per-turn instructions, provider and guardrails for future
+selection-aware Chat entries, but ordinary Context Actions do not pass through it.
+
+With AI off, `Ask AI` is omitted from the Context Surface because there is nowhere to converse. The
+four native actions remain available through the same Quick Action route.
 
 During this first slice, `quickActionsEnabled` is also the opt-in boundary for the Context Surface:
 both capabilities need the same Accessibility permission. A separate Context Surface setting should
@@ -40,7 +43,8 @@ rather than one surface with swapped contents. `CONTEXT.md` already names the ru
 | --- | --- | --- |
 | ⌥Space, or any hotkey bound to the palette | Command Surface | Summoning, searching, starting a task the reader has in mind |
 | A selection gesture | Context Surface | The minimum actions for text the reader has already selected |
-| A Context action press | Command Surface, in the chat | Following the answer up: more turns, another model, a reasoning channel |
+| A native Context action press | Quick Action result surface | Execute one transformation with its native preview/replace/diff semantics |
+| An explicit `Ask AI` press | Command Surface, in the chat | Escalate the captured selection for more turns, another model, or reasoning |
 
 The Context Surface is a window of its own, not a compact mode of the palette. The palette's default
 anchor is a fraction of the way down the visible frame (`paletteTopMarginFraction`), while a context
@@ -65,6 +69,10 @@ the surface that owns it and nothing else — a Quick Action still running behin
 state is not ours to cancel. While the card is opening it also cancels the press, because `onAction`
 does not fire until the growth ends.
 
+The handoff animation is now reserved for the explicit `Ask AI` escalation. Native actions leave the
+Context Surface through the Quick Action admission path instead of displaying a progress card for a
+Chat they never enter.
+
 Two differences between the surfaces are recorded rather than resolved, because each direction is a
 visual decision of its own:
 
@@ -80,9 +88,9 @@ visual decision of its own:
 
 The Context Surface can be pinned from its own bar (`DeloresContextIslandController.isPinned`).
 The toolbar this island came from pinned the expanded panel that was holding an answer; here the
-answer is on the chat surface, so what a pin holds is the **selection**: the island stays put and the
-same captured text stays behind its actions. That is the state a reader wants when they are about to
-press a second action after reading the first answer.
+selection is the durable object: the island stays put and the same captured text stays behind its
+actions. That is the state a reader wants when they are about to press a second native action, or
+when they want to escalate the same selection to `Ask AI`.
 
 Pinned, and only while pinned:
 
@@ -90,17 +98,18 @@ Pinned, and only while pinned:
   it reads anything, so neither the clipboard nor the recorded selection state is disturbed.
 - An outside click passes by. `windowDidResignKey` is the only way this surface used to leave without
   being asked.
-- A press does not take the bar away. `handOff` skips the growth and hands the action over at once:
-  the growth exists to carry the reader *out* of the island, and a pinned island has nowhere to carry
-  them. `releaseSurface()` leaves the island and the captured context alone.
+- A native action press does not take the bar away. The Quick Action runs against the held selection,
+  and `releaseSurface()` leaves the island and captured context alone. An `Ask AI` press follows the
+  handoff path; its growth exists to carry the reader *out* of the island, while the pinned island
+  remains as the held context.
 
 Escape and the close button still get out, and either one clears the pin with the panel. The toolbar
 drew the same line: a pinned panel there still answered Escape.
 
-**An action pressed while the chat is already on screen joins it instead of starting over.** A chat
-the reader can see is a conversation, and replacing it would take away the answer they were reading.
-Only a pinned surface reaches this with the chat still up, because every other route dismissed the
-palette on the way in. `AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with
+**An `Ask AI` action pressed while the chat is already on screen joins it instead of starting over.**
+A chat the reader can see is a conversation, and replacing it would take away the answer they were
+reading. Only a pinned surface reaches this with the chat still up, because every other route dismissed
+the palette on the way in. `AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with
 `DeloresContextCoordinator`.
 
 ## Phase 1.5 boundary
@@ -120,8 +129,8 @@ explicit busy state otherwise.
 | Palette, AI providers, Keychain, TextInjector, window engine | Tinycast | Inherit upstream |
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
-| Quick Action entry with a captured selection, and the language it translates into | `QuickActionCoordinator` | One small integration seam; the AI-off fallback for a context action |
-| Chat entry carrying a captured selection's instructions | `AIChatCoordinator`, `QuickActionPrompt` | One small integration seam |
+| Quick Action entry with a captured selection, and the language it translates into | `QuickActionCoordinator` | One small integration seam; the native execution path for Context actions |
+| Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
 | Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester` | Interactive windows only; pass-through overlays remain transparent |

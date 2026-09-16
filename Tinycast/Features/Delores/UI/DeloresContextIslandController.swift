@@ -64,7 +64,12 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             mode: mode,
             barHeight: size.height,
             onAction: { [weak self] action in
-                self?.handOff(action, actions: actions, in: context.screen, metrics: metrics)
+                guard let self else { return }
+                if action.requiresChatHandoff {
+                    self.handOff(action, actions: actions, in: context.screen, metrics: metrics)
+                } else {
+                    self.onAction?(action)
+                }
             },
             onTogglePin: { [weak self] pinned in self?.isPinned = pinned },
             onDismiss: { [weak self] in self?.dismiss() }

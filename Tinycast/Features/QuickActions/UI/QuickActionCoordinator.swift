@@ -174,12 +174,15 @@ final class QuickActionCoordinator {
     func run(
         _ action: QuickAction,
         selection: String,
-        target: NSRunningApplication?
+        target: NSRunningApplication?,
+        keepingPaletteVisible: Bool = false
     ) -> QuickActionStartResult {
         let admission = QuickActionStartResult.admission(
             enabled: settings.quickActionsEnabled, isRunning: running != nil)
         guard admission == .started else { return admission }
-        if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
+        if paletteCoordinator.isVisible, !keepingPaletteVisible {
+            paletteCoordinator.hidePalette(restoreFocus: false)
+        }
         start { [weak self] in
             await self?.begin(action, target: target, selectionOverride: selection)
         }
