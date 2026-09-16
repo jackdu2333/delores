@@ -31,3 +31,7 @@ _Avoid_: 全量复制、二次开发分支
 
 **Upstream Sync**：将 Tinycast 新提交引入 Delores，并重新验证定制层边界和产品行为的过程。
 _Avoid_: 自动升级、直接覆盖
+
+**Vendored Integration**：把另一个项目的最新源代码以明确目录边界纳入 Delores，保留其独立
+构建和测试入口，再通过适配层逐步接入运行时。
+_Avoid_: 直接把两个 AppDelegate 合并、双重 AI 管线
