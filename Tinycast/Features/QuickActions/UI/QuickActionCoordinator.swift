@@ -158,24 +158,32 @@ final class QuickActionCoordinator {
         run(.custom(action))
     }
 
-    func run(_ action: QuickAction) {
-        guard settings.quickActionsEnabled, running == nil else { return }
+    @discardableResult
+    func run(_ action: QuickAction) -> QuickActionStartResult {
+        let admission = QuickActionStartResult.admission(
+            enabled: settings.quickActionsEnabled, isRunning: running != nil)
+        guard admission == .started else { return admission }
         let target = paletteCoordinator.targetApp
         if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
         start { [weak self] in await self?.begin(action, target: target) }
+        return .started
     }
 
     /// A Context Surface supplies a snapshot so the action cannot read a newer selection.
+    @discardableResult
     func run(
         _ action: QuickAction,
         selection: String,
         target: NSRunningApplication?
-    ) {
-        guard settings.quickActionsEnabled, running == nil else { return }
+    ) -> QuickActionStartResult {
+        let admission = QuickActionStartResult.admission(
+            enabled: settings.quickActionsEnabled, isRunning: running != nil)
+        guard admission == .started else { return admission }
         if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
         start { [weak self] in
             await self?.begin(action, target: target, selectionOverride: selection)
         }
+        return .started
     }
 
     func cancel() {

@@ -6,7 +6,7 @@ The first vertical slice is intentionally small:
 
 ```text
 selection gesture
-    → SelectionGestureMonitor
+    → DeloresCoordinator
     → DeloresContextCoordinator
     → Context Island
     → Tinycast QuickActionCoordinator
@@ -21,6 +21,16 @@ both capabilities need the same Accessibility permission. A separate Context Sur
 only be introduced when the product needs independent control, so the consent semantics do not split
 prematurely.
 
+## Phase 1.5 boundary
+
+`AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface
+implementation and is the place where future Surface arbitration will live.
+
+Selection gesture admission uses a window snapshot policy: only visible windows that accept mouse
+events block selection detection. HUDs and drop guides remain pass-through. Quick Action admission
+returns `started`, `busy` or `disabled`; the Context Island closes only for `started` and shows an
+explicit busy state otherwise.
+
 ### Ownership map
 
 | Area | Owner | Sync posture |
@@ -29,7 +39,9 @@ prematurely.
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
 | Quick Action entry with a captured selection | `QuickActionCoordinator` | One small integration seam |
-| App lifecycle wiring | `AppCore` | One small integration seam |
+| App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
+| Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester` | Interactive windows only; pass-through overlays remain transparent |
+| Quick Action admission | `QuickActionStartResult`, `QuickActionCoordinator` | Shared capability returns an explicit start result |
 | Product identity and build metadata | `project.yml`, generated project, `Info.plist` | Delores-owned seam |
 | Delores model gate | `.github/workflows/ci.yml`, `Scripts/run-delores-tests.sh` | Delores-owned seam |
 | Local packaging and release gate | `Scripts/build-delores-dmg.sh`, `docs/delores-release.md`, release workflow guard | Delores-owned seam |
@@ -74,6 +86,9 @@ Resolve conflicts in this order:
 If an upstream change makes a seam unnecessary, delete the seam and update this document in the same
 change. If an upstream feature overlaps a Delores feature, stop and record the ownership decision
 before merging; do not silently keep two implementations.
+
+The lifecycle and admission trade-off is recorded in
+[ADR 0003](adr/0003-single-delores-lifecycle-seam.md).
 
 ## Huaci integration workflow
 

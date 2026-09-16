@@ -20,14 +20,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
     var isVisible: Bool { panel?.isVisible == true }
 
-    func contains(_ point: CGPoint) -> Bool {
-        guard let panel, panel.isVisible else { return false }
-        return panel.frame.insetBy(dx: -4, dy: -4).contains(point)
-    }
-
     func present(
         context: SelectionInvocation,
         actions: [DeloresContextAction],
+        mode: DeloresContextIslandMode = .actions,
         metrics: InterfaceMetrics,
         onAction: @escaping (DeloresContextAction) -> Void,
         onDismiss: @escaping () -> Void
@@ -37,6 +33,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let size = DeloresContextIslandView.preferredSize(for: metrics)
         let root = DeloresContextIslandView(
             actions: actions,
+            mode: mode,
             onAction: { [weak self] action in
                 self?.dismiss(notifying: false)
                 onAction(action)
@@ -76,6 +73,24 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
         }
+    }
+
+    func showBusy(metrics: InterfaceMetrics) {
+        guard let panel, panel.isVisible else { return }
+        let size = DeloresContextIslandView.preferredSize(for: metrics)
+        let root = DeloresContextIslandView(
+            actions: [],
+            mode: .busy,
+            onAction: { _ in },
+            onDismiss: { [weak self] in self?.dismiss() })
+        let hosting = DeloresFirstMouseHostingView(rootView: root.environment(\.metrics, metrics))
+        hosting.sizingOptions = []
+        hosting.setFrameSize(size)
+        let top = panel.frame.maxY
+        panel.contentView = hosting
+        panel.setFrame(
+            NSRect(x: panel.frame.minX, y: top - size.height, width: size.width, height: size.height),
+            display: true)
     }
 
     func dismiss(notifying: Bool = true) {

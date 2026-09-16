@@ -62,6 +62,9 @@ final class SelectionGestureMonitor {
         }
         pendingCapture?.cancel()
         pendingCapture = nil
+        mouseDownPoint = .zero
+        lastMouseUpPoint = .zero
+        lastMouseUpUptime = -Double.infinity
         hasMouseDown = false
         isRunning = false
     }
@@ -77,13 +80,15 @@ final class SelectionGestureMonitor {
         let dragDistance = hasMouseDown
             ? hypot(point.x - mouseDownPoint.x, point.y - mouseDownPoint.y)
             : 0
-        let previousReleaseDistance = hypot(
-            point.x - lastMouseUpPoint.x,
-            point.y - lastMouseUpPoint.y)
+        let previousReleaseDistance: CGFloat? = lastMouseUpUptime == -Double.infinity
+            ? nil
+            : hypot(point.x - lastMouseUpPoint.x, point.y - lastMouseUpPoint.y)
         let isSelection = DeloresSelectionGesturePolicy.qualifies(
             dragDistance: dragDistance,
             previousReleaseDistance: previousReleaseDistance,
-            elapsedSincePreviousRelease: uptime - lastMouseUpUptime)
+            elapsedSincePreviousRelease: lastMouseUpUptime == -Double.infinity
+                ? nil
+                : uptime - lastMouseUpUptime)
 
         hasMouseDown = false
         lastMouseUpPoint = point

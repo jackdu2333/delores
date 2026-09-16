@@ -14,6 +14,8 @@ swiftc \
     "$ROOT/Tinycast/Features/Delores/Model/SelectionContextPolicy.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/ContextIslandPlacement.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/SelectionGesturePolicy.swift" \
+    "$ROOT/Tinycast/Features/Delores/Model/OwnSurfaceHitPolicy.swift" \
+    "$ROOT/Tinycast/Features/QuickActions/Model/QuickActionStartResult.swift" \
     "$ROOT/Tests/delores-context-test.swift"
 
 "$TEMP_DIR/delores-context-test"

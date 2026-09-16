@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="${DELORES_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
 UPSTREAM_REF="${UPSTREAM_REF:-upstream/main}"
@@ -29,7 +29,7 @@ echo "upstream commits not yet merged: $BEHIND"
 if [ "$BEHIND" -gt 0 ]; then
     echo
     echo "待同步的上游提交:"
-    git log --oneline --decorate "$HEAD..$UPSTREAM_REF"
+    git log --oneline --decorate "HEAD..$UPSTREAM_REF"
     exit 1
 fi
 

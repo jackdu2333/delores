@@ -6,6 +6,8 @@ struct DeloresContextTest {
     static func main() {
         testSelectionPolicy()
         testGesturePolicy()
+        testOwnSurfaceHitPolicy()
+        testQuickActionAdmission()
         testPlacement()
         testInvocationContext()
         print("Delores context tests passed")
@@ -62,6 +64,41 @@ struct DeloresContextTest {
         let notchFrame = DeloresContextIslandPlacement.frame(
             in: notchScreen, size: CGSize(width: 420, height: 48))
         require(notchFrame.minX == 1410, "notch screens anchor beside the right safe area")
+    }
+
+    private static func testOwnSurfaceHitPolicy() {
+        let interactive = DeloresSurfaceWindowSnapshot(
+            frame: CGRect(x: 100, y: 100, width: 300, height: 200),
+            isVisible: true,
+            ignoresMouseEvents: false)
+        let passthrough = DeloresSurfaceWindowSnapshot(
+            frame: CGRect(x: 500, y: 100, width: 300, height: 200),
+            isVisible: true,
+            ignoresMouseEvents: true)
+        require(
+            DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
+                at: CGPoint(x: 98, y: 100), in: [interactive]),
+            "interactive own surface includes the small hit padding")
+        require(
+            !DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
+                at: CGPoint(x: 550, y: 150), in: [passthrough]),
+            "click-through HUDs do not suppress a valid selection")
+        require(
+            !DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
+                at: CGPoint(x: 900, y: 900), in: [interactive]),
+            "points outside own surfaces remain eligible")
+    }
+
+    private static func testQuickActionAdmission() {
+        require(
+            QuickActionStartResult.admission(enabled: true, isRunning: false) == .started,
+            "enabled idle Quick Action starts")
+        require(
+            QuickActionStartResult.admission(enabled: true, isRunning: true) == .busy,
+            "running Quick Action reports busy")
+        require(
+            QuickActionStartResult.admission(enabled: false, isRunning: false) == .disabled,
+            "disabled Quick Action reports disabled")
     }
 
     private static func testGesturePolicy() {

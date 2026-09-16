@@ -25,10 +25,9 @@ final class DeloresContextCoordinator {
         self.quickActions = quickActions
         self.injector = injector
 
-        let island = DeloresContextIslandController()
-        self.island = island
-        self.gestureMonitor = SelectionGestureMonitor { [weak island] point in
-            island?.contains(point) == true
+        self.island = DeloresContextIslandController()
+        self.gestureMonitor = SelectionGestureMonitor { point in
+            DeloresOwnSurfaceHitTester.containsInteractiveSurface(at: point)
         }
         self.gestureMonitor.onGesture = { [weak self] gesture in
             self?.captureSelection(after: gesture)
@@ -125,12 +124,20 @@ final class DeloresContextCoordinator {
 
     private func run(_ action: DeloresContextAction) {
         guard case .selection(let selection) = context, let targetApplication else { return }
-        island.dismiss(notifying: false)
-        clearContext()
-        quickActions.run(
+        let result = quickActions.run(
             .builtIn(action.builtIn),
             selection: selection.text,
             target: targetApplication)
+        switch result {
+        case .started:
+            island.dismiss(notifying: false)
+            clearContext()
+        case .busy:
+            island.showBusy(metrics: settings.interfaceSize.metrics)
+        case .disabled:
+            island.dismiss(notifying: false)
+            clearContext()
+        }
     }
 
     private func surfaceDismissed() {

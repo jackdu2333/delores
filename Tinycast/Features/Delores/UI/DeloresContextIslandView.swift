@@ -1,9 +1,15 @@
 import SwiftUI
 
+enum DeloresContextIslandMode: Equatable {
+    case actions
+    case busy
+}
+
 struct DeloresContextIslandView: View {
     @Environment(\.metrics) private var metrics
 
     let actions: [DeloresContextAction]
+    let mode: DeloresContextIslandMode
     let onAction: (DeloresContextAction) -> Void
     let onDismiss: () -> Void
 
@@ -13,20 +19,28 @@ struct DeloresContextIslandView: View {
 
     var body: some View {
         HStack(spacing: metrics.spacing.xs) {
-            ForEach(actions) { action in
-                Button {
-                    onAction(action)
-                } label: {
-                    Label(action.title, systemImage: action.symbol)
-                        .font(metrics.typography.rowTrailing)
-                        .lineLimit(1)
+            switch mode {
+            case .actions:
+                ForEach(actions) { action in
+                    Button {
+                        onAction(action)
+                    } label: {
+                        Label(action.title, systemImage: action.symbol)
+                            .font(metrics.typography.rowTrailing)
+                            .lineLimit(1)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .padding(.horizontal, metrics.spacing.sm)
+                    .frame(height: metrics.scaled(30))
+                    .background(Theme.Colors.controlSurface, in: Capsule())
+                    .accessibilityLabel(action.title)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.Colors.textPrimary)
-                .padding(.horizontal, metrics.spacing.sm)
-                .frame(height: metrics.scaled(30))
-                .background(Theme.Colors.controlSurface, in: Capsule())
-                .accessibilityLabel(action.title)
+            case .busy:
+                Label("上一项任务处理中", systemImage: "hourglass")
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .lineLimit(1)
             }
 
             Button(action: onDismiss) {

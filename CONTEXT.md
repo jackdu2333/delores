@@ -24,6 +24,10 @@ _Avoid_: 按钮、入口
 它让不同 Surface 共享同一任务上下文，而不重复读取或询问用户已经提供的信息。
 _Avoid_: 当前状态、全局上下文
 
+**Surface Arbitration**：当多个 Surface 可能响应同一输入时，根据可交互性和任务状态决定
+哪个 Surface 接收事件，避免一个输入同时启动或关闭多个 Surface。
+_Avoid_: 把所有可见窗口视为同一种 Surface
+
 ## 代码来源关系
 
 **Upstream Overlay**：以 Tinycast 上游代码为基线、把 Delores 定制限制在独立层和少数接缝中的产品组织方式。

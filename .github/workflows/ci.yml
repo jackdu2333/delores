@@ -42,6 +42,9 @@ jobs:
       - name: Run the Delores context harness
         run: ./Scripts/run-delores-tests.sh
 
+      - name: Run the upstream drift regression
+        run: ./Tests/upstream-drift-test.sh
+
       - name: Run the vendored Huaci harness
         run: ./Scripts/run-huaci-integration-tests.sh
 
