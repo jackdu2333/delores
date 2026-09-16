@@ -9,12 +9,19 @@ selection gesture
     → DeloresCoordinator
     → DeloresContextCoordinator
     → Context Island
-    → Tinycast QuickActionCoordinator
-    → existing Quick Action result surface
+    → AIChatCoordinator
+    → the chat surface in the palette
 ```
 
-The Context Island does not own AI, clipboard or Accessibility implementation. It only presents
-actions and hands a captured selection snapshot to the existing Quick Action route.
+The Context Island does not own AI, clipboard or Accessibility implementation. It presents the
+actions; a press makes it grow in place and only then hands the captured selection over, so the
+answer arrives on the surface that already has follow-up turns, model switching and a reasoning
+channel. The action keeps its own instructions on that trip: `QuickActionPrompt` wraps the selection
+as material rather than instructions, and that boundary travels with the turn instead of being
+rewritten into AI Settings for one question.
+
+With AI off there is nowhere to converse, so the action falls through to the Quick Action route and
+its own result surface — the behaviour a selection gesture had before the chat took the action over.
 
 During this first slice, `quickActionsEnabled` is also the opt-in boundary for the Context Surface:
 both capabilities need the same Accessibility permission. A separate Context Surface setting should
@@ -38,7 +45,8 @@ explicit busy state otherwise.
 | Palette, AI providers, Keychain, TextInjector, window engine | Tinycast | Inherit upstream |
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
-| Quick Action entry with a captured selection | `QuickActionCoordinator` | One small integration seam |
+| Quick Action entry with a captured selection, and the language it translates into | `QuickActionCoordinator` | One small integration seam; the AI-off fallback for a context action |
+| Chat entry carrying a captured selection's instructions | `AIChatCoordinator`, `QuickActionPrompt` | One small integration seam |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
 | Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester` | Interactive windows only; pass-through overlays remain transparent |
 | Quick Action admission | `QuickActionStartResult`, `QuickActionCoordinator` | Shared capability returns an explicit start result |
@@ -54,8 +62,9 @@ upstream update.
 
 ## Upstream workflow
 
-`upstream` points to the official Tinycast repository. `integration/delores` is the product branch.
-The repository currently starts from Tinycast commit `79d380aa96072ad54e1259448a316d9e34d2a73b`.
+`upstream` points to the official Tinycast repository, `https://github.com/abue-ammar/tinycast`.
+`integration/delores` is the product branch. The repository currently starts from Tinycast commit
+`79d380aa96072ad54e1259448a316d9e34d2a73b`.
 
 Before syncing:
 
@@ -76,8 +85,8 @@ git merge --no-ff upstream/main
 Resolve conflicts in this order:
 
 1. Keep upstream changes in Tinycast-owned files unless they conflict with a listed seam.
-2. Reconcile only the Delores seams in `AppCore.swift`, `QuickActionCoordinator.swift`, `project.yml`
-   and `Info.plist`.
+2. Reconcile only the Delores seams in `AppCore.swift`, `AIChatCoordinator.swift`,
+   `QuickActionPrompt.swift`, `QuickActionCoordinator.swift`, `project.yml` and `Info.plist`.
 3. Never copy a Delores file over an upstream file to resolve a conflict.
 4. Regenerate the Xcode project with XcodeGen after `project.yml` is settled.
 5. Run the upstream harnesses, the Delores model harness and the available Debug build checks.
