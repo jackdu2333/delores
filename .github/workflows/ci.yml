@@ -5,8 +5,9 @@ name: CI
 # a minute. Both go through the scripts rather than naming rules or harnesses here, so this file
 # cannot drift from them. See docs/testing.md.
 #
-# PRs only, deliberately. `pull_request` builds the *merge result*, so a push to `main` that came from
-# a green PR would re-test content CI has already seen. Use "Run workflow" for a direct push to main.
+# PRs only, deliberately. `pull_request` builds the *merge result*, so a direct push to the default
+# branch would not be covered automatically. Use "Run workflow" after a direct push to
+# `integration/delores`; the default branch still does not make a PR unnecessary.
 on:
   pull_request:
   workflow_dispatch:
