@@ -64,7 +64,9 @@ final class AIChatCoordinator {
     }
 
     /// ⇥ and the AI fallback: a fresh chat that carries the question, already asked.
-    func ask(_ prompt: String) {
+    /// A surface that captured its own material brings the instructions for it too; they travel
+    /// with the turn, so nothing in AI Settings is rewritten for one question.
+    func ask(_ prompt: String, instructions: String? = nil) {
         guard settings.aiEnabled else { return }
         // No question is no reason to skip the open policy: this is a summon, not an ask.
         guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -73,7 +75,7 @@ final class AIChatCoordinator {
         }
         chat.startNewChat()
         paletteCoordinator.showPalette(mode: .ai)
-        send(prompt)
+        send(prompt, instructions: instructions)
     }
 
     /// A file pasted at the launcher belongs in chat, never in a search for its name.
@@ -108,7 +110,7 @@ final class AIChatCoordinator {
     }
 
     @discardableResult
-    func send(_ input: String) -> Bool {
+    func send(_ input: String, instructions override: String? = nil) -> Bool {
         guard settings.aiEnabled else { return false }
         do {
             let webSearch = core.aiSettings.webSearchEnabled && capabilities.webSearch
@@ -116,9 +118,10 @@ final class AIChatCoordinator {
             return chat.send(
                 address.rest, using: try toolAware(core.aiProvider(), scopedTo: address.slug),
                 webSearch: webSearch,
-                instructions: AIInstructions.compose(
-                    userPrompt: core.aiSettings.systemPrompt,
-                    isEnabled: core.aiSettings.systemPromptEnabled),
+                instructions: override
+                    ?? AIInstructions.compose(
+                        userPrompt: core.aiSettings.systemPrompt,
+                        isEnabled: core.aiSettings.systemPromptEnabled),
                 contextBudget: contextBudget)
         } catch {
             chat.report(error.localizedDescription)

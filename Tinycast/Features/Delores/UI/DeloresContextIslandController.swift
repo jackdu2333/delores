@@ -16,7 +16,12 @@ private final class DeloresContextIslandPanel: NSPanel {
 @MainActor
 final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     private var panel: DeloresContextIslandPanel?
+    private var onAction: ((DeloresContextAction) -> Void)?
     private var onDismiss: (() -> Void)?
+
+    /// Names the panel an asynchronous step belongs to. The opening card hands its action over after
+    /// an animation, and a press outlives the panel whenever a new selection replaces it meanwhile.
+    private var panelGeneration = UUID()
 
     var isVisible: Bool { panel?.isVisible == true }
 
@@ -34,9 +39,9 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let root = DeloresContextIslandView(
             actions: actions,
             mode: mode,
+            barHeight: size.height,
             onAction: { [weak self] action in
-                self?.dismiss(notifying: false)
-                onAction(action)
+                self?.handOff(action, actions: actions, in: context.screen, metrics: metrics)
             },
             onDismiss: { [weak self] in self?.dismiss() }
         )
@@ -64,10 +69,12 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         panel.delegate = self
         panel.contentView = hosting
 
-        let frame = DeloresContextIslandPlacement.frame(in: context.screen, size: size)
+        let frame = DeloresContextIslandPlacement.collapsedFrame(in: context.screen, size: size)
         panel.setFrame(NSRect(origin: frame.origin, size: frame.size), display: false)
         self.panel = panel
+        self.onAction = onAction
         self.onDismiss = onDismiss
+        panelGeneration = UUID()
 
         panel.fadeIn(duration: Theme.Duration.enter) {
             panel.makeKeyAndOrderFront(nil)
@@ -81,16 +88,77 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let root = DeloresContextIslandView(
             actions: [],
             mode: .busy,
+            barHeight: size.height,
             onAction: { _ in },
             onDismiss: { [weak self] in self?.dismiss() })
         let hosting = DeloresFirstMouseHostingView(rootView: root.environment(\.metrics, metrics))
         hosting.sizingOptions = []
         hosting.setFrameSize(size)
-        let top = panel.frame.maxY
+        let anchored = panel.frame
         panel.contentView = hosting
         panel.setFrame(
-            NSRect(x: panel.frame.minX, y: top - size.height, width: size.width, height: size.height),
+            DeloresContextIslandPlacement.frame(keepingTopEdgeOf: anchored, height: size.height),
             display: true)
+    }
+
+    /// The card's opening. The bar grows where it stands and only then hands the answer over, so the
+    /// hand-off reads as one downward gesture instead of a window swap.
+    ///
+    /// The answer itself lands on the chat surface, which is a window of its own — its rectangle is
+    /// the chat's to decide, so what this buys is the gesture, not geometric continuity.
+    private enum Handoff {
+        /// Long enough to be read as a gesture, short enough not to sit between press and answer.
+        static let growth: TimeInterval = 0.20
+    }
+
+    private func handOff(
+        _ action: DeloresContextAction,
+        actions: [DeloresContextAction],
+        in screen: InvocationScreen,
+        metrics: InterfaceMetrics
+    ) {
+        guard let panel, panel.isVisible else {
+            onAction?(action)
+            return
+        }
+        let generation = panelGeneration
+        let anchored = panel.frame
+        let height = DeloresContextIslandPlacement.expandedHeight(
+            preferred: metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight),
+            in: screen)
+
+        // Laid out for the card it becomes before the frame animates, so the growth reveals the card
+        // rather than stretching the bar. Its own buttons are inert: one press is the whole gesture.
+        let root = DeloresContextIslandView(
+            actions: actions,
+            mode: .handoff(progressTitle: action.progressTitle),
+            barHeight: anchored.height,
+            onAction: { _ in },
+            onDismiss: { [weak self] in self?.dismiss() })
+        let hosting = DeloresFirstMouseHostingView(rootView: root.environment(\.metrics, metrics))
+        hosting.sizingOptions = []
+        hosting.setFrameSize(NSSize(width: anchored.width, height: height))
+        panel.contentView = hosting
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Handoff.growth
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(
+                DeloresContextIslandPlacement.frame(keepingTopEdgeOf: anchored, height: height),
+                display: true)
+        } completionHandler: { [weak self] in
+            // AppKit runs the handler on the main thread; the parameter just isn't typed for it.
+            MainActor.assumeIsolated {
+                // A new selection may have replaced this panel while the card was opening, and its
+                // own press is the one that should run — this step stops rather than answer for it.
+                guard let self, self.panelGeneration == generation else { return }
+                // A shadow is cached from the frame it was first drawn at, so the one the bar grew
+                // with is the bar's. Rebuild it before the card starts fading.
+                self.panel?.invalidateShadow()
+                self.onAction?(action)
+                self.dismiss(notifying: false)
+            }
+        }
     }
 
     func dismiss(notifying: Bool = true) {
@@ -99,7 +167,9 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             return
         }
         panel = nil
+        panelGeneration = UUID()
         let callback = onDismiss
+        onAction = nil
         onDismiss = nil
         closing.delegate = nil
         if notifying { callback?() }

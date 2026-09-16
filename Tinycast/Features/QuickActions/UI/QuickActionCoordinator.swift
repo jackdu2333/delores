@@ -339,7 +339,8 @@ final class QuickActionCoordinator {
         start { [weak self] in await self?.perform(state, target: target, previewing: true) }
     }
 
-    private var targetLanguage: Locale.Language {
+    /// Shared with a surface that hands its action to the chat, so both translate into one language.
+    var targetLanguage: Locale.Language {
         let stored = store.settings.targetLanguage
         guard !stored.isEmpty else { return Locale.current.language }
         return Locale.Language(identifier: stored)

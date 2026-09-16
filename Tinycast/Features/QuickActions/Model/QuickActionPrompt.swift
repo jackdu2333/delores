@@ -61,4 +61,20 @@ enum QuickActionPrompt {
         }
         return lines.joined(separator: "\n")
     }
+
+    /// The chat path runs no translation framework, so translate carries its own task there
+    /// instead of the bare boundary the panel path leaves to `TextTranslator`.
+    /// Nil for every other action: its own instructions already carry the whole task.
+    ///
+    /// The language arrives already named — `TextTranslator.displayName(of:)` owns that spelling,
+    /// so this stays a pure builder with no locale of its own to consult.
+    static func chatInstructions(
+        for action: QuickAction, targetLanguageName name: String
+    ) -> String? {
+        guard action.builtInAction == .translate else { return nil }
+        return boundary + "\n\n" + """
+            Translate the text into \(name). Keep the writer's formatting and line breaks, and \
+            return only the translation.
+            """
+    }
 }

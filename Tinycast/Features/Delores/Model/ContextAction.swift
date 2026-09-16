@@ -11,6 +11,9 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     var title: String { builtIn.title }
     var symbol: String { builtIn.symbol }
 
+    /// What the opened card says while the answer is still on its way.
+    var progressTitle: String { builtIn.progressTitle }
+
     static let defaults: [DeloresContextAction] = [
         DeloresContextAction(.translate),
         DeloresContextAction(.summarize),

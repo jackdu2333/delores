@@ -8,6 +8,7 @@ final class DeloresContextCoordinator {
     private let settings: AppSettings
     private let quickActions: QuickActionCoordinator
     private let injector: TextInjector
+    private let aiChat: AIChatCoordinator
     private let island: DeloresContextIslandController
     private let gestureMonitor: SelectionGestureMonitor
 
@@ -20,10 +21,14 @@ final class DeloresContextCoordinator {
     private(set) var context: InvocationContext?
     private(set) var isMonitoring = false
 
-    init(settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector) {
+    init(
+        settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector,
+        aiChat: AIChatCoordinator
+    ) {
         self.settings = settings
         self.quickActions = quickActions
         self.injector = injector
+        self.aiChat = aiChat
 
         self.island = DeloresContextIslandController()
         self.gestureMonitor = SelectionGestureMonitor { point in
@@ -124,11 +129,33 @@ final class DeloresContextCoordinator {
 
     private func run(_ action: DeloresContextAction) {
         guard case .selection(let selection) = context, let targetApplication else { return }
-        let result = quickActions.run(
-            .builtIn(action.builtIn),
-            selection: selection.text,
-            target: targetApplication)
-        switch result {
+        let quickAction = QuickAction.builtIn(action.builtIn)
+        // A Context action is a question for the chat surface, so its answer can be followed up.
+        guard settings.aiEnabled else {
+            runThroughQuickActions(
+                quickAction, selection: selection.text, target: targetApplication)
+            return
+        }
+        // The Quick Action's own instructions already treat the selection as material, never as a
+        // request; the chat path borrows them rather than inventing a second, weaker boundary.
+        let instructions =
+            QuickActionPrompt.chatInstructions(
+                for: quickAction,
+                targetLanguageName: TextTranslator.displayName(of: quickActions.targetLanguage))
+            ?? QuickActionPrompt.instructions(for: quickAction)
+        island.dismiss(notifying: false)
+        clearContext()
+        aiChat.ask(
+            QuickActionPrompt.message(for: quickAction, selection: selection.text),
+            instructions: instructions)
+    }
+
+    /// AI off leaves the action with nowhere to converse, so the shared Quick Action path answers
+    /// it — the behaviour a selection gesture had before the chat took the action over.
+    private func runThroughQuickActions(
+        _ action: QuickAction, selection: String, target: NSRunningApplication
+    ) {
+        switch quickActions.run(action, selection: selection, target: target) {
         case .started:
             island.dismiss(notifying: false)
             clearContext()

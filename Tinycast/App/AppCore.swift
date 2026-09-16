@@ -172,7 +172,8 @@ final class AppCore {
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var deloresCoordinator = DeloresCoordinator(
-        settings: settings, quickActions: quickActionCoordinator, injector: textInjector)
+        settings: settings, quickActions: quickActionCoordinator, injector: textInjector,
+        aiChat: aiChatCoordinator)
     @ObservationIgnored private(set) lazy var mcpCoordinator = MCPCoordinator(
         settings: settings, store: mcpSettings, manager: mcp, core: self)
     @ObservationIgnored private(set) lazy var aiChatCoordinator = AIChatCoordinator(
