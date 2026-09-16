@@ -1209,6 +1209,12 @@ public class GhostPreviewPanel: NSPanel {
                 context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
                 self.animator().alphaValue = 1.0
             }
+            let token = animationToken
+            let fallback = Timer(timeInterval: 0.20, repeats: false) { [weak self] _ in
+                guard let self, self.animationToken == token else { return }
+                self.alphaValue = 1.0
+            }
+            RunLoop.main.add(fallback, forMode: .common)
         } else {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.20
@@ -1238,12 +1244,21 @@ public class GhostPreviewPanel: NSPanel {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().alphaValue = 0.0
         }, completionHandler: { [weak self] in
-            guard let self = self else { return }
-            if self.animationToken == token {
-                self.orderOut(nil)
-                self.setFrame(.zero, display: false)
-                self.hostingView.rootView = AnyView(EmptyView())
-            }
+            self?.finishHide(token: token)
         })
+
+        // AppKit animation completion can be skipped in a headless/test run loop. Keep the
+        // WindowServer framebuffer reclamation deterministic even when that callback is lost.
+        let fallback = Timer(timeInterval: 0.20, repeats: false) { [weak self] _ in
+            self?.finishHide(token: token)
+        }
+        RunLoop.main.add(fallback, forMode: .common)
+    }
+
+    private func finishHide(token: Int) {
+        guard animationToken == token else { return }
+        orderOut(nil)
+        setFrame(.zero, display: false)
+        hostingView.rootView = AnyView(EmptyView())
     }
 }
