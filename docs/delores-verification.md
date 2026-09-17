@@ -1,66 +1,89 @@
 # Delores verification status
 
-This file has two jobs: naming the checks that still have to run on a machine with Xcode, and keeping
-the evidence for the ones that have already run. Delores is developed on a machine with Command Line
-Tools and no Xcode, so part of the definition of done in [testing.md](testing.md) cannot be executed
-there. Writing that gap down is the point of this file — an unrun check that is silently assumed to
-pass is how a broken build reaches the default branch.
+This file has two jobs: naming the checks that have run and what they said, and keeping the reason any
+check could not run. Delores was developed for a long time on a machine with Command Line Tools and no
+Xcode, so part of the definition of done in [testing.md](testing.md) could not be executed there; that
+gap is recorded below under **Historical**. Writing it down is the point of this file — an unrun check
+that is silently assumed to pass is how a broken build reaches the default branch.
 
-It is a record, not a task list. Update the results when a check finally runs; do not delete the rows
-that say why something could not run here, or the next person re-derives them.
+It is a record, not a task list. Update the results when a check runs again; do not delete the rows
+that say why something could not run, or the next person re-derives them.
+
+**The machine changed on 2026-09-17**: Xcode 27.0 is installed and selected, so the build and the
+SwiftUI-macro harnesses now run here. SwiftLint is *not* currently installed, so `lint.sh` is the one
+check that cannot.
 
 ## The machine this was recorded on
 
-Recorded 2026-09-17 on the Delores development machine, at `e79171b`.
+Recorded 2026-09-17 on the Delores development machine, at `39f5d13`.
 
 | Fact | How it was read | Value |
 | --- | --- | --- |
-| Active developer directory | `xcode-select -p` | `/Library/Developer/CommandLineTools` |
-| Xcode installed | `ls /Applications/Xcode*.app` | none |
-| `xcodebuild` | `xcodebuild -version` | fails: "requires Xcode, but active developer directory … is a command line tools instance" |
+| Active developer directory | `xcode-select -p` | `/Applications/Xcode.app/Contents/Developer` |
+| Xcode installed | `xcodebuild -version` | Xcode 27.0, build `27A266a` |
 | Swift | `swift --version` | 6.4 (swiftlang-6.4.0.34.1), target `arm64-apple-macosx27.0.0` |
-| SDK | `xcrun --show-sdk-path --sdk macosx` | Command Line Tools `MacOSX.sdk`, 27.0 |
-| SwiftLint | `swiftlint version` | 0.65.1 (present) |
-| SwiftUI macro plugin | find `/Library/Developer` for `libSwiftUIMacros*` | not present |
-
-The missing macro plugin is the single cause of every compile failure below: `@Entry`,
-`@State` and `@FocusState` are external macros whose implementation ships inside Xcode,
-not in Command Line Tools.
-
-## Still to run, on a machine with Xcode
-
-None of these has ever run for this repository on this machine. They are not known to fail — they are
-unknown, which is the state this table exists to make visible.
-
-| Check | Command | Why it cannot run here |
-| --- | --- | --- |
-| Debug build, zero new warnings | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug CODE_SIGNING_ALLOWED=NO build` | `xcodebuild` refuses to run without Xcode |
-| Whole-app compile | the same build | `swiftc -typecheck` over the shipped sources aborts at `DesignSystem/InterfaceMetrics.swift:192` on `@Entry` |
-| The seven SwiftUI-macro harnesses | `./Scripts/run-tests.sh` | needs `libSwiftUIMacros.dylib` |
-| Lint exactly as documented | `./Scripts/lint.sh` | SwiftLint aborts before reading a file: `sourcekitdInProc.framework` is not where it expects under a CLT-only install. The override below is what does run here |
-| Release build | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Release CODE_SIGNING_ALLOWED=NO build` | same |
+| SDK | `xcrun --show-sdk-path --sdk macosx` | Xcode's `MacOSX27.0.sdk` |
+| SwiftUI macro plugin | find `/Applications/Xcode.app` for `libSwiftUIMacros*` | present |
+| SwiftLint | `swiftlint version` | **not installed** |
 
 ## Recorded results
 
-2026-09-17, `e79171b`, Command Line Tools only.
+2026-09-17, `39f5d13`, with the Companion Shell work in the working tree.
 
 | Command | Result |
 | --- | --- |
-| `TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh` | **✓ lint-clean**, including the settings-anchor check at the end of the script |
+| `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED, no warnings** |
+| `./Scripts/run-tests.sh` | **172 passed, 1 failed.** The one failure is `ext-test`, "the second run's timers still fire" |
+| `./Scripts/run-tests.sh ext-test` (three times, alone) | **✓ passed 3/3** — see below |
+| `./Scripts/run-delores-tests.sh` | **passed** |
+| purity grep over `Tinycast/Features/*/Model/` | no output — the pure-layer boundary holds |
+| `./Scripts/lint.sh` | does not run: `swiftlint not found` |
+
+### The one `run-tests.sh` failure is load-dependent, not a regression
+
+`ext-test` asserts that timer callbacks scheduled by a second extension run still fire. It fails only
+inside the full parallel run (`count=0`) and passes every time it is run on its own — three for three,
+at 6.7–7.1 s each, with the machine otherwise idle. A whole-suite run compiles and runs 73 harnesses
+in 81 s, so the timer simply does not get a slot.
+
+`ext-test` shares no source file with `Features/Delores/`, so it is not reachable from the Companion
+Shell work. Treat a lone `ext-test` failure in a full run as noise, and re-run it alone before
+believing it.
+
+## Historical: Command Line Tools only
+
+Recorded 2026-09-17 at `e79171b`, before Xcode was installed. Kept because it explains why several
+checks were unknown for months, and because the SwiftLint override below is still the one to use on a
+CLT-only machine.
+
+| Fact | Value then |
+| --- | --- |
+| Active developer directory | `/Library/Developer/CommandLineTools` |
+| Xcode installed | none |
+| `xcodebuild` | fails: "requires Xcode, but active developer directory … is a command line tools instance" |
+| SDK | Command Line Tools `MacOSX.sdk`, 27.0 |
+| SwiftUI macro plugin | not present |
+| SwiftLint | 0.65.1 (present) |
+
+The missing macro plugin was the cause of every compile failure then: `@Entry`, `@State` and
+`@FocusState` are external macros whose implementation ships inside Xcode, not in Command Line Tools.
+
+| Command | Result then |
+| --- | --- |
+| `TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh` | **✓ lint-clean**, including the settings-anchor check |
 | `./Scripts/lint.sh` (no override) | abort: SwiftLint's SourceKitten cannot load `sourcekitdInProc.framework` |
 | `./Scripts/run-tests.sh` | **66 of 73 pass.** 7 fail: `appearance-test`, `interface-size-test`, `palette-placement-test`, `callout-test`, `ext-icon-test`, `notes-editor-test`, `ext-test` |
 | `./Scripts/run-delores-tests.sh` | **passed** |
 | node settings-anchor check | **passed** |
 | `./Tests/upstream-drift-test.sh` | **passed** |
-| purity grep over `Tinycast/Features/*/Model/` | no output — the pure-layer boundary holds |
-| `swiftc -swift-version 6 -typecheck Tinycast/Features/Delores/Model/CompanionWander.swift` | **passed** |
+| `swiftc -swift-version 6 -typecheck …/Model/CompanionWander.swift` | **passed** |
 | `swiftc -parse` on `DeloresCompanionCoordinator.swift`, `DeloresSpatialPanels.swift` | **passed** |
 
-The seven failures all report the same six errors — `external macro implementation type`
-`'SwiftUIMacros.EntryMacro' could not be found` and its `StateMacro` sibling. Everything
-else they report (`extensions must not contain stored properties`, `cannot assign to property: 'self' is immutable`) is a downstream consequence of the macro not expanding.
+The seven failures all reported the same six errors — `external macro implementation type`
+`'SwiftUIMacros.EntryMacro' could not be found` and its `StateMacro` sibling. Everything else they
+reported was a downstream consequence of the macro not expanding.
 
-They are **not** caused by any Delores change. Verified by extracting a pre-change commit into a
+They were **not** caused by any Delores change. Verified by extracting a pre-change commit into a
 scratch directory and running two of them there:
 
 ```sh
@@ -69,14 +92,13 @@ git archive 062ef85 | tar -x -C "$(mktemp -d)/delores-pristine"
 #                ./Scripts/run-tests.sh ext-test         → FAILED, identical 6 errors
 ```
 
-The seven harnesses share no source file with `Features/Delores/`, and
-`DesignSystem/InterfaceMetrics.swift` — untouched by this work — fails the same way when
-typechecked on its own.
+Note that `ext-test` appears in both the old failure list and the current one, for different reasons:
+then it was the macro, now it is timer scheduling under load. Same name, unrelated cause.
 
-### The lint override
+### The SwiftLint override
 
 SwiftLint locates its `sourcekitd` through `TOOLCHAIN_DIR`. Pointing that at Command Line
-Tools is enough to run the whole script here:
+Tools was enough to run the whole script there:
 
 ```sh
 TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh
@@ -86,6 +108,9 @@ TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh
 the script: macOS strips `DYLD_*` when exec'ing a platform binary, and the script's interpreter
 is `/bin/bash`. A plain environment variable survives, which is why `TOOLCHAIN_DIR` is the
 one to use.
+
+SwiftLint is not installed on this machine as of 2026-09-17, so neither form currently runs.
+Reinstall it with `brew install swiftlint` before relying on the lint half of the definition of done.
 
 ## Manual acceptance on real displays
 
@@ -105,14 +130,16 @@ The Companion's wander is a pure model, asserted from a fixed seed in
 ## Known gaps carried by the Companion
 
 Product decisions waiting on a decision, not verification items. Listed so they are not mistaken for
-regressions during the manual pass above.
+regressions during the manual pass above. The full inventory of designed-but-unbuilt work, with
+evidence per item, lives in [delores-backlog.md](delores-backlog.md); this section stays scoped to
+what the manual pass above has to cover.
 
 - The top edge is still inside the wander's range, so the companion can occupy the same strip as the
-  Context Island and the snap island.
+  Context Island and the snap island. The collision itself is now decided rather than open: both
+  surfaces grow out of the pet beside its body, so the strip is shared by design, not contested.
 - Pausing while the reader is typing is not implemented. The signal it would use,
   `CGEventSource.secondsSinceLastEventType`, needs no new permission.
 - The companion has no accessibility label and no menu-bar entry, so a keyboard-only reader cannot
   reach it. Double-clicking it to reopen the last selection is also gated on Accessibility permission.
 - Its expressions do not fall back to idle, the capture change is not signalled to the reader, and the
   no-selection double-click shows no bubble.
-

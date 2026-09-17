@@ -15,6 +15,10 @@ final class DeloresCompanionCoordinator {
     private var currentSelection = ""
     private var wander: DeloresCompanionWander.State?
     private var isRunning = false
+    /// A shell the Companion opened is on screen, so the body stands still. A body that walked out
+    /// from under the bar it opened would leave the bar hanging over nothing — and the bar is hung
+    /// on the body, not on the display.
+    private var isHoldingShell = false
     private var lastWanderTick: TimeInterval = 0
     private var rng = SystemRandomNumberGenerator()
     var onOpenContext: (() -> Void)?
@@ -31,6 +35,77 @@ final class DeloresCompanionCoordinator {
     func applyEnabled() { settings.deloresCompanionEnabled ? startCompanion() : stopCompanion() }
     func prepareForTermination() { stopCompanion() }
     func recordSelection(_ text: String) { currentSelection = text; companion?.play(.glance) }
+
+    // MARK: - Shells the Companion opened
+
+    /// Where a shell opened on the display whose visible area is `visibleFrame` should hang: off the
+    /// body, on whichever edge it is riding. Nil when there is no body to hang one from, which is
+    /// the ordinary case and sends the bar back to the menu bar.
+    ///
+    /// The body comes to that display first if it is not already on it. A bar grown beside a body on
+    /// another display is a bar nobody can see, and the reason for hanging it off the body is that
+    /// it appears where the reader already is.
+    func anchorForShell(in visibleFrame: CGRect) -> (center: CGPoint, edge: DeloresCompanionEdge)? {
+        guard isRunning, let companion, companion.isVisible else { return nil }
+        let bounds = visibleFrame.insetBy(
+            dx: Self.companionVisibleRadius, dy: Self.companionVisibleRadius)
+        guard bounds.width > 0, bounds.height > 0 else { return nil }
+        var center = companion.center
+        // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
+        if !bounds.insetBy(dx: -1, dy: -1).contains(center) {
+            // Carried across at the new display's middle height and the old body's own horizontal
+            // preference, which `project` then lands on the edge nearest where the body came from —
+            // the short way round, rather than a jump to a corner.
+            center = DeloresCompanionWander.project(
+                CGPoint(x: center.x, y: visibleFrame.midY), into: bounds)
+            companion.move(to: center)
+            wander = DeloresCompanionWander.settled(at: center, in: bounds, at: now, using: &rng)
+            syncWanderTimers()
+        }
+        return (center, DeloresCompanionWander.edge(for: center, in: bounds))
+    }
+
+    /// The body's standing point on `screen`, if it is standing on that screen at all. Unlike
+    /// `anchorForShell(in:)` this never moves the body: a drag brought near it is not a wish for it
+    /// to travel across displays, and an island beside where the body stands is already beside it.
+    func bodyAnchor(on screen: NSScreen) -> (center: CGPoint, edge: DeloresCompanionEdge)? {
+        guard isRunning, let companion, companion.isVisible else { return nil }
+        guard let standing = DeloresWindowGeometry.screenContaining(companion.center),
+            standing.frame == screen.frame
+        else { return nil }
+        return (
+            companion.center,
+            DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: standing))
+        )
+    }
+
+    /// Stands the body still while a shell it opened is on screen.
+    func holdForShell() {
+        isHoldingShell = true
+        stopWanderTimers()
+    }
+
+    /// The shell is gone, so the body may walk again.
+    func releaseShell() {
+        guard isHoldingShell else { return }
+        isHoldingShell = false
+        guard isRunning, let companion, companion.isVisible,
+            let screen = DeloresWindowGeometry.screenContaining(companion.center)
+        else { return }
+        settle(at: companion.center, on: screen)
+    }
+
+    /// A shell did not fit where the body was standing and the body had to be moved along its edge
+    /// to make room for it. The shell has already decided where; this only puts the body there.
+    func relocate(to center: CGPoint, edge: DeloresCompanionEdge) {
+        guard let companion,
+            let screen = DeloresWindowGeometry.screenContaining(center)
+        else { return }
+        companion.move(to: center)
+        wander = DeloresCompanionWander.settled(
+            at: center, in: companionBounds(on: screen), at: now, using: &rng)
+        syncWanderTimers()
+    }
     private func captureCompanion(_ captured: Bool) {
         guard let companion else { return }
         if captured {
@@ -80,6 +155,8 @@ final class DeloresCompanionCoordinator {
 
     private func stopCompanion() {
         isRunning = false
+        // The Companion is going away, so nothing it was holding itself still for survives it.
+        isHoldingShell = false
         if let companionMonitor { NSEvent.removeMonitor(companionMonitor); self.companionMonitor = nil }
         if let companionLocalMonitor { NSEvent.removeMonitor(companionLocalMonitor); self.companionLocalMonitor = nil }
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver); self.screenObserver = nil }
@@ -139,7 +216,8 @@ final class DeloresCompanionCoordinator {
     }
 
     private func advanceWander() {
-        guard isRunning, let companion, companion.isVisible, let state = wander else { return }
+        guard isRunning, !isHoldingShell, let companion, companion.isVisible, let state = wander
+        else { return }
         guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
         let tick = now
         let elapsed = tick - lastWanderTick

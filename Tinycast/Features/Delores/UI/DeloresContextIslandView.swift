@@ -129,7 +129,18 @@ struct DeloresContextIslandView: View {
     /// The height the bar is actually given, after the menu bar has had its say — deliberately not
     /// the wish. Laying out to the wish is what clipped the pills: the panel is capped to the menu
     /// bar strip (28pt on a 30pt bar), so content designed against 38pt lost its bottom edge.
+    ///
+    /// For a vertical strip this carries the strip's *thickness* instead — the room the column
+    /// takes across the display, measured where the bar's width is measured.
     let barHeight: CGFloat
+    /// True when this is the vertical strip a body standing on a vertical edge grows: the catalog
+    /// stacks into a column whose long axis follows the edge, and cards open inward across the
+    /// strip's pet-side rim. The pills themselves never turn — a pill keeps its icon and label
+    /// side by side, whatever direction the row that carries them runs in.
+    let isVertical: Bool
+    /// Which rim of the vessel the strip occupies when vertical — always the pet-side rim, so the
+    /// card opens away from the edge into the display.
+    let barAtLeadingEdge: Bool
     /// The width the bar had while it was the only thing in the panel, which the row keeps in every
     /// later state.
     ///
@@ -139,8 +150,12 @@ struct DeloresContextIslandView: View {
     /// row at the bar's own width instead means the catalog never moves, and the controls a card adds
     /// spill to the right of it.
     ///
-    /// Zero while measuring: a row told its own width cannot report what width it needs.
+    /// Zero while measuring: a row told its own width cannot report what width it needs. A vertical
+    /// strip keeps its length instead — see `pinnedBarLength` — and ignores this.
     let pinnedBarWidth: CGFloat
+    /// The length the column had while it was the only thing in the panel, which the column keeps
+    /// in every later state — the vertical strip's counterpart to `pinnedBarWidth`.
+    let pinnedBarLength: CGFloat
     let onAction: (DeloresContextAction) -> Void
     let onCopy: () -> Void
     /// Copies the answer in the card, which is a different text from the selection the bar copies.
@@ -180,7 +195,10 @@ struct DeloresContextIslandView: View {
         mode: DeloresContextIslandMode,
         isPinned: Bool = false,
         barHeight: CGFloat,
+        isVertical: Bool = false,
+        barAtLeadingEdge: Bool = true,
         pinnedBarWidth: CGFloat = 0,
+        pinnedBarLength: CGFloat = 0,
         onAction: @escaping (DeloresContextAction) -> Void,
         onCopy: @escaping () -> Void = {},
         onCopyAnswer: @escaping () -> Void = {},
@@ -196,7 +214,10 @@ struct DeloresContextIslandView: View {
         self.actions = actions
         self.mode = mode
         self.barHeight = barHeight
+        self.isVertical = isVertical
+        self.barAtLeadingEdge = barAtLeadingEdge
         self.pinnedBarWidth = pinnedBarWidth
+        self.pinnedBarLength = pinnedBarLength
         self.onAction = onAction
         self.onCopy = onCopy
         self.onCopyAnswer = onCopyAnswer
@@ -220,8 +241,19 @@ struct DeloresContextIslandView: View {
 
     /// What a pill may be tall inside the bar it was given. A shallow menu bar shortens the pills
     /// rather than clipping them; the floor keeps the label legible where there is almost no room.
+    /// A column's pills stand at the bar's own preferred depth: nothing caps a column the way the
+    /// menu bar caps a bar, and its thickness is the width its pills need, not a depth at all.
     private var pillHeight: CGFloat {
-        max(metrics.scaled(20), barHeight - metrics.scaled(8))
+        let depth = isVertical ? Self.preferredSize(for: metrics).height : barHeight
+        return max(metrics.scaled(20), depth - metrics.scaled(8))
+    }
+
+    /// Where the vessel's two tenants sit: the bar along its top edge on the menu bar, the strip
+    /// against the pet-side rim on a vertical edge. The card hangs the same way, off the far side of
+    /// whichever rim the bar itself occupies.
+    private var vesselAlignment: Alignment {
+        guard isVertical else { return .top }
+        return barAtLeadingEdge ? .topLeading : .topTrailing
     }
 
     var body: some View {
@@ -234,18 +266,21 @@ struct DeloresContextIslandView: View {
         // the vessel's height honest: it accepts any proposal down to nothing, and the card hangs off
         // its `background`, which does not feed back into the vessel's size. So the card overflows
         // downward and is clipped, which is what "the panel opens downward" means, instead of
-        // shoving the bar off the top of the screen.
-        ZStack(alignment: .top) {
+        // shoving the bar off the top of the screen. A vertical strip is the same arrangement turned
+        // a quarter: the strip holds the pet-side rim and the card overflows inward across it.
+        ZStack(alignment: vesselAlignment) {
             bar
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(alignment: .top) {
+                .background(alignment: vesselAlignment) {
                     if mode.opensCard {
                         expandedContent
                     }
                 }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(
+            maxWidth: .infinity, maxHeight: .infinity,
+            alignment: isVertical ? vesselAlignment : .top)
         // One shape for both states: the corner is wider than half a closed bar's height, so the bar
         // clamps it down to the pill it always was and the card simply grows into the wider corner.
         .frosted(
@@ -274,7 +309,10 @@ struct DeloresContextIslandView: View {
                 handoffCard(title)
             }
         }
-        .padding(.top, barHeight)
+        .padding(.top, isVertical ? 0 : barHeight)
+        .padding(
+            isVertical && barAtLeadingEdge ? .leading : .trailing,
+            isVertical ? barHeight : 0)
         .padding(.horizontal, metrics.scaled(DeloresContextIslandPlacement.cardInset))
         .padding(.bottom, metrics.scaled(DeloresContextIslandPlacement.pillBottomInset))
     }
@@ -339,67 +377,82 @@ struct DeloresContextIslandView: View {
             .fill(DeloresIslandSurface.card(colorScheme)))
     }
 
+    /// The bar's arrangement: a row on the menu bar, a column on a vertical edge. The row runs
+    /// along the edge the body rides either way; only the pills' carrier turns, never the pills.
+    ///
+    /// Either way the row is pinned to the length it was measured at — `pinnedBarWidth` one way,
+    /// `pinnedBarLength` the other — so the controls a card adds spill past the row's end rather
+    /// than pushing the catalog along, and `fixedSize` is what makes that spill deliberate: it
+    /// stops the row from being squeezed to the space it is being drawn in, which is the other way
+    /// this layout could eat the controls it just added.
+    @ViewBuilder
     private var bar: some View {
-        HStack(spacing: metrics.spacing.sm) {
-            // Every mode shows the catalog: an answer is one action's result, not the end of the bar,
-            // and hiding the others behind a close press would make comparing two of them a
-            // three-step job. `.handoff` passes an inert `onAction`, so this costs nothing there.
-            ForEach(actions) { action in
-                actionPill(action)
-            }
-
-            // The trailing slot carries one group or the other, never both.
-            //
-            // Collapsed and unpinned, the bar is the catalog and the copy button — which is what was
-            // asked for, and what the toolbar this came from showed in that state. Pin, collapse and
-            // close belong to the states where the automatic exits are unavailable: a pinned surface
-            // stops answering outside clicks and new selections alike, so it has to offer a way out
-            // of itself, and an open card is a state the reader chose and may want to leave without
-            // leaving the selection.
-            //
-            // Swapping rather than adding is the whole point. The selection's copy has a home in the
-            // card while a card is open — the answer has its own copy button there — and carrying
-            // both groups would grow the row by three controls instead of two, for a button already
-            // on screen.
-            if isPinned || mode.opensCard {
-                controlButton(
-                    .pin,
-                    symbol: isPinned ? "pin.fill" : "pin",
-                    isOn: isPinned,
-                    iconSize: 11,
-                    help: isPinned ? "松开这份选区" : "钉住这份选区"
-                ) {
-                    isPinned.toggle()
-                    onTogglePin(isPinned)
-                }
-                // Only while there is a card to put away. Collapsing leaves the selection and the
-                // bar exactly where they were, which is the difference between this and closing.
-                if mode.opensCard {
-                    controlButton(
-                        .collapse, symbol: "chevron.up", iconSize: 10.5, weight: .semibold,
-                        help: "收起结果"
-                    ) {
-                        onCollapseAnswer()
-                    }
-                }
-                controlButton(
-                    .close, symbol: "xmark", iconSize: 10, weight: .bold, help: "关闭（Esc）"
-                ) {
-                    onDismiss()
-                }
-            } else {
-                copyButton
-            }
+        if isVertical {
+            VStack(spacing: metrics.spacing.sm) { barContent }
+                .padding(.vertical, metrics.spacing.md)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: pinnedBarLength > 0 ? pinnedBarLength : nil, alignment: .top)
+                .frame(width: barHeight)
+        } else {
+            barContent
+                .padding(.horizontal, metrics.spacing.md)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(width: pinnedBarWidth > 0 ? pinnedBarWidth : nil, alignment: .leading)
+                .frame(height: barHeight)
         }
-        .padding(.horizontal, metrics.spacing.md)
-        // Pinned to the width the bar was measured at, and laid out from its leading edge. The
-        // controls a card adds then spill past the row's trailing edge rather than pushing the
-        // catalog left — see `pinnedBarWidth`. `fixedSize` is what makes that spill deliberate: it
-        // stops the row from being squeezed to the width it is being drawn in, which is the other way
-        // this layout could eat the controls it just added.
-        .fixedSize(horizontal: true, vertical: false)
-        .frame(width: pinnedBarWidth > 0 ? pinnedBarWidth : nil, alignment: .leading)
-        .frame(height: barHeight)
+    }
+
+    @ViewBuilder
+    private var barContent: some View {
+        // Every mode shows the catalog: an answer is one action's result, not the end of the bar,
+        // and hiding the others behind a close press would make comparing two of them a
+        // three-step job. `.handoff` passes an inert `onAction`, so this costs nothing there.
+        ForEach(actions) { action in
+            actionPill(action)
+        }
+
+        // The trailing slot carries one group or the other, never both.
+        //
+        // Collapsed and unpinned, the bar is the catalog and the copy button — which is what was
+        // asked for, and what the toolbar this came from showed in that state. Pin, collapse and
+        // close belong to the states where the automatic exits are unavailable: a pinned surface
+        // stops answering outside clicks and new selections alike, so it has to offer a way out
+        // of itself, and an open card is a state the reader chose and may want to leave without
+        // leaving the selection.
+        //
+        // Swapping rather than adding is the whole point. The selection's copy has a home in the
+        // card while a card is open — the answer has its own copy button there — and carrying
+        // both groups would grow the row by three controls instead of two, for a button already
+        // on screen.
+        if isPinned || mode.opensCard {
+            controlButton(
+                .pin,
+                symbol: isPinned ? "pin.fill" : "pin",
+                isOn: isPinned,
+                iconSize: 11,
+                help: isPinned ? "松开这份选区" : "钉住这份选区"
+            ) {
+                isPinned.toggle()
+                onTogglePin(isPinned)
+            }
+            // Only while there is a card to put away. Collapsing leaves the selection and the
+            // bar exactly where they were, which is the difference between this and closing.
+            if mode.opensCard {
+                controlButton(
+                    .collapse, symbol: "chevron.up", iconSize: 10.5, weight: .semibold,
+                    help: "收起结果"
+                ) {
+                    onCollapseAnswer()
+                }
+            }
+            controlButton(
+                .close, symbol: "xmark", iconSize: 10, weight: .bold, help: "关闭（Esc）"
+            ) {
+                onDismiss()
+            }
+        } else {
+            copyButton
+        }
     }
 
     // MARK: - The answer

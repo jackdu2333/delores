@@ -14,6 +14,13 @@ final class DeloresWindowSnapCoordinator {
     private var snapNeedsCandidate = false
     private var snapIsActive = false
     private var snapHasClaimedGate = false
+    /// The body's standing point on the display a drag is happening in, if it is standing on that
+    /// display at all. Read-only on purpose: a drag must never move the Companion to meet it.
+    var companionAnchor: ((NSScreen) -> (center: CGPoint, edge: DeloresCompanionEdge)?)?
+    /// Where an island opened out of the body settled. Made once, when the run begins, and held:
+    /// an island that slid after a wandering body mid-drag would be a thing chasing the reader
+    /// rather than a thing they aimed at.
+    private var snapBodyPlacement: DeloresCompanionShell.Placement?
     var onWindowGeometryChanged: ((CGPoint) -> Void)?
     var onWindowSnapped: ((AXUIElement, DeloresSnapSlot, CGRect, NSScreen) -> Void)?
     private static let snapDragThreshold: CGFloat = 8
@@ -46,6 +53,7 @@ final class DeloresWindowSnapCoordinator {
         snapCandidate = nil
         snapNeedsCandidate = false
         snapIsActive = false
+        snapBodyPlacement = nil
         snapMonitorStart = .zero
         // Only a drag that actually moved a window can have moved a seam, and only a claimed
         // gate means one did. Notifying on every release made the divider walk every window
@@ -95,14 +103,39 @@ final class DeloresWindowSnapCoordinator {
             let halfCenterWidth = Self.snapTopCenterTriggerWidth / 2.0
             let isInCenterTop = abs(point.x - screen.frame.midX) <= halfCenterWidth
 
-            if isNearTop && (isInCenterTop || snapIsActive) {
+            // The body comes first: a window brought to the Companion opens the island out of the
+            // body itself, on whichever edge it stands. Only a body standing on the display the
+            // drag is on can be brought to; the reader who has no Companion still has the top.
+            let body = companionAnchor?(screen)
+            let overBody = body.map {
+                DeloresCompanionShell.dragHitFrame(center: $0.center).contains(point)
+            } ?? false
+            if overBody, let body, snapBodyPlacement == nil {
+                let layout = SnapIslandGeometry.layout(forEdge: body.edge)
+                snapBodyPlacement = DeloresCompanionShell.planIslandOpening(
+                    petCenter: body.center, edge: body.edge,
+                    islandSize: layout.size, visibleFrame: screen.visibleFrame)
+            }
+            // Once up, the island itself holds the run alive: its cards reach further than the
+            // hit frame, and a drag that had found the body would not want it gone the moment it
+            // climbed onto the island.
+            let overIsland = snapIsActive && snapIsland?.frame.contains(point) == true
+
+            if let placement = snapBodyPlacement, overBody || overIsland {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
-                snapIsland?.show(on: screen)
+                snapIsland?.showBesideBody(placement, on: screen)
+                snapIsland?.setHoveredSlot(snapIsland?.slot(at: point))
+            } else if isNearTop && (isInCenterTop || snapIsActive) {
+                snapBodyPlacement = nil
+                snapIsActive = true
+                snapIsland = snapIsland ?? DeloresSnapIslandPanel()
+                snapIsland?.showAtTopCenter(on: screen)
                 let slot = snapIsland?.slot(at: point)
                 snapIsland?.setHoveredSlot(slot)
             } else if snapIsActive {
                 snapIsActive = false
+                snapBodyPlacement = nil
                 snapIsland?.hide()
             }
         case .leftMouseUp:

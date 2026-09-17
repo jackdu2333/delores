@@ -1,0 +1,276 @@
+import CoreGraphics
+
+/// Where a shell the Companion has opened goes: grown out of the body's inward side, rather than
+/// hung from the menu bar.
+///
+/// Pure, so the geometry can be asserted without a window — the Companion rides the perimeter of
+/// its display, and every question here is only "which way is inward from where it happens to be
+/// standing", which needs no screen to answer.
+///
+/// The body stays *outside* the shell in every case: a bar that covered the Companion would take
+/// away the thing the reader clicked to get it.
+enum DeloresCompanionShell {
+    /// The glass circle the reader sees. The window around it is larger — 44pt — so a body this
+    /// size still gives a thumb something to aim at.
+    static let visibleSize: CGFloat = 28
+
+    static var visibleRadius: CGFloat { visibleSize / 2 }
+
+    /// The seam between the body and whatever grew out of it. Wide enough to read as two things,
+    /// narrow enough to read as one gesture.
+    static let shellGap: CGFloat = 8
+
+    /// Where a shell ended up, and where the body had to go to let it.
+    ///
+    /// The body moving is part of the answer rather than a side effect: a shell that did not fit
+    /// slides the Companion along its own edge until it does, and the caller has to be told, or the
+    /// two drift apart on screen.
+    struct Placement: Equatable {
+        var petCenter: CGPoint
+        var edge: DeloresCompanionEdge
+        var frame: CGRect
+    }
+
+    // MARK: - The body
+
+    static func circleFrame(center: CGPoint) -> CGRect {
+        CGRect(
+            x: center.x - visibleRadius, y: center.y - visibleRadius,
+            width: visibleSize, height: visibleSize)
+    }
+
+    /// Puts the body on `edge` without letting any part of it leave the visible area. The circle is
+    /// kept a radius off each corner, so a body in a corner is on one edge and not half on two.
+    static func snapCenter(
+        _ point: CGPoint, to edge: DeloresCompanionEdge, in visibleFrame: CGRect
+    ) -> CGPoint {
+        let minX = visibleFrame.minX + visibleRadius
+        let maxX = visibleFrame.maxX - visibleRadius
+        let minY = visibleFrame.minY + visibleRadius
+        let maxY = visibleFrame.maxY - visibleRadius
+        let x = min(max(point.x, minX), maxX)
+        let y = min(max(point.y, minY), maxY)
+        switch edge {
+        case .right: return CGPoint(x: maxX, y: y)
+        case .left: return CGPoint(x: minX, y: y)
+        case .top: return CGPoint(x: x, y: maxY)
+        case .bottom: return CGPoint(x: x, y: minY)
+        }
+    }
+
+    /// Which edge a point is closest to. A corner is equally near two, and the right one wins —
+    /// which is the edge the Companion spawns on, so an untouched body answers `.right`.
+    static func nearestEdge(to point: CGPoint, in visibleFrame: CGRect) -> DeloresCompanionEdge {
+        let distances: [(DeloresCompanionEdge, CGFloat)] = [
+            (.right, abs(visibleFrame.maxX - point.x)),
+            (.left, abs(point.x - visibleFrame.minX)),
+            (.top, abs(visibleFrame.maxY - point.y)),
+            (.bottom, abs(point.y - visibleFrame.minY)),
+        ]
+        return distances.min(by: { $0.1 < $1.1 })?.0 ?? .right
+    }
+
+    /// A body riding the bottom edge has nowhere to grow a bar: one grown "inward" from there would
+    /// lie across the middle of the display, which is the part the reader is looking at. It slides
+    /// to whichever vertical edge is nearer and grows from that instead.
+    static func edgeForOpeningBar(
+        current: DeloresCompanionEdge, petCenter: CGPoint, visibleFrame: CGRect
+    ) -> DeloresCompanionEdge {
+        guard current == .bottom else { return current }
+        let distLeft = petCenter.x - visibleFrame.minX
+        let distRight = visibleFrame.maxX - petCenter.x
+        return distLeft <= distRight ? .left : .right
+    }
+
+    // MARK: - Shells
+
+    /// Where a dragged window counts as having been brought to the body. Generous on purpose: a
+    /// drag carries a window, not a pointer, and a target the reader has to hit exactly is one
+    /// they will miss.
+    static func dragHitFrame(center: CGPoint) -> CGRect {
+        let side: CGFloat = 60
+        return CGRect(
+            x: center.x - side / 2, y: center.y - side / 2, width: side, height: side)
+    }
+
+    /// A closed bar: grown from the body's inward side, level with its centre.
+    static func planBarOpening(
+        petCenter: CGPoint,
+        edge: DeloresCompanionEdge,
+        shellSize: CGSize,
+        visibleFrame: CGRect
+    ) -> Placement {
+        let resolvedEdge = edgeForOpeningBar(
+            current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+        var center = petCenter
+        if resolvedEdge != edge {
+            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame)
+        }
+        return placeShell(
+            petCenter: center, edge: resolvedEdge, shellSize: shellSize, visibleFrame: visibleFrame)
+    }
+
+    /// A snap island: grown out of the body's inward side too, with its long axis along the edge the
+    /// body rides — horizontal above or below the body, vertical beside it. The body may open one
+    /// from the bottom edge, unlike a bar: an island is a preview that lives for the length of a
+    /// drag, not a surface the reader reads from.
+    static func planIslandOpening(
+        petCenter: CGPoint,
+        edge: DeloresCompanionEdge,
+        islandSize: CGSize,
+        visibleFrame: CGRect
+    ) -> Placement {
+        placeShell(
+            petCenter: petCenter, edge: edge, shellSize: islandSize, visibleFrame: visibleFrame)
+    }
+
+    /// An opened card: the bar stays level with the body's centre and the answer hangs downward from
+    /// it.
+    ///
+    /// On a vertical edge the body slides *up* when the card would otherwise run off the bottom,
+    /// which is the only direction it can go that keeps it beside what it opened.
+    static func planExpandedBarOpening(
+        petCenter: CGPoint,
+        edge: DeloresCompanionEdge,
+        collapsedSize: CGSize,
+        expandedSize: CGSize,
+        visibleFrame: CGRect
+    ) -> Placement {
+        let resolvedEdge = edgeForOpeningBar(
+            current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+        var center = petCenter
+        if resolvedEdge != edge {
+            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame)
+        }
+        var frame = hangDownFrame(
+            petCenter: center, edge: resolvedEdge,
+            collapsedSize: collapsedSize, expandedSize: expandedSize)
+        if resolvedEdge == .left || resolvedEdge == .right {
+            let overflowBottom = visibleFrame.minY - frame.minY
+            if overflowBottom > 0 {
+                center = snapCenter(
+                    CGPoint(x: center.x, y: center.y + overflowBottom),
+                    to: resolvedEdge, in: visibleFrame)
+                frame = hangDownFrame(
+                    petCenter: center, edge: resolvedEdge,
+                    collapsedSize: collapsedSize, expandedSize: expandedSize)
+            }
+        }
+        frame = clamp(frame, to: visibleFrame)
+        return Placement(petCenter: center, edge: resolvedEdge, frame: frame)
+    }
+
+    /// The shell sits on the body's inward side with a `shellGap` seam, and the body stays outside
+    /// it. If it does not fit, the body slides along its own edge until it does.
+    static func placeShell(
+        petCenter: CGPoint,
+        edge: DeloresCompanionEdge,
+        shellSize: CGSize,
+        visibleFrame: CGRect
+    ) -> Placement {
+        var center = snapCenter(petCenter, to: edge, in: visibleFrame)
+        var frame = inwardFrame(
+            petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+
+        switch edge {
+        case .top, .bottom:
+            let overflowLeft = visibleFrame.minX - frame.minX
+            let overflowRight = frame.maxX - visibleFrame.maxX
+            var shift: CGFloat = 0
+            if overflowLeft > 0 { shift += overflowLeft }
+            if overflowRight > 0 { shift -= overflowRight }
+            if shift != 0 {
+                center = snapCenter(
+                    CGPoint(x: center.x + shift, y: center.y), to: edge, in: visibleFrame)
+                frame = inwardFrame(
+                    petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+            }
+        case .left, .right:
+            let overflowBottom = visibleFrame.minY - frame.minY
+            let overflowTop = frame.maxY - visibleFrame.maxY
+            var shift: CGFloat = 0
+            if overflowBottom > 0 { shift += overflowBottom }
+            if overflowTop > 0 { shift -= overflowTop }
+            if shift != 0 {
+                center = snapCenter(
+                    CGPoint(x: center.x, y: center.y + shift), to: edge, in: visibleFrame)
+                frame = inwardFrame(
+                    petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+            }
+        }
+
+        frame = clamp(frame, to: visibleFrame)
+        return Placement(petCenter: center, edge: edge, frame: frame)
+    }
+
+    /// On a vertical edge the shell is level with the body's centre; on a horizontal one it is
+    /// centred on the body and hangs off its inward side.
+    private static func inwardFrame(
+        petVisible: CGRect, edge: DeloresCompanionEdge, shellSize: CGSize
+    ) -> CGRect {
+        switch edge {
+        case .right:
+            return CGRect(
+                x: petVisible.minX - shellGap - shellSize.width,
+                y: petVisible.midY - shellSize.height / 2,
+                width: shellSize.width, height: shellSize.height)
+        case .left:
+            return CGRect(
+                x: petVisible.maxX + shellGap,
+                y: petVisible.midY - shellSize.height / 2,
+                width: shellSize.width, height: shellSize.height)
+        case .top:
+            return CGRect(
+                x: petVisible.midX - shellSize.width / 2,
+                y: petVisible.minY - shellGap - shellSize.height,
+                width: shellSize.width, height: shellSize.height)
+        case .bottom:
+            return CGRect(
+                x: petVisible.midX - shellSize.width / 2,
+                y: petVisible.maxY + shellGap,
+                width: shellSize.width, height: shellSize.height)
+        }
+    }
+
+    /// Where an opened card goes. On a horizontal edge it hangs below the bar, sharing the bar's
+    /// top edge. On a vertical edge the bar is a vertical strip and the card shares its pet-side
+    /// edge instead — the strip rides the card's pet-side rim like a spine, and the growth is one
+    /// inward gesture. Either way the card starts where the bar starts along the shell's long
+    /// axis, and the bar itself never moves.
+    private static func hangDownFrame(
+        petCenter: CGPoint,
+        edge: DeloresCompanionEdge,
+        collapsedSize: CGSize,
+        expandedSize: CGSize
+    ) -> CGRect {
+        let pet = circleFrame(center: petCenter)
+        let top = pet.midY + collapsedSize.height / 2
+        let y = top - expandedSize.height
+        switch edge {
+        case .right:
+            return CGRect(
+                x: pet.minX - shellGap - expandedSize.width,
+                y: y, width: expandedSize.width, height: expandedSize.height)
+        case .left:
+            return CGRect(
+                x: pet.maxX + shellGap,
+                y: y, width: expandedSize.width, height: expandedSize.height)
+        case .top, .bottom:
+            return inwardFrame(
+                petVisible: pet, edge: edge, shellSize: expandedSize)
+        }
+    }
+
+    /// Keeps a shell inside what the display actually shows. A shell wider than the display is
+    /// shrunk to it rather than left hanging off both ends.
+    private static func clamp(_ rect: CGRect, to bounds: CGRect) -> CGRect {
+        var r = rect
+        if r.width > bounds.width { r.size.width = bounds.width }
+        if r.height > bounds.height { r.size.height = bounds.height }
+        if r.minX < bounds.minX { r.origin.x = bounds.minX }
+        if r.maxX > bounds.maxX { r.origin.x = bounds.maxX - r.width }
+        if r.minY < bounds.minY { r.origin.y = bounds.minY }
+        if r.maxY > bounds.maxY { r.origin.y = bounds.maxY - r.height }
+        return r
+    }
+}

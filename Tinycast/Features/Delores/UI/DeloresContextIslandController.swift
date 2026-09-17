@@ -68,6 +68,18 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// to a menu bar and there is one of those per display.
     private var screen: InvocationScreen?
 
+    /// The Companion this bar was grown from, when the Companion is what opened it. Nil is the menu
+    /// bar, which is the bar's ordinary home.
+    ///
+    /// Kept as the body's centre and the edge it rides rather than as a frame, because the body is
+    /// what the bar hangs on and it is the body that has to move when a shell does not fit.
+    private var companionAnchor: (center: CGPoint, edge: DeloresCompanionEdge)?
+
+    /// Told when a shell did not fit where the body was standing and the body had to slide along its
+    /// edge to make room. The Companion owns its own window, so it is the only thing that can move
+    /// it; without this the two would drift apart on screen.
+    var onCompanionRelocated: ((CGPoint, DeloresCompanionEdge) -> Void)?
+
     /// The bar's width, measured once while the bar is the only thing in the panel.
     ///
     /// Never re-measured: a card holds a paragraph, whose ideal width is the length of its longest
@@ -79,6 +91,20 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// would squeeze the two controls that state just added.
     private var barWidth: CGFloat = 0
     private var barWidthWithExits: CGFloat = 0
+
+    /// The strip's length along its long axis, carried the way the horizontal bar carries its
+    /// width: measured once, twice for the two control sets, held for every state after that.
+    /// Zero while the bar is horizontal, where the length is the menu bar's business.
+    private var barLength: CGFloat = 0
+    private var barLengthWithExits: CGFloat = 0
+
+    /// True when the bar is a vertical strip — the body stands on a vertical edge and the bar's
+    /// long axis follows it, cards opening inward across the strip's pet-side rim. Resolved the
+    /// way `planBarOpening` resolves it, so what is measured is what gets laid out.
+    private var barIsVertical = false
+    /// Which rim of the vessel the strip occupies: the pet-side one, so the card opens away from
+    /// the edge into the display. Only meaningful while `barIsVertical`.
+    private var barAtLeadingEdge = true
 
     /// The state the panel is showing, kept so a control that changes the *width* — the pin — can
     /// re-render without the caller restating what is on screen.
@@ -124,11 +150,13 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onStopAnswer: @escaping () -> Void,
         onRetryAnswer: @escaping () -> Void,
         onFollowUp: @escaping (String) -> Void,
-        onDismiss: @escaping () -> Void
+        onDismiss: @escaping () -> Void,
+        companion: (center: CGPoint, edge: DeloresCompanionEdge)? = nil
     ) {
         dismiss(notifying: false)
 
         screen = context.screen
+        companionAnchor = companion
         selectionText = context.text
         answer = nil
         isCardCollapsed = false
@@ -143,20 +171,36 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         followUpDraft = ""
 
         let wish = DeloresContextIslandView.preferredSize(for: metrics)
+        if let anchor = companionAnchor {
+            let resolved = DeloresCompanionShell.edgeForOpeningBar(
+                current: anchor.edge, petCenter: anchor.center,
+                visibleFrame: context.screen.visibleFrame)
+            barIsVertical = resolved == .left || resolved == .right
+            barAtLeadingEdge = resolved == .left
+        } else {
+            barIsVertical = false
+            barAtLeadingEdge = true
+        }
         // The height the bar is actually given, not the wish: the menu bar caps it, and content laid
         // out against the uncapped wish is what clipped the pills.
         let height = DeloresContextIslandPlacement.collapsedHeight(
             preferred: wish.height, in: context.screen)
-        barWidth = measuredBarWidth(
+        let closed = measuredBar(
             root: makeRoot(.actions), metrics: metrics, wish: wish, in: context.screen)
         // Measured against a card-opening state, because that is the state that also carries the
         // collapse control. A hand-off card's own width is its label's, which is narrower than the
         // bar, so what comes back is the bar's.
-        barWidthWithExits = measuredBarWidth(
+        let withExits = measuredBar(
             root: makeRoot(.handoff(progressTitle: "正在打开 AI 对话"), pinned: true),
             metrics: metrics, wish: wish, in: context.screen)
+        barWidth = closed.thickness
+        barWidthWithExits = withExits.thickness
+        barLength = barIsVertical ? closed.length : 0
+        barLengthWithExits = barIsVertical ? withExits.length : 0
         lastMode = .actions
-        let size = CGSize(width: barWidth, height: height)
+        let size = barIsVertical
+            ? CGSize(width: barWidth, height: barLength)
+            : CGSize(width: barWidth, height: height)
 
         // Hosted only after the measurement, because the row is pinned to the width that measurement
         // returned — and a row told its own width cannot report one.
@@ -187,9 +231,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         panel.isRestorable = false
         panel.delegate = self
         panel.contentView = hosting
-        panel.setFrame(
-            DeloresContextIslandPlacement.collapsedFrame(in: context.screen, size: size),
-            display: false)
+        let resting = restingFrame(size: size, in: context.screen)
+        panel.setFrame(resting, display: false)
         // Escape closes what this surface put up, and nothing else: an action still running behind the
         // card is cancelled with the surface that asked for it, which the coordinator does on the way
         // out. While the card is opening it cancels the press as well, because `onAction` does not
@@ -214,10 +257,16 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // The bar condenses out of the menu bar rather than fading in where it stands: it is put
         // `enterSlide` too high and animated down onto its resting place while it comes up to full
         // opacity, one eased 180ms action for both. A bare fade reads as a window switching on; this
-        // reads as the bar settling, which is what the toolbar this came from did.
-        let resting = DeloresContextIslandPlacement.collapsedFrame(in: context.screen, size: size)
-        panel.setFrame(
-            resting.offsetBy(dx: 0, dy: DeloresContextIslandPlacement.enterSlide), display: false)
+        // reads as the bar settling, which is what the toolbar this came from did. A vertical strip
+        // grows out of the body instead, so it comes in from the body's edge rather than from above.
+        let entrySlide = DeloresContextIslandPlacement.enterSlide
+        let entry: (dx: CGFloat, dy: CGFloat)
+        if barIsVertical {
+            entry = barAtLeadingEdge ? (-entrySlide, 0) : (entrySlide, 0)
+        } else {
+            entry = (0, entrySlide)
+        }
+        panel.setFrame(resting.offsetBy(dx: entry.dx, dy: entry.dy), display: false)
         panel.alphaValue = 0
         // Ordered in rather than made key: see `becomesKeyOnlyIfNeeded` above. Making it key here
         // is what swallowed the reader's very next keystrokes — copy, cut, delete — in the app they
@@ -250,6 +299,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         screen = nil
         barWidth = 0
         barWidthWithExits = 0
+        barLength = 0
+        barLengthWithExits = 0
+        barIsVertical = false
+        barAtLeadingEdge = true
         lastMode = .actions
         closing.delegate = nil
         closing.onEscape = nil
@@ -291,7 +344,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
                 }
                 return event
             }
-        ]
+        ].compactMap { $0 }
         // The palette does not click; it takes the keyboard. That is the other way out, and the
         // island steps aside for it exactly as it did when losing key was the mechanism.
         foreignKeyObserver = NotificationCenter.default.addObserver(
@@ -380,7 +433,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     // MARK: - Rendering
 
     private func makeRoot(
-        _ mode: DeloresContextIslandMode, pinned: Bool? = nil, rowWidth: CGFloat = 0
+        _ mode: DeloresContextIslandMode, pinned: Bool? = nil, rowWidth: CGFloat = 0,
+        rowLength: CGFloat = 0
     ) -> DeloresContextIslandView {
         let actions = presented?.actions ?? []
         let metrics = presented?.metrics ?? .standard
@@ -393,8 +447,13 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             actions: actions,
             mode: mode,
             isPinned: pinned ?? isPinned,
-            barHeight: barHeight,
+            // The short axis is the bar's height on the menu bar and the strip's thickness on a
+            // vertical edge — either way it is the room the row itself takes across it.
+            barHeight: barIsVertical ? barWidth : barHeight,
+            isVertical: barIsVertical,
+            barAtLeadingEdge: barAtLeadingEdge,
             pinnedBarWidth: rowWidth,
+            pinnedBarLength: rowLength,
             onAction: { [weak self] action in
                 guard let self else { return }
                 if action.requiresChatHandoff {
@@ -454,8 +513,11 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let wish = DeloresContextIslandView.preferredSize(for: metrics)
         let barHeight = DeloresContextIslandPlacement.collapsedHeight(
             preferred: wish.height, in: screen)
-        // Which bar this state draws decides how wide the vessel has to be.
+        // Which bar this state draws decides how wide the vessel has to be. A vertical strip asks
+        // the same question along its own axis — which column it draws decides how long the vessel
+        // has to be.
         let row = isPinned || mode.opensCard ? barWidthWithExits : barWidth
+        let rowLength = isPinned || mode.opensCard ? barLengthWithExits : barLength
         // The row is drawn at the collapsed bar's width in every state, so a wider row is room the
         // vessel has to hold rather than a reason to move the catalog. See `vesselWidth`.
         let vessel = DeloresContextIslandPlacement.vesselWidth(
@@ -478,6 +540,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
                     : DeloresContextIslandPlacement.expandedHeight(
                         preferred: targetHeight,
                         in: screen))
+        } else if barIsVertical {
+            size = CGSize(width: vessel, height: rowLength)
         } else {
             size = CGSize(width: vessel, height: barHeight)
         }
@@ -485,15 +549,17 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
         // Laid out for the card it becomes before the frame animates, so the growth reveals the card
         // rather than stretching the bar.
-        let root = makeRoot(mode, rowWidth: barWidth)
+        let root = makeRoot(mode, rowWidth: barWidth, rowLength: barLength)
         let hosting = DeloresFirstMouseHostingView(
             rootView: hosted(root, size: size, metrics: metrics))
         hosting.sizingOptions = []
         hosting.setFrameSize(NSSize(width: size.width, height: size.height))
         let anchored = panel.frame
         panel.contentView = hosting
-        let target = DeloresContextIslandPlacement.expandedFrame(
-            keepingTopEdgeOf: anchored, size: size, in: screen)
+        let target =
+            mode.opensCard
+            ? cardFrame(size: size, barHeight: barHeight, anchored: anchored, in: screen)
+            : restingFrame(size: size, in: screen)
 
         guard animated, target != anchored else {
             panel.setFrame(target, display: true)
@@ -508,12 +574,17 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // length of the animation. Taking the width first puts the room there before the controls are
         // drawn in it; growing downward is the gesture, and the width is only the room for it.
         //
-        // Nothing moves sideways by doing this: the panel is centred on its display, so widening it
-        // symmetrically leaves the pinned row exactly where it was.
-        let widened = CGRect(
-            x: target.minX, y: anchored.minY, width: target.width, height: anchored.height)
-        if widened != anchored {
-            panel.setFrame(widened, display: true)
+        // Nothing moves sideways by doing this *on the menu bar*: the panel is centred on its
+        // display, so widening it symmetrically leaves the pinned row exactly where it was. A bar
+        // hung from the Companion is held by the edge nearest the body instead, and widening that
+        // one moves its far edge only — which is the direction the card is growing in anyway, so the
+        // width may simply travel with the height.
+        if companionAnchor == nil {
+            let widened = CGRect(
+                x: target.minX, y: anchored.minY, width: target.width, height: anchored.height)
+            if widened != anchored {
+                panel.setFrame(widened, display: true)
+            }
         }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Card.growth
@@ -525,6 +596,49 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             // without a new one would keep the old outline.
             MainActor.assumeIsolated { self?.panel?.invalidateShadow() }
         }
+    }
+
+    // MARK: - Where the bar hangs
+
+    /// Where a closed bar goes: hung under the menu bar, or grown from the Companion's inward side
+    /// when the Companion is what opened it.
+    private func restingFrame(size: CGSize, in screen: InvocationScreen) -> CGRect {
+        guard let pet = companionAnchor else {
+            return DeloresContextIslandPlacement.collapsedFrame(in: screen, size: size)
+        }
+        let placement = DeloresCompanionShell.planBarOpening(
+            petCenter: pet.center, edge: pet.edge, shellSize: size,
+            visibleFrame: screen.visibleFrame)
+        adopt(placement)
+        return placement.frame
+    }
+
+    /// Where an opened card goes. Hung from the closed bar's top edge, so the growth is one downward
+    /// gesture and the bar itself never moves — except on a vertical edge, where a card that would
+    /// run off the bottom lifts the Companion with it rather than being clipped.
+    private func cardFrame(
+        size: CGSize, barHeight: CGFloat, anchored: CGRect, in screen: InvocationScreen
+    ) -> CGRect {
+        guard let pet = companionAnchor else {
+            return DeloresContextIslandPlacement.expandedFrame(
+                keepingTopEdgeOf: anchored, size: size, in: screen)
+        }
+        let placement = DeloresCompanionShell.planExpandedBarOpening(
+            petCenter: pet.center, edge: pet.edge,
+            collapsedSize: CGSize(width: barWidth, height: barIsVertical ? barLength : barHeight),
+            expandedSize: size, visibleFrame: screen.visibleFrame)
+        adopt(placement)
+        return placement.frame
+    }
+
+    /// The body had to move to make room. The Companion owns its own window, so the most this can do
+    /// is say so.
+    private func adopt(_ placement: DeloresCompanionShell.Placement) {
+        guard companionAnchor?.center != placement.petCenter
+            || companionAnchor?.edge != placement.edge
+        else { return }
+        companionAnchor = (placement.petCenter, placement.edge)
+        onCompanionRelocated?(placement.petCenter, placement.edge)
     }
 
     /// The card's opening for an answer that lands elsewhere. Its own buttons are inert: one press is
@@ -553,22 +667,28 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         }
     }
 
-    /// The bar's width, measured the way the toolbar it came from measured itself: lay the content
-    /// out, then read the ideal width off a hosting view that is allowed to publish one.
+    /// The bar's axes, measured the way the toolbar it came from measured itself: lay the content
+    /// out, then read the ideal size off a hosting view that is allowed to publish one. The
+    /// thickness is read for the horizontal bar's width and the strip's width alike — a column that
+    /// comes back wider than the display is not a column — and the length carries the strip's
+    /// height, capped at the display for the same reason.
     ///
     /// Measuring happens on a probe, never on the real view — a hosting view with `sizingOptions`
     /// emptied reports a fitting size of zero (measured), and the real one needs `sizingOptions`
     /// empty so this controller owns its frame. `barWidth` reads a zero as "no measurement" and
     /// falls back, so a probe that fails to report costs a wide bar rather than a clipped one.
-    private func measuredBarWidth(
+    private func measuredBar(
         root: DeloresContextIslandView, metrics: InterfaceMetrics, wish: CGSize,
         in screen: InvocationScreen
-    ) -> CGFloat {
+    ) -> (thickness: CGFloat, length: CGFloat) {
         let probe = NSHostingView(rootView: root.environment(\.metrics, metrics))
         probe.setFrameSize(NSSize(width: wish.width, height: wish.height))
         probe.layoutSubtreeIfNeeded()
-        return DeloresContextIslandPlacement.barWidth(
-            hugging: probe.fittingSize.width, in: screen)
+        let hugging = probe.fittingSize
+        return (
+            DeloresContextIslandPlacement.barWidth(hugging: hugging.width, in: screen),
+            min(hugging.height, screen.visibleFrame.height)
+        )
     }
 
     /// The selection, not a result: this bar hangs over a selection, and copying it is the one thing

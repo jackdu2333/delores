@@ -1,6 +1,23 @@
 import AppKit
 import Observation
 
+/// The Companion, as the Context Surface sees it.
+///
+/// Deliberately not a reference to the Companion: the bar only ever needs to ask where to hang, to
+/// report that the body had to move, and to say whether a shell is on screen. Without one of these
+/// the bar hangs from the menu bar, which is its ordinary home, so every part of this is optional as
+/// a whole rather than piece by piece.
+struct DeloresContextCompanionHosting {
+    /// Where a shell opened on the display whose visible area is this should hang. Nil sends the bar
+    /// to the menu bar — the Companion is off, or its body is not on screen.
+    var anchor: (CGRect) -> (center: CGPoint, edge: DeloresCompanionEdge)?
+    /// A shell did not fit where the body was standing, and the body had to slide along its edge.
+    var relocate: (CGPoint, DeloresCompanionEdge) -> Void
+    /// A shell hung off the body came on screen, or went away. While one is up the body stands
+    /// still: a body that walked out from under the bar it opened leaves the bar over nothing.
+    var held: (Bool) -> Void
+}
+
 /// Routes a captured selection to whatever the reader pressed.
 @MainActor
 @Observable
@@ -36,6 +53,8 @@ final class DeloresContextCoordinator {
     private(set) var context: InvocationContext?
     private(set) var isMonitoring = false
     var onSelectionPresented: ((String) -> Void)?
+    /// Set when the Companion is the thing a bar should hang from. Nil is a bar on the menu bar.
+    @ObservationIgnored var companionHosting: DeloresContextCompanionHosting?
 
     /// True while the reader is holding a selection on the Context Surface. A surface behind it reads
     /// this to tell "the keyboard moved to the reader's own pinned bar" apart from "the reader left".
@@ -194,6 +213,17 @@ final class DeloresContextCoordinator {
         // The bar is being replaced, and with it the selection the last answer was about.
         cancelAnswer()
 
+        // Hung off the Companion when the Companion is what the reader is looking at, and off the
+        // menu bar otherwise. The body is asked where it is standing before the bar is built,
+        // because the bar's own size is what decides whether the body then has to move.
+        let pet = companionHosting?.anchor(screen.visibleFrame)
+        island.onCompanionRelocated = { [weak self] center, edge in
+            self?.companionHosting?.relocate(center, edge)
+        }
+        // Told either way rather than only when there is one: the bar before this one may have been
+        // holding the body still, and a replacement that went to the menu bar has to let it go.
+        companionHosting?.held(pet != nil)
+
         island.present(
             context: selection,
             actions: barActions(),
@@ -203,7 +233,8 @@ final class DeloresContextCoordinator {
             onStopAnswer: { [weak self] in self?.stopAnswering() },
             onRetryAnswer: { [weak self] in self?.askAgain() },
             onFollowUp: { [weak self] question in self?.followUp(question) },
-            onDismiss: { [weak self] in self?.surfaceDismissed() })
+            onDismiss: { [weak self] in self?.surfaceDismissed() },
+            companion: pet)
     }
 
     private func run(_ action: DeloresContextAction) {
@@ -336,6 +367,8 @@ final class DeloresContextCoordinator {
     }
 
     private func clearContext() {
+        // Nothing of ours is on screen, so nothing is holding the Companion still any more.
+        companionHosting?.held(false)
         context = nil
         targetApplication = nil
         // Closing out the surface closes out the conversation with it: a question typed under one

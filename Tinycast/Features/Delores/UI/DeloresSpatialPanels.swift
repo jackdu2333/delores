@@ -138,7 +138,9 @@ enum DeloresSnapSlot {
 }
 
 final class DeloresSnapIslandPanel: NSPanel {
-    private let islandSize = SnapIslandGeometry.size
+    private(set) var layout: SnapIslandGeometry.Layout = .horizontal
+    /// Where the island last settled, so a run already resting there is left alone.
+    private var restingFrame: CGRect?
     private var activeScreen: NSScreen?
     private let hosting: NSHostingView<DeloresSnapIslandView>
     private let state = DeloresSnapIslandState()
@@ -149,33 +151,70 @@ final class DeloresSnapIslandPanel: NSPanel {
     init() {
         let hosting = NSHostingView(rootView: DeloresSnapIslandView(state: state))
         hosting.sizingOptions = []
-        hosting.frame = CGRect(origin: .zero, size: islandSize)
+        hosting.frame = CGRect(origin: .zero, size: SnapIslandGeometry.size)
         self.hosting = hosting
         super.init(
-            contentRect: CGRect(origin: .zero, size: islandSize),
+            contentRect: CGRect(origin: .zero, size: SnapIslandGeometry.size),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .popUpMenu; ignoresMouseEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         contentView = hosting
     }
     override var canBecomeKey: Bool { false }
-    /// The island drops into place from just above where it will rest, on the reference's own
-    /// numbers — 14pt over 240ms — and its contents come up on a spring inside that. Arriving is
-    /// most of what makes it read as something that appeared *for this drag* rather than as a strip
-    /// that had been sitting there.
-    ///
-    /// Already up on the same display is not re-flown. Dragging near the top fires repeatedly, and
-    /// restarting the animation on every frame would leave the island permanently mid-arrival.
-    func show(on screen: NSScreen) {
-        if isVisible, activeScreen?.frame == screen.frame { return }
-        activeScreen = screen
-        let width = islandSize.width
-        let height = islandSize.height
+    /// The fallback with no Companion in sight: the island drops into place at the top centre of
+    /// the display, on the reference's own numbers — 14pt over 240ms — and its contents come up on
+    /// a spring inside that. Arriving is most of what makes it read as something that appeared
+    /// *for this drag* rather than as a strip that had been sitting there.
+    func showAtTopCenter(on screen: NSScreen) {
+        let layout = SnapIslandGeometry.Layout.horizontal
+        let width = layout.size.width
+        let height = layout.size.height
         let resting = CGRect(
             x: round(screen.frame.midX - width / 2),
             y: max(screen.visibleFrame.maxY - height - 6, screen.frame.maxY - height - 8),
             width: width, height: height)
-        setFrame(resting.offsetBy(dx: 0, dy: Self.enterSlide), display: false)
+        flyIn(
+            to: resting, layout: layout, screen: screen,
+            from: CGVector(dx: 0, dy: Self.enterSlide))
+    }
+
+    /// Beside the body a window was brought to, with the island's long axis along the edge the body
+    /// rides. The island comes in from the body's side rather than from above, which is what makes
+    /// it read as having grown out of the body rather than dropped onto the edge.
+    func showBesideBody(_ placement: DeloresCompanionShell.Placement, on screen: NSScreen) {
+        let layout = SnapIslandGeometry.layout(forEdge: placement.edge)
+        let slide = Self.enterSlide
+        let from: CGVector
+        switch placement.edge {
+        case .top: from = CGVector(dx: 0, dy: slide)
+        case .bottom: from = CGVector(dx: 0, dy: -slide)
+        case .left: from = CGVector(dx: -slide, dy: 0)
+        case .right: from = CGVector(dx: slide, dy: 0)
+        }
+        flyIn(to: placement.frame, layout: layout, screen: screen, from: from)
+    }
+
+    /// The one place an arrival is performed: laid out for the layout it lands in, put just off its
+    /// resting place on the side it comes from, then settled onto it.
+    ///
+    /// A run already resting exactly there is not re-flown. Dragging near the top fires repeatedly,
+    /// and restarting the animation on every frame would leave the island permanently mid-arrival.
+    private func flyIn(
+        to resting: CGRect,
+        layout: SnapIslandGeometry.Layout,
+        screen: NSScreen,
+        from offset: CGVector
+    ) {
+        if isVisible, activeScreen?.frame == screen.frame, self.layout == layout,
+            restingFrame == resting
+        { return }
+        activeScreen = screen
+        self.layout = layout
+        restingFrame = resting
+        hosting.rootView = DeloresSnapIslandView(state: state, layout: layout)
+        hosting.frame = CGRect(origin: .zero, size: layout.size)
+        let entered = resting.offsetBy(dx: offset.dx, dy: offset.dy)
+        setFrame(entered, display: false)
         alphaValue = 0
         orderFrontRegardless()
 
@@ -202,9 +241,9 @@ final class DeloresSnapIslandPanel: NSPanel {
     func slot(at point: CGPoint) -> DeloresSnapSlot? {
         guard activeScreen != nil, frame.contains(point) else { return nil }
         let local = CGPoint(x: point.x - frame.minX, y: point.y - frame.minY)
-        guard SnapIslandGeometry.bounds.contains(local) else { return nil }
+        guard layout.bounds.contains(local) else { return nil }
         for card in SnapIslandGeometry.Card.allCases {
-            let rect = SnapIslandGeometry.rect(for: card)
+            let rect = layout.rect(for: card)
             guard rect.contains(local) else { continue }
             let ratio = (local.x - rect.minX) / rect.width
             switch card {
@@ -214,7 +253,7 @@ final class DeloresSnapIslandPanel: NSPanel {
                 return ratio <= SnapIslandGeometry.mainSideSplitRatio ? .mainWorkspace : .sideWorkspace
             case .quarter:
                 let isLeft = ratio <= 0.5
-                let isTop = local.y >= SnapIslandGeometry.quarterCenterY
+                let isTop = local.y >= rect.midY
                 if isTop { return isLeft ? .topLeft : .topRight }
                 return isLeft ? .bottomLeft : .bottomRight
             case .thirds:
@@ -241,7 +280,39 @@ struct SnapIslandGeometry {
         }
     }
 
+    /// Which way the island lays its cards out: a horizontal island on a horizontal edge, a
+    /// vertical one on a vertical edge. The cards themselves never rotate — a card's glyphs are
+    /// drawn for the width the card has either way — only the row they stand in does.
+    enum Layout {
+        case horizontal, vertical
+
+        var size: CGSize {
+            switch self {
+            case .horizontal: return SnapIslandGeometry.size
+            case .vertical: return SnapIslandGeometry.verticalSize
+            }
+        }
+
+        var bounds: CGRect { CGRect(origin: .zero, size: size) }
+
+        func rect(for card: Card) -> CGRect {
+            let index = CGFloat(Card.allCases.firstIndex(of: card) ?? 0)
+            switch self {
+            case .horizontal:
+                return CGRect(
+                    x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
+                    width: cardWidth, height: cardHeight)
+            case .vertical:
+                return CGRect(
+                    x: horizontalPadding, y: verticalPadding + index * (cardHeight + gap),
+                    width: cardWidth, height: cardHeight)
+            }
+        }
+    }
+
     static let size = CGSize(width: 620, height: 88)
+    /// The vertical island: same cards, same paddings, stacked — the reference's own numbers.
+    static let verticalSize = CGSize(width: 164, height: 340)
     static let horizontalPadding: CGFloat = 12
     static let verticalPadding: CGFloat = 8
     static let gap: CGFloat = 12
@@ -255,10 +326,13 @@ struct SnapIslandGeometry {
     static let glyphCornerRadius: CGFloat = 4.5
 
     static func rect(for card: Card) -> CGRect {
-        let index = CGFloat(Card.allCases.firstIndex(of: card) ?? 0)
-        return CGRect(
-            x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
-            width: cardWidth, height: cardHeight)
+        Layout.horizontal.rect(for: card)
+    }
+
+    /// The layout an island takes beside a body standing on `edge` — the island's long axis
+    /// follows the edge.
+    static func layout(forEdge edge: DeloresCompanionEdge) -> Layout {
+        edge == .left || edge == .right ? .vertical : .horizontal
     }
 
     static var mainSideSplitRatio: CGFloat {
@@ -279,25 +353,41 @@ final class DeloresSnapIslandState: ObservableObject {
 
 struct DeloresSnapIslandView: View {
     @ObservedObject var state: DeloresSnapIslandState
+    var layout: SnapIslandGeometry.Layout = .horizontal
     @Environment(\.colorScheme) private var colorScheme
 
     private var isDark: Bool { colorScheme == .dark }
 
     var body: some View {
-        HStack(spacing: SnapIslandGeometry.gap) {
-            card(.halfSplit)
-            card(.mainSide)
-            card(.quarter)
-            card(.thirds)
+        cards
+            .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
+            .padding(.vertical, SnapIslandGeometry.verticalPadding)
+            .frame(width: layout.size.width, height: layout.size.height)
+            .background(
+                DeloresVisualEffectView(material: .popover, blending: .behindWindow)
+                    .clipShape(Capsule()))
+            .scaleEffect(state.isAppearing ? 1 : 0.96)
+            .opacity(state.isAppearing ? 1 : 0)
+    }
+
+    /// The same four cards either way — a card's glyphs are drawn for its width, never rotated —
+    /// only the row they stand in turns with the edge.
+    @ViewBuilder
+    private var cards: some View {
+        switch layout {
+        case .horizontal:
+            HStack(spacing: SnapIslandGeometry.gap) { islandCards }
+        case .vertical:
+            VStack(spacing: SnapIslandGeometry.gap) { islandCards }
         }
-        .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
-        .padding(.vertical, SnapIslandGeometry.verticalPadding)
-        .frame(width: SnapIslandGeometry.size.width, height: SnapIslandGeometry.size.height)
-        .background(
-            DeloresVisualEffectView(material: .popover, blending: .behindWindow)
-                .clipShape(Capsule()))
-        .scaleEffect(state.isAppearing ? 1 : 0.96)
-        .opacity(state.isAppearing ? 1 : 0)
+    }
+
+    @ViewBuilder
+    private var islandCards: some View {
+        card(.halfSplit)
+        card(.mainSide)
+        card(.quarter)
+        card(.thirds)
     }
 
     /// A line that takes the light along its top edge and falls into shadow along its bottom.

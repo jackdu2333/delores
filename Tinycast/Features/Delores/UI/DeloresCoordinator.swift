@@ -17,6 +17,18 @@ final class DeloresCoordinator {
         snapping.onWindowSnapped = { [weak divider] window, slot, rect, screen in divider?.registerSnappedWindow(window, slot: slot, rect: rect, screen: screen) }
         self.context = context; self.companion = companion; self.snapping = snapping; self.divider = divider
         context.onSelectionPresented = { [weak companion] text in companion?.recordSelection(text) }
+        // The Companion is the bar's other home: with it on, a bar grows out of the body's inward
+        // side rather than down out of the menu bar.
+        context.companionHosting = DeloresContextCompanionHosting(
+            anchor: { [weak companion] visibleFrame in companion?.anchorForShell(in: visibleFrame) },
+            relocate: { [weak companion] center, edge in companion?.relocate(to: center, edge: edge) },
+            held: { [weak companion] isHeld in
+                if isHeld { companion?.holdForShell() } else { companion?.releaseShell() }
+            })
+        // A snap island grows out of the body the same way: with the Companion on, a window is
+        // brought to the body itself, and only a display the body is not standing on still has the
+        // top-centre fallback. Read-only — a drag must not move the body to meet it.
+        snapping.companionAnchor = { [weak companion] screen in companion?.bodyAnchor(on: screen) }
     }
     func applyEnabled() {
         // The first call is launch, and the main actor is still digesting startup: every mouse

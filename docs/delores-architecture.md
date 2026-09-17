@@ -91,6 +91,16 @@ anchor is a fraction of the way down the visible frame (`paletteTopMarginFractio
 action belongs at the status bar; the two cannot share one window without moving where ⌥Space puts
 the palette.
 
+**The status bar is not its only home.** With the Companion on, a bar grown for a selection the
+Companion handed over hangs off the body's inward side instead — `DeloresCompanionShell` decides where,
+and reports when the body had to slide along its own edge to make room, because the Companion owns its
+window and is the only thing that can move it. The bar's long axis follows the body's edge: horizontal
+under a top/bottom pet, vertical beside a left/right one, with the strip against the pet's side edge
+acting as the spine the card grows away from. While such a bar is up the body stands still: one that
+walked out from under the bar it opened leaves that bar over nothing. Without a Companion — or with its
+body off screen — the bar goes back to the menu bar, which is its ordinary home, and the reason every
+part of `DeloresContextCompanionHosting` is optional as a whole rather than piece by piece.
+
 Arbitration is by the keyboard, and only the palette takes it by being summoned. The island is
 ordered in without key (`becomesKeyOnlyIfNeeded`): it appears over a selection the reader may still
 be editing, so ⌘C, ⌘X and Delete must reach their app, and the bar answers for the keyboard only
@@ -123,8 +133,9 @@ visual decision of its own:
   toolbar it came from. The palette draws with `NSVisualEffectView(.hudWindow)` under a
   reader-configurable scrim. The two are on screen together only across the hand-off's fade, and
   they were left as they are on that basis.
-- **Window level.** The island is at `.statusBar` so it sits over the menu bar it is anchored to; the
-  palette is at `.floating`. Across the hand-off the outgoing island therefore draws over the
+- **Window level.** The island is at `.statusBar` so it sits over both of its anchors — the menu bar,
+  its ordinary home, and the Companion (`.floating`) a bar can be grown out of beside; the palette is
+  at `.floating`. Across the hand-off the outgoing island therefore draws over the
   incoming palette until its exit fade (`Theme.Duration.exit`) ends.
 
 ## What Pin holds
@@ -251,11 +262,15 @@ harness.
 
 The old Ghost XOR Companion exclusion is gone. Huaci turned snap and the divider off whenever the pet
 started. Delores treats those as capabilities that can be enabled together; only the live gesture is
-exclusive. The pet and the snap island can both occupy the top of the display, so that combination
-still needs a machine pass.
+exclusive. With the pet on, dragging a window over its body opens the snap island beside the pet —
+`planIslandOpening` places it with its long axis along the pet's edge, a horizontal island under a
+top/bottom pet and a vertical one beside a left/right pet. The top-center trigger survives only as
+the no-pet fallback: with the pet off, or its body off that screen, the island opens at the top of
+the display as it always did.
 
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
-automated test:
+automated test. They are the Spatial half of the story; the full designed-but-unbuilt inventory,
+including items outside this document's scope, is kept in [delores-backlog.md](delores-backlog.md):
 
 - `findSplitPair` filters on-screen windows spanning the pointer's height, but does not yet exclude
   occluded windows, other Spaces, or apps whose focused window is elsewhere. Snapping captures the
@@ -377,9 +392,10 @@ by hand or its seam is silently untested. Everything in `UI/` — the island, th
 island, the divider — is outside it, so UI-layer policy has no unit test and can only be checked by
 building and watching the running app.
 
-Two checks in [testing.md](testing.md) need Xcode, and this machine has none: the build, and anything
-that expands a SwiftUI macro. What does run here, and what is still owed, is tracked in
-[delores-verification.md](delores-verification.md) rather than restated here. On a machine with Xcode:
+Both checks in [testing.md](testing.md) that used to need Xcode now run here: Xcode 27 has been
+installed and selected since 2026-09-17, and the Debug build passes with no warnings. What runs here,
+and what is still owed, is tracked in [delores-verification.md](delores-verification.md) rather than
+restated here:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -387,8 +403,9 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 ./Scripts/lint.sh
 ```
 
-`lint.sh` needs SwiftLint, and SwiftLint needs a toolchain that can load `sourcekitd`; the override
-that works on a Command Line Tools machine is in [delores-verification.md](delores-verification.md).
+`lint.sh` needs SwiftLint, which is **not** currently installed on this machine — reinstall it with
+`brew install swiftlint`. On a Command Line Tools machine SwiftLint additionally needs a toolchain
+that can load `sourcekitd`, and the override for that is in [delores-verification.md](delores-verification.md).
 Its second half, `Scripts/check-settings-search.js`, went unnoticed for a long time because of this.
 CI selects Xcode 26 and does not build the app.
 
