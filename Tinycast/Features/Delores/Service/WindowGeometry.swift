@@ -1,8 +1,8 @@
 import AppKit
 @preconcurrency import ApplicationServices
 
-@MainActor
 enum DeloresWindowGeometry {
+    @MainActor
     static func focusedWindow(of app: NSRunningApplication) -> AXUIElement? {
         let appElement = AXWindowAccess.application(for: app.processIdentifier)
         guard let window = AXWindowAccess.targetWindow(in: appElement),
@@ -10,6 +10,7 @@ enum DeloresWindowGeometry {
         AXUIElementSetMessagingTimeout(window, AXWindowAccess.messagingTimeout)
         return window
     }
+    @MainActor
     @discardableResult
     static func setWindowFrame(_ window: AXUIElement, rect: CGRect) -> Bool {
         let geometry = AXGeometry(screens: NSScreen.screens)
@@ -23,7 +24,9 @@ enum DeloresWindowGeometry {
         let tolerance = AXWindowAccess.clampTolerance
         return abs(validated.minX - axRect.minX) <= tolerance && abs(validated.minY - axRect.minY) <= tolerance && (!canResize || (abs(validated.width - axRect.width) <= tolerance && abs(validated.height - axRect.height) <= tolerance))
     }
+    @MainActor
     static func activeScreen() -> NSScreen? { NSScreen.main ?? NSScreen.screens.first }
+    @MainActor
     static func screenContaining(_ point: CGPoint) -> NSScreen? {
         NSScreen.screens.first { $0.frame.contains(point) } ?? activeScreen()
     }
