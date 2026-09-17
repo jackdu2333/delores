@@ -74,7 +74,7 @@ extension SettingsAnchor {
     static let windowManagementOptions = Self(tab: .windowManagement, title: "Options")
 
     static let deloresCompanion = Self(tab: .delores, title: "Companion")
-    static let deloresSpatial = Self(tab: .delores, title: "Spatial")
+    static let deloresSpatial = Self(tab: .delores, title: "Window Capabilities")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")
     static let clipboardCommands = Self(tab: .clipboard, title: "Commands")

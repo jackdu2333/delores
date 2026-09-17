@@ -1,7 +1,7 @@
 import Combine
 import SwiftUI
 
-/// The Spatial half of Delores: the Companion, window snapping and the split divider.
+/// The Delores pane: the Companion Surface, and the two window capabilities behind it.
 struct DeloresSpatialSettingsView: View {
     @Environment(AppSettings.self) private var settings
 
@@ -13,16 +13,24 @@ struct DeloresSpatialSettingsView: View {
         @Bindable var settings = settings
         return Form {
             Section {
-                Toggle("Enable desktop companion", isOn: $settings.deloresCompanionEnabled)
-                    .settingsAnchor(.deloresCompanion)
+                Toggle(isOn: $settings.deloresCompanionEnabled) {
+                    SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
+                    Text(
+                        "The companion that is simply there: patrols the edge of the display, and "
+                            + "reopens your last selection when you double-click it. While it is on, "
+                            + "window snapping and the split divider stay off."
+                    )
+                }
+            } header: {
+                SettingsSectionHeader(.deloresCompanion)
+            } footer: {
                 Text(
-                    "Shows the small companion on the desktop. While it is on it takes over the "
-                        + "Spatial surface, and window snapping and the split divider stop."
+                    "The companion is a Surface, not a second chat client: it has no actions, "
+                        + "history or model of its own. It hands you to the Context or Command "
+                        + "Surface, which own those."
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            } header: {
-                Text("Companion")
             }
 
             Section {
@@ -38,19 +46,24 @@ struct DeloresSpatialSettingsView: View {
                         Button("Open System Settings") { Permissions.openAccessibilitySettings() }
                     }
                 }
-                Toggle("Enable window snapping", isOn: snappingBinding)
-                    .disabled(settings.deloresCompanionEnabled)
-                Toggle("Enable split divider", isOn: dividerBinding)
-                    .disabled(settings.deloresCompanionEnabled)
-                    .settingsAnchor(.deloresSpatial)
-                Text(
-                    "Drag a window to the top-center island to choose a layout. Move the pointer "
-                        + "onto the seam between two tiled windows to resize them together."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Toggle(isOn: snappingBinding) {
+                    SettingsRowTitle(.deloresSpatial, "Enable window snapping")
+                    Text(
+                        "Drag a window up to the island at the top of the display, and drop it on "
+                            + "the layout you want."
+                    )
+                }
+                .disabled(settings.deloresCompanionEnabled)
+                Toggle(isOn: dividerBinding) {
+                    SettingsRowTitle(.deloresSpatial, "Enable split divider")
+                    Text(
+                        "Move the pointer onto the seam between two tiled windows to resize them "
+                            + "together."
+                    )
+                }
+                .disabled(settings.deloresCompanionEnabled)
             } header: {
-                Text("Spatial")
+                SettingsSectionHeader(.deloresSpatial)
             } footer: {
                 Text(
                     "Both read and move other apps' windows through the same Accessibility "
@@ -66,7 +79,7 @@ struct DeloresSpatialSettingsView: View {
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
     }
 
-    /// Snap and divider both write window frames, so the grant is asked for where the reader turns
+    /// The window capabilities write window frames, so the grant is asked for where the reader turns
     /// them on — an explicit gesture — rather than at launch.
     private var snappingBinding: Binding<Bool> {
         Binding(

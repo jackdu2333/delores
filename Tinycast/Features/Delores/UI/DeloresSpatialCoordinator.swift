@@ -250,7 +250,8 @@ final class DeloresSpatialCoordinator {
 
     private func startSnapping() {
         guard snapMonitor == nil else { return }
-        snapMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
+        let watched: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseDragged, .leftMouseUp]
+        snapMonitor = NSEvent.addGlobalMonitorForEvents(matching: watched) { [weak self] event in
             let type = event.type
             let point = NSEvent.mouseLocation
             Task { @MainActor [weak self] in self?.handleSnap(type, at: point) }
@@ -501,7 +502,9 @@ final class DeloresSpatialCoordinator {
     private func findSplitPair(near point: CGPoint) -> SplitPair? {
         guard let screen = screenContaining(point) else { return nil }
         let geometry = AXGeometry(screens: NSScreen.screens)
-        let infos = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]) ?? []
+        let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+        let listed = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]]
+        let infos = listed ?? []
         var candidates: [(pid: pid_t, rect: CGRect)] = []
         for info in infos {
             guard (info[kCGWindowLayer as String] as? Int) == 0,
@@ -591,7 +594,9 @@ private final class DeloresCompanionPanel: NSPanel {
     var center: CGPoint { CGPoint(x: frame.midX, y: frame.midY) }
 
     init() {
-        super.init(contentRect: CGRect(x: 0, y: 0, width: 44, height: 44), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        super.init(
+            contentRect: CGRect(x: 0, y: 0, width: 44, height: 44),
+            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
@@ -706,7 +711,9 @@ private final class DeloresSnapIslandPanel: NSPanel {
         hosting.sizingOptions = []
         hosting.frame = CGRect(origin: .zero, size: islandSize)
         self.hosting = hosting
-        super.init(contentRect: CGRect(origin: .zero, size: islandSize), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        super.init(
+            contentRect: CGRect(origin: .zero, size: islandSize),
+            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .popUpMenu; ignoresMouseEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         contentView = hosting
@@ -824,7 +831,9 @@ private final class DeloresDividerPanel: NSPanel {
     static let width: CGFloat = 36
 
     init() {
-        super.init(contentRect: CGRect(x: 0, y: 0, width: Self.width, height: 200), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        super.init(
+            contentRect: CGRect(x: 0, y: 0, width: Self.width, height: 200),
+            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
@@ -891,15 +900,40 @@ private final class DeloresDividerView: NSView {
 private struct DeloresVisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blending: NSVisualEffectView.BlendingMode
-    func makeNSView(context: Context) -> NSVisualEffectView { let view = NSVisualEffectView(); view.material = material; view.blendingMode = blending; view.state = .active; return view }
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blending
+        view.state = .active
+        return view
+    }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
 private enum DeloresCompanionEdge { case top, bottom, left, right }
+
+/// The edge of `frame` the point is closest to. Ties go to the right edge, which is where the
+/// companion starts.
 private func nearestEdge(_ point: CGPoint, _ frame: CGRect) -> DeloresCompanionEdge {
-    [(DeloresCompanionEdge.left, abs(point.x - frame.minX)), (.right, abs(frame.maxX - point.x)), (.top, abs(frame.maxY - point.y)), (.bottom, abs(point.y - frame.minY))].min(by: { $0.1 < $1.1 })?.0 ?? .right
+    let distances: [(DeloresCompanionEdge, CGFloat)] = [
+        (.left, abs(point.x - frame.minX)),
+        (.right, abs(frame.maxX - point.x)),
+        (.top, abs(frame.maxY - point.y)),
+        (.bottom, abs(point.y - frame.minY)),
+    ]
+    return distances.min(by: { $0.1 < $1.1 })?.0 ?? .right
 }
-private func snapPoint(_ point: CGPoint, edge: DeloresCompanionEdge, in frame: CGRect) -> CGPoint {
-    let x = min(max(point.x, frame.minX), frame.maxX), y = min(max(point.y, frame.minY), frame.maxY)
-    switch edge { case .left: return CGPoint(x: frame.minX, y: y); case .right: return CGPoint(x: frame.maxX, y: y); case .top: return CGPoint(x: x, y: frame.maxY); case .bottom: return CGPoint(x: x, y: frame.minY) }
+
+/// Puts a point onto the given edge, keeping its position along that edge.
+private func snapPoint(
+    _ point: CGPoint, edge: DeloresCompanionEdge, in frame: CGRect
+) -> CGPoint {
+    let x = min(max(point.x, frame.minX), frame.maxX)
+    let y = min(max(point.y, frame.minY), frame.maxY)
+    switch edge {
+    case .left: return CGPoint(x: frame.minX, y: y)
+    case .right: return CGPoint(x: frame.maxX, y: y)
+    case .top: return CGPoint(x: x, y: frame.maxY)
+    case .bottom: return CGPoint(x: x, y: frame.minY)
+    }
 }
