@@ -22,6 +22,7 @@ struct DeloresContextTest {
         testQuickActionPrompt()
         testPlacement()
         testCompanionShell()
+        testCompanionAnimation()
         testInvocationContext()
         print("Delores context tests passed")
     }
@@ -830,6 +831,57 @@ struct DeloresContextTest {
         require(
             hit.contains(CGPoint(x: 675, y: 400)) && hit.contains(CGPoint(x: 725, y: 400)),
             "the drag hit frame is centred on the body")
+    }
+
+    private static func testCompanionAnimation() {
+        // Ruling 3, and its corollary: anything that is not a trip is idle. That is also what covers
+        // holding a shell, being captured and being dragged — none of them has a wander state to read.
+        require(
+            DeloresCompanionAnimation.row(isStrolling: false, isHeld: false, facing: .right) == .idle,
+            "a resting body is idle")
+        require(
+            DeloresCompanionAnimation.row(isStrolling: true, isHeld: true, facing: .left) == .idle,
+            "a body holding a shell is idle even mid-trip")
+        require(
+            DeloresCompanionAnimation.row(isStrolling: true, isHeld: false, facing: .left) == .walkLeft,
+            "a trip reads its row off the facing")
+        require(
+            DeloresCompanionAnimation.row(isStrolling: true, isHeld: false, facing: .right) == .walkRight,
+            "and the other direction off the same one")
+
+        // The wander walks a perimeter, so a step along a vertical edge has no horizontal component.
+        // A body there must not flip sides every frame: it keeps what it already had.
+        require(
+            DeloresCompanionAnimation.facing(
+                from: CGPoint(x: 400, y: 300), to: CGPoint(x: 400, y: 340), fallback: .left) == .left,
+            "a purely vertical step keeps the facing it already had")
+        require(
+            DeloresCompanionAnimation.facing(
+                from: CGPoint(x: 400, y: 340), to: CGPoint(x: 400, y: 300), fallback: .right) == .right,
+            "and so does one going back down the same edge")
+        require(
+            DeloresCompanionAnimation.facing(
+                from: CGPoint(x: 100, y: 20), to: CGPoint(x: 130, y: 20), fallback: .left) == .right,
+            "a step to the right turns the body right")
+        require(
+            DeloresCompanionAnimation.facing(
+                from: CGPoint(x: 130, y: 20), to: CGPoint(x: 100, y: 20), fallback: .right) == .left,
+            "a step to the left turns it back")
+
+        // Core Animation counts y from the bottom and the sheet is authored from the top, so the row
+        // is flipped once — and the first row is therefore the one at the top of the image.
+        let top = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        require(top.minX == 0, "the first frame of the first row is the sheet's left edge")
+        require(top.maxY == 1, "and its top edge — the flip is what puts the first row up there")
+        require(top.width == 0.2, "a frame is one column of five")
+        require(top.height == 0.25, "and one row of four")
+        let last = DeloresCompanionAnimation.contentsRect(row: .reaction, frame: 2)
+        require(last.minY == 0, "the last row sits on the sheet's bottom edge")
+        require(last.minX == 0.4, "the frame index is the column")
+
+        // Ruling 2: one timer drives the step and the frame together, so this is a trade, not a saving.
+        require(DeloresCompanionAnimation.walkFrame == 1.0 / 12.0, "walking is pinned at 12 fps")
+        require(DeloresCompanionAnimation.breathDuration == 2.0, "a breath is two seconds across two frames")
     }
 
     private static func testInvocationContext() {

@@ -1,0 +1,63 @@
+import CoreGraphics
+import Foundation
+
+/// Which way the body is looking. The atlas carries a row for each, and nothing outside the sprite
+/// needs to know about it: the wander walks a perimeter, which has no left or right in it.
+enum DeloresCompanionFacing: Equatable, Sendable {
+    case left, right
+}
+
+/// Which row of the atlas the body is drawn from, and how fast that row changes.
+///
+/// Pure, so the mapping can be asserted without a window. This is the whole of the animation policy —
+/// everything downstream writes one CGRect into one layer — which is why the two rulings it carries
+/// live here rather than in the panel that obeys them.
+enum DeloresCompanionAnimation {
+    /// One breath: two frames, each held for half of this. The period of a Core Animation keyframe
+    /// animation, not a timer interval — see the sprite plan's first ruling.
+    static let breathDuration: TimeInterval = 2.0
+
+    /// Frames while walking. Ruling 2: one timer drives the step and the frame together, so this is
+    /// the walk's frame rate *and* its position-update rate. A trade, not a saving.
+    static let walkFrame: TimeInterval = 1.0 / 12.0
+
+    /// One loop of a reaction. Played twice and then left, at a rate a pixel reads as deliberate.
+    static let reactionDuration: TimeInterval = 0.24
+
+    /// Cells in a walk cycle. Both walk rows are the same length, because one is the other mirrored.
+    static var walkFrameCount: Int { CompanionAtlas.Row.walkLeft.frameCount }
+
+    /// Which row a pose is on.
+    ///
+    /// Everything that is not a trip is idle: a body holding a shell, one the reader has captured, and
+    /// one being dragged all stand still, and none of them has a wander state to read.
+    static func row(isStrolling: Bool, isHeld: Bool, facing: DeloresCompanionFacing) -> CompanionAtlas.Row {
+        guard isStrolling, !isHeld else { return .idle }
+        return facing == .left ? .walkLeft : .walkRight
+    }
+
+    /// Which way the body turned between two steps (ruling 3).
+    ///
+    /// The wander walks the display's perimeter, so a step along a vertical edge has no horizontal
+    /// component at all, and a body there must not flip sides every frame. `fallback` is the facing it
+    /// already had, and it is what a purely vertical step keeps.
+    static func facing(
+        from previous: CGPoint, to current: CGPoint, fallback: DeloresCompanionFacing
+    ) -> DeloresCompanionFacing {
+        let dx = current.x - previous.x
+        if dx > 0 { return .right }
+        if dx < 0 { return .left }
+        return fallback
+    }
+
+    /// The atlas rectangle for one frame, in `contentsRect`'s 0–1 space.
+    ///
+    /// Core Animation measures y from the bottom and the sheet is authored from the top, so the row is
+    /// flipped once here — this is the only place that knows either fact.
+    static func contentsRect(row: CompanionAtlas.Row, frame: Int) -> CGRect {
+        let width = 1 / CGFloat(CompanionAtlas.columns)
+        let height = 1 / CGFloat(CompanionAtlas.rows)
+        let y = 1 - (CGFloat(row.rawValue) + 1) * height
+        return CGRect(x: CGFloat(frame) * width, y: y, width: width, height: height)
+    }
+}

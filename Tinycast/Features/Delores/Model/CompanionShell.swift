@@ -10,9 +10,11 @@ import CoreGraphics
 /// The body stays *outside* the shell in every case: a bar that covered the Companion would take
 /// away the thing the reader clicked to get it.
 enum DeloresCompanionShell {
-    /// The glass circle the reader sees. The window around it is larger — 44pt — so a body this
-    /// size still gives a thumb something to aim at.
-    static let visibleSize: CGFloat = 28
+    /// The body the reader sees, and the window holding it: the sprite is drawn at its authored size,
+    /// so the two are the same number. It was a 28pt glass circle inside a 44pt window while the body
+    /// was a placeholder — the window was larger so a thumb had something to aim at, and a 48pt
+    /// sprite is already more than that was.
+    static let visibleSize: CGFloat = 48
 
     static var visibleRadius: CGFloat { visibleSize / 2 }
 

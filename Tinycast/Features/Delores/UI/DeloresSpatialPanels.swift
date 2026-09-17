@@ -1,7 +1,107 @@
 import AppKit
+import QuartzCore
 import SwiftUI
 
-enum DeloresCompanionExpression { case idle, glance, chat }
+/// What a gesture can ask the body to do. Standing still is not one of them: that is `rest()`, and
+/// the wander is what asks for it.
+enum DeloresCompanionExpression { case glance, chat }
+
+/// The body itself: one layer holding one decoded atlas, and a frame that is a rectangle into that one
+/// image — which is why a pose costs a CGRect and neither a decode nor a rebuilt view tree.
+final class DeloresCompanionBodyView: NSView {
+    private static let breathKey = "breath"
+    private static let reactionKey = "reaction"
+
+    /// The one decoded sheet, loaded once for the life of the app. Every frame is a rectangle into it,
+    /// so no pose ever decodes anything.
+    private static let atlas: CGImage? = {
+        guard let image = Bundle.main.image(forResource: "CompanionAtlas.generated") else { return nil }
+        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+    }()
+
+    private let sprite = CALayer()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        // Authored at 1x and scaled by the GPU, so nearest: linear turns every edge into a smear.
+        sprite.magnificationFilter = .nearest
+        sprite.minificationFilter = .nearest
+        sprite.contents = Self.atlas
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        layer?.addSublayer(sprite)
+    }
+
+    required init?(coder: NSCoder) { fatalError("DeloresCompanionBodyView is not made in a nib") }
+
+    override func layout() {
+        super.layout()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        sprite.frame = bounds
+        CATransaction.commit()
+    }
+
+    /// Carried to another display, the art has to be told the new scale or it softens.
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        sprite.contentsScale = window?.backingScaleFactor ?? 2
+    }
+
+    // MARK: - Poses
+
+    /// Standing still and breathing. The loop is a Core Animation keyframe animation rather than a
+    /// timer — the first ruling: a resting body does not wake the main thread.
+    func rest() {
+        guard sprite.animation(forKey: Self.breathKey) == nil else { return }
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        let breath = CAKeyframeAnimation(keyPath: "contentsRect")
+        breath.values = [
+            DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0),
+            DeloresCompanionAnimation.contentsRect(row: .idle, frame: 1),
+        ]
+        // Discrete, or Core Animation interpolates between two cells and draws the gap between them:
+        // a rectangle that belongs to no frame.
+        breath.calculationMode = .discrete
+        breath.duration = DeloresCompanionAnimation.breathDuration
+        breath.repeatCount = .infinity
+        sprite.add(breath, forKey: Self.breathKey)
+    }
+
+    /// One step of a trip. The breath comes off first: while it is attached, writing `contentsRect`
+    /// changes the model value and the screen keeps showing the animation's.
+    func step(frame: Int, facing: DeloresCompanionFacing) {
+        sprite.removeAnimation(forKey: Self.breathKey)
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(
+            row: DeloresCompanionAnimation.row(isStrolling: true, isHeld: false, facing: facing),
+            frame: frame)
+    }
+
+    /// A reaction, played and dropped back. The idle frame is written *first*, because it is the model
+    /// value the layer returns to when a one-shot animation ends — which is how "played and dropped
+    /// back" costs no timer to notice the end.
+    func react(_ reaction: CompanionAtlas.Reaction) {
+        sprite.removeAnimation(forKey: Self.breathKey)
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        let play = CAKeyframeAnimation(keyPath: "contentsRect")
+        play.values = (0..<reaction.frameCount).map { frame in
+            DeloresCompanionAnimation.contentsRect(row: .reaction, frame: reaction.rawValue + frame)
+        }
+        play.calculationMode = .discrete
+        play.duration = DeloresCompanionAnimation.reactionDuration
+        play.repeatCount = 2
+        sprite.add(play, forKey: Self.reactionKey)
+    }
+
+    /// Nothing is watching any more, so nothing should still be running behind an ordered-out panel —
+    /// a hidden window is not composited, but leaving the loop attached is a thing to explain later.
+    func stop() {
+        sprite.removeAllAnimations()
+    }
+}
 
 final class DeloresCompanionPanel: NSPanel {
     var onSingleClick: (() -> Void)?
@@ -13,33 +113,49 @@ final class DeloresCompanionPanel: NSPanel {
     private var dragged = false
     private var longPressTimer: Timer?
     private(set) var isCaptured = false
-    private var hosting: NSHostingView<DeloresCompanionView>!
+    private var body: DeloresCompanionBodyView!
     var center: CGPoint { CGPoint(x: frame.midX, y: frame.midY) }
 
     init() {
+        let size = DeloresCompanionShell.visibleSize
         super.init(
-            contentRect: CGRect(x: 0, y: 0, width: 44, height: 44),
+            contentRect: CGRect(x: 0, y: 0, width: size, height: size),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
         becomesKeyOnlyIfNeeded = true
-        hosting = NSHostingView(rootView: DeloresCompanionView())
-        contentView = hosting
+        body = DeloresCompanionBodyView(
+            frame: CGRect(origin: .zero, size: CGSize(width: size, height: size)))
+        contentView = body
     }
 
     /// Never takes the keyboard away from the app being used; the panel only needs the pointer.
     override var canBecomeKey: Bool { true }
 
     func present(at center: CGPoint) { move(to: center); orderFrontRegardless() }
-    func move(to center: CGPoint) { setFrameOrigin(CGPoint(x: center.x - 22, y: center.y - 22)) }
-    func hide() { setCaptured(false); orderOut(nil); longPressTimer?.invalidate() }
+    func move(to center: CGPoint) {
+        let half = DeloresCompanionShell.visibleRadius
+        setFrameOrigin(CGPoint(x: center.x - half, y: center.y - half))
+    }
+    func hide() { setCaptured(false); body.stop(); orderOut(nil); longPressTimer?.invalidate() }
     func setCaptured(_ captured: Bool) {
         isCaptured = captured
         ignoresMouseEvents = !captured
     }
-    func play(_ expression: DeloresCompanionExpression) { hosting.rootView = DeloresCompanionView(expression: expression) }
+    func play(_ expression: DeloresCompanionExpression) {
+        switch expression {
+        case .glance: body.react(.glance)
+        case .chat: body.react(.chat)
+        }
+    }
     func showBubble() { play(.chat) }
+
+    /// Standing still. A pose the wander drives, not a gesture: see `DeloresCompanionBodyView.rest`.
+    func rest() { body.rest() }
+
+    /// One step of a trip, which is the only pose that carries a direction.
+    func step(frame: Int, facing: DeloresCompanionFacing) { body.step(frame: frame, facing: facing) }
 
     override func mouseDown(with event: NSEvent) {
         down = NSEvent.mouseLocation; dragged = false
@@ -58,21 +174,6 @@ final class DeloresCompanionPanel: NSPanel {
         longPressTimer?.invalidate(); longPressTimer = nil
         guard !dragged else { dragged = false; onDragEnded?(NSEvent.mouseLocation); return }
         event.clickCount >= 2 ? onDoubleClick?() : onSingleClick?()
-    }
-}
-
-struct DeloresCompanionView: View {
-    var expression = DeloresCompanionExpression.idle
-    private var symbol: String {
-        switch expression { case .idle: return "sparkles"; case .glance: return "eye"; case .chat: return "bubble.left" }
-    }
-    var body: some View {
-        ZStack {
-            DeloresVisualEffectView(material: .popover, blending: .behindWindow).clipShape(Circle())
-            Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
-        }
-        .frame(width: 28, height: 28)
-        .frame(width: 44, height: 44)
     }
 }
 

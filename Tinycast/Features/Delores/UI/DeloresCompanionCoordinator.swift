@@ -21,12 +21,17 @@ final class DeloresCompanionCoordinator {
     private var isHoldingShell = false
     private var lastWanderTick: TimeInterval = 0
     private var rng = SystemRandomNumberGenerator()
+    /// Which way the body is looking, and how far through the walk cycle it is. A rest has neither a
+    /// frame to advance nor a direction worth remembering, so both belong to the walk alone.
+    private var facing: DeloresCompanionFacing = .right
+    private var walkFrame = 0
     var onOpenContext: (() -> Void)?
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
     private static let companionVisibleRadius: CGFloat = 14
-    /// Frames while walking. A rest runs none at all, so this is the only frame cost there is.
-    private static let strollFrame: TimeInterval = 1.0 / 20.0
+    /// Frames while walking. A rest runs none at all, so this is the only frame cost there is — and
+    /// the sprite's second ruling makes it the walk's frame rate too: one timer, step and frame both.
+    private static var strollFrame: TimeInterval { DeloresCompanionAnimation.walkFrame }
     /// Monotonic, so a clock change cannot make a rest look overdue or a step look enormous.
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
     init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate, onOpenContext: (() -> Void)? = nil) {
@@ -83,6 +88,8 @@ final class DeloresCompanionCoordinator {
     func holdForShell() {
         isHoldingShell = true
         stopWanderTimers()
+        // It is standing still for as long as the shell is up, so it is idle rather than mid-step.
+        companion?.rest()
     }
 
     /// The shell is gone, so the body may walk again.
@@ -112,6 +119,8 @@ final class DeloresCompanionCoordinator {
             guard interactionGate.claim(.companion) else { return }
             companion.setCaptured(true)
             stopWanderTimers()
+            // Being picked up is not walking: the body stands in the reader's hand.
+            companion.rest()
         } else {
             companion.setCaptured(false)
             interactionGate.release(.companion)
@@ -182,7 +191,8 @@ final class DeloresCompanionCoordinator {
     /// Resting runs no frames at all: one wake is scheduled for the moment the rest ends. Walking is
     /// the only phase that costs a timer, which is the whole of the Companion's idle budget.
     private func syncWanderTimers() {
-        guard isRunning, let wander else { stopWanderTimers(); return }
+        // A body with nowhere to go is idle: being dragged, being held, or simply stopped.
+        guard isRunning, let wander else { stopWanderTimers(); companion?.rest(); return }
         switch wander.phase {
         case .strolling:
             wakeTimer?.invalidate(); wakeTimer = nil
@@ -196,6 +206,9 @@ final class DeloresCompanionCoordinator {
         case .resting(let until):
             strollTimer?.invalidate(); strollTimer = nil
             wakeTimer?.invalidate()
+            // Standing still is the idle row, and the breathing loop is a Core Animation animation:
+            // it starts once and runs without the main thread, so a rest costs only the wake below.
+            companion?.rest()
             let timer = Timer(timeInterval: max(0, until - now), repeats: false) { [weak self] _ in
                 Task { @MainActor [weak self] in self?.advanceWander() }
             }
@@ -222,11 +235,18 @@ final class DeloresCompanionCoordinator {
         let tick = now
         let elapsed = tick - lastWanderTick
         lastWanderTick = tick
+        let from = companion.center
         let next = DeloresCompanionWander.advance(
             state, elapsed: elapsed, now: tick, in: companionBounds(on: screen), using: &rng)
         wander = next
         companion.move(to: next.center)
         syncWanderTimers()
+        guard case .strolling = next.phase else { return }
+        // Ruling 3: the facing reads off the step's horizontal component, and a step with none keeps
+        // what it had — a body on a vertical edge must not flip sides every frame.
+        facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
+        walkFrame += 1
+        companion.step(frame: walkFrame % DeloresCompanionAnimation.walkFrameCount, facing: facing)
     }
 
     private func handleCompanionPointer(at point: CGPoint) {

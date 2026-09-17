@@ -27,6 +27,7 @@ swiftc \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionWander.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionShell.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionAtlas.generated.swift" \
+    "$ROOT/Tinycast/Features/Delores/Model/CompanionAnimation.swift" \
     "$ROOT/Tinycast/Features/QuickActions/Model/QuickActionStartResult.swift" \
     "$ROOT/Tinycast/Features/QuickActions/Model/CustomQuickAction.swift" \
     "$ROOT/Tinycast/Features/QuickActions/Model/QuickAction.swift" \
