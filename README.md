@@ -1,27 +1,31 @@
 # Delores
 
-**Context-aware command layer for macOS.** Delores keeps the mature Tinycast command and capability
-core, then adds a second way to enter it: when text is selected, a small Context Island appears with
-the actions that can operate on that selection.
+**One tool, three forms, on top of Tinycast's core.** Delores keeps the mature Tinycast command and
+capability core and adds the forms that are needed around a selection and on the desktop itself:
 
 ```text
-user intent → surface → shared capability
+one core → three surfaces → many capabilities
 
-⌥ Space      → Command Surface  → Tinycast launcher core
-select text  → Context Surface   → Tinycast Quick Actions
-window drag  → Spatial Surface   → planned next phase
+⌥ Space        → Command Surface    → search, commands, Chat, Settings   (the most complete)
+select text    → Context Surface    → Translate / Explain / Summarize / Search, in a card
+always there   → Companion Surface  → a glance, the last selection, a hand-off
 ```
+
+`CONTEXT.md` defines the vocabulary. The shape of it: a **Surface** is where the reader is, a
+**Capability** is what gets done, and no surface owns the capability behind it. Window snapping and
+the split divider are capabilities with a transient affordance, not a fourth form.
 
 ## Current slice
 
-The first implementation validates the most important product loop:
-
 ```text
-select text → Context Island → Translate / Summarize / Rewrite / Fix Grammar
+select text → Context Island → Translate / Explain / Summarize / Search
+                                      ↓
+                          streamed answer, copy, write back, one follow-up
 ```
 
-Context actions reuse Tinycast's existing provider, Keychain, Accessibility, streaming and result
-handling paths. Delores does not create a second AI service or a second text-injection path.
+The island owns its own action catalogue and streams its own answers, reading only the model route,
+the prompt overrides and the custom rows from Quick Actions. It does not create a second AI service,
+a second text-injection path or a second Keychain.
 
 ## Project structure
 

@@ -1,50 +1,86 @@
 # Delores architecture and upstream sync
 
-## Current implementation boundary
+## Three surfaces, one core, N capabilities
 
-The first vertical slice is intentionally small:
+Delores is one tool that appears in three forms. A **Surface** is where the reader is; a
+**Capability** is what gets done, and it belongs to the core rather than to any one form. `CONTEXT.md`
+carries the definitions; this is how they are laid out.
+
+| Surface | Summoned by | What it is for | How much of Delores it shows |
+| --- | --- | --- | --- |
+| Context | a selection gesture | The minimum actions for the text the reader has just selected | The least |
+| Companion | always there, once enabled | Being findable: a glance, the last selection, a hand-off | Very little |
+| Command | ⌥Space, or any hotkey bound to the palette | Searching, commands, Chat, anything long-running | Everything |
+
+Behind them sits the core: AI actions and the model routes bound to them, Search, Clipboard, Text
+Injection, the window placement engine, Settings. A surface presents a task and renders a result; it
+does not own the capability that produced it. `Action` is the word for one capability reachable from
+more than one surface, and it is why the catalog is not copied per surface.
+
+Two things that are deliberately **not** surfaces: window snapping and the split divider. They are
+window-placement capabilities with a transient affordance attached to a gesture the reader was making
+anyway. They have no place to be and nothing of their own to say.
+
+### Where each one is
+
+- **Command** — Tinycast's palette, unchanged, and meant to stay that way. It is the mature one and it
+  carries the long tail: search, commands, Chat, Settings.
+- **Context** — the shape is the toolbar's now. The bar, the card, the follow-up field, the expansion
+  geometry, the pointer physics and the Escape order all match the vendored reference, which was
+  re-read from source and rendered to check rather than assumed. What it still carries itself is its
+  own catalogue, prompts and streaming — see below.
+- **Companion** — running, not vendored: patrol, hover, click grammar, and a double-click that reopens
+  the last selection's Context Surface. It currently shares one coordinator with two capabilities it
+  has nothing to do with; separating them is the next structural step.
+
+## Current implementation boundary
 
 ```text
 selection gesture
     → DeloresCoordinator
     → DeloresContextCoordinator
     → Context Island
-    ├─ native Quick Action → Quick Action result surface
-    └─ explicit Ask AI → AIChatCoordinator → chat surface in the palette
+    ├─ an action press → its own card, streamed on that action's own route
+    └─ a press asking for Chat → AIChatCoordinator → the chat surface in the palette
 ```
 
-The Context Island does not own AI, clipboard or Accessibility implementation. It presents the
-minimum actions for the captured selection. The four built-in actions remain native Quick Actions:
-Translate keeps Apple's Translation framework, Summarize keeps its preview, and Rewrite/Fix Grammar
-keep their diff/replace semantics. Their result arrives on the existing Quick Action result surface,
-regardless of whether AI Chat is enabled. This preserves one Action with one meaning across entries.
+The island owns its own catalogue. `DeloresContextAction` defines the four rows
+(translate/explain/summarize/search) with their prompts, and which of them rewrites the selection. It
+reads exactly three things from Quick Actions and nothing else: the sections the reader wrote in
+Settings, a per-action prompt override they wrote there, and the model route bound to an action id
+(`quickActions.provider(forActionID:)`). The answer is streamed into the island's own card by
+`DeloresContextCoordinator.answer`, which builds the `AIRequest` and consumes `provider.stream`.
 
-Chat is an explicit escalation, not the hidden destination of every Context Action. The `Ask AI`
-action is the only Context button that grows the island and hands the captured selection to
-`AIChatCoordinator`; it is the entry for follow-up turns, model switching and reasoning. The existing
-handoff infrastructure still carries per-turn instructions, provider and guardrails for future
-selection-aware Chat entries, but ordinary Context Actions do not pass through it.
+It does **not** hand a press to the Quick Action result surface. Earlier in the project a Context press
+did exactly that, and the four Actions were native Quick Actions keeping their own preview and
+diff/replace semantics. That is no longer the code, and this section used to say it was. What survives
+is the escalation seam: an action whose `kind` is `.ask` grows the island and hands the captured
+selection to `AIChatCoordinator`, and `requiresChatHandoff` is `kind == .ask`. No shipped row is
+`.ask`, so the seam is currently unexercised and kept for a future selection-aware Chat entry.
 
-With AI off, `Ask AI` is omitted from the Context Surface because there is nowhere to converse. The
-four native actions remain available through the same Quick Action route.
+Chat remains an explicit escalation rather than the destination of every press. The handoff
+infrastructure still carries per-turn instructions, provider and guardrails for those future entries.
 
-During this first slice, `quickActionsEnabled` is also the opt-in boundary for the Context Surface:
-both capabilities need the same Accessibility permission. A separate Context Surface setting should
-only be introduced when the product needs independent control, so the consent semantics do not split
-prematurely.
+`quickActionsEnabled` is still the opt-in boundary for the Context Surface, because both need the same
+Accessibility permission. A separate Context switch should only appear when the product needs
+independent control, so the consent semantics do not split prematurely.
 
-## The two entry points
+## The three entry points
 
-One capability set sits behind two summons, and each summon gets the Surface that fits the input
-rather than one surface with swapped contents. `CONTEXT.md` already names the rule under
-*Surface Arbitration* and *Action*; this is where it is carried out.
+One capability set sits behind three summons, and each summon gets the Surface that fits the input
+rather than one surface with swapped contents. `CONTEXT.md` already names the rule under *Surface
+Arbitration*, *Gesture Admission* and *Action*; this is where it is carried out.
 
 | Summon | Surface | What it is for |
 | --- | --- | --- |
-| ⌥Space, or any hotkey bound to the palette | Command Surface | Summoning, searching, starting a task the reader has in mind |
-| A selection gesture | Context Surface | The minimum actions for text the reader has already selected |
-| A native Context action press | Quick Action result surface | Execute one transformation with its native preview/replace/diff semantics |
-| An explicit `Ask AI` press | Command Surface, in the chat | Escalate the captured selection for more turns, another model, or reasoning |
+| ⌥Space, or any hotkey bound to the palette | Command | Summoning, searching, starting a task the reader has in mind |
+| A selection gesture | Context | The minimum actions for text the reader has already selected |
+| A press on one of those actions | Context | Run that action on the captured text, and stream the answer into the card |
+| A press whose action is `.ask` | Command, in the chat | Escalate the captured selection for more turns, another model, or reasoning |
+| A click on the Companion | Companion | Reopen the last selection, or say something about having nothing to work on |
+
+Window snapping and the split divider are not in this table because they are not summons: they are
+capabilities that answer a gesture the reader is already making, and they take no one anywhere.
 
 The Context Surface is a window of its own, not a compact mode of the palette. The palette's default
 anchor is a fraction of the way down the visible frame (`paletteTopMarginFraction`), while a context
@@ -193,6 +229,26 @@ back to the Context Surface. Settings live under the `Delores Spatial` pane.
 Runtime ownership has moved to Delores: the adapter has its own panels and geometry rather than bridging
 Huaci's managers, and the vendored sources are a behavioural reference plus a regression harness.
 
+### Two things this file gets in the way of, structurally
+
+The adapter above predates the taxonomy at the top of this document, and it shows in two places:
+
+1. **It is one coordinator for a surface and two capabilities.** The Companion is a Surface; snapping
+   and the divider are Capabilities. They share a file because Huaci modelled them as one "Spatial"
+   mode. The intended split is `CompanionCoordinator` for the surface, and the two capabilities as
+   services behind the same gesture router the gate already is. The whole adapter is Delores-owned, so
+   this split costs nothing on the upstream side.
+
+2. **Enabling the Companion stops both capabilities** (`applyEnabled` in the adapter). That is not an
+   accident of this code: Huaci gated them itself, in `CompanionInteraction.allowsGhostSnap` and
+   `allowsGhostDivider`, and its `applyPresenceMode` stops both managers when the pet starts. Its
+   model is Ghost XOR Companion — two *presences*, with the ghost overlays belonging to the ghost one —
+   rather than two features that conflict. Neither function carries a comment saying why, and the
+   gesture claim now makes the exclusion unnecessary: a pet drag is Delores' own window and is already
+   excluded from the snap candidate. Making the switches independent is therefore a deliberate
+   departure from the reference, and it needs re-testing of the pet against the snap island, which both
+   live at the top centre of the display.
+
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
 automated test:
 
@@ -230,6 +286,7 @@ automated test:
 | Local packaging and release gate | `Scripts/build-delores-dmg.sh`, `docs/delores-release.md`, release workflow guard | Delores-owned seam |
 | Latest Huaci source and regression harness | `Integrations/HuaciGongju/`, `Scripts/run-huaci-integration-tests.sh` | Vendored integration; explicit adapter required |
 | Quick Actions consent copy | `Features/QuickActions/Settings/QuickActionsSettingsView.swift` | Delores-owned seam |
+| Where an agent is told the Delores contract exists | `AGENTS.md`, one row in its "Read it before you" table | The only Delores content in an otherwise untouched upstream file. The rule itself lives in this document and in `CONTEXT.md`; the row exists so an agent that only ever reads `AGENTS.md` still finds them |
 
 Do not rename the upstream `Tinycast/` directory, upstream source files, or the generated project
 structure merely to make the product name look uniform. That creates avoidable conflicts on every
@@ -287,10 +344,11 @@ The source and its tests are still part of the Delores repository and run indepe
 ```
 
 The source boundary and update procedure are recorded in
-[ADR 0002](adr/0002-vendor-huaci-latest-project.md). The Spatial Surface now has that explicit
-adapter — a Delores-owned consent setting, a lazy lifecycle and its own panels, see the ownership
-map above. It is not a silent activation of Huaci's global monitors, and the vendored managers are
-still not compiled into the app target.
+[ADR 0002](adr/0002-vendor-huaci-latest-project.md), which was written before the shipping
+capabilities were named — it calls them the Spatial Surface, and `CONTEXT.md` no longer does. The
+adapter exists: a Delores-owned consent setting, a lazy lifecycle and its own panels, see the
+ownership map above. It is not a silent activation of Huaci's global monitors, and the vendored
+managers are still not compiled into the app target.
 
 ## Verification after every sync
 

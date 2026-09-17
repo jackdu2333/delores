@@ -5,11 +5,18 @@ name: CI
 # a minute. Both go through the scripts rather than naming rules or harnesses here, so this file
 # cannot drift from them. See docs/testing.md.
 #
-# PRs only, deliberately. `pull_request` builds the *merge result*, so a direct push to the default
-# branch would not be covered automatically. Use "Run workflow" after a direct push to
-# `integration/delores`; the default branch still does not make a PR unnecessary.
+# A push to the default branch and a PR both run it.
+#
+# It used to be PRs only, on the reasoning that `pull_request` builds the *merge result* and that a
+# direct push would be covered the next time a PR opened. That does not hold for this repository:
+# `integration/delores` is the default branch and is developed by pushing straight to it, so the ref
+# CI exists to protect was the one ref it never saw. A push to it now runs the same job — the evidence
+# per HEAD the branch was missing. A PR targeting it runs both, which costs one duplicated minute and
+# is cheaper than a condition that has to stay correct.
 on:
   pull_request:
+  push:
+    branches: [integration/delores]
   workflow_dispatch:
 
 # A new push supersedes the previous run for the same ref.
