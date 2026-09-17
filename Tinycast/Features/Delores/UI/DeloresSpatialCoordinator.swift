@@ -22,7 +22,6 @@ final class DeloresSpatialCoordinator {
     private var patrolTimer: Timer?
     private var companion: DeloresCompanionPanel?
     private var snapIsland: DeloresSnapIslandPanel?
-    private var snapGhost: DeloresSnapGhostPanel?
     private var divider: DeloresDividerPanel?
     private var currentSelection = ""
 
@@ -286,7 +285,6 @@ final class DeloresSpatialCoordinator {
     /// island up or the interaction gate clamped shut.
     private func releaseSnap() {
         snapIsland?.hide(); snapIsland = nil
-        snapGhost?.hide(); snapGhost = nil
         snapHoveredSlot = nil
         snapCandidate = nil
         snapIsActive = false
@@ -377,11 +375,11 @@ final class DeloresSpatialCoordinator {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.show(on: screen)
-                showSnapGhost(for: snapIsland?.slot(at: point), on: screen)
+                let slot = snapIsland?.slot(at: point)
+                snapIsland?.setHoveredSlot(slot)
             } else if snapIsActive {
                 snapIsActive = false
                 snapIsland?.hide()
-                showSnapGhost(for: nil, on: screen)
             }
         case .leftMouseUp:
             defer { releaseSnap() }
@@ -416,23 +414,6 @@ final class DeloresSpatialCoordinator {
         guard let current = AXWindowAccess.frame(of: candidate.window) else { return false }
         return abs(current.minX - candidate.initialFrame.minX) >= Self.snapWindowThreshold
             || abs(current.minY - candidate.initialFrame.minY) >= Self.snapWindowThreshold
-    }
-
-    /// Shows where the window will land while a card is under the pointer.
-    ///
-    /// The island without this is four pictures and no answer to "and if I let go here?". The
-    /// reference drew the same preview, and releasing outside a card does nothing by design — so
-    /// without it the whole feature reads as broken rather than as unaimed.
-    private func showSnapGhost(for slot: DeloresSnapSlot?, on screen: NSScreen) {
-        guard slot != snapHoveredSlot else { return }
-        snapHoveredSlot = slot
-        guard let slot else {
-            snapGhost?.hide()
-            return
-        }
-        let panel = snapGhost ?? DeloresSnapGhostPanel()
-        snapGhost = panel
-        panel.show(rect: slot.rect(in: screen.visibleFrame))
     }
 
     // MARK: Split divider
@@ -920,7 +901,15 @@ private final class DeloresSnapIslandPanel: NSPanel {
             animator().alphaValue = 1
         }
     }
-    func hide() { ignoresMouseEvents = true; orderOut(nil) }
+    func setHoveredSlot(_ slot: DeloresSnapSlot?) {
+        guard state.hoveredSlot != slot else { return }
+        state.hoveredSlot = slot
+    }
+    func hide() {
+        ignoresMouseEvents = true
+        state.hoveredSlot = nil
+        orderOut(nil)
+    }
     func slot(at point: CGPoint) -> DeloresSnapSlot? {
         guard activeScreen != nil, frame.contains(point) else { return nil }
         let local = CGPoint(x: point.x - frame.minX, y: point.y - frame.minY)
@@ -996,6 +985,7 @@ private struct SnapIslandGeometry {
 /// the frame and the alpha are driven from AppKit, but the contents come up on their own curve.
 private final class DeloresSnapIslandState: ObservableObject {
     @Published var isAppearing = false
+    @Published var hoveredSlot: DeloresSnapSlot? = nil
 }
 
 private struct DeloresSnapIslandView: View {
@@ -1042,10 +1032,61 @@ private struct DeloresSnapIslandView: View {
     }
 
     @ViewBuilder
+    private func highlightCell(_ slot: DeloresSnapSlot) -> some View {
+        if state.hoveredSlot == slot {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(Color.accentColor.opacity(isDark ? 0.35 : 0.25))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(isDark ? 0.8 : 0.6), lineWidth: 1)
+                )
+        } else {
+            Color.clear
+        }
+    }
+
+    @ViewBuilder
     private func card(_ card: SnapIslandGeometry.Card) -> some View {
         let geometry = SnapIslandGeometry.self
         let size = card.glyphSize
         ZStack {
+            // Interactive slot highlights
+            switch card {
+            case .halfSplit:
+                HStack(spacing: geometry.glyphDividerWidth) {
+                    highlightCell(.left)
+                    highlightCell(.right)
+                }
+                .padding(geometry.glyphDividerWidth)
+            case .mainSide:
+                let mainW = (size.width - geometry.glyphDividerWidth) * (2.0 / 3.0)
+                HStack(spacing: geometry.glyphDividerWidth) {
+                    highlightCell(.mainWorkspace).frame(width: mainW)
+                    highlightCell(.sideWorkspace).frame(maxWidth: .infinity)
+                }
+                .padding(geometry.glyphDividerWidth)
+            case .quarter:
+                VStack(spacing: geometry.glyphDividerWidth) {
+                    HStack(spacing: geometry.glyphDividerWidth) {
+                        highlightCell(.topLeft)
+                        highlightCell(.topRight)
+                    }
+                    HStack(spacing: geometry.glyphDividerWidth) {
+                        highlightCell(.bottomLeft)
+                        highlightCell(.bottomRight)
+                    }
+                }
+                .padding(geometry.glyphDividerWidth)
+            case .thirds:
+                HStack(spacing: geometry.glyphDividerWidth) {
+                    highlightCell(.leftThird)
+                    highlightCell(.centerThird)
+                    highlightCell(.rightThird)
+                }
+                .padding(geometry.glyphDividerWidth)
+            }
+
+            // Outer rim and inner dividers
             RoundedRectangle(cornerRadius: geometry.glyphCornerRadius, style: .continuous)
                 .strokeBorder(paneRim, lineWidth: geometry.glyphDividerWidth)
             switch card {
@@ -1102,47 +1143,6 @@ private struct DeloresSnapIslandView: View {
     }
 
     private enum Axis { case horizontal, vertical }
-}
-
-/// The outline of where the window will land, over the real desktop, while a card is hovered.
-///
-/// Click-through on purpose: it is drawn across the whole target area, which is where the pointer and
-/// the dragged window are, so taking mouse events would break the drag it is describing.
-private final class DeloresSnapGhostPanel: NSPanel {
-    private let hosting: NSHostingView<DeloresSnapGhostView>
-
-    init() {
-        let hosting = NSHostingView(rootView: DeloresSnapGhostView())
-        hosting.sizingOptions = []
-        self.hosting = hosting
-        super.init(
-            contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered, defer: false)
-        isOpaque = false; backgroundColor = .clear; level = .popUpMenu; hasShadow = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
-        contentView = hosting
-    }
-
-    override var canBecomeKey: Bool { false }
-
-    func show(rect: CGRect) {
-        setFrame(rect, display: true)
-        orderFrontRegardless()
-    }
-    func hide() { orderOut(nil) }
-}
-
-private struct DeloresSnapGhostView: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(Color.accentColor.opacity(0.10))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(
-                        Color.accentColor.opacity(0.85),
-                        style: StrokeStyle(lineWidth: 2, dash: [7, 5])))
-    }
 }
 
 /// The overlay over the seam between two tiled windows.
