@@ -7,6 +7,7 @@ final class SelectionGestureMonitor {
         let screenPoint: CGPoint
         let timestamp: Date
         let uptime: TimeInterval
+        let kind: DeloresSelectionGesturePolicy.Kind
     }
 
     typealias Handler = @MainActor (Gesture) -> Void
@@ -83,7 +84,7 @@ final class SelectionGestureMonitor {
         let previousReleaseDistance: CGFloat? = lastMouseUpUptime == -Double.infinity
             ? nil
             : hypot(point.x - lastMouseUpPoint.x, point.y - lastMouseUpPoint.y)
-        let isSelection = DeloresSelectionGesturePolicy.qualifies(
+        let gestureKind = DeloresSelectionGesturePolicy.qualifies(
             dragDistance: dragDistance,
             previousReleaseDistance: previousReleaseDistance,
             elapsedSincePreviousRelease: lastMouseUpUptime == -Double.infinity
@@ -94,7 +95,7 @@ final class SelectionGestureMonitor {
         lastMouseUpPoint = point
         lastMouseUpUptime = uptime
 
-        guard !shouldIgnorePoint(point), isSelection else { return }
+        guard let gestureKind, !shouldIgnorePoint(point) else { return }
 
         pendingCapture?.cancel()
         pendingCapture = Task { @MainActor [weak self] in
@@ -104,7 +105,8 @@ final class SelectionGestureMonitor {
                 Gesture(
                     screenPoint: point,
                     timestamp: Date(),
-                    uptime: uptime))
+                    uptime: uptime,
+                    kind: gestureKind))
         }
     }
 }

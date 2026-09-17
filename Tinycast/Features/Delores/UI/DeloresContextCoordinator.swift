@@ -116,7 +116,13 @@ final class DeloresContextCoordinator {
         captureTask = Task { @MainActor [weak self] in
             var rawText = AccessibilityText.selection(in: target)
             if rawText == nil {
-                rawText = await injector.copySelection(from: target)
+                // Synthesizing ⌘C is dangerous if the target app is Finder or the gesture was a double-click
+                // on a non-text item (e.g. opening files in Finder), which interrupts double-click delivery.
+                let isFinder = target.bundleIdentifier == "com.apple.finder"
+                let allowClipboardFallback = !isFinder && gesture.kind == .drag
+                if allowClipboardFallback {
+                    rawText = await injector.copySelection(from: target)
+                }
             }
             guard let rawText,
                 let prepared = DeloresSelectionContextPolicy.prepare(rawText),

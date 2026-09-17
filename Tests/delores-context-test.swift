@@ -547,25 +547,25 @@ struct DeloresContextTest {
             DeloresSelectionGesturePolicy.qualifies(
                 dragDistance: 8,
                 previousReleaseDistance: nil,
-                elapsedSincePreviousRelease: nil),
+                elapsedSincePreviousRelease: nil) == .drag,
             "drag selection reaches its threshold")
         require(
-            !DeloresSelectionGesturePolicy.qualifies(
+            DeloresSelectionGesturePolicy.qualifies(
                 dragDistance: 7.9,
                 previousReleaseDistance: nil,
-                elapsedSincePreviousRelease: nil),
+                elapsedSincePreviousRelease: nil) == nil,
             "ordinary click is ignored")
         require(
             DeloresSelectionGesturePolicy.qualifies(
                 dragDistance: 0,
                 previousReleaseDistance: 4,
-                elapsedSincePreviousRelease: 0.34),
+                elapsedSincePreviousRelease: 0.34) == .doubleClick,
             "double click selection is accepted")
         require(
-            !DeloresSelectionGesturePolicy.qualifies(
+            DeloresSelectionGesturePolicy.qualifies(
                 dragDistance: 0,
                 previousReleaseDistance: 4,
-                elapsedSincePreviousRelease: 0.35),
+                elapsedSincePreviousRelease: 0.35) == nil,
             "late second click is ignored")
     }
 
