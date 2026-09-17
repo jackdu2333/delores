@@ -239,13 +239,19 @@ struct DeloresContextIslandView: View {
             height: metrics.scaled(DeloresContextIslandPlacement.preferredBarHeight))
     }
 
+    /// What one entry occupies along a vertical strip's long axis. A column is a stack of these, so
+    /// this is what decides how long the strip grows — tight enough that the whole catalog still
+    /// reads as a strip beside the body rather than a slab, and tall enough for an icon to keep its
+    /// title under it.
+    private var verticalStep: CGFloat { metrics.scaled(36) }
+
     /// What a pill may be tall inside the bar it was given. A shallow menu bar shortens the pills
     /// rather than clipping them; the floor keeps the label legible where there is almost no room.
-    /// A column's pills stand at the bar's own preferred depth: nothing caps a column the way the
-    /// menu bar caps a bar, and its thickness is the width its pills need, not a depth at all.
+    /// A column's entries take the strip's own step instead: its thickness is the width the entries
+    /// need, not a depth anything is capping.
     private var pillHeight: CGFloat {
-        let depth = isVertical ? Self.preferredSize(for: metrics).height : barHeight
-        return max(metrics.scaled(20), depth - metrics.scaled(8))
+        guard isVertical else { return max(metrics.scaled(20), barHeight - metrics.scaled(8)) }
+        return verticalStep
     }
 
     /// Where the vessel's two tenants sit: the bar along its top edge on the menu bar, the strip
@@ -394,7 +400,7 @@ struct DeloresContextIslandView: View {
                 .frame(height: pinnedBarLength > 0 ? pinnedBarLength : nil, alignment: .top)
                 .frame(width: barHeight)
         } else {
-            barContent
+            HStack(spacing: metrics.spacing.sm) { barContent }
                 .padding(.horizontal, metrics.spacing.md)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: pinnedBarWidth > 0 ? pinnedBarWidth : nil, alignment: .leading)
@@ -689,6 +695,7 @@ struct DeloresContextIslandView: View {
             isAnswering
             ? Color.accentColor
             : Theme.Colors.textPrimary.opacity(isHovered ? 0.95 : 0.72)
+        let weight: Font.Weight = isAnswering ? .semibold : .medium
         return Button {
             onAction(action)
         } label: {
@@ -696,16 +703,35 @@ struct DeloresContextIslandView: View {
             // its natural width: the toolbar this island came from lays its actions out exactly this
             // way, and the pin is what keeps a width the bar has not measured yet from crushing a
             // title down to an ellipsis.
-            HStack(spacing: metrics.spacing.xs) {
-                Image(systemName: action.symbol)
-                    .font(.system(size: metrics.scaled(12), weight: isAnswering ? .semibold : .medium))
-                Text(action.title)
-                    .font(.system(size: metrics.scaled(12), weight: isAnswering ? .semibold : .medium))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+            //
+            // A column turns the pair round instead. Its thickness is the shorter of its two sides,
+            // and an entry that kept icon and title side by side would carry the row's whole width
+            // down the column — the strip would be as wide as the bar it replaced and twice as tall.
+            // Icon over a smaller title keeps the thickness at roughly the body's own scale, which
+            // is the only reason a column can stand next to the pet and still read as a strip.
+            Group {
+                if isVertical {
+                    VStack(spacing: metrics.scaled(1)) {
+                        Image(systemName: action.symbol)
+                            .font(.system(size: metrics.scaled(13), weight: weight))
+                        Text(action.title)
+                            .font(.system(size: metrics.scaled(10), weight: weight))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity)
+                } else {
+                    HStack(spacing: metrics.spacing.xs) {
+                        Image(systemName: action.symbol)
+                            .font(.system(size: metrics.scaled(12), weight: weight))
+                        Text(action.title)
+                            .font(.system(size: metrics.scaled(12), weight: weight))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                }
             }
             .foregroundStyle(ink)
-            .padding(.horizontal, metrics.spacing.md)
+            .padding(.horizontal, isVertical ? metrics.spacing.sm : metrics.spacing.md)
             .frame(height: pillHeight)
             // No resting capsule. A container drawn inside the glass reads as a second vessel,
             // which is exactly the layered look the toolbar this came from spent effort removing —
@@ -791,6 +817,9 @@ struct DeloresContextIslandView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(DeloresIslandPressStyle(isHovered: isHovered))
+        // A column's controls take the same step as its entries: a disc left at its own height
+        // among them would read as a gap in the column rather than as another thing to press.
+        .frame(minHeight: isVertical ? verticalStep : 0)
         .onHover { inside in
             hoveredControl = Self.resolvedHover(inside, current: hoveredControl, id: control)
         }
