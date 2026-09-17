@@ -73,6 +73,9 @@ enum AIModelDiscovery {
         } else if !apiKey.isEmpty {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
+        if baseURL.host()?.contains("opencode") == true {
+            request.setValue("delores-\(UUID().uuidString.prefix(8))", forHTTPHeaderField: "x-opencode-session")
+        }
         if provider == .openRouter {
             request.setValue(appTitle, forHTTPHeaderField: "X-OpenRouter-Title")
         }

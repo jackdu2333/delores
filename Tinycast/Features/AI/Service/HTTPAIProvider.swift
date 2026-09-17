@@ -79,6 +79,9 @@ struct HTTPAIProvider: AIProvider {
         switch configuration.shape {
         case .openAICompatible:
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            if configuration.baseURL.host()?.contains("opencode") == true {
+                request.setValue("delores-\(UUID().uuidString.prefix(8))", forHTTPHeaderField: "x-opencode-session")
+            }
             if configuration.provider == .gemini {
                 request.setValue(Self.googleClientHeader, forHTTPHeaderField: "x-goog-api-client")
             } else if configuration.provider == .openRouter {
