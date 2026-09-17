@@ -1,5 +1,49 @@
 # Delores — Product Intent and North Star
 
+> **发心第一，定位第二，设计第三。**
+>
+> Delores 的任何产品、交互和技术决策，都应先验证是否符合产品发心，再验证是否符合产品定位，最后才讨论具体设计。
+> 实现便利不能反过来修改产品发心；设计偏好不能反过来改变产品定位。
+>
+> **当“更容易实现”和“更符合发心/定位”发生冲突时，优先保持发心和定位，并报告实现上的代价，不得自行修改产品方向。**
+
+## The Product Constitution: 三层决策宪法
+
+每次评审、新增需求或代码重构时，始终遵循以下决策顺序：
+
+```text
+发心 (Origin / Intent)
+Why are we doing this?
+        ↓
+定位 (Identity / Scope)
+What is Delores, and what is it not?
+        ↓
+设计 (Design / Interaction)
+Which Surface? Which interaction? What UI?
+        ↓
+架构 (Architecture / Boundaries)
+How should responsibilities be divided?
+        ↓
+实现 (Implementation / Code)
+How should the code be written?
+```
+
+1. **第一层：发心（Origin & Intent）**
+   - **核心回答**：为什么做？
+   - **Delores 的发心**：不是把 Tinycast 和划词工具简单拼起来，而是**减少用户在 macOS 上“为了完成一个小任务，不得不切换工具、打开大窗口、重复提供上下文”的认知与操作成本**。它应该在用户需要的地方，以最小充分形态出现，用完即退场。
+   - **判据**：如果一个提案增加了不必要的大窗口、引入了驻留干扰、或强迫用户重复提供上下文，即使技术上再酷炫，也直接在发心层否决。
+
+2. **第二层：定位（Identity & Positioning）**
+   - **核心回答**：它到底是什么，不是什么？
+   - **Delores 的定位**：Delores 是一个原生 macOS 的**轻量意图层 / Command Layer**。它只有一个产品、一个共享能力核心，但以三种形态出现：顶部 **Context Surface**、桌面 **Companion Surface**、快捷键 **Command Surface**。Window Snap、Divider、翻译、总结、搜索这些都只是**能力（Capabilities）**，绝不是新的独立产品形态。
+   - **判据**：如果一个需求试图把 Companion 做成第四个全功能工作台，或者把完整 Chat 塞进顶部划词栏，在定位层直接拦截。
+
+3. **第三层：设计（Design & Interaction）**
+   - **核心回答**：它长什么样、怎么交互？
+   - **Delores 的设计原则**：顶部栏怎么展开、桌宠怎么巡游、快捷键窗口多宽、Liquid Glass 怎么画、结果卡多高，这些都属于设计层。**只要前两层（发心与定位）不变，设计层就可以且应该持续敏捷迭代。**
+
+---
+
 ## Why Delores exists
 
 Delores began from a simple observation:
