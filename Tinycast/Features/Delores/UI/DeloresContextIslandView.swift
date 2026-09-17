@@ -264,8 +264,12 @@ struct DeloresContextIslandView: View {
     private var expandedContent: some View {
         VStack(spacing: metrics.spacing.md) {
             if let answer = mode.answer {
-                answerCard(answer)
-                followUpPill(answer)
+                if mode.isWorking {
+                    workingCard(answer)
+                } else {
+                    answerCard(answer)
+                    followUpPill(answer)
+                }
             } else if let title = mode.handoffTitle {
                 handoffCard(title)
             }
@@ -273,6 +277,45 @@ struct DeloresContextIslandView: View {
         .padding(.top, barHeight)
         .padding(.horizontal, metrics.scaled(DeloresContextIslandPlacement.cardInset))
         .padding(.bottom, metrics.scaled(DeloresContextIslandPlacement.pillBottomInset))
+    }
+
+    /// The sleek, thin processing card shown while waiting for an answer to begin arriving.
+    private func workingCard(_ answer: DeloresContextIslandAnswer) -> some View {
+        HStack(spacing: metrics.spacing.sm) {
+            ProgressView()
+                .controlSize(.small)
+            Text("✦ 正在\(answer.actionTitle)…")
+                .font(.system(size: metrics.scaled(12), weight: .medium))
+                .foregroundStyle(Theme.Colors.textSecondary)
+            Spacer(minLength: 0)
+            Button {
+                onStopAnswer()
+            } label: {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: metrics.scaled(10)))
+                    .foregroundStyle(Theme.Colors.destructive.opacity(0.85))
+                    .padding(metrics.scaled(4))
+                    .background(Circle().fill(Color.primary.opacity(colorScheme == .dark ? 0.08 : 0.05)))
+            }
+            .buttonStyle(DeloresIslandPressStyle())
+            .help("停止生成")
+            .accessibilityLabel("停止生成")
+        }
+        .padding(.horizontal, metrics.scaled(12))
+        .padding(.vertical, metrics.scaled(8))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(
+            RoundedRectangle(
+                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.cardCornerRadius),
+                style: .continuous
+            )
+            .fill(DeloresIslandSurface.card(colorScheme)))
+        .overlay(
+            RoundedRectangle(
+                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.cardCornerRadius),
+                style: .continuous
+            )
+            .strokeBorder(DeloresIslandSurface.rim(colorScheme), lineWidth: 0.5))
     }
 
     /// The card shown while an action's answer is being handed to the chat surface. Its own buttons
