@@ -297,13 +297,15 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         foreignKeyObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
         ) { [weak self] notification in
+            // ObjectIdentifier is Sendable and the notification is not, so the identity is what
+            // crosses into the actor — the only thing the decision below needs of the window.
+            let becameKey = (notification.object as? AnyObject).map(ObjectIdentifier.init)
             MainActor.assumeIsolated {
                 guard let self,
                     self.panelGeneration == generation,
                     let current = self.panel,
                     current.isVisible,
-                    let window = notification.object as? NSWindow,
-                    window !== current
+                    becameKey != ObjectIdentifier(current)
                 else { return }
                 self.dismissUnlessHeld()
             }
