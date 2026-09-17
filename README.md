@@ -15,6 +15,8 @@ always there   → Companion Surface  → a glance, the last selection, a hand-o
 **Capability** is what gets done, and no surface owns the capability behind it. Window snapping and
 the split divider are capabilities with a transient affordance, not a fourth form.
 
+Product intent and long-term boundaries: [docs/delores-product.md](docs/delores-product.md).
+
 ## Current slice
 
 ```text

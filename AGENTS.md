@@ -47,6 +47,7 @@ system-wide chord, and HIToolbox's TIS APIs remain the public input-source mecha
 | Read it before you | Doc |
 | --- | --- |
 | change how anything is wired or owned | [architecture.md](docs/architecture.md) |
+| change Delores product behavior or decide which Surface owns an interaction | [delores-product.md](docs/delores-product.md) — product intent, North Star and boundaries |
 | work on Delores' surfaces or capabilities | [delores-architecture.md](docs/delores-architecture.md) — three surfaces, one core, N capabilities; `CONTEXT.md` carries the words |
 | write Swift — naming, style, concurrency, budgets, comments | [standards.md](docs/standards.md) |
 | claim a change is done | [testing.md](docs/testing.md) |
