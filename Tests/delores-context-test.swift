@@ -600,11 +600,24 @@ struct DeloresContextTest {
         require(summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 512, "512 ceiling")
         let translate = require(DeloresContextAction.catalog.first { $0.id == "translate" }, "translate")
         require(translate.maxOutputTokens(selection: "short") == 128, "scaled")
+        require(summarize.definition.id == "summarize", "summarize identity")
+        require(
+            summarize.definition.outputCap == .compact(max: 512)
+                && summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
+                == DeloresActionDefinition.OutputCap.compact(max: 512)
+                    .tokens(selection: String(repeating: "a", count: 9_000)),
+            "Context summarize and Quick Action summarize share the compact 512 cap")
     }
     private static func testActionSessionRunner() {
         require(runSession { $0.yield(.text("你好")); $0.yield(.text("世界")); $0.finish() } == .finished("你好世界"), "runner short stream")
         require(runSession { $0.finish() } == .failed(DeloresActionSession.emptyResult), "empty stream")
         require(runSession(isCurrent: { false }) { $0.yield(.text("ghost")); $0.finish() } == nil, "stale generation")
+        require(
+            runSession { continuation in
+                continuation.yield(.text("一半"))
+                continuation.finish(throwing: CancellationError())
+            } == .stopped("一半"),
+            "cancelled stream keeps the partial result")
     }
     private static func runSession(isCurrent: @escaping () -> Bool = { true }, _ build: @escaping (AsyncThrowingStream<AIStreamEvent, Error>.Continuation) -> Void) -> DeloresActionSession.Outcome? {
         var outcome: DeloresActionSession.Outcome?

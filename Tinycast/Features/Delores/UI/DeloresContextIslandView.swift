@@ -724,7 +724,7 @@ struct DeloresMarkdownReaderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(Array(MarkdownBlock.parse(markdown).enumerated()), id: \.offset) { _, block in
+            ForEach(Array(DeloresMarkdownBlock.parse(markdown).enumerated()), id: \.offset) { _, block in
                 blockView(block)
             }
         }
@@ -732,7 +732,7 @@ struct DeloresMarkdownReaderView: View {
     }
 
     @ViewBuilder
-    private func blockView(_ block: MarkdownBlock) -> some View {
+    private func blockView(_ block: DeloresMarkdownBlock) -> some View {
         switch block {
         case .heading(let level, let text):
             Text(inlineMarkdown(text))
@@ -829,7 +829,7 @@ struct DeloresMarkdownReaderView: View {
     }
 }
 
-enum MarkdownBlock: Equatable {
+private enum DeloresMarkdownBlock: Equatable {
     case heading(level: Int, text: String)
     case paragraph(text: String)
     case bulletItem(indent: Int, text: String)
@@ -838,8 +838,8 @@ enum MarkdownBlock: Equatable {
     case quote(text: String)
     case divider
 
-    static func parse(_ raw: String) -> [MarkdownBlock] {
-        var blocks: [MarkdownBlock] = []
+    static func parse(_ raw: String) -> [DeloresMarkdownBlock] {
+        var blocks: [DeloresMarkdownBlock] = []
         let lines = raw.components(separatedBy: .newlines)
         var i = 0
 
@@ -862,8 +862,7 @@ enum MarkdownBlock: Equatable {
                     i += 1
                 }
                 if i < lines.count { i += 1 }
-                blocks.append(.codeBlock(lang: lang.isEmpty ? nil : lang, code: codeLines.joined(separator: "
-")))
+                blocks.append(.codeBlock(lang: lang.isEmpty ? nil : lang, code: codeLines.joined(separator: "\n")))
                 continue
             }
 
@@ -901,7 +900,7 @@ enum MarkdownBlock: Equatable {
 
             // Bullet list item: - or *
             if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
-                let indent = line.prefix(while: { $0 == " " || $0 == "	" }).count / 2
+                let indent = line.prefix(while: { $0 == " " || $0 == "\t" }).count / 2
                 let text = String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces)
                 blocks.append(.bulletItem(indent: indent, text: text))
                 i += 1
@@ -912,7 +911,7 @@ enum MarkdownBlock: Equatable {
             let numMatch = trimmed.range(of: #"^\d+[.)]\s+"#, options: .regularExpression)
             if let match = numMatch {
                 let prefix = String(trimmed[match])
-                let digits = prefix.trimmingCharacters(in: CharacterSet(charactersIn: ".) 	"))
+                let digits = prefix.trimmingCharacters(in: CharacterSet(charactersIn: ".) \t"))
                 let text = String(trimmed[match.upperBound...]).trimmingCharacters(in: .whitespaces)
                 blocks.append(.numberedItem(number: digits, text: text))
                 i += 1
