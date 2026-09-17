@@ -1,0 +1,64 @@
+name: Build App
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build Configuration'
+        type: choice
+        options:
+          - Release
+          - Debug
+        default: Release
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_PATH="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "$XCODE_PATH" ]; then
+            echo "::error::No Xcode 26.x found on this runner. Installed Xcodes:"
+            ls /Applications | grep -i xcode || true
+            exit 1
+          fi
+          echo "Using $XCODE_PATH"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
+
+      - name: Build Application
+        run: |
+          xcodebuild -project Tinycast.xcodeproj \
+            -scheme Tinycast \
+            -configuration ${{ github.event.inputs.configuration }} \
+            -derivedDataPath build/DerivedData \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Locate and Stage .app Bundle
+        run: |
+          APP_PATH="$(find build/DerivedData -name '*.app' -maxdepth 5 -type d | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: .app bundle not found"
+            find build/DerivedData -type d
+            exit 1
+          fi
+          echo "Found app at $APP_PATH"
+          mkdir -p dist
+          cp -R "$APP_PATH" dist/
+          APP_NAME="$(basename "$APP_PATH")"
+          cd dist
+          zip -r -y "${APP_NAME%.app}.zip" "$APP_NAME"
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: delores-macos-arm64
+          path: dist/*.zip
