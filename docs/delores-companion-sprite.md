@@ -247,9 +247,9 @@ desktop-pet 的 `SpriteSlicer` 算法与 petex 的格式文档即参考库。此
 | --- | --- | --- | --- |
 | 0 | **先落地当前 Shell WIP**（裁决 4） | `CompanionShell.swift` + `testCompanionShell` | ✅ 2026-09-17：harness 通过，Debug build 零警告 |
 | 1 | 资产与生成脚本 | 源帧 + `gen-companion-atlas.js` + `Resources/` 下图集 PNG + `Model/CompanionAtlas.generated.swift` | 脚本重跑幂等；图集尺寸/行列符合规格；生成物已提交 |
-| 2 | Model 层映射 | `CompanionAnimation.swift` 纯函数：① 相位→行；② `facing(from:to:fallback:)`（裁决 3）。进 `run-delores-tests.sh` 清单 | harness 断言：resting/holding/captured→idle 行、strolling 左右→对应行、**竖边 dx==0 保持 fallback**、帧率钳制值 |
-| 3 | CALayer 换心 | `DeloresCompanionPanel` 内容改为空壳 NSView + CALayer；删 SwiftUI 视图与玻璃圆；呼吸接 CA 离散动画（裁决 1）；尺寸 44→48 并重算 Shell 几何 | `xcodegen generate` 后 xcodebuild 0 error；肉眼：像素锐利、无玻璃底；**同步在 `delores-architecture.md` 的材质差异处补记 Companion 无材质** |
-| 4 | 手势表情接线 | `play()` 改切行；单击→glance、双击→chat/开 Context、长按→chat 行；`recordSelection` → glance | 手动：五手势各触发对应行，播完回落 idle |
+| 2 | Model 层映射 | `CompanionAnimation.swift` 纯函数：① 相位→行；② `facing(from:to:fallback:)`（裁决 3）；③ `contentsRect(row:frame:)`，y 轴翻转只在这里发生一次。进 `run-delores-tests.sh` 清单 | ✅ 2026-09-18：harness 断言全过（resting/held→idle、strolling 左右→对应行、竖边 dx==0 保持 fallback、帧矩形与帧率钳制值） |
+| 3 | CALayer 换心 | `DeloresCompanionBodyView`（空壳 NSView + CALayer）；删 `DeloresCompanionView` 与玻璃圆；呼吸接 CA 离散动画（裁决 1）；尺寸 44→48，真相源收进 `DeloresCompanionShell.visibleSize` | ✅ 2026-09-18：xcodebuild 零错误零警告，图集已进 bundle；材质差异已补记进架构文档；像素锐利度与「无玻璃底」仍需真机肉眼 |
+| 4 | 手势表情接线 | `play()` → `react()`；wander 相位驱动 `rest()` / `step(frame:facing:)`；捕获、持 shell、拖拽一律 idle；帧率降到 12 fps（裁决 2） | ✅ 2026-09-18：编译通过、harness 通过。**五手势的实际观感与「播完回落 idle」仍需真机手动验收** |
 | 5 | 设置页 | 尺寸档位 48/96 两档（整数倍纪律） | 切档后无像素抖、跨屏拖拽不糊 |
 | 6 | 验收门禁 | 见下 | 全绿 |
 

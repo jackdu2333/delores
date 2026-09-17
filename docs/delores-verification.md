@@ -15,7 +15,7 @@ check that cannot.
 
 ## The machine this was recorded on
 
-Recorded 2026-09-17 on the Delores development machine, at `39f5d13`.
+Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 | Fact | How it was read | Value |
 | --- | --- | --- |
@@ -28,27 +28,38 @@ Recorded 2026-09-17 on the Delores development machine, at `39f5d13`.
 
 ## Recorded results
 
-2026-09-17, `39f5d13`, with the Companion Shell work in the working tree.
+2026-09-18, `f45beac`, with the sprite work in the working tree.
 
 | Command | Result |
 | --- | --- |
-| `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED, no warnings** |
-| `./Scripts/run-tests.sh` | **172 passed, 1 failed.** The one failure is `ext-test`, "the second run's timers still fire" |
-| `./Scripts/run-tests.sh ext-test` (three times, alone) | **✓ passed 3/3** — see below |
+| `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug clean build` | **✓ BUILD SUCCEEDED.** Two warnings, both upstream — see below |
+| `./Scripts/run-tests.sh` | **✓ 73/73** |
 | `./Scripts/run-delores-tests.sh` | **passed** |
 | purity grep over `Tinycast/Features/*/Model/` | no output — the pure-layer boundary holds |
 | `./Scripts/lint.sh` | does not run: `swiftlint not found` |
 
-### The one `run-tests.sh` failure is load-dependent, not a regression
+### A clean build is the only build that means anything
 
-`ext-test` asserts that timer callbacks scheduled by a second extension run still fire. It fails only
-inside the full parallel run (`count=0`) and passes every time it is run on its own — three for three,
-at 6.7–7.1 s each, with the machine otherwise idle. A whole-suite run compiles and runs 73 harnesses
-in 81 s, so the timer simply does not get a slot.
+An **incremental** build once reported `BUILD SUCCEEDED, no warnings` on this tree and was wrong on
+both counts: it had recompiled only the files that had changed, so warnings carried by untouched files
+never surfaced, and it skipped a file pair that no longer agreed — `DeloresWindowSnapCoordinator`
+calling a `show(on:)` that `DeloresSpatialPanels` had meanwhile replaced with `showAtTopCenter` and
+`showBesideBody`. The next full build failed on it.
 
-`ext-test` shares no source file with `Features/Delores/`, so it is not reachable from the Companion
-Shell work. Treat a lone `ext-test` failure in a full run as noise, and re-run it alone before
-believing it.
+Treat "it built" as a claim only when it comes from `clean build`. The two warnings a clean build does
+report are both at `ClipboardView.swift:284` (`IsolatedConformances`, on `Content` and `Placeholder`)
+— upstream code that no Delores change has touched.
+
+### `ext-test` can fail on load alone
+
+`ext-test` asserts that timer callbacks scheduled by a second extension run still fire. It has failed
+inside the full parallel run (`count=0`) and passed every time it was run on its own — three for three,
+at 6.7–7.1 s each — and it also passed as part of a whole-suite run that had the machine to itself
+(73/73 in 44 s). A whole-suite run compiles and runs 73 harnesses back to back, so under load the
+timer simply does not get a slot.
+
+`ext-test` shares no source file with `Features/Delores/`. Treat a lone `ext-test` failure in a full
+run as noise, and re-run it alone before believing it.
 
 ## Historical: Command Line Tools only
 

@@ -131,8 +131,10 @@ visual decision of its own:
 
 - **Material.** The Context Surface draws with Liquid Glass (`Theme.frosted`), carried over from the
   toolbar it came from. The palette draws with `NSVisualEffectView(.hudWindow)` under a
-  reader-configurable scrim. The two are on screen together only across the hand-off's fade, and
-  they were left as they are on that basis.
+  reader-configurable scrim. The Companion draws with no material at all — a pixel sprite on a
+  transparent panel — so it is the artwork's own outline that has to carry it against a pale
+  wallpaper. The first two are on screen together only across the hand-off's fade, and they were left
+  as they are on that basis.
 - **Window level.** The island is at `.statusBar` so it sits over both of its anchors — the menu bar,
   its ordinary home, and the Companion (`.floating`) a bar can be grown out of beside; the palette is
   at `.floating`. Across the hand-off the outgoing island therefore draws over the
