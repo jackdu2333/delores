@@ -933,7 +933,7 @@ private final class DeloresSnapIslandPanel: NSPanel {
             case .halfSplit:
                 return ratio <= 0.5 ? .left : .right
             case .mainSide:
-                return ratio <= 2.0 / 3.0 ? .mainWorkspace : .sideWorkspace
+                return ratio <= SnapIslandGeometry.mainSideSplitRatio ? .mainWorkspace : .sideWorkspace
             case .quarter:
                 let isLeft = ratio <= 0.5
                 let isTop = local.y >= SnapIslandGeometry.quarterCenterY
@@ -950,7 +950,19 @@ private final class DeloresSnapIslandPanel: NSPanel {
 }
 
 private struct SnapIslandGeometry {
-    enum Card: CaseIterable { case halfSplit, mainSide, quarter, thirds }
+    enum Card: CaseIterable {
+        case halfSplit, mainSide, quarter, thirds
+
+        var glyphSize: CGSize {
+            switch self {
+            case .halfSplit: return CGSize(width: 108, height: 64)
+            case .mainSide:  return CGSize(width: 110, height: 64)
+            case .quarter:   return CGSize(width: 106, height: 64)
+            case .thirds:    return CGSize(width: 112, height: 64)
+            }
+        }
+    }
+
     static let size = CGSize(width: 620, height: 88)
     static let horizontalPadding: CGFloat = 12
     static let verticalPadding: CGFloat = 8
@@ -969,6 +981,14 @@ private struct SnapIslandGeometry {
         return CGRect(
             x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
             width: cardWidth, height: cardHeight)
+    }
+
+    static var mainSideSplitRatio: CGFloat {
+        let glyphW = Card.mainSide.glyphSize.width
+        let inset = (cardWidth - glyphW) / 2
+        let available = glyphW - glyphDividerWidth
+        let mainWidth = available * (2.0 / 3.0)
+        return (inset + mainWidth + glyphDividerWidth / 2) / cardWidth
     }
 }
 
@@ -1024,6 +1044,7 @@ private struct DeloresSnapIslandView: View {
     @ViewBuilder
     private func card(_ card: SnapIslandGeometry.Card) -> some View {
         let geometry = SnapIslandGeometry.self
+        let size = card.glyphSize
         ZStack {
             RoundedRectangle(cornerRadius: geometry.glyphCornerRadius, style: .continuous)
                 .strokeBorder(paneRim, lineWidth: geometry.glyphDividerWidth)
@@ -1032,17 +1053,33 @@ private struct DeloresSnapIslandView: View {
                 divider(.vertical)
             case .mainSide:
                 HStack(spacing: 0) {
-                    Color.clear.frame(width: geometry.cardWidth * 2.0 / 3.0 - 0.75)
+                    Color.clear.frame(width: (size.width - geometry.glyphDividerWidth) * (2.0 / 3.0))
                     divider(.vertical)
                     Color.clear.frame(maxWidth: .infinity)
                 }
             case .quarter:
-                VStack(spacing: 0) { divider(.horizontal); divider(.horizontal) }
-                HStack(spacing: 0) { divider(.vertical); divider(.vertical) }
+                VStack(spacing: 0) {
+                    Color.clear.frame(maxHeight: .infinity)
+                    divider(.horizontal)
+                    Color.clear.frame(maxHeight: .infinity)
+                }
+                HStack(spacing: 0) {
+                    Color.clear.frame(maxWidth: .infinity)
+                    divider(.vertical)
+                    Color.clear.frame(maxWidth: .infinity)
+                }
             case .thirds:
-                HStack(spacing: 0) { divider(.vertical); divider(.vertical) }
+                let colW = (size.width - geometry.glyphDividerWidth * 2) / 3.0
+                HStack(spacing: 0) {
+                    Color.clear.frame(width: colW)
+                    divider(.vertical)
+                    Color.clear.frame(width: colW)
+                    divider(.vertical)
+                    Color.clear.frame(maxWidth: .infinity)
+                }
             }
         }
+        .frame(width: size.width, height: size.height)
         .frame(width: geometry.cardWidth, height: geometry.cardHeight)
     }
 
