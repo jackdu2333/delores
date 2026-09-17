@@ -377,7 +377,9 @@ by hand or its seam is silently untested. Everything in `UI/` — the island, th
 island, the divider — is outside it, so UI-layer policy has no unit test and can only be checked by
 building and watching the running app.
 
-On this machine's toolchain (Xcode 27, Swift 6.4, macOS 27 SDK), also run:
+Two checks in [testing.md](testing.md) need Xcode, and this machine has none: the build, and anything
+that expands a SwiftUI macro. What does run here, and what is still owed, is tracked in
+[delores-verification.md](delores-verification.md) rather than restated here. On a machine with Xcode:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -385,9 +387,10 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 ./Scripts/lint.sh
 ```
 
-`lint.sh` needs SwiftLint, which is not installed here, so it only ever runs in CI — which is part of
-why `Scripts/check-settings-search.js`, the second half of it, went unnoticed. CI selects Xcode 26 and
-does not build the app.
+`lint.sh` needs SwiftLint, and SwiftLint needs a toolchain that can load `sourcekitd`; the override
+that works on a Command Line Tools machine is in [delores-verification.md](delores-verification.md).
+Its second half, `Scripts/check-settings-search.js`, went unnoticed for a long time because of this.
+CI selects Xcode 26 and does not build the app.
 
 The current development bundle ID is not one of Tinycast's release channels, so the inherited updater
 must not install Tinycast releases. A Delores release feed is a separate future decision.

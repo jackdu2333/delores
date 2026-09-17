@@ -69,6 +69,9 @@ The public release lane is intentionally not configured yet; its boundary is doc
 The inherited Tinycast harnesses remain available through `./Scripts/run-tests.sh`. Some of them
 require Xcode's SwiftUI macro plugin and cannot run under Command Line Tools alone.
 
+Which checks have run, which are still owed, and what the manual sweep on real displays has to cover:
+[docs/delores-verification.md](docs/delores-verification.md).
+
 ## Upstream
 
 Use the read-only drift check before and after every upstream sync:
