@@ -23,7 +23,7 @@ enum CompanionAtlas {
         var frameCount: Int {
             switch self {
             case .idle: return 3
-            case .walkLeft, .walkRight: return 5
+            case .walkLeft, .walkRight: return 4
             case .reaction: return 5
             }
         }

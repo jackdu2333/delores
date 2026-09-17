@@ -17,6 +17,11 @@ final class DeloresWindowSnapCoordinator {
     /// The body's standing point on the display a drag is happening in, if it is standing on that
     /// display at all. Read-only on purpose: a drag must never move the Companion to meet it.
     var companionAnchor: ((NSScreen) -> DeloresCompanionAnchor?)?
+    /// Told to stand the body still while a drag is over it, and to let it walk again after. The
+    /// island is placed from where the body was standing when the drag found it, so a body that kept
+    /// walking would hang the island beside a place it had already left.
+    var onBodyHoldChanged: ((Bool) -> Void)?
+    private var isHoldingBody = false
     /// Where an island opened out of the body settled. Made once, when the run begins, and held:
     /// an island that slid after a wandering body mid-drag would be a thing chasing the reader
     /// rather than a thing they aimed at.
@@ -41,6 +46,14 @@ final class DeloresWindowSnapCoordinator {
         }
     }
 
+    /// Said once per change rather than once per event: a drag fires these continuously, and every
+    /// frame of it would otherwise restart the body's idle timers.
+    private func holdBody(_ held: Bool) {
+        guard isHoldingBody != held else { return }
+        isHoldingBody = held
+        onBodyHoldChanged?(held)
+    }
+
     private func stopSnapping() {
         if let snapMonitor { NSEvent.removeMonitor(snapMonitor); self.snapMonitor = nil }
         releaseSnap()
@@ -49,6 +62,7 @@ final class DeloresWindowSnapCoordinator {
     /// Everything a snap run leaves behind, cleared in one place so a stop mid-drag cannot leave the
     /// island up or the interaction gate clamped shut.
     private func releaseSnap() {
+        holdBody(false)
         snapIsland?.hide(); snapIsland = nil
         snapCandidate = nil
         snapNeedsCandidate = false
@@ -121,6 +135,10 @@ final class DeloresWindowSnapCoordinator {
             // hit frame, and a drag that had found the body would not want it gone the moment it
             // climbed onto the island.
             let overIsland = snapIsActive && snapIsland?.frame.contains(point) == true
+            // The body stands still from the moment the drag finds it, not from the moment the
+            // island appears: what makes a drag feel like it slipped is the thing it was aimed at
+            // walking away between the aim and the drop.
+            holdBody(overBody || overIsland)
 
             if let placement = snapBodyPlacement, overBody || overIsland {
                 snapIsActive = true

@@ -29,6 +29,11 @@ final class DeloresCoordinator {
         // brought to the body itself, and only a display the body is not standing on still has the
         // top-centre fallback. Read-only — a drag must not move the body to meet it.
         snapping.companionAnchor = { [weak companion] screen in companion?.bodyAnchor(on: screen) }
+        // A drag brought to the body stops it: the island is placed from where the body stood when
+        // the drag found it, so it stands there until the drag is over.
+        snapping.onBodyHoldChanged = { [weak companion] isHeld in
+            if isHeld { companion?.holdForShell() } else { companion?.releaseShell() }
+        }
     }
 
     /// The body is drawn at another step, which changes where it may stand as well as how big it is.

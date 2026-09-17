@@ -541,7 +541,13 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
                         preferred: targetHeight,
                         in: screen))
         } else if barIsVertical {
-            size = CGSize(width: vessel, height: rowLength)
+            // A column's vessel is the strip itself: as thick as its entries, as long as the column
+            // it is showing. The row's `vesselWidth` does not apply — its spill is room for controls
+            // a *row* grew past the row it was pinned at, while a column's controls are simply more
+            // entries, and the length was measured with them already in it.
+            size = CGSize(
+                width: max(row, DeloresContextIslandPlacement.minimumStripThickness),
+                height: rowLength)
         } else {
             size = CGSize(width: vessel, height: barHeight)
         }
@@ -685,10 +691,14 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         probe.setFrameSize(NSSize(width: wish.width, height: wish.height))
         probe.layoutSubtreeIfNeeded()
         let hugging = probe.fittingSize
-        return (
-            DeloresContextIslandPlacement.barWidth(hugging: hugging.width, in: screen),
-            min(hugging.height, screen.visibleFrame.height)
-        )
+        // The two axes are measured on their own terms. A column is tens of points thick, which the
+        // row's own floor reads as "not measured" and answers with a 420pt bar — the slab a vertical
+        // strip became when it was measured as if it were a row.
+        let thickness =
+            barIsVertical
+            ? DeloresContextIslandPlacement.stripThickness(hugging: hugging.width)
+            : DeloresContextIslandPlacement.barWidth(hugging: hugging.width, in: screen)
+        return (thickness, min(hugging.height, screen.visibleFrame.height))
     }
 
     /// The selection, not a result: this bar hangs over a selection, and copying it is the one thing

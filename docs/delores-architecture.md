@@ -257,8 +257,12 @@ Huaci's `AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `ma
 Companion double-click reopens the last captured selection on the Context Surface. Settings live under
 the `Companion & Windows` pane.
 
-How the Companion moves is `Model/CompanionWander.swift`: it stands still, walks one trip along the
-display's perimeter to a destination it drew, then stands still again. Rests and trips are both
+How the Companion moves is `Model/CompanionWander.swift`: it stands still, walks one trip along its
+loop to a destination it drew, then stands still again. The loop is `Model/CompanionLoop.swift` — the
+display's whole frame, less the stretches the body may not walk: the ends of the menu bar, because
+that is where the icons are, and the Dock, which it goes *around* rather than over. Where the loop has
+a gap the body turns back at the end of a run; where it closes it walks round and round, which is what
+an ordinary display still is. Rests and trips are both
 short-bodied and long-tailed, a trip holds one speed from end to end, and a destination is never the
 spot the last one left — an even rhythm at a constant speed is what makes a thing read as mechanical
 rather than as occupied. Randomness is injected rather than drawn, so the whole thing replays from a

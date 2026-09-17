@@ -18,7 +18,11 @@ final class DeloresCompanionCoordinator {
     /// A shell the Companion opened is on screen, so the body stands still. A body that walked out
     /// from under the bar it opened would leave the bar hanging over nothing — and the bar is hung
     /// on the body, not on the display.
-    private var isHoldingShell = false
+    ///
+    /// Counted rather than flagged: a bar and a snap island can both be up, and whichever is
+    /// dismissed first must not set the body walking while the other is still hung on it.
+    private var shellHolds = 0
+    private var isHoldingShell: Bool { shellHolds > 0 }
     private var lastWanderTick: TimeInterval = 0
     private var rng = SystemRandomNumberGenerator()
     /// Which way the body is looking, and how far through the walk cycle it is. A rest has neither a
@@ -54,21 +58,30 @@ final class DeloresCompanionCoordinator {
     /// it appears where the reader already is.
     func anchorForShell(in visibleFrame: CGRect) -> DeloresCompanionAnchor? {
         guard isRunning, let companion, companion.isVisible else { return nil }
+        // The display the shell is being grown on, found from the visible frame it was asked about.
+        guard let screen = DeloresWindowGeometry.screenContaining(
+            CGPoint(x: visibleFrame.midX, y: visibleFrame.midY))
+        else { return nil }
+        let loop = loop(on: screen)
+        guard !loop.isEmpty else { return nil }
         let bounds = visibleFrame.insetBy(dx: bodyRadius, dy: bodyRadius)
-        guard bounds.width > 0, bounds.height > 0 else { return nil }
         var center = companion.center
-        // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
+        // A body on its loop is on the boundary of its display, which `contains` excludes.
         if !bounds.insetBy(dx: -1, dy: -1).contains(center) {
             // Carried across at the new display's middle height and the old body's own horizontal
-            // preference, which `project` then lands on the edge nearest where the body came from —
+            // preference, which `project` then lands on the run nearest where the body came from —
             // the short way round, rather than a jump to a corner.
             center = DeloresCompanionWander.project(
-                CGPoint(x: center.x, y: visibleFrame.midY), into: bounds)
+                CGPoint(x: center.x, y: visibleFrame.midY), into: loop)
             companion.move(to: center)
-            wander = DeloresCompanionWander.settled(at: center, in: bounds, at: now, using: &rng)
+            wander = DeloresCompanionWander.settled(at: center, in: loop, at: now, using: &rng)
             syncWanderTimers()
         }
-        return (center, DeloresCompanionWander.edge(for: center, in: bounds), bodyRadius)
+        return (
+            center,
+            DeloresCompanionWander.edge(for: center, in: companionBounds(on: screen)),
+            bodyRadius
+        )
     }
 
     /// The body's standing point on `screen`, if it is standing on that screen at all. Unlike
@@ -92,24 +105,24 @@ final class DeloresCompanionCoordinator {
         guard let companion, companion.isVisible else { return }
         companion.applySize(settings.deloresCompanionSize)
         guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
-        let landed = DeloresCompanionWander.project(
-            companion.center, into: companionBounds(on: screen))
+        let landed = DeloresCompanionWander.project(companion.center, into: loop(on: screen))
         companion.move(to: landed)
         settle(at: landed, on: screen)
     }
 
     /// Stands the body still while a shell it opened is on screen.
     func holdForShell() {
-        isHoldingShell = true
+        shellHolds += 1
         stopWanderTimers()
         // It is standing still for as long as the shell is up, so it is idle rather than mid-step.
         companion?.rest()
     }
 
-    /// The shell is gone, so the body may walk again.
+    /// The shell is gone, so the body may walk again — once nothing else is holding it.
     func releaseShell() {
-        guard isHoldingShell else { return }
-        isHoldingShell = false
+        guard shellHolds > 0 else { return }
+        shellHolds -= 1
+        guard !isHoldingShell else { return }
         guard isRunning, let companion, companion.isVisible,
             let screen = DeloresWindowGeometry.screenContaining(companion.center)
         else { return }
@@ -123,8 +136,7 @@ final class DeloresCompanionCoordinator {
             let screen = DeloresWindowGeometry.screenContaining(center)
         else { return }
         companion.move(to: center)
-        wander = DeloresCompanionWander.settled(
-            at: center, in: companionBounds(on: screen), at: now, using: &rng)
+        wander = DeloresCompanionWander.settled(at: center, in: loop(on: screen), at: now, using: &rng)
         syncWanderTimers()
     }
     private func captureCompanion(_ captured: Bool) {
@@ -179,7 +191,7 @@ final class DeloresCompanionCoordinator {
     private func stopCompanion() {
         isRunning = false
         // The Companion is going away, so nothing it was holding itself still for survives it.
-        isHoldingShell = false
+        shellHolds = 0
         if let companionMonitor { NSEvent.removeMonitor(companionMonitor); self.companionMonitor = nil }
         if let companionLocalMonitor { NSEvent.removeMonitor(companionLocalMonitor); self.companionLocalMonitor = nil }
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver); self.screenObserver = nil }
@@ -238,7 +250,7 @@ final class DeloresCompanionCoordinator {
 
     private func settle(at point: CGPoint, on screen: NSScreen) {
         wander = DeloresCompanionWander.settled(
-            at: point, in: companionBounds(on: screen), at: now, using: &rng)
+            at: point, in: loop(on: screen), at: now, using: &rng)
         syncWanderTimers()
     }
 
@@ -249,9 +261,11 @@ final class DeloresCompanionCoordinator {
         let tick = now
         let elapsed = tick - lastWanderTick
         lastWanderTick = tick
-        let from = companion.center
+        // Read from the wander rather than from the window: the window origin is snapped to whole
+        // points for the artwork's sake, and that rounding must not colour which way the body turns.
+        let from = state.center
         let next = DeloresCompanionWander.advance(
-            state, elapsed: elapsed, now: tick, in: companionBounds(on: screen), using: &rng)
+            state, elapsed: elapsed, now: tick, in: loop(on: screen), using: &rng)
         wander = next
         companion.move(to: next.center)
         syncWanderTimers()
@@ -299,14 +313,14 @@ final class DeloresCompanionCoordinator {
         guard let companion, let screen = DeloresWindowGeometry.screenContaining(point) else { return }
         stopWanderTimers()
         wander = nil
-        companion.move(to: DeloresCompanionWander.project(point, into: companionBounds(on: screen)))
+        companion.move(to: DeloresCompanionWander.project(point, into: loop(on: screen)))
     }
 
     /// A drop stays where it was let go and stands there a beat, which is also what makes the drop
     /// read as having landed.
     private func dropCompanion(at point: CGPoint) {
         guard let companion, let screen = DeloresWindowGeometry.screenContaining(point) else { return }
-        let landed = DeloresCompanionWander.project(point, into: companionBounds(on: screen))
+        let landed = DeloresCompanionWander.project(point, into: loop(on: screen))
         companion.move(to: landed)
         settle(at: landed, on: screen)
     }
@@ -321,11 +335,84 @@ final class DeloresCompanionCoordinator {
         settle(at: point, on: screen)
     }
 
+    /// The loop the body rides: the display's whole frame, not its visible area.
+    ///
+    /// `visibleFrame` is the screen minus the menu bar and the Dock, which is why the body used to
+    /// walk under one and above the other. It walks on the menu bar now and along the bottom of the
+    /// screen, drawn over both — which is why its panel is at `.statusBar`, since a window below that
+    /// level is simply covered by the menu bar. What it must still keep off is the path's business,
+    /// not the frame's.
     private func companionBounds(on screen: NSScreen) -> CGRect {
-        screen.visibleFrame.insetBy(dx: bodyRadius, dy: bodyRadius)
+        screen.frame.insetBy(dx: bodyRadius, dy: bodyRadius)
     }
 
     private func spawnPoint(on screen: NSScreen) -> CGPoint {
-        CGPoint(x: screen.visibleFrame.maxX - bodyRadius, y: screen.visibleFrame.midY)
+        CGPoint(x: screen.frame.maxX - bodyRadius, y: screen.frame.midY)
+    }
+
+    /// What the body may walk on `screen`.
+    ///
+    /// The whole frame, less the two things it must not walk through: the Dock, which it goes around,
+    /// and the ends of the menu bar, which is where the icons live. Both are read off the display
+    /// rather than asked of anyone — see `deloresMenuBarRuns` for why that is the choice.
+    private func loop(on screen: NSScreen) -> DeloresCompanionLoop {
+        DeloresCompanionLoop.around(
+            screen.frame,
+            bodyRadius: bodyRadius,
+            walkingAround: screen.deloresDockZone,
+            topRuns: screen.deloresMenuBarRuns)
+    }
+}
+
+extension NSScreen {
+    /// Where the Dock stands on this display.
+    ///
+    /// Its *height* is what the system tells us: the strip the visible frame gives up along the bottom.
+    /// Its *width* has to be worked out, because no public API answers that and the two that could —
+    /// the window list, Accessibility — sit behind permissions this feature does not otherwise ask
+    /// for. So the Dock's own preferences are read instead, which is close enough to walk around.
+    ///
+    /// A hidden Dock gives up no height, so it gets no detour at all: the body crosses the bottom of
+    /// the screen where the Dock will later appear, and that is the honest answer rather than a guess.
+    var deloresDockZone: CGRect? {
+        let height = visibleFrame.minY - frame.minY
+        guard height > 0 else { return nil }
+        let width = min(frame.width, dockStripWidth)
+        return CGRect(
+            x: frame.midX - width / 2, y: frame.minY,
+            width: width, height: height)
+    }
+
+    /// How wide the Dock's strip of tiles is, read from the Dock's own settings.
+    ///
+    /// Falls back to the whole bottom edge, which is wrong in the harmless direction: a body that goes
+    /// around more of the screen than it had to still never walks through the Dock.
+    private var dockStripWidth: CGFloat {
+        guard let dock = UserDefaults(suiteName: "com.apple.dock") else { return frame.width }
+        let tile = CGFloat(dock.integer(forKey: "tilesize"))
+        let apps = dock.array(forKey: "persistent-apps")?.count ?? 0
+        let others = dock.array(forKey: "persistent-others")?.count ?? 0
+        guard tile > 0, apps + others > 0 else { return frame.width }
+        // Finder and the Trash are on every Dock and appear in neither list; the slack covers the gaps
+        // between tiles and the margin at each end.
+        let tiles = CGFloat(apps + others + 2)
+        return tile * tiles * 1.2
+    }
+
+    /// The stretches of the menu bar the body is allowed on: beside the notch where there is one, and
+    /// across the middle of the bar where there is not. Never the ends, which is where the icons are.
+    ///
+    /// A rule rather than a measurement, on purpose. Reading where the icons actually are needs
+    /// either screen recording or Accessibility, and asking for a permission so that a pet can avoid
+    /// a battery icon is out of proportion to what it buys.
+    var deloresMenuBarRuns: [ClosedRange<CGFloat>] {
+        let reach: CGFloat = 240
+        if let left = auxiliaryTopLeftArea, let right = auxiliaryTopRightArea {
+            return [
+                (left.maxX - reach)...left.maxX,
+                right.minX...(right.minX + reach),
+            ]
+        }
+        return [(frame.midX - reach)...(frame.midX + reach)]
     }
 }

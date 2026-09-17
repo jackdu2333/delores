@@ -136,6 +136,7 @@
 		31B7A586F32A53DFB74E65A5 /* DeloresDividerPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883681223B3B2D0C2E569F53 /* DeloresDividerPanel.swift */; };
 		31E0E4E0782A79504CEB588D /* ScrollIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 622E1F1C01B954DCA2199BCD /* ScrollIntent.swift */; };
 		32238C3CCA0310804D30506A /* ExtensionCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7DDDF0D150C30D0D0FC0BFD /* ExtensionCatalog.swift */; };
+		32567201F74DA240FE6F4FA9 /* CompanionLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0C1F85F1016AE8AFDCFD464 /* CompanionLoop.swift */; };
 		3278D86A619DC587B10EEC1B /* MCPTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B8990163AB02BC5E29D7B8 /* MCPTool.swift */; };
 		32C65BE018B7107FFA92DDA2 /* NoteSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132FBA3F0A0B4F6C796B901B /* NoteSwitcherView.swift */; };
 		32E151D0C1A3EB1979EE1E53 /* BackupArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DCCA01C368B2F38617A80DB /* BackupArchive.swift */; };
@@ -1242,6 +1243,7 @@
 		E03A52EBF08AD5C44953DBDC /* FilePreviewStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewStage.swift; sourceTree = "<group>"; };
 		E08F20B0B823443E176F1566 /* InstalledCLIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledCLIProvider.swift; sourceTree = "<group>"; };
 		E0BE684A650197A714D6858A /* CameraPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPanel.swift; sourceTree = "<group>"; };
+		E0C1F85F1016AE8AFDCFD464 /* CompanionLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionLoop.swift; sourceTree = "<group>"; };
 		E1FB153A0D53D42771F1CA99 /* WindowLayoutDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLayoutDisplay.swift; sourceTree = "<group>"; };
 		E1FB75182A60F65BA1FB9BA8 /* NotificationToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationToken.swift; sourceTree = "<group>"; };
 		E20A7C8EADDB7F89A73796CC /* BackupComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupComposer.swift; sourceTree = "<group>"; };
@@ -2175,6 +2177,7 @@
 				EE9D4FB970002997A9A7CE03 /* ActionSession.swift */,
 				C685F41F1573D32C3FF59159 /* CompanionAnimation.swift */,
 				C01F57ADD9C5610D4DD87825 /* CompanionAtlas.generated.swift */,
+				E0C1F85F1016AE8AFDCFD464 /* CompanionLoop.swift */,
 				FDEEB5A19DDC8B3B15421548 /* CompanionShell.swift */,
 				FF4CF981B5248DA1660CFAAD /* CompanionWander.swift */,
 				D18D7E6E42E9E78E3C4189DB /* ContextAction.swift */,
@@ -3344,6 +3347,7 @@
 				1545F0D79421A893EA104C3A /* CompactFavoritesRow.swift in Sources */,
 				9C596362466373F9EDC246E3 /* CompanionAnimation.swift in Sources */,
 				14C38441A2444054E5F54F52 /* CompanionAtlas.generated.swift in Sources */,
+				32567201F74DA240FE6F4FA9 /* CompanionLoop.swift in Sources */,
 				1AB91DEE2B70BA7C98006486 /* CompanionShell.swift in Sources */,
 				DB9D7AAB296CAF448A3990B9 /* CompanionWander.swift in Sources */,
 				7EA8057463FE0CD5D4565667 /* ContextAction.swift in Sources */,

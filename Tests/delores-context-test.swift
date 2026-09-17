@@ -13,6 +13,7 @@ struct DeloresContextTest {
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
         MainActor.assumeIsolated { testSurfaceInteractionGate() }
+        testCompanionLoop()
         testCompanionWander()
         testQuickActionAdmission()
         testContextActions()
@@ -789,8 +790,11 @@ struct DeloresContextTest {
         // below it, vertical beside it, its long axis always along the edge. Unlike a bar it may
         // open on the bottom edge — it is a preview for the length of a drag, not a reading
         // surface, and the bottom of the display is not the middle of it.
+        // The reference's own numbers: a row of four panes in a capsule, and the same four standing
+        // in a column with no capsule around them — a column is only as wide and as tall as its
+        // panes, because a capsule 300-odd tall would cut the end ones to slivers.
         let wide = CGSize(width: 620, height: 88)
-        let tall = CGSize(width: 164, height: 340)
+        let tall = CGSize(width: 140, height: 324)
         let topIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: 400, y: visible.maxY - r),
             edge: .top, islandSize: wide, visibleFrame: visible, bodyRadius: r)
@@ -909,18 +913,99 @@ struct DeloresContextTest {
         }
     }
 
-    /// The Companion's wander: it rides the display edge without ever cutting across, never ends a
-    /// trip where the last one did, never rests long enough to look dead, and asks for no frame at
-    /// all while it rests. Replayed from a fixed seed, so the randomness is real and the sequence is
-    /// not.
+    /// The loop: what the body may walk, and where it turns back.
+    private static func testCompanionLoop() {
+        let display = CGRect(x: 0, y: 0, width: 1600, height: 1000)
+        let radius: CGFloat = 24
+        let r = display.insetBy(dx: radius, dy: radius)
+
+        // Nothing in the way: one run around the display, and it closes.
+        let plain = DeloresCompanionLoop.around(display, bodyRadius: radius)
+        require(plain.runs.count == 1, "an unobstructed display is one run")
+        require(plain.runs[0].isClosed, "and it closes")
+        let perimeter = 2 * (r.width + r.height)
+        require(
+            abs(plain.runs[0].length - perimeter) < 0.01,
+            "and its length is the display's perimeter")
+        for tick in stride(from: 0, through: perimeter, by: 1) {
+            let point = DeloresCompanionLoop.position(at: tick, in: plain.runs[0])
+            require(
+                r.insetBy(dx: -0.01, dy: -0.01).contains(point),
+                "every point of the loop is on the display")
+        }
+
+        // A Dock standing on the bottom edge is walked around rather than crossed.
+        let dock = CGRect(x: 600, y: 0, width: 400, height: 90)
+        let withDock = DeloresCompanionLoop.around(display, bodyRadius: radius, walkingAround: dock)
+        require(withDock.runs.count == 1, "walking around something still leaves one run")
+        let dockRun = withDock.runs[0]
+        require(dockRun.isClosed, "and that run still closes")
+        require(
+            abs(dockRun.length - (perimeter + 2 * (dock.maxY - r.minY))) < 0.01,
+            "going around costs the Dock's height twice, once each way")
+        let walked = stride(from: 0, through: dockRun.length, by: 1).map {
+            DeloresCompanionLoop.position(at: $0, in: dockRun)
+        }
+        require(
+            walked.contains { abs($0.y - dock.maxY) < 0.01 && $0.x > dock.minX && $0.x < dock.maxX },
+            "the loop crosses the Dock's top")
+        require(
+            !walked.contains { dock.insetBy(dx: 1, dy: 0).contains($0) && $0.y < dock.maxY - 0.01 },
+            "and never enters the Dock")
+
+        // The menu bar's ends are forbidden, so each allowed stretch is a run of its own and the long
+        // way round stops where the first of them begins.
+        let withEnds = DeloresCompanionLoop.around(
+            display, bodyRadius: radius, topRuns: [200...500, 900...1200])
+        require(withEnds.runs.count == 3, "two allowed stretches plus the long way round")
+        require(withEnds.runs[1].length == 300, "a stretch is as long as it is")
+        require(withEnds.runs[2].length == 300, "and so is the other one")
+        require(!withEnds.runs[1].isClosed, "a stretch that stops short is walked back and forth")
+        require(!withEnds.runs[2].isClosed, "both of them")
+        for index in 1...2 {
+            for end in [withEnds.runs[index].points.first!, withEnds.runs[index].points.last!] {
+                require(abs(end.y - r.maxY) < 0.01, "both ends of a stretch are on the menu bar")
+            }
+        }
+        let longWay = require(withEnds.runs[0].points.last, "the long run ends somewhere")
+        require(abs(longWay.x - 1200) < 0.01, "the long run stops at the first forbidden stretch")
+        require(
+            abs(withEnds.runs[0].points.first!.x - r.minX) < 0.01,
+            "and it starts at the other corner")
+
+        // An open run turns back at its ends; a closed one carries on round.
+        require(
+            DeloresCompanionLoop.travel(150, from: 250, in: withEnds.runs[1]) == 200,
+            "an open run turns back at its far end")
+        require(
+            DeloresCompanionLoop.travel(-400, from: 100, in: withEnds.runs[1]) == 300,
+            "and at its near end")
+        require(
+            abs(DeloresCompanionLoop.travel(plain.runs[0].length + 10, from: 0, in: plain.runs[0]) - 10)
+                < 0.01,
+            "a closed run carries on round instead of turning")
+
+        // A display too small to hold the body at all is empty rather than crashing.
+        require(
+            DeloresCompanionLoop.around(
+                CGRect(x: 0, y: 0, width: 40, height: 40), bodyRadius: 24
+            ).isEmpty,
+            "a display smaller than the body has nowhere to walk")
+    }
+
+    /// The Companion's wander: it rides its loop without ever cutting across, never ends a trip where
+    /// the last one did, never rests long enough to look dead, and asks for no frame at all while it
+    /// rests. Replayed from a fixed seed, so the randomness is real and the sequence is not.
     private static func testCompanionWander() {
         let bounds = CGRect(x: 0, y: 0, width: 1200, height: 800)
-        let total = DeloresCompanionWander.perimeter(of: bounds)
+        let loop = DeloresCompanionLoop.around(bounds, bodyRadius: 0)
+        let run = loop.runs[0]
+        let total = run.length
         let least = DeloresCompanionWander.shortTripRange.lowerBound
         var rng = SeededRandom(seed: 0x5EED_1234)
 
         let settled = DeloresCompanionWander.settled(
-            at: CGPoint(x: 700, y: 400), in: bounds, at: 0, using: &rng)
+            at: CGPoint(x: 700, y: 400), in: loop, at: 0, using: &rng)
         require(isOnEdge(settled.center, in: bounds), "a settle lands on the edge it will ride")
         let firstRest = require(restEnd(settled), "a settle stands still before it walks")
         require(firstRest >= DeloresCompanionWander.shortRestRange.lowerBound, "a rest is not instant")
@@ -929,23 +1014,23 @@ struct DeloresContextTest {
             DeloresCompanionWander.nextWake(after: settled) == firstRest,
             "a rest states when it ends")
         require(
-            DeloresCompanionWander.advance(settled, elapsed: 0.1, now: 1, in: bounds, using: &rng) == settled,
+            DeloresCompanionWander.advance(settled, elapsed: 0.1, now: 1, in: loop, using: &rng) == settled,
             "a rest under its due time changes nothing, and owes no frame")
 
         let walking = DeloresCompanionWander.advance(
-            settled, elapsed: 0.1, now: firstRest + 0.1, in: bounds, using: &rng)
-        guard case .strolling(let destination, let speed) = walking.phase else {
+            settled, elapsed: 0.1, now: firstRest + 0.1, in: loop, using: &rng)
+        guard case .strolling(_, let destination, let speed) = walking.phase else {
             fatalError("FAIL: a rest that has come due sets off")
         }
         require(DeloresCompanionWander.speedRange.contains(speed), "a trip holds a speed in range")
-        let leftBehind = DeloresCompanionWander.distanceAlongPerimeter(of: settled.center, in: bounds)
+        let leftBehind = DeloresCompanionLoop.distance(of: settled.center, in: run)
         require(
             gap(destination, leftBehind, around: total) >= least - 0.01,
             "a destination is far enough away not to repeat the spot it left")
         require(DeloresCompanionWander.nextWake(after: walking) == nil, "a trip runs on frames")
 
         let late = DeloresCompanionWander.advance(
-            walking, elapsed: 600, now: firstRest + 61, in: bounds, using: &rng)
+            walking, elapsed: 600, now: firstRest + 61, in: loop, using: &rng)
         require(late.phase.isWalking, "a capped frame does not finish a trip")
         let ceiling = CGFloat(DeloresCompanionWander.maximumStep) * DeloresCompanionWander.speedRange.upperBound
         require(
@@ -969,7 +1054,7 @@ struct DeloresContextTest {
             "most rests are pauses")
         require(Set(restDraws).count > 10, "rests are drawn, not fixed")
 
-        let tripDraws = (0..<400).map { _ in DeloresCompanionWander.tripDistance(in: bounds, using: &rng) }
+        let tripDraws = (0..<400).map { _ in DeloresCompanionWander.tripDistance(in: total, using: &rng) }
         require(
             tripDraws.allSatisfy { $0 >= DeloresCompanionWander.shortTripRange.lowerBound },
             "a trip always goes somewhere")
@@ -994,7 +1079,7 @@ struct DeloresContextTest {
             clock += elapsed
             let wasWalking = state.phase.isWalking
             let next = DeloresCompanionWander.advance(
-                state, elapsed: elapsed, now: clock, in: bounds, using: &rng)
+                state, elapsed: elapsed, now: clock, in: loop, using: &rng)
             require(isOnEdge(next.center, in: bounds), "the body rides an edge and never cuts across")
             require(
                 bounds.insetBy(dx: -0.01, dy: -0.01).contains(next.center),
@@ -1009,7 +1094,7 @@ struct DeloresContextTest {
             case .resting(let until):
                 restingFrames += 1
                 if wasWalking { rests.append(until - clock) }
-            case .strolling(let destination, let speed):
+            case .strolling(_, let destination, let speed):
                 if !wasWalking {
                     tripCount += 1
                     destinations.append(destination)
@@ -1037,11 +1122,12 @@ struct DeloresContextTest {
 
         // A display too small to hold a minimum trip still wanders, and still stays on its edge.
         let tight = CGRect(x: 0, y: 0, width: 90, height: 60)
+        let tightLoop = DeloresCompanionLoop.around(tight, bodyRadius: 0)
         var tightState = DeloresCompanionWander.settled(
-            at: CGPoint(x: tight.midX, y: tight.midY), in: tight, at: 0, using: &rng)
+            at: CGPoint(x: tight.midX, y: tight.midY), in: tightLoop, at: 0, using: &rng)
         for tick in stride(from: 0.05, through: 30, by: 0.05) {
             tightState = DeloresCompanionWander.advance(
-                tightState, elapsed: 0.05, now: tick, in: tight, using: &rng)
+                tightState, elapsed: 0.05, now: tick, in: tightLoop, using: &rng)
             require(
                 isOnEdge(tightState.center, in: tight),
                 "a tiny display still keeps the body on its edge")

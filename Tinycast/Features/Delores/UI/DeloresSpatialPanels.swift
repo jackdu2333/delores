@@ -27,6 +27,17 @@ final class DeloresCompanionBodyView: NSView {
         // Authored at 1x and scaled by the GPU, so nearest: linear turns every edge into a smear.
         sprite.magnificationFilter = .nearest
         sprite.minificationFilter = .nearest
+        // A pose is a finished rectangle, and a step writes one twelve times a second. Core
+        // Animation's implicit animation lasts a quarter of a second, so leaving it on would mean the
+        // sheet is permanently caught between two cells — the art slides, which reads as a twitch.
+        // The breathing loop is unaffected: an explicit animation does not go through `actions`.
+        sprite.actions = [
+            "contentsRect": NSNull(),
+            "contents": NSNull(),
+            "contentsScale": NSNull(),
+            "position": NSNull(),
+            "bounds": NSNull(),
+        ]
         sprite.contents = Self.atlas
         sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
         layer?.addSublayer(sprite)
@@ -123,7 +134,9 @@ final class DeloresCompanionPanel: NSPanel {
         super.init(
             contentRect: CGRect(x: 0, y: 0, width: size.side, height: size.side),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
+        // `.statusBar`, not `.floating`: the body walks the menu bar, and anything below level 24 is
+        // covered by it outright rather than drawn over it.
+        isOpaque = false; backgroundColor = .clear; level = .statusBar; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
         becomesKeyOnlyIfNeeded = true
@@ -136,20 +149,24 @@ final class DeloresCompanionPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 
     func present(at center: CGPoint) { move(to: center); orderFrontRegardless() }
-    func move(to center: CGPoint) {
-        setFrameOrigin(CGPoint(x: center.x - size.radius, y: center.y - size.radius))
+    /// Where the window goes for a body centred on `center`.
+    ///
+    /// Whole points, because the body is pixel art: an origin that is not on a whole point puts a
+    /// fractional number of screen pixels under each authored pixel, and the art then shimmers as it
+    /// moves — the same picture, drawn a little differently every frame.
+    private func origin(for center: CGPoint) -> CGPoint {
+        CGPoint(x: (center.x - size.radius).rounded(), y: (center.y - size.radius).rounded())
     }
+
+    func move(to center: CGPoint) { setFrameOrigin(origin(for: center)) }
 
     /// Drawn at the other step without going anywhere: the body grows about the point it stands on,
     /// which is the point the reader aimed at.
     func applySize(_ next: DeloresCompanionShell.Size) {
         guard next != size else { return }
         size = next
-        let middle = center
         setFrame(
-            CGRect(
-                x: middle.x - next.radius, y: middle.y - next.radius,
-                width: next.side, height: next.side),
+            CGRect(origin: origin(for: center), size: CGSize(width: next.side, height: next.side)),
             display: true)
     }
     func hide() { setCaptured(false); body.stop(); orderOut(nil); longPressTimer?.invalidate() }
@@ -325,6 +342,10 @@ final class DeloresSnapIslandPanel: NSPanel {
         { return }
         activeScreen = screen
         self.layout = layout
+        // A column is four outlines and nothing else, so the window must not add a ground of its
+        // own: the panel's shadow is drawn around the window's rectangle, which fills the gaps
+        // between the panes and reads as the very slab the outlines were meant to replace.
+        hasShadow = layout == .horizontal
         restingFrame = resting
         hosting.rootView = DeloresSnapIslandView(state: state, layout: layout)
         hosting.frame = CGRect(origin: .zero, size: layout.size)
@@ -355,7 +376,11 @@ final class DeloresSnapIslandPanel: NSPanel {
     }
     func slot(at point: CGPoint) -> DeloresSnapSlot? {
         guard activeScreen != nil, frame.contains(point) else { return nil }
-        let local = CGPoint(x: point.x - frame.minX, y: point.y - frame.minY)
+        // The card rects are laid out from the island's top-left, which is where SwiftUI puts its
+        // origin; the point arrives in screen coordinates, measured from the bottom. Flipping here
+        // rather than in the geometry keeps `rect(for:)` a statement about the layout and leaves
+        // the one place that knows about screen space to say so.
+        let local = CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y)
         guard layout.bounds.contains(local) else { return nil }
         for card in SnapIslandGeometry.Card.allCases {
             let rect = layout.rect(for: card)
@@ -418,16 +443,29 @@ struct SnapIslandGeometry {
                     x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
                     width: cardWidth, height: cardHeight)
             case .vertical:
+                // No padding: a column is the panes themselves, so a pane's rect *is* its slice of
+                // the island and the first one starts at the island's own edge.
                 return CGRect(
-                    x: horizontalPadding, y: verticalPadding + index * (cardHeight + gap),
+                    x: 0, y: index * (cardHeight + gap),
                     width: cardWidth, height: cardHeight)
             }
         }
     }
 
     static let size = CGSize(width: 620, height: 88)
-    /// The vertical island: same cards, same paddings, stacked — the reference's own numbers.
-    static let verticalSize = CGSize(width: 164, height: 340)
+    /// The vertical island is the four panes and nothing else: no vessel around them, no padding, a
+    /// pane's rect being its own slice of the column.
+    ///
+    /// There is no capsule around it on purpose. A capsule 340 tall has 82pt semicircular ends, and
+    /// a pane is 140 wide — so the top and bottom panes were being cut down to a sliver of glass by
+    /// the very shape that was supposed to be holding them. Where a column cannot be wrapped, the
+    /// panes are the surface: each carries its own glass, and the island is however tall they are.
+    static var verticalSize: CGSize {
+        let count = CGFloat(Card.allCases.count)
+        return CGSize(
+            width: cardWidth,
+            height: count * cardHeight + (count - 1) * gap)
+    }
     static let horizontalPadding: CGFloat = 12
     static let verticalPadding: CGFloat = 8
     static let gap: CGFloat = 12
@@ -439,6 +477,8 @@ struct SnapIslandGeometry {
     /// against its own pane, thin enough to read as an edge of it rather than a line on it.
     static let glyphDividerWidth: CGFloat = 1.4
     static let glyphCornerRadius: CGFloat = 4.5
+    /// The corner of a pane carrying its own ground, which every pane does in a column.
+    static let paneCornerRadius: CGFloat = 10
 
     static func rect(for card: Card) -> CGRect {
         Layout.horizontal.rect(for: card)
@@ -474,15 +514,24 @@ struct DeloresSnapIslandView: View {
     private var isDark: Bool { colorScheme == .dark }
 
     var body: some View {
-        cards
-            .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
-            .padding(.vertical, SnapIslandGeometry.verticalPadding)
-            .frame(width: layout.size.width, height: layout.size.height)
-            .background(
-                DeloresVisualEffectView(material: .popover, blending: .behindWindow)
-                    .clipShape(Capsule()))
-            .scaleEffect(state.isAppearing ? 1 : 0.96)
-            .opacity(state.isAppearing ? 1 : 0)
+        Group {
+            switch layout {
+            case .horizontal:
+                cards
+                    .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
+                    .padding(.vertical, SnapIslandGeometry.verticalPadding)
+                    .frame(width: layout.size.width, height: layout.size.height)
+                    .background(
+                        DeloresVisualEffectView(material: .popover, blending: .behindWindow)
+                            .clipShape(Capsule()))
+            case .vertical:
+                // The panes are the island: no vessel, no padding. See `verticalSize`.
+                cards
+                    .frame(width: layout.size.width, height: layout.size.height)
+            }
+        }
+        .scaleEffect(state.isAppearing ? 1 : 0.96)
+        .opacity(state.isAppearing ? 1 : 0)
     }
 
     /// The same four cards either way — a card's glyphs are drawn for its width, never rotated —
@@ -616,6 +665,24 @@ struct DeloresSnapIslandView: View {
         }
         .frame(width: size.width, height: size.height)
         .frame(width: geometry.cardWidth, height: geometry.cardHeight)
+        // A column has no vessel, so each pane carries its own ground. Glass on its own is not
+        // enough there: over a bright window every edge in these cards is a pale line on pale, and
+        // the panes are the only thing telling the reader where the window is about to land.
+        .background(
+            Group {
+                if layout == .vertical {
+                    DeloresVisualEffectView(material: .popover, blending: .behindWindow)
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: geometry.paneCornerRadius, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(
+                                cornerRadius: geometry.paneCornerRadius, style: .continuous)
+                                .fill(
+                                    Color(nsColor: .windowBackgroundColor)
+                                        .opacity(isDark ? 0.34 : 0.44)))
+                }
+            })
     }
 
     @ViewBuilder

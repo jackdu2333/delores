@@ -14,16 +14,22 @@ enum DeloresCompanionEdge: Equatable, Sendable {
 /// longer than it walks. The clock is the caller's — a rest's `until` and the `now` compared
 /// against it only have to come from the same one.
 ///
-/// Every distance here is along the display's perimeter, so the body rides an edge and never cuts
-/// across the middle of the screen it exists to be found beside.
+/// Where it *may* go is not decided here. `DeloresCompanionLoop` says which stretches of the display
+/// are walkable and which are not; this only decides how the body moves along them.
 enum DeloresCompanionWander {
     enum Phase: Equatable, Sendable {
         case resting(until: TimeInterval)
-        case strolling(destination: CGFloat, speed: CGFloat)
+        case strolling(run: Int, destination: CGFloat, speed: CGFloat)
     }
 
+    /// Where the body is, which run it is on, and what it is doing.
+    ///
+    /// The run is carried rather than re-derived from the position. Two runs can touch without being
+    /// connected — an allowed stretch of menu bar begins exactly where a forbidden one ends — and a
+    /// body that picked the wrong one would walk straight into what it is meant to keep off.
     struct State: Equatable, Sendable {
         var center: CGPoint
+        var run: Int
         var phase: Phase
     }
 
@@ -41,8 +47,7 @@ enum DeloresCompanionWander {
     static let speedRange: ClosedRange<CGFloat> = 16...34
 
     /// How far a trip goes. Most are a few steps and a look around; the tail is the long way, which
-    /// is what keeps the walking from reading as a metronome. The floor is also the guarantee that a
-    /// trip never ends on the spot the last one left.
+    /// is what keeps the walking from reading as a metronome.
     static let shortTripRange: ClosedRange<CGFloat> = 120...360
     static let longTripChance = 0.2
 
@@ -50,33 +55,40 @@ enum DeloresCompanionWander {
     /// across the display.
     static let maximumStep: TimeInterval = 0.25
 
-    /// Every arrival — a start, a drop, a screen change — begins here: still, on an edge.
+    /// Every arrival — a start, a drop, a screen change — begins here: still, on the loop.
     static func settled(
-        at center: CGPoint, in bounds: CGRect, at now: TimeInterval,
+        at center: CGPoint, in loop: DeloresCompanionLoop, at now: TimeInterval,
         using rng: inout some RandomNumberGenerator
     ) -> State {
-        State(
-            center: project(center, into: bounds),
+        let nearest = loop.nearest(to: center)
+        return State(
+            center: nearest.point,
+            run: nearest.run,
             phase: .resting(until: now + restDuration(using: &rng)))
     }
 
     /// One frame. A rest that is not yet due returns the state untouched, which is what lets the
     /// caller run no timer at all in between.
     static func advance(
-        _ state: State, elapsed: TimeInterval, now: TimeInterval, in bounds: CGRect,
+        _ state: State, elapsed: TimeInterval, now: TimeInterval, in loop: DeloresCompanionLoop,
         using rng: inout some RandomNumberGenerator
     ) -> State {
         switch state.phase {
         case .resting(let until):
             guard now >= until else { return state }
+            let run = loop.run(at: state.run)
             return State(
                 center: state.center,
+                run: state.run,
                 phase: .strolling(
-                    destination: destination(from: state.center, in: bounds, using: &rng),
+                    run: state.run,
+                    destination: destination(from: state.center, in: run, using: &rng),
                     speed: CGFloat.random(in: speedRange, using: &rng)))
-        case .strolling(let destination, let speed):
+        case .strolling(let index, let destination, let speed):
+            let run = loop.run(at: index)
             let budget = speed * CGFloat(min(max(elapsed, 0), maximumStep))
-            return travel(state, to: destination, budget: budget, now: now, in: bounds, using: &rng)
+            return travel(
+                state, run: index, to: destination, budget: budget, in: run, at: now, using: &rng)
         }
     }
 
@@ -87,10 +99,10 @@ enum DeloresCompanionWander {
         return until
     }
 
-    /// The point on the perimeter nearest `point`. Every write to the body goes through here, so it
-    /// can never be left somewhere the wander has no way back from.
-    static func project(_ point: CGPoint, into bounds: CGRect) -> CGPoint {
-        position(at: distanceAlongPerimeter(of: point, in: bounds), in: bounds)
+    /// The point on the loop nearest `point`. Every write to the body goes through here, so it can
+    /// never be left somewhere the wander has no way back from.
+    static func project(_ point: CGPoint, into loop: DeloresCompanionLoop) -> CGPoint {
+        loop.nearest(to: point).point
     }
 
     /// A corner is equally near two edges, and the right one wins — the edge it spawns on.
@@ -104,93 +116,71 @@ enum DeloresCompanionWander {
         return distances.min { $0.1 < $1.1 }?.0 ?? .right
     }
 
-    static func perimeter(of bounds: CGRect) -> CGFloat { 2 * (bounds.width + bounds.height) }
-
-    /// How far a point sits along the perimeter, measured clockwise from the bottom-left corner.
-    static func distanceAlongPerimeter(of point: CGPoint, in bounds: CGRect) -> CGFloat {
-        let width = bounds.width
-        let height = bounds.height
-        switch edge(for: point, in: bounds) {
-        case .bottom: return clamp(point.x - bounds.minX, 0, width)
-        case .right: return width + clamp(point.y - bounds.minY, 0, height)
-        case .top: return width + height + clamp(bounds.maxX - point.x, 0, width)
-        case .left: return 2 * width + height + clamp(bounds.maxY - point.y, 0, height)
-        }
-    }
-
     static func restDuration(using rng: inout some RandomNumberGenerator) -> TimeInterval {
         let range = Double.random(in: 0...1, using: &rng) < longRestChance ? longRestRange : shortRestRange
         return min(Double.random(in: range, using: &rng), maximumRest)
     }
 
-    /// Half the perimeter is the longest meaningful trip: past it the short way round is the other
-    /// way, and a destination stops being a direction.
-    static func tripDistance(in bounds: CGRect, using rng: inout some RandomNumberGenerator) -> CGFloat {
-        let longest = max(shortTripRange.upperBound, perimeter(of: bounds) / 2)
+    /// How far a trip is allowed to go.
+    ///
+    /// The floor is the shortest trip, so a long run still gets steps that read as steps. A run
+    /// *shorter* than that — a stretch of menu bar beside the notch — can only be walked end to end,
+    /// which is what the body does there.
+    static func tripDistance(in length: CGFloat, using rng: inout some RandomNumberGenerator) -> CGFloat {
+        let longest = max(shortTripRange.upperBound, length)
         let range = Double.random(in: 0...1, using: &rng) < longTripChance
             ? shortTripRange.upperBound...longest
             : shortTripRange
         return CGFloat.random(in: range, using: &rng)
     }
 
+    /// A destination on the same run, drawn as a signed offset from where the body stands, so the
+    /// draw itself can never land on the spot it is leaving.
+    private static func destination(
+        from center: CGPoint, in run: DeloresCompanionLoop.Run,
+        using rng: inout some RandomNumberGenerator
+    ) -> CGFloat {
+        let here = DeloresCompanionLoop.distance(of: center, in: run)
+        let reach = tripDistance(in: run.length, using: &rng)
+        let sign: CGFloat = Bool.random(using: &rng) ? 1 : -1
+        let target = here + sign * reach
+        // A closed run is walked round, so its destination wraps. An open one stops at its ends: the
+        // body turns when it gets there rather than continuing into what it may not walk.
+        guard run.isClosed, run.length > 0 else { return min(max(target, 0), run.length) }
+        let wrapped = target.truncatingRemainder(dividingBy: run.length)
+        return wrapped < 0 ? wrapped + run.length : wrapped
+    }
+
     private static func travel(
-        _ state: State, to destination: CGFloat, budget: CGFloat, now: TimeInterval, in bounds: CGRect,
+        _ state: State, run index: Int, to destination: CGFloat, budget: CGFloat,
+        in run: DeloresCompanionLoop.Run, at now: TimeInterval,
         using rng: inout some RandomNumberGenerator
     ) -> State {
-        let total = perimeter(of: bounds)
-        let here = distanceAlongPerimeter(of: state.center, in: bounds)
-        let delta = shortestDelta(from: here, to: destination, around: total)
+        let here = DeloresCompanionLoop.distance(of: state.center, in: run)
+        let delta = shortestDelta(from: here, to: destination, in: run)
         guard abs(delta) > budget else {
             return State(
-                center: position(at: destination, in: bounds),
+                center: DeloresCompanionLoop.position(at: destination, in: run),
+                run: index,
                 phase: .resting(until: now + restDuration(using: &rng)))
         }
-        let moved = here + (delta > 0 ? budget : -budget)
-        return State(center: position(at: moved, in: bounds), phase: state.phase)
+        let moved = DeloresCompanionLoop.travel(delta > 0 ? budget : -budget, from: here, in: run)
+        return State(
+            center: DeloresCompanionLoop.position(at: moved, in: run),
+            run: index,
+            phase: state.phase)
     }
 
-    /// A destination drawn as a signed offset from where the body stands, so the draw itself can
-    /// never land on the spot it is leaving.
-    private static func destination(
-        from center: CGPoint, in bounds: CGRect, using rng: inout some RandomNumberGenerator
+    /// How far it is from here to there *the way the body will walk it*: the short way round a closed
+    /// run, and the direct way along an open one, whose ends it cannot cross.
+    private static func shortestDelta(
+        from here: CGFloat, to there: CGFloat, in run: DeloresCompanionLoop.Run
     ) -> CGFloat {
-        let total = perimeter(of: bounds)
-        let offset = tripDistance(in: bounds, using: &rng)
-        let sign: CGFloat = Bool.random(using: &rng) ? 1 : -1
-        return normalized(distanceAlongPerimeter(of: center, in: bounds) + sign * offset, around: total)
-    }
-
-    /// The short way round, so a trip never crosses the middle of the display to reach its edge.
-    private static func shortestDelta(from here: CGFloat, to there: CGFloat, around total: CGFloat) -> CGFloat {
-        guard total > 0 else { return 0 }
+        let total = run.length
+        guard run.isClosed, total > 0 else { return there - here }
         var delta = (there - here).truncatingRemainder(dividingBy: total)
         if delta > total / 2 { delta -= total }
         if delta < -total / 2 { delta += total }
         return delta
-    }
-
-    private static func normalized(_ distance: CGFloat, around total: CGFloat) -> CGFloat {
-        guard total > 0 else { return 0 }
-        let remainder = distance.truncatingRemainder(dividingBy: total)
-        return remainder < 0 ? remainder + total : remainder
-    }
-
-    /// Perimeter travel runs clockwise from the bottom-left corner: bottom, right, top, left.
-    private static func position(at distance: CGFloat, in bounds: CGRect) -> CGPoint {
-        let width = bounds.width
-        let height = bounds.height
-        let travelled = normalized(distance, around: 2 * (width + height))
-        if travelled < width { return CGPoint(x: bounds.minX + travelled, y: bounds.minY) }
-        if travelled < width + height {
-            return CGPoint(x: bounds.maxX, y: bounds.minY + travelled - width)
-        }
-        if travelled < 2 * width + height {
-            return CGPoint(x: bounds.maxX - (travelled - width - height), y: bounds.maxY)
-        }
-        return CGPoint(x: bounds.minX, y: bounds.maxY - (travelled - 2 * width - height))
-    }
-
-    private static func clamp(_ value: CGFloat, _ lower: CGFloat, _ upper: CGFloat) -> CGFloat {
-        min(max(value, lower), upper)
     }
 }

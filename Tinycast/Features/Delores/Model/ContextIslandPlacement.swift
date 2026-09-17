@@ -11,6 +11,11 @@ enum DeloresContextIslandPlacement {
     /// view that has not laid out yet rather than a genuinely narrow bar.
     static let minimumWidth: CGFloat = 200
 
+    /// The floor under a vertical strip's thickness: the narrowest column that can still be aimed
+    /// at. It is an order of magnitude under `minimumWidth` on purpose — a column's thickness is
+    /// the width of one entry, not the width of a readable row.
+    static let minimumStripThickness: CGFloat = 44
+
     /// The bar's wish. A display with a notch reports the whole safe strip as its menu bar, so the
     /// wish survives there; a shallow menu bar caps the bar instead.
     static let preferredBarHeight: CGFloat = 38
@@ -98,6 +103,18 @@ enum DeloresContextIslandPlacement {
             return min(preferredWidth, usable)
         }
         return min(measured, usable)
+    }
+
+    /// A vertical strip's thickness, which is the width of its widest entry and nothing more.
+    ///
+    /// Deliberately not `barWidth(hugging:)`: that reads anything at or under `minimumWidth` as an
+    /// unlaid-out view and answers with the row's own wish, and a column is tens of points thick by
+    /// design — so every strip it measured came back as a slab of the row's width. A column's floor
+    /// is the smallest one that can still be pressed, and a column that never laid out is still a
+    /// usable strip rather than a bar that lost its measurement.
+    static func stripThickness(hugging measured: CGFloat) -> CGFloat {
+        guard measured.isFinite, measured > 0 else { return minimumStripThickness }
+        return max(measured, minimumStripThickness)
     }
 
     /// The panel's width while a card is open: the bar's own width, unless the bar is narrower than

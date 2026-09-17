@@ -146,14 +146,17 @@ const mirror = (g) => {
   return out;
 };
 
-// The walk cycle: five frames, one up-and-down per cycle, leaning into the direction of travel.
-// Written once and mirrored, so the two directions can never drift apart.
+// The walk cycle: four frames, one up-and-down per cycle. Four and not five, because a cycle comes
+// back to where it started — a fifth frame could only repeat the first, and a repeated frame reads as
+// a limp rather than as a step. Written once and mirrored, so the two directions cannot drift apart.
+//
+// Every frame leans into the direction of travel by the same amount. A lean that came and went would
+// snap the body back two pixels once per cycle, which the eye reads as a twitch.
 const WALK = [
-  { lift: 0, lean: 0, step: 0 },
+  { lift: 0, lean: 1, step: 0 },
   { lift: -1, lean: 1, step: 1 },
   { lift: 0, lean: 1, step: 2 },
   { lift: 1, lean: 1, step: 3 },
-  { lift: 0, lean: 1, step: 0 },
 ];
 
 function frame(row, col) {
@@ -169,9 +172,9 @@ function frame(row, col) {
     // Walking looks where it is going, which is also what keeps the two directions apart on screen:
     // without it the mirror is only a shift of the feet.
     case 1:
-      return creature({ ...WALK[col], gaze: 1 });
+      return col < WALK.length ? creature({ ...WALK[col], gaze: 1 }) : grid();
     case 2:
-      return mirror(creature({ ...WALK[col], gaze: 1 }));
+      return col < WALK.length ? mirror(creature({ ...WALK[col], gaze: 1 })) : grid();
     default:
       // Reaction: glance (2), wave (2), chat (1).
       if (col < 2) return creature({ gaze: col === 0 ? -1 : 1 });
@@ -201,7 +204,7 @@ function blit(cell, col, row) {
 
 // How many cells of each row carry a frame. The generated Swift states these too, from this one
 // list, so the sheet and the constants cannot disagree about where a row ends.
-const FRAMES_PER_ROW = [3, 5, 5, 5];
+const FRAMES_PER_ROW = [3, 4, 4, 5];
 
 for (let row = 0; row < ROWS; row++) {
   for (let col = 0; col < COLUMNS; col++) {
