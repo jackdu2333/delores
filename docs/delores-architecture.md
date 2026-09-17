@@ -363,19 +363,30 @@ managers are still not compiled into the app target.
 ./Scripts/run-huaci-integration-tests.sh
 ```
 
+The last one is local-only on this machine's toolchain, and CI skips it deliberately: the vendored
+snapshot uses a macOS 27 member behind `#available`, and availability gates the runtime rather than the
+compile, so the Xcode 26 runner cannot build it. The step prints that reason and passes; it runs again
+by itself once the runner's SDK moves. `Tests/upstream-drift-test.sh` is the CI-side counterpart of
+`check-upstream-drift.sh`, and it spent a long time as mode 100644 — a "Permission denied" that nobody
+saw until CI finally ran on this branch.
+
 What the Delores harness does and does not cover: `run-delores-tests.sh` compiles an explicit list of
 `Model/` files with `Tests/delores-context-test.swift`. A new model file has to be added to that list
 by hand or its seam is silently untested. Everything in `UI/` — the island, the Companion, the snap
 island, the divider — is outside it, so UI-layer policy has no unit test and can only be checked by
 building and watching the running app.
 
-On a machine with Xcode 26 and SwiftLint installed, also run:
+On this machine's toolchain (Xcode 27, Swift 6.4, macOS 27 SDK), also run:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build
 ./Scripts/lint.sh
 ```
+
+`lint.sh` needs SwiftLint, which is not installed here, so it only ever runs in CI — which is part of
+why `Scripts/check-settings-search.js`, the second half of it, went unnoticed. CI selects Xcode 26 and
+does not build the app.
 
 The current development bundle ID is not one of Tinycast's release channels, so the inherited updater
 must not install Tinycast releases. A Delores release feed is a separate future decision.
