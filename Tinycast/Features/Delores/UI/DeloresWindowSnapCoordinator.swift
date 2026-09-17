@@ -8,6 +8,10 @@ final class DeloresWindowSnapCoordinator {
     private var snapIsland: DeloresSnapIslandPanel?
     private var snapMonitorStart = CGPoint.zero
     private var snapCandidate: SnapCandidate?
+    /// Whether the candidate still has to be read. Reading it costs a burst of accessibility
+    /// calls into the app that was pressed, and a press that never becomes a drag — the
+    /// reader's every ordinary click — must not pay for a drag it did not make.
+    private var snapNeedsCandidate = false
     private var snapIsActive = false
     private var snapHasClaimedGate = false
     var onWindowGeometryChanged: ((CGPoint) -> Void)?
@@ -40,15 +44,24 @@ final class DeloresWindowSnapCoordinator {
     private func releaseSnap() {
         snapIsland?.hide(); snapIsland = nil
         snapCandidate = nil
+        snapNeedsCandidate = false
         snapIsActive = false
         snapMonitorStart = .zero
+        // Only a drag that actually moved a window can have moved a seam, and only a claimed
+        // gate means one did. Notifying on every release made the divider walk every window
+        // on the screen on the reader's every click — a burst of accessibility traffic into
+        // whatever app was clicked, for a geometry that had not changed.
+        let movedAWindow = snapHasClaimedGate
         if snapHasClaimedGate {
             snapHasClaimedGate = false
             interactionGate.release(.snapping)
         }
-        // A window stopped moving, which is the discrete signal that every cached seam may now be
-        // wrong. Not guessed from a mouse-up: the press that moved it belongs to another app.
-        onWindowGeometryChanged?(NSEvent.mouseLocation)
+        if movedAWindow {
+            // A window stopped moving, which is the discrete signal that every cached seam may
+            // now be wrong. Not guessed from a mouse-up: the press that moved it belongs to
+            // another app.
+            onWindowGeometryChanged?(NSEvent.mouseLocation)
+        }
     }
 
     /// Every cached seam is stale now, so discovery runs again on the next opportunity rather than
@@ -58,10 +71,18 @@ final class DeloresWindowSnapCoordinator {
         switch type {
         case .leftMouseDown:
             snapMonitorStart = point
-            snapCandidate = snapCandidate(at: point)
+            // The candidate is not read yet: see `snapNeedsCandidate`. Reading it here put
+            // accessibility calls into the pressed app before anything knew whether the press
+            // was a drag at all.
+            snapCandidate = nil
+            snapNeedsCandidate = true
             snapIsActive = false
         case .leftMouseDragged:
             guard hypot(point.x - snapMonitorStart.x, point.y - snapMonitorStart.y) >= Self.snapDragThreshold else { return }
+            if snapNeedsCandidate {
+                snapNeedsCandidate = false
+                snapCandidate = snapCandidate(at: point)
+            }
             // The gate is claimed only once a window has actually moved. Claiming it on pointer
             // distance alone would swallow the ordinary text selection this gesture might be.
             if !snapHasClaimedGate {
@@ -99,7 +120,10 @@ final class DeloresWindowSnapCoordinator {
         }
     }
 
-    /// The window the drag would move, read at the press. Delores' own surfaces are not targets.
+    /// The window the drag would move, read once the press has become one. Delores' own surfaces
+    /// are not targets. The frame it returns is a few points into the drag rather than the press
+    /// itself, which only moves the gate claim a little further out — in the safe direction, away
+    /// from the text selection this gesture might still turn out to be.
     private func snapCandidate(at point: CGPoint) -> SnapCandidate? {
         guard Permissions.isAccessibilityTrusted(),
               let app = NSWorkspace.shared.frontmostApplication,
