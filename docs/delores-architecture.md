@@ -101,6 +101,13 @@ walked out from under the bar it opened leaves that bar over nothing. Without a 
 body off screen — the bar goes back to the menu bar, which is its ordinary home, and the reason every
 part of `DeloresContextCompanionHosting` is optional as a whole rather than piece by piece.
 
+**Its size is a setting, and the geometry takes that size as a parameter.** Two steps and no others —
+48 and 96 — because the sprite is authored at a fixed size and drawn at a whole number of its own
+pixels; anything between the two puts a fractional number of screen pixels under one drawn pixel,
+which is what shimmers. Where a shell may go is a question about the body's edge, so
+`DeloresCompanionShell` takes `bodyRadius` as an argument rather than reading a constant: the model
+stays pure, one geometry serves both steps, and the size can be changed without re-deriving any of it.
+
 Arbitration is by the keyboard, and only the palette takes it by being summoned. The island is
 ordered in without key (`becomesKeyOnlyIfNeeded`): it appears over a selection the reader may still
 be editing, so ⌘C, ⌘X and Delete must reach their app, and the bar answers for the keyboard only

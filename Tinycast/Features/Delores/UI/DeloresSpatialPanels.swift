@@ -116,17 +116,19 @@ final class DeloresCompanionPanel: NSPanel {
     private var body: DeloresCompanionBodyView!
     var center: CGPoint { CGPoint(x: frame.midX, y: frame.midY) }
 
-    init() {
-        let size = DeloresCompanionShell.visibleSize
+    private var size: DeloresCompanionShell.Size
+
+    init(size: DeloresCompanionShell.Size) {
+        self.size = size
         super.init(
-            contentRect: CGRect(x: 0, y: 0, width: size, height: size),
+            contentRect: CGRect(x: 0, y: 0, width: size.side, height: size.side),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
         becomesKeyOnlyIfNeeded = true
         body = DeloresCompanionBodyView(
-            frame: CGRect(origin: .zero, size: CGSize(width: size, height: size)))
+            frame: CGRect(origin: .zero, size: CGSize(width: size.side, height: size.side)))
         contentView = body
     }
 
@@ -135,8 +137,20 @@ final class DeloresCompanionPanel: NSPanel {
 
     func present(at center: CGPoint) { move(to: center); orderFrontRegardless() }
     func move(to center: CGPoint) {
-        let half = DeloresCompanionShell.visibleRadius
-        setFrameOrigin(CGPoint(x: center.x - half, y: center.y - half))
+        setFrameOrigin(CGPoint(x: center.x - size.radius, y: center.y - size.radius))
+    }
+
+    /// Drawn at the other step without going anywhere: the body grows about the point it stands on,
+    /// which is the point the reader aimed at.
+    func applySize(_ next: DeloresCompanionShell.Size) {
+        guard next != size else { return }
+        size = next
+        let middle = center
+        setFrame(
+            CGRect(
+                x: middle.x - next.radius, y: middle.y - next.radius,
+                width: next.side, height: next.side),
+            display: true)
     }
     func hide() { setCaptured(false); body.stop(); orderOut(nil); longPressTimer?.invalidate() }
     func setCaptured(_ captured: Bool) {

@@ -10,13 +10,22 @@ import CoreGraphics
 /// The body stays *outside* the shell in every case: a bar that covered the Companion would take
 /// away the thing the reader clicked to get it.
 enum DeloresCompanionShell {
-    /// The body the reader sees, and the window holding it: the sprite is drawn at its authored size,
-    /// so the two are the same number. It was a 28pt glass circle inside a 44pt window while the body
-    /// was a placeholder — the window was larger so a thumb had something to aim at, and a 48pt
-    /// sprite is already more than that was.
-    static let visibleSize: CGFloat = 48
+    /// How large the body is drawn. Two steps and no others: the sprite is authored at 48 px, so the
+    /// only question is how many authored pixels a point is worth. Anything between the two puts a
+    /// fractional number of device pixels under one authored pixel, which is what makes pixel art
+    /// shimmer.
+    enum Size: Int, CaseIterable, Sendable {
+        case regular = 48
+        case large = 96
 
-    static var visibleRadius: CGFloat { visibleSize / 2 }
+        /// What the geometry works in. Where a shell may go is a question about the body's edge, so
+        /// it is the radius that travels rather than the diameter.
+        var radius: CGFloat { CGFloat(rawValue) / 2 }
+
+        /// The window's side. There is no margin around the body any more: the sprite fills its
+        /// window, and it is already larger than the thumb the old glass circle had to be padded for.
+        var side: CGFloat { CGFloat(rawValue) }
+    }
 
     /// The seam between the body and whatever grew out of it. Wide enough to read as two things,
     /// narrow enough to read as one gesture.
@@ -35,21 +44,22 @@ enum DeloresCompanionShell {
 
     // MARK: - The body
 
-    static func circleFrame(center: CGPoint) -> CGRect {
+    static func circleFrame(center: CGPoint, bodyRadius: CGFloat) -> CGRect {
         CGRect(
-            x: center.x - visibleRadius, y: center.y - visibleRadius,
-            width: visibleSize, height: visibleSize)
+            x: center.x - bodyRadius, y: center.y - bodyRadius,
+            width: bodyRadius * 2, height: bodyRadius * 2)
     }
 
     /// Puts the body on `edge` without letting any part of it leave the visible area. The circle is
     /// kept a radius off each corner, so a body in a corner is on one edge and not half on two.
     static func snapCenter(
-        _ point: CGPoint, to edge: DeloresCompanionEdge, in visibleFrame: CGRect
+        _ point: CGPoint, to edge: DeloresCompanionEdge, in visibleFrame: CGRect,
+        bodyRadius: CGFloat
     ) -> CGPoint {
-        let minX = visibleFrame.minX + visibleRadius
-        let maxX = visibleFrame.maxX - visibleRadius
-        let minY = visibleFrame.minY + visibleRadius
-        let maxY = visibleFrame.maxY - visibleRadius
+        let minX = visibleFrame.minX + bodyRadius
+        let maxX = visibleFrame.maxX - bodyRadius
+        let minY = visibleFrame.minY + bodyRadius
+        let maxY = visibleFrame.maxY - bodyRadius
         let x = min(max(point.x, minX), maxX)
         let y = min(max(point.y, minY), maxY)
         switch edge {
@@ -88,7 +98,8 @@ enum DeloresCompanionShell {
 
     /// Where a dragged window counts as having been brought to the body. Generous on purpose: a
     /// drag carries a window, not a pointer, and a target the reader has to hit exactly is one
-    /// they will miss.
+    /// they will miss. It does not grow with the body — a larger target would start overlapping
+    /// the windows being dragged to it.
     static func dragHitFrame(center: CGPoint) -> CGRect {
         let side: CGFloat = 60
         return CGRect(
@@ -100,16 +111,18 @@ enum DeloresCompanionShell {
         petCenter: CGPoint,
         edge: DeloresCompanionEdge,
         shellSize: CGSize,
-        visibleFrame: CGRect
+        visibleFrame: CGRect,
+        bodyRadius: CGFloat
     ) -> Placement {
         let resolvedEdge = edgeForOpeningBar(
             current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
         var center = petCenter
         if resolvedEdge != edge {
-            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame)
+            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
         }
         return placeShell(
-            petCenter: center, edge: resolvedEdge, shellSize: shellSize, visibleFrame: visibleFrame)
+            petCenter: center, edge: resolvedEdge, shellSize: shellSize,
+            visibleFrame: visibleFrame, bodyRadius: bodyRadius)
     }
 
     /// A snap island: grown out of the body's inward side too, with its long axis along the edge the
@@ -120,10 +133,12 @@ enum DeloresCompanionShell {
         petCenter: CGPoint,
         edge: DeloresCompanionEdge,
         islandSize: CGSize,
-        visibleFrame: CGRect
+        visibleFrame: CGRect,
+        bodyRadius: CGFloat
     ) -> Placement {
         placeShell(
-            petCenter: petCenter, edge: edge, shellSize: islandSize, visibleFrame: visibleFrame)
+            petCenter: petCenter, edge: edge, shellSize: islandSize,
+            visibleFrame: visibleFrame, bodyRadius: bodyRadius)
     }
 
     /// An opened card: the bar stays level with the body's centre and the answer hangs downward from
@@ -136,26 +151,28 @@ enum DeloresCompanionShell {
         edge: DeloresCompanionEdge,
         collapsedSize: CGSize,
         expandedSize: CGSize,
-        visibleFrame: CGRect
+        visibleFrame: CGRect,
+        bodyRadius: CGFloat
     ) -> Placement {
         let resolvedEdge = edgeForOpeningBar(
             current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
         var center = petCenter
         if resolvedEdge != edge {
-            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame)
+            center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
         }
         var frame = hangDownFrame(
             petCenter: center, edge: resolvedEdge,
-            collapsedSize: collapsedSize, expandedSize: expandedSize)
+            collapsedSize: collapsedSize, expandedSize: expandedSize, bodyRadius: bodyRadius)
         if resolvedEdge == .left || resolvedEdge == .right {
             let overflowBottom = visibleFrame.minY - frame.minY
             if overflowBottom > 0 {
                 center = snapCenter(
                     CGPoint(x: center.x, y: center.y + overflowBottom),
-                    to: resolvedEdge, in: visibleFrame)
+                    to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
                 frame = hangDownFrame(
                     petCenter: center, edge: resolvedEdge,
-                    collapsedSize: collapsedSize, expandedSize: expandedSize)
+                    collapsedSize: collapsedSize, expandedSize: expandedSize,
+                    bodyRadius: bodyRadius)
             }
         }
         frame = clamp(frame, to: visibleFrame)
@@ -168,11 +185,13 @@ enum DeloresCompanionShell {
         petCenter: CGPoint,
         edge: DeloresCompanionEdge,
         shellSize: CGSize,
-        visibleFrame: CGRect
+        visibleFrame: CGRect,
+        bodyRadius: CGFloat
     ) -> Placement {
-        var center = snapCenter(petCenter, to: edge, in: visibleFrame)
+        var center = snapCenter(petCenter, to: edge, in: visibleFrame, bodyRadius: bodyRadius)
         var frame = inwardFrame(
-            petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+            petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
+            edge: edge, shellSize: shellSize)
 
         switch edge {
         case .top, .bottom:
@@ -183,9 +202,11 @@ enum DeloresCompanionShell {
             if overflowRight > 0 { shift -= overflowRight }
             if shift != 0 {
                 center = snapCenter(
-                    CGPoint(x: center.x + shift, y: center.y), to: edge, in: visibleFrame)
+                    CGPoint(x: center.x + shift, y: center.y), to: edge, in: visibleFrame,
+                    bodyRadius: bodyRadius)
                 frame = inwardFrame(
-                    petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+                    petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
+                    edge: edge, shellSize: shellSize)
             }
         case .left, .right:
             let overflowBottom = visibleFrame.minY - frame.minY
@@ -195,9 +216,11 @@ enum DeloresCompanionShell {
             if overflowTop > 0 { shift -= overflowTop }
             if shift != 0 {
                 center = snapCenter(
-                    CGPoint(x: center.x, y: center.y + shift), to: edge, in: visibleFrame)
+                    CGPoint(x: center.x, y: center.y + shift), to: edge, in: visibleFrame,
+                    bodyRadius: bodyRadius)
                 frame = inwardFrame(
-                    petVisible: circleFrame(center: center), edge: edge, shellSize: shellSize)
+                    petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
+                    edge: edge, shellSize: shellSize)
             }
         }
 
@@ -243,9 +266,10 @@ enum DeloresCompanionShell {
         petCenter: CGPoint,
         edge: DeloresCompanionEdge,
         collapsedSize: CGSize,
-        expandedSize: CGSize
+        expandedSize: CGSize,
+        bodyRadius: CGFloat
     ) -> CGRect {
-        let pet = circleFrame(center: petCenter)
+        let pet = circleFrame(center: petCenter, bodyRadius: bodyRadius)
         let top = pet.midY + collapsedSize.height / 2
         let y = top - expandedSize.height
         switch edge {
@@ -276,3 +300,8 @@ enum DeloresCompanionShell {
         return r
     }
 }
+
+/// What the Companion tells another surface about where its body is standing: enough to grow a shell
+/// out of it, and the radius with it, because every question here is about the body's edge and only
+/// the Companion knows how large it is drawn.
+typealias DeloresCompanionAnchor = (center: CGPoint, edge: DeloresCompanionEdge, radius: CGFloat)

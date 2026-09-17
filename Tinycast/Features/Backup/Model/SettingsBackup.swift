@@ -80,6 +80,9 @@ struct SettingsBackup: Codable {
         var hideCurrentEvent: Int?
         // Safe to carry: it silences a prompt rather than granting anything.
         var supportReminders: Bool?
+        // Safe to carry for the opposite reason — it grants nothing at all, it only says how large
+        // something is drawn on this Mac's own screens.
+        var companionSize: Int?
     }
 
     /// One entry per bindable action. docs/features/hotkeys.md#persistence
@@ -171,7 +174,8 @@ extension SettingsBackup {
             calendarMenuBarDisplay: s.calendarMenuBarDisplay.rawValue,
             menuBarLinkedEventsOnly: s.menuBarLinkedEventsOnly,
             hideCurrentEvent: s.hideCurrentEvent.rawValue,
-            supportReminders: s.supportRemindersEnabled)
+            supportReminders: s.supportRemindersEnabled,
+            companionSize: s.deloresCompanionSize.rawValue)
 
         let hk = core.hotKeys
         var hotkeys = HotkeyBackup()
@@ -479,6 +483,10 @@ extension SettingsBackup {
         }
         if let flag = s.supportReminders {
             settings.supportRemindersEnabled = flag
+            count += 1
+        }
+        if let raw = s.companionSize, let size = DeloresCompanionShell.Size(rawValue: raw) {
+            settings.deloresCompanionSize = size
             count += 1
         }
         return count

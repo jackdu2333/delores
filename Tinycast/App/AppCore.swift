@@ -556,6 +556,11 @@ final class AppCore {
                 $0.quickActionCoordinator.applyEnabled()
                 $0.deloresCoordinator.applyEnabled()
             })
+        // How large the body is drawn is not a capability being switched on: the Companion stays up,
+        // it only stands further in from the edge than it did.
+        track(
+            { _ = $0.deloresCompanionSize },
+            reproject: { $0.deloresCoordinator.applyCompanionSize() })
         track(
             {
                 _ = $0.calendarEnabled

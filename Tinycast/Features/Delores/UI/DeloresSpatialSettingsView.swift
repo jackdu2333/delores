@@ -96,6 +96,17 @@ struct DeloresSpatialSettingsView: View {
                         + "reopens your last selection when you double-click it. "
                 )
             }
+            Picker(selection: $settings.deloresCompanionSize) {
+                Text("Regular").tag(DeloresCompanionShell.Size.regular)
+                Text("Large").tag(DeloresCompanionShell.Size.large)
+            } label: {
+                SettingsRowTitle(.deloresCompanion, "Size")
+                // Why there are two and no slider: the sprite is authored at a fixed size and drawn
+                // at a whole number of its own pixels. Anything between the two would put a
+                // fractional number of screen pixels under one drawn pixel, which is what shimmers.
+                Text("Two sizes only, because it is drawn at a whole number of its own pixels.")
+            }
+            .settingsEnabled(settings.deloresCompanionEnabled)
         } header: {
             SettingsSectionHeader(.deloresCompanion)
         } footer: {

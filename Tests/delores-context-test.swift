@@ -660,13 +660,13 @@ struct DeloresContextTest {
 
     private static func testCompanionShell() {
         let visible = CGRect(x: 0, y: 0, width: 1440, height: 876)
-        let r = DeloresCompanionShell.visibleRadius
+        let r = DeloresCompanionShell.Size.regular.radius
         let gap = DeloresCompanionShell.shellGap
         let bar = CGSize(width: 420, height: 38)
 
         // The whole point: the shell grows inward, and the body it grew from stays outside it.
         func assertOutside(_ placement: DeloresCompanionShell.Placement, _ what: String) {
-            let pet = DeloresCompanionShell.circleFrame(center: placement.petCenter)
+            let pet = DeloresCompanionShell.circleFrame(center: placement.petCenter, bodyRadius: r)
             require(
                 !placement.frame.intersects(pet),
                 "a shell grown \(what) does not cover the body it grew from")
@@ -678,8 +678,8 @@ struct DeloresContextTest {
 
         let right = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 400),
-            edge: .right, shellSize: bar, visibleFrame: visible)
-        let rightPet = DeloresCompanionShell.circleFrame(center: right.petCenter)
+            edge: .right, shellSize: bar, visibleFrame: visible, bodyRadius: r)
+        let rightPet = DeloresCompanionShell.circleFrame(center: right.petCenter, bodyRadius: r)
         require(
             right.frame.maxX == rightPet.minX - gap,
             "a shell on the right edge grows leftward with the gap between")
@@ -688,8 +688,8 @@ struct DeloresContextTest {
 
         let left = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: visible.minX + r, y: 400),
-            edge: .left, shellSize: bar, visibleFrame: visible)
-        let leftPet = DeloresCompanionShell.circleFrame(center: left.petCenter)
+            edge: .left, shellSize: bar, visibleFrame: visible, bodyRadius: r)
+        let leftPet = DeloresCompanionShell.circleFrame(center: left.petCenter, bodyRadius: r)
         require(
             left.frame.minX == leftPet.maxX + gap,
             "a shell on the left edge grows rightward with the gap between")
@@ -697,8 +697,8 @@ struct DeloresContextTest {
 
         let top = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: 400, y: visible.maxY - r),
-            edge: .top, shellSize: bar, visibleFrame: visible)
-        let topPet = DeloresCompanionShell.circleFrame(center: top.petCenter)
+            edge: .top, shellSize: bar, visibleFrame: visible, bodyRadius: r)
+        let topPet = DeloresCompanionShell.circleFrame(center: top.petCenter, bodyRadius: r)
         require(
             top.frame.maxY == topPet.minY - gap,
             "a shell on the top edge hangs below the body")
@@ -709,12 +709,12 @@ struct DeloresContextTest {
         // there would lie across the middle of the display. The body slides to a vertical edge.
         let bottom = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: 200, y: visible.minY + r),
-            edge: .bottom, shellSize: bar, visibleFrame: visible)
+            edge: .bottom, shellSize: bar, visibleFrame: visible, bodyRadius: r)
         require(bottom.edge == .left, "a body on the bottom edge slides to the nearer vertical edge")
         assertOutside(bottom, "from the bottom edge")
         let farBottom = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: visible.maxX - 200, y: visible.minY + r),
-            edge: .bottom, shellSize: bar, visibleFrame: visible)
+            edge: .bottom, shellSize: bar, visibleFrame: visible, bodyRadius: r)
         require(
             farBottom.edge == .right,
             "a body on the bottom edge takes the nearer vertical edge, whichever that is")
@@ -724,7 +724,7 @@ struct DeloresContextTest {
         let opened = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 400),
             edge: .right, collapsedSize: bar,
-            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible)
+            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible, bodyRadius: r)
         require(
             opened.frame.maxY == right.frame.maxY,
             "an opened card hangs from the closed bar's top edge")
@@ -737,7 +737,7 @@ struct DeloresContextTest {
         let low = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 100),
             edge: .right, collapsedSize: bar,
-            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible)
+            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible, bodyRadius: r)
         require(low.petCenter.y > 100, "a card that would run off the bottom lifts the body with it")
         require(low.frame.minY == visible.minY, "the lifted card sits on the bottom edge")
         assertOutside(low, "open, after lifting the body")
@@ -749,7 +749,7 @@ struct DeloresContextTest {
         let narrow = CGRect(x: 0, y: 0, width: 300, height: 876)
         let squeezed = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: 300 - r, y: 400),
-            edge: .right, shellSize: bar, visibleFrame: narrow)
+            edge: .right, shellSize: bar, visibleFrame: narrow, bodyRadius: r)
         require(
             squeezed.frame.width <= narrow.width && squeezed.frame.minX >= narrow.minX,
             "a shell wider than its display is shrunk to it")
@@ -760,7 +760,7 @@ struct DeloresContextTest {
         let strip = CGSize(width: 44, height: 340)
         let rightStrip = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 400),
-            edge: .right, shellSize: strip, visibleFrame: visible)
+            edge: .right, shellSize: strip, visibleFrame: visible, bodyRadius: r)
         require(
             rightStrip.frame.maxX == rightPet.minX - gap,
             "a strip on the right edge grows leftward with the gap between")
@@ -768,7 +768,7 @@ struct DeloresContextTest {
         assertOutside(rightStrip, "as a strip, on the right edge")
         let leftStrip = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: visible.minX + r, y: 400),
-            edge: .left, shellSize: strip, visibleFrame: visible)
+            edge: .left, shellSize: strip, visibleFrame: visible, bodyRadius: r)
         require(
             leftStrip.frame.minX == leftPet.maxX + gap,
             "a strip on the left edge grows rightward with the gap between")
@@ -776,7 +776,7 @@ struct DeloresContextTest {
         let spine = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 400),
             edge: .right, collapsedSize: strip,
-            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible)
+            expandedSize: CGSize(width: 420, height: 390), visibleFrame: visible, bodyRadius: r)
         require(
             spine.frame.maxX == rightStrip.frame.maxX,
             "an opened card keeps the strip's pet-side rim — the strip is the card's spine")
@@ -793,8 +793,8 @@ struct DeloresContextTest {
         let tall = CGSize(width: 164, height: 340)
         let topIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: 400, y: visible.maxY - r),
-            edge: .top, islandSize: wide, visibleFrame: visible)
-        let topIslandPet = DeloresCompanionShell.circleFrame(center: topIsland.petCenter)
+            edge: .top, islandSize: wide, visibleFrame: visible, bodyRadius: r)
+        let topIslandPet = DeloresCompanionShell.circleFrame(center: topIsland.petCenter, bodyRadius: r)
         require(
             topIsland.frame.maxY == topIslandPet.minY - gap,
             "an island on the top edge hangs below the body")
@@ -803,8 +803,8 @@ struct DeloresContextTest {
 
         let bottomIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: 400, y: visible.minY + r),
-            edge: .bottom, islandSize: wide, visibleFrame: visible)
-        let bottomIslandPet = DeloresCompanionShell.circleFrame(center: bottomIsland.petCenter)
+            edge: .bottom, islandSize: wide, visibleFrame: visible, bodyRadius: r)
+        let bottomIslandPet = DeloresCompanionShell.circleFrame(center: bottomIsland.petCenter, bodyRadius: r)
         require(
             bottomIsland.frame.minY == bottomIslandPet.maxY + gap,
             "an island on the bottom edge rides above the body, where a bar would have slid away")
@@ -812,7 +812,7 @@ struct DeloresContextTest {
 
         let rightIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 400),
-            edge: .right, islandSize: tall, visibleFrame: visible)
+            edge: .right, islandSize: tall, visibleFrame: visible, bodyRadius: r)
         require(
             rightIsland.frame.maxX == rightPet.minX - gap,
             "an island on the right edge grows leftward with the gap between")
@@ -822,7 +822,7 @@ struct DeloresContextTest {
         // Too low for a vertical island, and the body rides up with it rather than being clipped.
         let lowIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 60),
-            edge: .right, islandSize: tall, visibleFrame: visible)
+            edge: .right, islandSize: tall, visibleFrame: visible, bodyRadius: r)
         require(lowIsland.petCenter.y > 60, "an island that would run off the bottom lifts the body")
 
         // What counts as "brought to the body" during a drag is generous, by design.

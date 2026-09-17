@@ -73,7 +73,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     ///
     /// Kept as the body's centre and the edge it rides rather than as a frame, because the body is
     /// what the bar hangs on and it is the body that has to move when a shell does not fit.
-    private var companionAnchor: (center: CGPoint, edge: DeloresCompanionEdge)?
+    private var companionAnchor: DeloresCompanionAnchor?
 
     /// Told when a shell did not fit where the body was standing and the body had to slide along its
     /// edge to make room. The Companion owns its own window, so it is the only thing that can move
@@ -151,7 +151,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onRetryAnswer: @escaping () -> Void,
         onFollowUp: @escaping (String) -> Void,
         onDismiss: @escaping () -> Void,
-        companion: (center: CGPoint, edge: DeloresCompanionEdge)? = nil
+        companion: DeloresCompanionAnchor? = nil
     ) {
         dismiss(notifying: false)
 
@@ -608,7 +608,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         }
         let placement = DeloresCompanionShell.planBarOpening(
             petCenter: pet.center, edge: pet.edge, shellSize: size,
-            visibleFrame: screen.visibleFrame)
+            visibleFrame: screen.visibleFrame, bodyRadius: pet.radius)
         adopt(placement)
         return placement.frame
     }
@@ -626,7 +626,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let placement = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: pet.center, edge: pet.edge,
             collapsedSize: CGSize(width: barWidth, height: barIsVertical ? barLength : barHeight),
-            expandedSize: size, visibleFrame: screen.visibleFrame)
+            expandedSize: size, visibleFrame: screen.visibleFrame, bodyRadius: pet.radius)
         adopt(placement)
         return placement.frame
     }
@@ -634,10 +634,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// The body had to move to make room. The Companion owns its own window, so the most this can do
     /// is say so.
     private func adopt(_ placement: DeloresCompanionShell.Placement) {
-        guard companionAnchor?.center != placement.petCenter
-            || companionAnchor?.edge != placement.edge
+        guard let anchor = companionAnchor,
+            anchor.center != placement.petCenter || anchor.edge != placement.edge
         else { return }
-        companionAnchor = (placement.petCenter, placement.edge)
+        companionAnchor = (placement.petCenter, placement.edge, anchor.radius)
         onCompanionRelocated?(placement.petCenter, placement.edge)
     }
 

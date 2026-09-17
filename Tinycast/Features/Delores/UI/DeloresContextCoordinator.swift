@@ -10,7 +10,7 @@ import Observation
 struct DeloresContextCompanionHosting {
     /// Where a shell opened on the display whose visible area is this should hang. Nil sends the bar
     /// to the menu bar — the Companion is off, or its body is not on screen.
-    var anchor: (CGRect) -> (center: CGPoint, edge: DeloresCompanionEdge)?
+    var anchor: (CGRect) -> DeloresCompanionAnchor?
     /// A shell did not fit where the body was standing, and the body had to slide along its edge.
     var relocate: (CGPoint, DeloresCompanionEdge) -> Void
     /// A shell hung off the body came on screen, or went away. While one is up the body stands

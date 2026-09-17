@@ -16,7 +16,7 @@ final class DeloresWindowSnapCoordinator {
     private var snapHasClaimedGate = false
     /// The body's standing point on the display a drag is happening in, if it is standing on that
     /// display at all. Read-only on purpose: a drag must never move the Companion to meet it.
-    var companionAnchor: ((NSScreen) -> (center: CGPoint, edge: DeloresCompanionEdge)?)?
+    var companionAnchor: ((NSScreen) -> DeloresCompanionAnchor?)?
     /// Where an island opened out of the body settled. Made once, when the run begins, and held:
     /// an island that slid after a wandering body mid-drag would be a thing chasing the reader
     /// rather than a thing they aimed at.
@@ -114,7 +114,8 @@ final class DeloresWindowSnapCoordinator {
                 let layout = SnapIslandGeometry.layout(forEdge: body.edge)
                 snapBodyPlacement = DeloresCompanionShell.planIslandOpening(
                     petCenter: body.center, edge: body.edge,
-                    islandSize: layout.size, visibleFrame: screen.visibleFrame)
+                    islandSize: layout.size, visibleFrame: screen.visibleFrame,
+                    bodyRadius: body.radius)
             }
             // Once up, the island itself holds the run alive: its cards reach further than the
             // hit frame, and a drag that had found the body would not want it gone the moment it

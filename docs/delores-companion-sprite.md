@@ -250,7 +250,7 @@ desktop-pet 的 `SpriteSlicer` 算法与 petex 的格式文档即参考库。此
 | 2 | Model 层映射 | `CompanionAnimation.swift` 纯函数：① 相位→行；② `facing(from:to:fallback:)`（裁决 3）；③ `contentsRect(row:frame:)`，y 轴翻转只在这里发生一次。进 `run-delores-tests.sh` 清单 | ✅ 2026-09-18：harness 断言全过（resting/held→idle、strolling 左右→对应行、竖边 dx==0 保持 fallback、帧矩形与帧率钳制值） |
 | 3 | CALayer 换心 | `DeloresCompanionBodyView`（空壳 NSView + CALayer）；删 `DeloresCompanionView` 与玻璃圆；呼吸接 CA 离散动画（裁决 1）；尺寸 44→48，真相源收进 `DeloresCompanionShell.visibleSize` | ✅ 2026-09-18：xcodebuild 零错误零警告，图集已进 bundle；材质差异已补记进架构文档；像素锐利度与「无玻璃底」仍需真机肉眼 |
 | 4 | 手势表情接线 | `play()` → `react()`；wander 相位驱动 `rest()` / `step(frame:facing:)`；捕获、持 shell、拖拽一律 idle；帧率降到 12 fps（裁决 2） | ✅ 2026-09-18：编译通过、harness 通过。**五手势的实际观感与「播完回落 idle」仍需真机手动验收** |
-| 5 | 设置页 | 尺寸档位 48/96 两档（整数倍纪律） | 切档后无像素抖、跨屏拖拽不糊 |
+| 5 | 设置页 | 尺寸档位 48/96 两档（`DeloresCompanionShell.Size`）；身体半径成为**注入参数**而非静态常量——这正是裁决 4 说的返工 | ✅ 2026-09-18：编译、harness、settings-search 全过。Shell 那 98 行断言因本就按 `radius` 书写，尺寸注入后**无一条需要改**。**切档后无像素抖、跨屏拖拽不糊仍需真机肉眼** |
 | 6 | 验收门禁 | 见下 | 全绿 |
 
 ## 验收门禁

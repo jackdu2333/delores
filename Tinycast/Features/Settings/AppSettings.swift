@@ -444,6 +444,12 @@ final class AppSettings {
         didSet { defaults.set(deloresCompanionEnabled, forKey: Key.deloresCompanionEnabled.rawValue) }
     }
 
+    /// How large the Companion is drawn. Two steps only — see `DeloresCompanionShell.Size`, which
+    /// owns why anything between them would shimmer.
+    var deloresCompanionSize: DeloresCompanionShell.Size {
+        didSet { defaults.set(deloresCompanionSize.rawValue, forKey: Key.deloresCompanionSize.rawValue) }
+    }
+
     var deloresWindowSnappingEnabled: Bool {
         didSet { defaults.set(deloresWindowSnappingEnabled, forKey: Key.deloresWindowSnappingEnabled.rawValue) }
     }
@@ -649,6 +655,8 @@ final class AppSettings {
         menuSearchShowsAppleMenu = defaults.bool(forKey: Key.menuSearchShowsAppleMenu.rawValue)
         windowManagementEnabled = defaults.bool(forKey: Key.windowManagementEnabled.rawValue)
         deloresCompanionEnabled = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue)
+        deloresCompanionSize = DeloresCompanionShell.Size(
+            rawValue: defaults.integer(forKey: Key.deloresCompanionSize.rawValue)) ?? .regular
         deloresWindowSnappingEnabled = defaults.bool(
             forKey: Key.deloresWindowSnappingEnabled.rawValue)
         deloresSplitDividerEnabled = defaults.bool(

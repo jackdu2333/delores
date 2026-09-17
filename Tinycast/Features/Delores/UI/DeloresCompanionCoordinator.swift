@@ -28,7 +28,9 @@ final class DeloresCompanionCoordinator {
     var onOpenContext: (() -> Void)?
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
-    private static let companionVisibleRadius: CGFloat = 14
+    /// How far off the visible edge the body rides, which is its own radius: a body drawn at the
+    /// larger step stands further in, or it would hang off the display.
+    private var bodyRadius: CGFloat { settings.deloresCompanionSize.radius }
     /// Frames while walking. A rest runs none at all, so this is the only frame cost there is — and
     /// the sprite's second ruling makes it the walk's frame rate too: one timer, step and frame both.
     private static var strollFrame: TimeInterval { DeloresCompanionAnimation.walkFrame }
@@ -50,10 +52,9 @@ final class DeloresCompanionCoordinator {
     /// The body comes to that display first if it is not already on it. A bar grown beside a body on
     /// another display is a bar nobody can see, and the reason for hanging it off the body is that
     /// it appears where the reader already is.
-    func anchorForShell(in visibleFrame: CGRect) -> (center: CGPoint, edge: DeloresCompanionEdge)? {
+    func anchorForShell(in visibleFrame: CGRect) -> DeloresCompanionAnchor? {
         guard isRunning, let companion, companion.isVisible else { return nil }
-        let bounds = visibleFrame.insetBy(
-            dx: Self.companionVisibleRadius, dy: Self.companionVisibleRadius)
+        let bounds = visibleFrame.insetBy(dx: bodyRadius, dy: bodyRadius)
         guard bounds.width > 0, bounds.height > 0 else { return nil }
         var center = companion.center
         // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
@@ -67,21 +68,34 @@ final class DeloresCompanionCoordinator {
             wander = DeloresCompanionWander.settled(at: center, in: bounds, at: now, using: &rng)
             syncWanderTimers()
         }
-        return (center, DeloresCompanionWander.edge(for: center, in: bounds))
+        return (center, DeloresCompanionWander.edge(for: center, in: bounds), bodyRadius)
     }
 
     /// The body's standing point on `screen`, if it is standing on that screen at all. Unlike
     /// `anchorForShell(in:)` this never moves the body: a drag brought near it is not a wish for it
     /// to travel across displays, and an island beside where the body stands is already beside it.
-    func bodyAnchor(on screen: NSScreen) -> (center: CGPoint, edge: DeloresCompanionEdge)? {
+    func bodyAnchor(on screen: NSScreen) -> DeloresCompanionAnchor? {
         guard isRunning, let companion, companion.isVisible else { return nil }
         guard let standing = DeloresWindowGeometry.screenContaining(companion.center),
             standing.frame == screen.frame
         else { return nil }
         return (
             companion.center,
-            DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: standing))
+            DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: standing)),
+            bodyRadius
         )
+    }
+
+    /// Drawn at the other step. The body keeps the point it stands on and grows about it; where it
+    /// may stand is its own radius, so a larger body has to be brought back inside the display.
+    func applyCompanionSize() {
+        guard let companion, companion.isVisible else { return }
+        companion.applySize(settings.deloresCompanionSize)
+        guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
+        let landed = DeloresCompanionWander.project(
+            companion.center, into: companionBounds(on: screen))
+        companion.move(to: landed)
+        settle(at: landed, on: screen)
     }
 
     /// Stands the body still while a shell it opened is on screen.
@@ -132,7 +146,7 @@ final class DeloresCompanionCoordinator {
         guard companionMonitor == nil, companionLocalMonitor == nil else { return }
         guard let screen = DeloresWindowGeometry.activeScreen() else { return }
         isRunning = true
-        let panel = companion ?? DeloresCompanionPanel()
+        let panel = companion ?? DeloresCompanionPanel(size: settings.deloresCompanionSize)
         companion = panel
         panel.onSingleClick = { [weak self] in self?.companionSingleClick() }
         panel.onDoubleClick = { [weak self] in self?.companionDoubleClick() }
@@ -308,10 +322,10 @@ final class DeloresCompanionCoordinator {
     }
 
     private func companionBounds(on screen: NSScreen) -> CGRect {
-        screen.visibleFrame.insetBy(dx: Self.companionVisibleRadius, dy: Self.companionVisibleRadius)
+        screen.visibleFrame.insetBy(dx: bodyRadius, dy: bodyRadius)
     }
 
     private func spawnPoint(on screen: NSScreen) -> CGPoint {
-        CGPoint(x: screen.visibleFrame.maxX - Self.companionVisibleRadius, y: screen.visibleFrame.midY)
+        CGPoint(x: screen.visibleFrame.maxX - bodyRadius, y: screen.visibleFrame.midY)
     }
 }
