@@ -140,7 +140,7 @@ final class DeloresCompanionCoordinator {
             guard companion.isCaptured, companionLeaveTimer == nil else { return }
             let timer = Timer(timeInterval: Self.companionLeaveDuration, repeats: false) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    guard let self, let companion = self.companion else { return }
+                    guard let self, self.companion != nil else { return }
                     self.captureCompanion(false)
                     self.companionLeaveTimer = nil
                 }

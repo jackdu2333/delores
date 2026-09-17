@@ -1,6 +1,8 @@
 import AppKit
 @preconcurrency import ApplicationServices
 
+@MainActor
+@MainActor
 enum DeloresWindowGeometry {
     static func focusedWindow(of app: NSRunningApplication) -> AXUIElement? {
         let appElement = AXWindowAccess.application(for: app.processIdentifier)
