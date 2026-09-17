@@ -33,6 +33,10 @@ anyway. They have no place to be and nothing of their own to say.
   the last selection's Context Surface. It currently shares one coordinator with two capabilities it
   has nothing to do with; separating them is the next structural step.
 
+The gap between the surfaces and the core, measured against both catalogues, is written up in
+[delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,
+and the one shape that can carry both. Read it before moving action execution anywhere.
+
 ## Current implementation boundary
 
 ```text
