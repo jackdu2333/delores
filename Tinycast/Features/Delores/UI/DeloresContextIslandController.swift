@@ -93,6 +93,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     private var panelGeneration = UUID()
 
     var isVisible: Bool { panel?.isVisible == true }
+    var isGenerating: Bool { answer?.isRunning == true }
 
     /// The card's opening. The bar grows where it stands and only then hands the answer over, so the
     /// hand-off reads as one downward gesture instead of a window swap.
@@ -248,7 +249,9 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// the answer is exactly the case that was meant.
     func windowDidResignKey(_ notification: Notification) {
         guard let panel, notification.object as? NSWindow === panel else { return }
-        guard !isPinned else { return }
+        // While a pinned selection is held OR while the model is still generating an answer,
+        // clicking outside does NOT dismiss the island.
+        guard !isPinned, !isGenerating else { return }
         dismiss()
     }
 

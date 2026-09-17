@@ -93,7 +93,7 @@ final class DeloresContextCoordinator {
         // A pinned island is holding a selection of its own, and the gesture that would replace it is
         // dropped before it reads anything: the read would paste over the reader's clipboard to no
         // purpose, and the selection state stays untouched rather than reporting text nobody sees.
-        guard !(island.isVisible && island.isPinned) else { return }
+        guard !(island.isVisible && (island.isPinned || island.isGenerating)) else { return }
 
         // A window drag or a divider drag is one gesture that belongs to Spatial. Releasing a mouse
         // button at the end of either is not a selection, and reading the target app for text would
@@ -323,7 +323,7 @@ final class DeloresContextCoordinator {
     /// Lets go of the captured selection, unless the reader pinned it. Then the island stays put and
     /// the next press lands on the same text, which is the whole of what pinning is for.
     private func releaseSurface() {
-        guard !island.isPinned else { return }
+        guard !island.isPinned, !island.isGenerating else { return }
         island.dismiss(notifying: false)
         clearContext()
     }
