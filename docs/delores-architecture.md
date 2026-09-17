@@ -91,11 +91,14 @@ anchor is a fraction of the way down the visible frame (`paletteTopMarginFractio
 action belongs at the status bar; the two cannot share one window without moving where ⌥Space puts
 the palette.
 
-Arbitration is by the keyboard. Whichever Surface holds key answers the input, and each dismisses
-itself on losing key (`PaletteWindowController.windowDidResignKey`,
-`DeloresContextIslandController.windowDidResignKey`). Summoning the palette over the island drops the
-island, and a fresh selection over the palette drops the palette — neither has to know the other
-exists, and no single input closes both.
+Arbitration is by the keyboard, and only the palette takes it by being summoned. The island is
+ordered in without key (`becomesKeyOnlyIfNeeded`): it appears over a selection the reader may still
+be editing, so ⌘C, ⌘X and Delete must reach their app, and the bar answers for the keyboard only
+after the reader clicks into its follow-up field. A click elsewhere closes it, watched directly
+because a bar that never held key has no key to lose; one of our own windows taking the keyboard
+(`NSWindow.didBecomeKeyNotification`) closes it too, which is how the palette summons the island out
+of the way — and a fresh selection over the palette still drops the palette, so neither has to
+know the other exists and no single input closes both.
 
 The one exception is a pinned Context Surface, which is a window of ours taking the keyboard on
 purpose rather than the reader leaving the app. `PaletteWindowController.windowDidResignKey` asks
@@ -103,11 +106,11 @@ purpose rather than the reader leaving the app. `PaletteWindowController.windowD
 windows still holds key. A resign that left the application still hides the palette, so the chat is
 never left floating over another app.
 
-Escape follows the same rule, and is handled at the panel in both surfaces: the Command Surface in
-`PalettePanel.sendEvent`, the Context Surface in `DeloresContextIslandPanel.sendEvent`. Escape closes
-the surface that owns it and nothing else — a Quick Action still running behind the island's busy
-state is not ours to cancel. While the card is opening it also cancels the press, because `onAction`
-does not fire until the growth ends.
+Escape follows the same rule where the surface holds key: the Command Surface in
+`PalettePanel.sendEvent`, the Context Surface in `DeloresContextIslandPanel.sendEvent`. Because the
+island takes key only on demand, an Escape pressed at the bar before that belongs to the reader's
+app — the deliberate cost of not stealing the keyboard over a fresh selection. While the card is
+opening it also cancels the press, because `onAction` does not fire until the growth ends.
 
 The handoff animation is now reserved for the explicit `Ask AI` escalation. Catalog actions
 (translate / explain / summarize / search) execute in the Context Surface's own card. They do not

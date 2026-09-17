@@ -92,6 +92,12 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// an animation, and a press outlives the panel whenever a new selection replaces it meanwhile.
     private var panelGeneration = UUID()
 
+    /// The bar holds no key of its own (see `becomesKeyOnlyIfNeeded` below), so losing key cannot
+    /// be what closes it. These watch for the reader clicking elsewhere — and for one of our own
+    /// windows taking the keyboard, which is how the palette summons the island out of the way.
+    private var outsideClickMonitors: [Any] = []
+    private var foreignKeyObserver: NSObjectProtocol?
+
     var isVisible: Bool { panel?.isVisible == true }
     var isGenerating: Bool { answer?.isRunning == true }
 
@@ -167,6 +173,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isMovableByWindowBackground = false
+        // The bar appears over a selection the reader may still be working on — ⌘C, ⌘X and Delete
+        // belong to their app, not to a bar they never clicked. Key is taken only when a control
+        // that needs the keyboard (the follow-up field) is clicked into.
+        panel.becomesKeyOnlyIfNeeded = true
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isOpaque = false
@@ -199,6 +209,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             return true
         }
         self.panel = panel
+        installDismissalWatchers(for: panel)
 
         // The bar condenses out of the menu bar rather than fading in where it stands: it is put
         // `enterSlide` too high and animated down onto its resting place while it comes up to full
@@ -208,8 +219,9 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         panel.setFrame(
             resting.offsetBy(dx: 0, dy: DeloresContextIslandPlacement.enterSlide), display: false)
         panel.alphaValue = 0
-        // Ordered in before the animation starts, or there is nothing on screen for it to run on.
-        panel.makeKeyAndOrderFront(nil)
+        // Ordered in rather than made key: see `becomesKeyOnlyIfNeeded` above. Making it key here
+        // is what swallowed the reader's very next keystrokes — copy, cut, delete — in the app they
+        // were selecting in.
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { animation in
             animation.duration = Theme.Duration.enter
@@ -223,6 +235,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     }
 
     func dismiss(notifying: Bool = true) {
+        teardownDismissalWatchers()
         guard let closing = panel else {
             if notifying { presented?.onDismiss() }
             return
@@ -244,13 +257,78 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         closing.fadeOut(duration: Theme.Duration.exit)
     }
 
-    /// An outside click, which is the one way this surface used to leave without being asked. A
-    /// pinned island sits it out — the reader said to hold this selection, and clicking away to read
-    /// the answer is exactly the case that was meant.
+    /// The key-holding case of leaving: the reader clicked into the follow-up field, then clicked
+    /// elsewhere. A bar that never held key is closed by the watchers below instead. A pinned or
+    /// still-generating island sits it out — the reader said to hold this selection, and clicking
+    /// away to read the answer is exactly the case that was meant.
     func windowDidResignKey(_ notification: Notification) {
         guard let panel, notification.object as? NSWindow === panel else { return }
         // While a pinned selection is held OR while the model is still generating an answer,
         // clicking outside does NOT dismiss the island.
+        guard !isPinned, !isGenerating else { return }
+        dismiss()
+    }
+
+    // MARK: - Leaving without being asked
+
+    /// A bar that holds no key has no key to lose, so the click away is watched directly. A click
+    /// on the bar itself is not a leave: the point is inside its frame, and the press is already on
+    /// its way to whatever control sits under it. The same hold as `windowDidResignKey` applies —
+    /// pinned, or still generating, means the reader has not left.
+    private func installDismissalWatchers(for panel: NSPanel) {
+        teardownDismissalWatchers()
+        let generation = panelGeneration
+        let mask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        outsideClickMonitors = [
+            NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.dismissIfReaderClickedAway(from: generation)
+                }
+            },
+            NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
+                MainActor.assumeIsolated {
+                    self?.dismissIfReaderClickedAway(from: generation)
+                }
+                return event
+            }
+        ]
+        // The palette does not click; it takes the keyboard. That is the other way out, and the
+        // island steps aside for it exactly as it did when losing key was the mechanism.
+        foreignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                guard let self,
+                    self.panelGeneration == generation,
+                    let current = self.panel,
+                    current.isVisible,
+                    let window = notification.object as? NSWindow,
+                    window !== current
+                else { return }
+                self.dismissUnlessHeld()
+            }
+        }
+    }
+
+    private func teardownDismissalWatchers() {
+        outsideClickMonitors.forEach(NSEvent.removeMonitor)
+        outsideClickMonitors = []
+        if let foreignKeyObserver {
+            NotificationCenter.default.removeObserver(foreignKeyObserver)
+            self.foreignKeyObserver = nil
+        }
+    }
+
+    private func dismissIfReaderClickedAway(from generation: UUID) {
+        guard panelGeneration == generation,
+            let panel,
+            panel.isVisible,
+            !panel.frame.contains(NSEvent.mouseLocation)
+        else { return }
+        dismissUnlessHeld()
+    }
+
+    private func dismissUnlessHeld() {
         guard !isPinned, !isGenerating else { return }
         dismiss()
     }
