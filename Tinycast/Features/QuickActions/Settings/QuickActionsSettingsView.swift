@@ -184,7 +184,9 @@ struct QuickActionsSettingsView: View {
         } footer: {
             Text(
                 "Separate from chat's model on purpose: a shortcut you press all day should not "
-                    + "bill an API every time. Apple Intelligence runs on this Mac for nothing."
+                    + "bill an API every time. Apple Intelligence runs on this Mac for nothing. "
+                    + "It answers the Context Bar's rows too, except the ones given a model of "
+                    + "their own — those are set in the Delores pane, beside the rows they belong to."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
