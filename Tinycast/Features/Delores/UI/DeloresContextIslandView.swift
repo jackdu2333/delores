@@ -9,6 +9,9 @@ struct DeloresContextIslandAnswer: Equatable {
     /// What was asked. The card says this rather than a bare result, because the bar above it can run
     /// other things and the reader needs to know which one answered.
     let actionTitle: String
+    /// Which action answered, so the bar can light the row the answer came from rather than leaving
+    /// the reader to match a title by eye.
+    let actionID: String
     let symbol: String
     /// Whether the answer is a rewrite of the selection, which is what decides if it can go back to
     /// the document the selection came from.
@@ -34,8 +37,7 @@ struct DeloresContextIslandAnswer: Equatable {
     var canRetry: Bool { failure != nil || isStopped }
 }
 
-enum DeloresContextIslandMode: Equatable {
-    case actions
+enum DeloresContextIslandMode: Equatable {    case actions
     /// The bar has opened for an answer that arrives on the chat surface instead of in here.
     case handoff(progressTitle: String)
     /// The answer, in the card below the bar. The bar above it stays live: the reader who wanted a
@@ -60,19 +62,60 @@ enum DeloresContextIslandMode: Equatable {
 /// The press feel for the island's controls.
 ///
 /// A `.plain` style gives no press at all, which is most of why this bar read as a row of labels
-/// rather than a row of controls. The scale is deliberately small: the bar is 28pt tall on a 30pt
-/// menu bar, and a larger factor turns a click into a bounce.
+/// rather than a row of controls. Taken from the toolbar this island came from: a spring on the
+/// press and a small lift under the pointer, both deliberately shallow — the bar is 28pt tall on a
+/// 30pt menu bar, and a larger factor turns a click into a bounce.
 private struct DeloresIslandPressStyle: ButtonStyle {
+    var isHovered: Bool = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .opacity(configuration.isPressed ? 0.86 : 1)
-            .animation(.easeOut(duration: Theme.Duration.hover), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.97 : (isHovered ? 1.03 : 1.0))
+            .animation(.spring(response: 0.2, dampingFraction: 0.75), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Duration.tooltip), value: isHovered)
+    }
+}
+
+/// The two surfaces that live *inside* the glass vessel, and the rim they share.
+///
+/// They are filled from the system's own surfaces rather than from the glass, because a surface
+/// inside glass has to read as one step away from it: tinting the glass again would make the card
+/// look like a second window.
+private enum DeloresIslandSurface {
+    /// The reading canvas. Near-white in light, a light wash in dark, so a page of text sits on the
+    /// opposite side of the glass from the bar above it either way.
+    static func card(_ scheme: ColorScheme) -> Color {
+        Color(nsColor: .textBackgroundColor).opacity(scheme == .dark ? 0.18 : 0.32)
+    }
+
+    /// The follow-up field, tighter than the card because it is a control rather than a page.
+    static func pill(_ scheme: ColorScheme) -> Color {
+        Color(nsColor: .controlBackgroundColor).opacity(scheme == .dark ? 0.30 : 0.45)
+    }
+
+    /// A directional rim: a bright top edge lifts the surface off a ground darker than it, and a dark
+    /// bottom edge cuts it off a ground lighter than it. Covering both ends means the surface stays
+    /// legible whichever way the background behind the glass happens to drift — a single flat stroke
+    /// would only work on one of them.
+    static func rim(_ scheme: ColorScheme) -> LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: Color.white.opacity(scheme == .dark ? 0.36 : 0.42), location: 0.0),
+                .init(color: Color.white.opacity(scheme == .dark ? 0.18 : 0.20), location: 0.16),
+                .init(color: Color.white.opacity(scheme == .dark ? 0.06 : 0.08), location: 0.72),
+                .init(color: Color.black.opacity(scheme == .dark ? 0.20 : 0.10), location: 1.0),
+            ],
+            startPoint: .top, endPoint: .bottom)
     }
 }
 
 struct DeloresContextIslandView: View {
     @Environment(\.metrics) private var metrics
+    /// The sheen is white, not a theme hover: a tinted fill reads as a selection rather than as light.
+    /// It is weighted per appearance because the same white does opposite things on the two grounds —
+    /// on glass over a light desktop a faint white is invisible, over a dark one it is already a
+    /// highlight.
+    @Environment(\.colorScheme) private var colorScheme
 
     let actions: [DeloresContextAction]
     let mode: DeloresContextIslandMode
@@ -80,6 +123,17 @@ struct DeloresContextIslandView: View {
     /// the wish. Laying out to the wish is what clipped the pills: the panel is capped to the menu
     /// bar strip (28pt on a 30pt bar), so content designed against 38pt lost its bottom edge.
     let barHeight: CGFloat
+    /// The width the bar had while it was the only thing in the panel, which the row keeps in every
+    /// later state.
+    ///
+    /// This is what keeps the text still. A row that grew with its own controls would slide left as
+    /// the panel widened, and the pill the reader just pressed would move out from under the pointer
+    /// — first when the card's controls joined the row, then again as the card opened. Drawing the
+    /// row at the bar's own width instead means the catalog never moves, and the controls a card adds
+    /// spill to the right of it.
+    ///
+    /// Zero while measuring: a row told its own width cannot report what width it needs.
+    let pinnedBarWidth: CGFloat
     let onAction: (DeloresContextAction) -> Void
     let onCopy: () -> Void
     /// Copies the answer in the card, which is a different text from the selection the bar copies.
@@ -119,6 +173,7 @@ struct DeloresContextIslandView: View {
         mode: DeloresContextIslandMode,
         isPinned: Bool = false,
         barHeight: CGFloat,
+        pinnedBarWidth: CGFloat = 0,
         onAction: @escaping (DeloresContextAction) -> Void,
         onCopy: @escaping () -> Void = {},
         onCopyAnswer: @escaping () -> Void = {},
@@ -134,6 +189,7 @@ struct DeloresContextIslandView: View {
         self.actions = actions
         self.mode = mode
         self.barHeight = barHeight
+        self.pinnedBarWidth = pinnedBarWidth
         self.onAction = onAction
         self.onCopy = onCopy
         self.onCopyAnswer = onCopyAnswer
@@ -162,23 +218,27 @@ struct DeloresContextIslandView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        // The bar holds the vessel's own top strip and the card hangs below it, as a ZStack rather
+        // than a VStack.
+        //
+        // A VStack pushes the bar out of the glass whenever the content is taller than the vessel —
+        // SwiftUI centres an oversized child, so while the window is still growing into its final
+        // height the bar would slide up and out of the top. `Color.clear` is the receiver that keeps
+        // the vessel's height honest: it accepts any proposal down to nothing, and the card hangs off
+        // its `background`, which does not feed back into the vessel's size. So the card overflows
+        // downward and is clipped, which is what "the panel opens downward" means, instead of
+        // shoving the bar off the top of the screen.
+        ZStack(alignment: .top) {
             bar
-            if let answer = mode.answer {
-                Divider().foregroundStyle(Theme.Colors.separator)
-                answerCard(answer)
-            } else if let title = mode.handoffTitle {
-                Divider().foregroundStyle(Theme.Colors.separator)
-                Label(title, systemImage: "ellipsis.bubble")
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(Theme.Colors.textSecondary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(alignment: .top) {
+                    if mode.opensCard {
+                        expandedContent
+                    }
+                }
         }
-        // Width hugs the controls; height still fills the vessel so an opened card looks like one
-        // surface. Leaving width flexible is what lets the controller size the bar to its content.
-        .frame(maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         // One shape for both states: the corner is wider than half a closed bar's height, so the bar
         // clamps it down to the pill it always was and the card simply grows into the wider corner.
         .frosted(
@@ -188,8 +248,49 @@ struct DeloresContextIslandView: View {
         .accessibilityElement(children: .contain)
     }
 
+    /// What hangs below the bar while a card is open: the reading surface, then the follow-up field
+    /// as a surface of its own.
+    ///
+    /// The two are separate surfaces rather than one card with a divider through it. The toolbar this
+    /// island came from draws no rule anywhere inside the vessel — a 1pt line inside glass reads as a
+    /// second container, and the field is a control rather than a part of the answer.
+    private var expandedContent: some View {
+        VStack(spacing: metrics.spacing.md) {
+            if let answer = mode.answer {
+                answerCard(answer)
+                followUpPill(answer)
+            } else if let title = mode.handoffTitle {
+                handoffCard(title)
+            }
+        }
+        .padding(.top, barHeight)
+        .padding(.horizontal, metrics.scaled(DeloresContextIslandPlacement.cardInset))
+        .padding(.bottom, metrics.scaled(DeloresContextIslandPlacement.pillBottomInset))
+    }
+
+    /// The card shown while an action's answer is being handed to the chat surface. Its own buttons
+    /// are inert: the press is the whole gesture.
+    private func handoffCard(_ title: String) -> some View {
+        HStack(spacing: metrics.spacing.sm) {
+            ProgressView().controlSize(.small)
+            Text(title)
+                .font(.system(size: metrics.scaled(12)))
+                .foregroundStyle(Theme.Colors.textSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, metrics.scaled(10))
+        .padding(.vertical, metrics.scaled(12))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(
+                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.cardCornerRadius),
+                style: .continuous
+            )
+            .fill(DeloresIslandSurface.card(colorScheme)))
+    }
+
     private var bar: some View {
-        HStack(spacing: metrics.spacing.xs) {
+        HStack(spacing: metrics.spacing.sm) {
             // Every mode shows the catalog: an answer is one action's result, not the end of the bar,
             // and hiding the others behind a close press would make comparing two of them a
             // three-step job. `.handoff` passes an inert `onAction`, so this costs nothing there.
@@ -197,14 +298,19 @@ struct DeloresContextIslandView: View {
                 actionPill(action)
             }
 
-            // The copy button is the bar's own action and is always there.
-            copyButton
-            // Pin and close appear exactly when the automatic exits are unavailable. A pinned
-            // surface stops answering outside clicks and new selections alike, so it has to offer a
-            // way out of itself; an open card is a state the reader chose and may want to leave
-            // without leaving the selection. Collapsed and unpinned, the bar is the four actions and
-            // the copy button — which is what was asked for, and what the toolbar this came from
-            // showed in that state.
+            // The trailing slot carries one group or the other, never both.
+            //
+            // Collapsed and unpinned, the bar is the catalog and the copy button — which is what was
+            // asked for, and what the toolbar this came from showed in that state. Pin, collapse and
+            // close belong to the states where the automatic exits are unavailable: a pinned surface
+            // stops answering outside clicks and new selections alike, so it has to offer a way out
+            // of itself, and an open card is a state the reader chose and may want to leave without
+            // leaving the selection.
+            //
+            // Swapping rather than adding is the whole point. The selection's copy has a home in the
+            // card while a card is open — the answer has its own copy button there — and carrying
+            // both groups would grow the row by three controls instead of two, for a button already
+            // on screen.
             if isPinned || mode.opensCard {
                 controlButton(
                     .pin,
@@ -231,9 +337,18 @@ struct DeloresContextIslandView: View {
                 ) {
                     onDismiss()
                 }
+            } else {
+                copyButton
             }
         }
         .padding(.horizontal, metrics.spacing.md)
+        // Pinned to the width the bar was measured at, and laid out from its leading edge. The
+        // controls a card adds then spill past the row's trailing edge rather than pushing the
+        // catalog left — see `pinnedBarWidth`. `fixedSize` is what makes that spill deliberate: it
+        // stops the row from being squeezed to the width it is being drawn in, which is the other way
+        // this layout could eat the controls it just added.
+        .fixedSize(horizontal: true, vertical: false)
+        .frame(width: pinnedBarWidth > 0 ? pinnedBarWidth : nil, alignment: .leading)
         .frame(height: barHeight)
     }
 
@@ -241,54 +356,38 @@ struct DeloresContextIslandView: View {
 
     /// The card. Deliberately a reader rather than an editor: the reply is meant to be read and then
     /// either copied or written back, and an editable field would invite edits the model never saw.
+    ///
+    /// A surface of its own inside the vessel, not a region of the vessel: the toolbar this island
+    /// came from paints the reading area one step away from the bar above it, with a directional rim
+    /// rather than a rule. It also fills the height it is given, which is what makes the answer look
+    /// like a page rather than a label that happens to be long.
     private func answerCard(_ answer: DeloresContextIslandAnswer) -> some View {
-        VStack(alignment: .leading, spacing: metrics.spacing.sm) {
-            HStack(spacing: metrics.spacing.xs) {
-                Label(answer.actionTitle, systemImage: answer.symbol)
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(Theme.Colors.textSecondary)
-                    .lineLimit(1)
-                Spacer(minLength: metrics.spacing.sm)
-                // Stop and retry share one slot because they cannot both be true: a reply that has
-                // finished cannot be stopped, and one still arriving has nothing to retry.
-                if answer.isRunning {
-                    answerButton("停止", symbol: "stop.circle") { onStopAnswer() }
-                } else if answer.canRetry {
-                    answerButton("重试", symbol: "arrow.clockwise") { onRetryAnswer() }
-                }
-                if answer.text != nil {
-                    answerButton(
-                        didCopyAnswer ? "已复制" : "复制",
-                        symbol: didCopyAnswer ? "checkmark" : "doc.on.doc",
-                        confirmed: didCopyAnswer
-                    ) {
-                        onCopyAnswer()
-                        didCopyAnswer = true
-                    }
-                    // Writing back over somebody's document is the one irreversible thing this card
-                    // can do, so it is a button the reader presses and never something that happens
-                    // on its own the moment the answer lands — and never while it is still arriving.
-                    if answer.rewritesSelection, !answer.isRunning {
-                        answerButton("替换原文", symbol: "text.insert") { onReplaceAnswer() }
-                    }
-                }
-            }
+        VStack(spacing: 0) {
+            answerHeader(answer)
             answerBody(answer)
-            // A follow-up is a question about an answer, so it waits for there to be one. Asking
-            // while the reply is still arriving would read as interrupting it, which is what stop is.
-            if answer.text != nil, !answer.isRunning {
-                followUpField
-            }
             if let note = answer.note {
                 Text(note)
-                    .font(metrics.typography.rowTrailing)
+                    .font(.system(size: metrics.scaled(11)))
                     .foregroundStyle(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, metrics.scaled(10))
+                    .padding(.bottom, metrics.scaled(8))
             }
         }
-        .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(
+                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.cardCornerRadius),
+                style: .continuous
+            )
+            .fill(DeloresIslandSurface.card(colorScheme)))
+        .overlay(
+            RoundedRectangle(
+                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.cardCornerRadius),
+                style: .continuous
+            )
+            .strokeBorder(DeloresIslandSurface.rim(colorScheme), lineWidth: 0.5))
         .task(id: didCopyAnswer) {
             guard didCopyAnswer else { return }
             try? await Task.sleep(for: .seconds(Theme.Duration.copyFeedback))
@@ -296,69 +395,156 @@ struct DeloresContextIslandView: View {
         }
     }
 
+    /// The strip above the answer: which action answered, and everything the reader can do with it.
+    ///
+    /// The action is a chip rather than a bare label, because the bar above already lights that row
+    /// and the card is the second place the reader looks to confirm it.
+    private func answerHeader(_ answer: DeloresContextIslandAnswer) -> some View {
+        HStack(spacing: metrics.spacing.sm) {
+            HStack(spacing: metrics.spacing.xs) {
+                Image(systemName: answer.symbol)
+                    .font(.system(size: metrics.scaled(10), weight: .medium))
+                Text(answer.actionTitle)
+                    .font(.system(size: metrics.scaled(11), weight: .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Theme.Colors.textSecondary)
+            .padding(.horizontal, metrics.scaled(6))
+            .padding(.vertical, metrics.scaled(2.5))
+            .background(
+                Capsule().fill(Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.04)))
+
+            Spacer(minLength: metrics.spacing.sm)
+
+            // Retry stays here; stop does not. A reply that has finished cannot be stopped and one
+            // still arriving has nothing to retry, and stopping belongs with the field the reader is
+            // watching fill rather than with the answer's own controls.
+            if answer.canRetry {
+                answerButton("重试", symbol: "arrow.clockwise") { onRetryAnswer() }
+            }
+            if answer.text != nil {
+                answerButton(
+                    didCopyAnswer ? "已复制" : "复制",
+                    symbol: didCopyAnswer ? "checkmark" : "doc.on.doc",
+                    confirmed: didCopyAnswer
+                ) {
+                    onCopyAnswer()
+                    didCopyAnswer = true
+                }
+                // Writing back over somebody's document is the one irreversible thing this card
+                // can do, so it is a button the reader presses and never something that happens
+                // on its own the moment the answer lands — and never while it is still arriving.
+                if answer.rewritesSelection, !answer.isRunning {
+                    answerButton("替换原文", symbol: "text.insert") { onReplaceAnswer() }
+                }
+            }
+        }
+        .padding(.horizontal, metrics.scaled(10))
+        .padding(.top, metrics.scaled(7))
+        .padding(.bottom, metrics.scaled(5))
+    }
+
     @ViewBuilder
     private func answerBody(_ answer: DeloresContextIslandAnswer) -> some View {
         if let failure = answer.failure {
-            Text(failure)
-                .font(metrics.typography.rowTitle)
-                .foregroundStyle(Theme.Colors.destructive)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            answerParagraph {
+                Text(failure)
+                    .foregroundStyle(Theme.Colors.destructive)
+            }
         } else if let text = answer.text {
             ScrollView {
-                // Selectable, because the first thing a reader does with a translation is take part
-                // of it rather than all of it.
-                Text(text)
-                    .font(metrics.typography.rowTitle)
-                    .foregroundStyle(Theme.Colors.textPrimary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                    // Selectable, because the first thing a reader does with a translation is take
+                    // part of it rather than all of it.
+                    answerParagraph {
+                        Text(text)
+                            .foregroundStyle(Theme.Colors.textPrimary)
+                            .textSelection(.enabled)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else if answer.isStopped, answer.text == nil {
             // Stopped before the first token, so there is nothing to show but the fact of it.
-            Text("已停止生成。")
-                .font(metrics.typography.rowTrailing)
-                .foregroundStyle(Theme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            HStack(spacing: metrics.spacing.sm) {
-                ProgressView().controlSize(.small)
-                Text(answer.actionTitle + "中…")
-                    .font(metrics.typography.rowTrailing)
+            answerParagraph {
+                Text("已停止生成。")
                     .foregroundStyle(Theme.Colors.textSecondary)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        } else {
+            answerParagraph {
+                HStack(spacing: metrics.spacing.md) {
+                    ProgressView().controlSize(.small)
+                    Text("正在生成结果…")
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+            }
         }
     }
 
-    /// Where a reader asks the next question. Plain rather than bordered: the toolbar this came from
-    /// drew a container around it and read as a third surface inside the glass.
-    private var followUpField: some View {
+    /// One paragraph of the reading canvas, set the way the toolbar this island came from set it:
+    /// 13pt with the leading opened up to 4, inset from the card's own edge rather than the vessel's.
+    ///
+    /// The leading is the part worth copying. A block of translated prose is read rather than
+    /// scanned, and at this size the default leading runs the lines together.
+    private func answerParagraph<Content: View>(
+        @ViewBuilder _ content: () -> Content
+    ) -> some View {
+        content()
+            .font(.system(size: metrics.scaled(13)))
+            .lineSpacing(metrics.scaled(4))
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, metrics.scaled(10))
+            .padding(.vertical, metrics.scaled(8))
+    }
+
+    /// Where a reader asks the next question: a surface of its own, below the answer's card.
+    ///
+    /// Separate rather than a row inside the card, because it is a control and not part of the
+    /// reading. It also carries the stop button — the field is what the reader is watching fill, so
+    /// that is where stopping belongs, and the answer's own header keeps only what acts on a
+    /// finished reply.
+    private func followUpPill(_ answer: DeloresContextIslandAnswer) -> some View {
         let canSend = !followUpInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return HStack(spacing: metrics.spacing.xs) {
+        return HStack(spacing: metrics.spacing.md) {
             Image(systemName: "sparkle")
                 .font(.system(size: metrics.scaled(11), weight: .medium))
-                .foregroundStyle(Theme.Colors.textSecondary)
-            TextField("接着问…", text: $followUpInput)
+                .foregroundStyle(Theme.Colors.textSecondary.opacity(0.6))
+            TextField("对此内容继续追问…", text: $followUpInput)
                 .textFieldStyle(.plain)
-                .font(metrics.typography.rowTrailing)
+                .font(.system(size: metrics.scaled(12)))
                 .onSubmit(submitFollowUp)
-            Button(action: submitFollowUp) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: metrics.scaled(15)))
-                    .foregroundStyle(canSend ? Color.accentColor : Theme.Colors.textSecondary)
+            if answer.isRunning {
+                Button {
+                    onStopAnswer()
+                } label: {
+                    Image(systemName: "stop.circle.fill")
+                        .font(.system(size: metrics.scaled(15)))
+                        .foregroundStyle(Theme.Colors.destructive.opacity(0.9))
+                }
+                .buttonStyle(DeloresIslandPressStyle())
+                .help("停止生成")
+                .accessibilityLabel("停止生成")
+            } else {
+                Button(action: submitFollowUp) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: metrics.scaled(15)))
+                        .foregroundStyle(
+                            canSend
+                                ? Color.accentColor
+                                : Theme.Colors.textSecondary.opacity(0.35))
+                }
+                .buttonStyle(DeloresIslandPressStyle())
+                .disabled(!canSend)
+                .help("追问（Enter）")
+                .accessibilityLabel("追问")
             }
-            .buttonStyle(DeloresIslandPressStyle())
-            .disabled(!canSend)
-            .help("追问（Enter）")
-            .accessibilityLabel("追问")
         }
-        .padding(.horizontal, metrics.scaled(10))
-        .padding(.vertical, metrics.scaled(6))
-        .background(Capsule().fill(Color.white.opacity(0.04)))
+        .padding(.horizontal, metrics.scaled(12))
+        .padding(.vertical, metrics.scaled(7))
+        .background(Capsule().fill(DeloresIslandSurface.pill(colorScheme)))
+        .overlay(Capsule().strokeBorder(DeloresIslandSurface.rim(colorScheme), lineWidth: 0.6))
         .contentShape(Capsule())
     }
 
@@ -396,6 +582,14 @@ struct DeloresContextIslandView: View {
 
     private func actionPill(_ action: DeloresContextAction) -> some View {
         let isHovered = hoveredActionID == action.id
+        // The row the answer came from stays lit for as long as the card is open. The card names the
+        // action too, but the bar is where the reader pressed, and a bar that looks identical before
+        // and after a press leaves them to work out which of four rows answered.
+        let isAnswering = mode.answer?.actionID == action.id
+        let ink =
+            isAnswering
+            ? Color.accentColor
+            : Theme.Colors.textPrimary.opacity(isHovered ? 0.95 : 0.72)
         return Button {
             onAction(action)
         } label: {
@@ -403,25 +597,42 @@ struct DeloresContextIslandView: View {
             // its natural width: the toolbar this island came from lays its actions out exactly this
             // way, and the pin is what keeps a width the bar has not measured yet from crushing a
             // title down to an ellipsis.
-            HStack(spacing: metrics.scaled(4)) {
+            HStack(spacing: metrics.spacing.xs) {
                 Image(systemName: action.symbol)
-                    .font(.system(size: metrics.scaled(12), weight: .medium))
+                    .font(.system(size: metrics.scaled(12), weight: isAnswering ? .semibold : .medium))
                 Text(action.title)
-                    .font(.system(size: metrics.scaled(12), weight: .medium))
+                    .font(.system(size: metrics.scaled(12), weight: isAnswering ? .semibold : .medium))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             }
-            .foregroundStyle(Theme.Colors.textPrimary.opacity(isHovered ? 0.95 : 0.72))
-            .padding(.horizontal, metrics.scaled(8))
+            .foregroundStyle(ink)
+            .padding(.horizontal, metrics.spacing.md)
             .frame(height: pillHeight)
             // No resting capsule. A container drawn inside the glass reads as a second vessel,
             // which is exactly the layered look the toolbar this came from spent effort removing —
-            // the pill is its label, and the pointer supplies the surface. The sheen is white, not a
-            // theme hover: a tinted fill reads as a selection rather than as light.
-            .background(Capsule().fill(isHovered ? Color.white.opacity(0.08) : Color.clear))
+            // the pill is its label, and the pointer supplies the surface. The answering row is the
+            // exception, and even there it is a soft tint rather than a stroked outline: a rim would
+            // redraw a small container inside the glass.
+            .background(
+                Group {
+                    if isAnswering {
+                        Capsule().fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.08),
+                                    Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.03),
+                                ],
+                                startPoint: .top, endPoint: .bottom))
+                    } else if isHovered {
+                        Capsule().fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.18))
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
             .contentShape(Capsule())
         }
-        .buttonStyle(DeloresIslandPressStyle())
+        .buttonStyle(DeloresIslandPressStyle(isHovered: isHovered))
         .onHover { inside in
             hoveredActionID = Self.resolvedHover(inside, current: hoveredActionID, id: action.id)
         }
@@ -456,23 +667,31 @@ struct DeloresContextIslandView: View {
         action: @escaping () -> Void
     ) -> some View {
         let isHovered = hoveredControl == control
+        // Every one of these holds a square of the same size whatever it is drawing. `doc.on.doc`
+        // and `checkmark` are not the same width, and neither are `pin` and `pin.fill` — an icon that
+        // changed the footprint would resize the row it sits in, and a row resized under the pointer
+        // is the same jolt as a row that moved.
+        //
         // The disc is a whisper at rest and only the pointer or a held state lights it. Painted at
         // this weight it reads as part of the glass; filled in with a theme surface it reads as
         // three grey counters sitting in it, which is not what the toolbar this came from looked
-        // like. The padding, not a fixed square, is what sets the size, so the disc tracks the icon.
+        // like. The padding, not a fixed outer square, is what sets the target, so the disc tracks
+        // the icon.
         let fill =
             isOn
-            ? Theme.Colors.selection
-            : Color.white.opacity(isHovered ? 0.10 : 0.04)
+            ? Color.accentColor.opacity(0.12)
+            : Color.primary.opacity(
+                isHovered ? (colorScheme == .dark ? 0.10 : 0.07) : 0.04)
         return Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: metrics.scaled(iconSize), weight: weight))
-                .foregroundStyle(tint ?? (isOn ? Theme.Colors.textPrimary : Theme.Colors.textSecondary))
+                .frame(width: metrics.scaled(12), height: metrics.scaled(12))
+                .foregroundStyle(tint ?? (isOn ? Color.accentColor : Theme.Colors.textPrimary.opacity(0.65)))
                 .padding(metrics.scaled(4))
                 .background(Circle().fill(fill))
                 .contentShape(Circle())
         }
-        .buttonStyle(DeloresIslandPressStyle())
+        .buttonStyle(DeloresIslandPressStyle(isHovered: isHovered))
         .onHover { inside in
             hoveredControl = Self.resolvedHover(inside, current: hoveredControl, id: control)
         }

@@ -140,8 +140,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // out against the uncapped wish is what clipped the pills.
         let height = DeloresContextIslandPlacement.collapsedHeight(
             preferred: wish.height, in: context.screen)
-        let root = makeRoot(.actions)
-        barWidth = measuredBarWidth(root: root, metrics: metrics, wish: wish, in: context.screen)
+        barWidth = measuredBarWidth(
+            root: makeRoot(.actions), metrics: metrics, wish: wish, in: context.screen)
         // Measured against a card-opening state, because that is the state that also carries the
         // collapse control. A hand-off card's own width is its label's, which is narrower than the
         // bar, so what comes back is the bar's.
@@ -151,8 +151,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         lastMode = .actions
         let size = CGSize(width: barWidth, height: height)
 
+        // Hosted only after the measurement, because the row is pinned to the width that measurement
+        // returned — and a row told its own width cannot report one.
         let hosting = DeloresFirstMouseHostingView(
-            rootView: hosted(root, size: size, metrics: metrics))
+            rootView: hosted(makeRoot(.actions, rowWidth: barWidth), size: size, metrics: metrics))
         hosting.sizingOptions = []
         hosting.setFrameSize(NSSize(width: size.width, height: size.height))
 
@@ -184,14 +186,38 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // this.
         panel.onEscape = { [weak self] in
             guard let self, self.isVisible else { return false }
-            self.dismiss()
+            // Escape walks back one step at a time. An open card closes first, and only the bare bar
+            // closes the surface. One press that took both away would leave a reader who only wanted
+            // the answer out of the way without their selection as well — and the bar they were
+            // reading from is one press away again either way.
+            if self.lastMode.opensCard {
+                self.collapseCard()
+            } else {
+                self.dismiss()
+            }
             return true
         }
         self.panel = panel
 
-        panel.fadeIn(duration: Theme.Duration.enter) {
-            panel.makeKeyAndOrderFront(nil)
-            panel.orderFrontRegardless()
+        // The bar condenses out of the menu bar rather than fading in where it stands: it is put
+        // `enterSlide` too high and animated down onto its resting place while it comes up to full
+        // opacity, one eased 180ms action for both. A bare fade reads as a window switching on; this
+        // reads as the bar settling, which is what the toolbar this came from did.
+        let resting = DeloresContextIslandPlacement.collapsedFrame(in: context.screen, size: size)
+        panel.setFrame(
+            resting.offsetBy(dx: 0, dy: DeloresContextIslandPlacement.enterSlide), display: false)
+        panel.alphaValue = 0
+        // Ordered in before the animation starts, or there is nothing on screen for it to run on.
+        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { animation in
+            animation.duration = Theme.Duration.enter
+            animation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(resting, display: true)
+            panel.animator().alphaValue = 1
+        } completionHandler: { [weak self] in
+            // AppKit runs the handler on the main thread; the parameter just isn't typed for it.
+            MainActor.assumeIsolated { self?.panel?.invalidateShadow() }
         }
     }
 
@@ -271,7 +297,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     // MARK: - Rendering
 
     private func makeRoot(
-        _ mode: DeloresContextIslandMode, pinned: Bool? = nil
+        _ mode: DeloresContextIslandMode, pinned: Bool? = nil, rowWidth: CGFloat = 0
     ) -> DeloresContextIslandView {
         let actions = presented?.actions ?? []
         let metrics = presented?.metrics ?? .standard
@@ -285,6 +311,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             mode: mode,
             isPinned: pinned ?? isPinned,
             barHeight: barHeight,
+            pinnedBarWidth: rowWidth,
             onAction: { [weak self] action in
                 guard let self else { return }
                 if action.requiresChatHandoff {
@@ -345,24 +372,32 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let barHeight = DeloresContextIslandPlacement.collapsedHeight(
             preferred: wish.height, in: screen)
         // Which bar this state draws decides how wide the vessel has to be.
-        let hugging = isPinned || mode.opensCard ? barWidthWithExits : barWidth
+        let row = isPinned || mode.opensCard ? barWidthWithExits : barWidth
+        // The row is drawn at the collapsed bar's width in every state, so a wider row is room the
+        // vessel has to hold rather than a reason to move the catalog. See `vesselWidth`.
+        let vessel = DeloresContextIslandPlacement.vesselWidth(
+            row: row, pinned: barWidth, in: screen)
         let size: CGSize
         if mode.opensCard {
-            // The card is as tall as it reads, up to the ceiling. A fixed height gives a four-word
-            // answer the same slab of glass as a page of text, which is what "unpolished" looked
-            // like; hugging instead keeps the growth the answer actually earns.
-            let width = DeloresContextIslandPlacement.resultWidth(barWidth: hugging, in: screen)
+            let width = DeloresContextIslandPlacement.resultWidth(barWidth: vessel, in: screen)
+            // The reading height, not the content's height. An opened card is a page: it is the same
+            // size whether the answer is one line or ten, so the growth is one gesture the reader can
+            // predict, and the text is set in a column that does not change width mid-read. A card
+            // sized to its own text makes a four-word answer a strip and a paragraph a slab, and the
+            // two look like different surfaces.
             size = CGSize(
                 width: width,
-                height: measuredCardHeight(mode, width: width, metrics: metrics, screen: screen))
+                height: DeloresContextIslandPlacement.expandedHeight(
+                    preferred: metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight),
+                    in: screen))
         } else {
-            size = CGSize(width: hugging, height: barHeight)
+            size = CGSize(width: vessel, height: barHeight)
         }
         lastMode = mode
 
         // Laid out for the card it becomes before the frame animates, so the growth reveals the card
         // rather than stretching the bar.
-        let root = makeRoot(mode)
+        let root = makeRoot(mode, rowWidth: barWidth)
         let hosting = DeloresFirstMouseHostingView(
             rootView: hosted(root, size: size, metrics: metrics))
         hosting.sizingOptions = []
@@ -377,6 +412,21 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             panel.invalidateShadow()
             return
         }
+        // The width is taken at once and only the height is animated.
+        //
+        // The row is pinned to the bar's own width, so the controls a card adds spill past the row's
+        // trailing edge, and the vessel is only wide enough for that spill once it has finished
+        // growing. Animating the width as well would carry those controls outside the glass for the
+        // length of the animation. Taking the width first puts the room there before the controls are
+        // drawn in it; growing downward is the gesture, and the width is only the room for it.
+        //
+        // Nothing moves sideways by doing this: the panel is centred on its display, so widening it
+        // symmetrically leaves the pinned row exactly where it was.
+        let widened = CGRect(
+            x: target.minX, y: anchored.minY, width: target.width, height: anchored.height)
+        if widened != anchored {
+            panel.setFrame(widened, display: true)
+        }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Card.growth
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -387,26 +437,6 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             // without a new one would keep the old outline.
             MainActor.assumeIsolated { self?.panel?.invalidateShadow() }
         }
-    }
-
-    /// How tall the panel has to be for this card, measured at the width it is about to get.
-    ///
-    /// The width has to be imposed on the probe first. A paragraph inside a `ScrollView` reports its
-    /// ideal as one unwrapped line — measured, a two-hundred-character answer came back as 3348pt
-    /// wide and 97pt tall, which is the height of a single line. Told the width, the text wraps and
-    /// the ideal height is the one the reader will see.
-    private func measuredCardHeight(
-        _ mode: DeloresContextIslandMode, width: CGFloat, metrics: InterfaceMetrics,
-        screen: InvocationScreen
-    ) -> CGFloat {
-        let ceiling = DeloresContextIslandPlacement.expandedHeight(
-            preferred: metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight),
-            in: screen)
-        let probe = NSHostingView(
-            rootView: makeRoot(mode).frame(width: width).environment(\.metrics, metrics))
-        probe.setFrameSize(NSSize(width: width, height: ceiling))
-        probe.layoutSubtreeIfNeeded()
-        return min(probe.fittingSize.height, ceiling)
     }
 
     /// The card's opening for an answer that lands elsewhere. Its own buttons are inert: one press is

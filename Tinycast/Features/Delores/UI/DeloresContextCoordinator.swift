@@ -453,7 +453,7 @@ extension DeloresContextIslandAnswer {
     /// happens once, at the press, instead of once more whenever the first token arrives.
     fileprivate static func running(_ action: DeloresContextAction) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, symbol: action.symbol,
+            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection)
     }
 
@@ -461,7 +461,7 @@ extension DeloresContextIslandAnswer {
     /// because every one of these is a new value handed to a view that has already been built once.
     fileprivate static func partial(_ action: DeloresContextAction, text: String) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, symbol: action.symbol,
+            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection,
             text: text.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -472,7 +472,7 @@ extension DeloresContextIslandAnswer {
         _ action: DeloresContextAction, text: String?
     ) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, symbol: action.symbol,
+            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection,
             text: text, isStopped: true)
     }
@@ -483,7 +483,7 @@ extension DeloresContextIslandAnswer {
     /// with nothing to read, nothing to retry on, and no way to tell the press from a misclick.
     fileprivate static func failed(_ action: DeloresContextAction, reason: String) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, symbol: action.symbol,
+            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection, failure: reason)
     }
 }

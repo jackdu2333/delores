@@ -333,6 +333,52 @@ struct DeloresContextTest {
 
         testBarWidth(screen: screen)
         testCardPlacement(screen: screen)
+        testPinnedBarRow(screen: screen)
+    }
+
+    /// The bar's row never moves. The panel is what widens, and the controls a card adds spill into
+    /// the width it gained rather than pushing the catalog along.
+    ///
+    /// This is an invariant rather than a measurement: the row is drawn at the width the bar had
+    /// while collapsed, and the panel is centred, so the row's left edge is a function of the bar
+    /// alone. If a future state lets the row grow with its own controls, the pill under the reader's
+    /// pointer moves the moment they press it — which is the bug this locks out.
+    private static func testPinnedBarRow(screen: InvocationScreen) {
+        let pinned: CGFloat = 300
+        let collapsed = DeloresContextIslandPlacement.collapsedFrame(
+            in: screen, size: CGSize(width: pinned, height: 48))
+        let opened = DeloresContextIslandPlacement.expandedFrame(
+            keepingTopEdgeOf: collapsed, size: CGSize(width: 420, height: 380), in: screen)
+
+        let rowWhenBarred = DeloresContextIslandPlacement.pinnedRowFrame(
+            in: collapsed, pinned: pinned)
+        let rowWhenOpen = DeloresContextIslandPlacement.pinnedRowFrame(in: opened, pinned: pinned)
+        require(
+            rowWhenOpen.minX == rowWhenBarred.minX,
+            "the pinned row keeps the bar's left edge once the panel widens")
+        require(
+            rowWhenBarred.minX == collapsed.minX,
+            "a bar that fills its own panel starts at that panel's edge")
+        require(rowWhenOpen.width == pinned, "the row keeps the bar's width, not the panel's")
+
+        // The spill is the row's growth, and the room for it is twice that: half of every point the
+        // panel gains lands on the empty side of the centred row.
+        require(
+            DeloresContextIslandPlacement.vesselWidth(row: pinned, pinned: pinned, in: screen)
+                == pinned,
+            "a row the bar's own width needs no room to spill into")
+        require(
+            DeloresContextIslandPlacement.vesselWidth(row: pinned + 40, pinned: pinned, in: screen)
+                == pinned + 80,
+            "a row that grew by forty needs eighty more panel")
+        require(
+            DeloresContextIslandPlacement.vesselWidth(row: pinned + 40, pinned: 0, in: screen)
+                == pinned + 40,
+            "an unmeasured bar is not asked for room it never claimed")
+        require(
+            DeloresContextIslandPlacement.vesselWidth(row: 4_000, pinned: pinned, in: screen)
+                == screen.frame.width - DeloresContextIslandPlacement.margin * 2,
+            "the display wins over a row too wide to hold")
     }
 
     /// A card is wider than the bar it grows out of, and a card that kept the bar's left edge would

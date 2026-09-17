@@ -30,6 +30,22 @@ enum DeloresContextIslandPlacement {
     /// this. Matching it means an answer is set in the same column it was set in before.
     static let minimumReadingWidth: CGFloat = 420
 
+    /// How far above its resting place the bar starts, so it settles down onto the menu bar instead
+    /// of simply appearing there. Taken from the toolbar this island came from, which condenses out
+    /// of the top of the screen rather than fading in: 4pt over 180ms, eased out.
+    static let enterSlide: CGFloat = 4
+
+    /// The reading card's own corner. Softer than the vessel's, because it is a surface *inside* the
+    /// glass: matching the vessel's corner would make the two read as one outline.
+    static let cardCornerRadius: CGFloat = 14
+
+    /// How far the card and the follow-up field sit from the vessel's sides. The vessel's own edge is
+    /// 22pt-rounded, so a surface that ran to it would look like it had been pushed through.
+    static let cardInset: CGFloat = 11
+
+    /// The gap under the follow-up field, so the field stands clear of the vessel's bottom edge.
+    static let pillBottomInset: CGFloat = 9
+
     /// A card never takes more than this share of what the display actually shows, so the dock and
     /// whatever is behind the window stay reachable on a short screen.
     static let maximumVisibleFraction: CGFloat = 0.60
@@ -88,6 +104,35 @@ enum DeloresContextIslandPlacement {
     static func resultWidth(barWidth: CGFloat, in screen: InvocationScreen) -> CGFloat {
         let usable = max(0, screen.frame.width - margin * 2)
         return min(max(barWidth, minimumReadingWidth), usable)
+    }
+
+    /// The width the panel needs for a bar whose row is pinned at `pinned`.
+    ///
+    /// The row is drawn at the width the bar had while it was the only thing in the panel, and the
+    /// panel is centred on the display, so the catalog's first pill lands on the same screen point
+    /// no matter what the panel became. The controls a later state adds — pin, collapse, close —
+    /// therefore spill to the right of that row, and the panel has to be wide enough to hold the
+    /// spill rather than squeezing it.
+    ///
+    /// The room the spill needs is **twice** the row's growth, not the growth itself: the panel is
+    /// centred, so every point added to its width lands half on the left of the row, where nothing is
+    /// drawn, and half on the right, where the spill is. `pinned` of zero means the bar was never
+    /// measured, and then the row is simply as wide as it is.
+    static func vesselWidth(row: CGFloat, pinned: CGFloat, in screen: InvocationScreen) -> CGFloat {
+        let usable = max(0, screen.frame.width - margin * 2)
+        let spill = pinned > 0 ? 2 * row - pinned : row
+        return min(max(spill, row), usable)
+    }
+
+    /// Where the pinned row starts on screen.
+    ///
+    /// Stated rather than left to the view's own centring, because every state's placement rests on
+    /// it: a panel centred on the display holds a row of the bar's own width at the bar's own left
+    /// edge, so widening the panel moves the glass and not the text.
+    static func pinnedRowFrame(in panelFrame: CGRect, pinned: CGFloat) -> CGRect {
+        CGRect(
+            x: panelFrame.midX - pinned / 2, y: panelFrame.minY,
+            width: pinned, height: panelFrame.height)
     }
 
     /// A card's frame: hung from the same top edge the bar hangs from, and placed horizontally the
