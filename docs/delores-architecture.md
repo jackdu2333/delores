@@ -109,9 +109,9 @@ the surface that owns it and nothing else — a Quick Action still running behin
 state is not ours to cancel. While the card is opening it also cancels the press, because `onAction`
 does not fire until the growth ends.
 
-The handoff animation is now reserved for the explicit `Ask AI` escalation. Native actions leave the
-Context Surface through the Quick Action admission path instead of displaying a progress card for a
-Chat they never enter.
+The handoff animation is now reserved for the explicit `Ask AI` escalation. Catalog actions
+(translate / explain / summarize / search) execute in the Context Surface's own card. They do not
+leave through the Quick Action admission path, and they do not open Chat.
 
 Two differences between the surfaces are recorded rather than resolved, because each direction is a
 visual decision of its own:
@@ -207,7 +207,7 @@ selection, and Spatial reads a drag as a window move or a seam resize. `DeloresS
 
 - Spatial claims the gate (`.snapping` or `.divider`) only once the gesture is unambiguously its own:
   snapping waits until the candidate window's AX frame has really moved by 20pt, so dragging across
-  text does not claim it.
+  text does not claim it. The Companion claims `.companion` while it is captured.
 - The Context Surface drops a gesture while the gate is held, **and for 350ms after it is released**.
   The release that ends a Spatial drag is the very event selection detection reacts to, and it asks
   about it a beat later, so letting go has to keep covering the gesture rather than reopening it.
@@ -219,41 +219,29 @@ replace the per-surface hit testing above.
 
 ### Ownership map
 
-### Spatial / Companion adapter (Delores-owned)
+### Spatial / Companion (Delores-owned)
 
-`Tinycast/Features/Delores/UI/DeloresSpatialCoordinator.swift` is the only runtime adapter for the vendored
-Companion and Spatial capabilities. It owns lazy `start/stop` for the desktop companion, window snapping and
-split divider; `AppCore` observes the four persisted switches (`quickActionsEnabled` plus the three Spatial
-keys) in one tracking block and reprojects `DeloresCoordinator`, which forwards to both of its children.
-Companion mode is mutually exclusive with the two ghost window features. The adapter does not compile Huaci's
-`AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `main.swift`; Context remains owned by
-`DeloresCoordinator`, with the adapter receiving the latest captured selection and handing companion double-click
-back to the Context Surface. Settings live under the `Companion & Windows` pane — it was called
-`Delores Spatial`, which named it after a word this document had already stopped using and told a
-reader nothing about what is inside it.
+`DeloresCoordinator` holds four children: `DeloresContextCoordinator`, `DeloresCompanionCoordinator`,
+`DeloresWindowSnapCoordinator`, and `DeloresSplitDividerCoordinator`. They share one
+`DeloresSurfaceInteractionGate`. `AppCore` observes the four persisted switches
+(`quickActionsEnabled` plus Companion / snapping / divider) and calls `applyEnabled()`, which starts
+or stops each child independently.
 
-Runtime ownership has moved to Delores: the adapter has its own panels and geometry rather than bridging
-Huaci's managers, and the vendored sources are a behavioural reference plus a regression harness.
+Companion, snapping and the divider may be on together; a gesture belongs to one owner. The Companion
+claims `.companion` while captured, snapping claims `.snapping` once the candidate window has
+actually moved, and the divider claims `.divider` on the seam press. These coordinators do not compile
+Huaci's `AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `main.swift`.
+Companion double-click reopens the last captured selection on the Context Surface. Settings live under
+the `Companion & Windows` pane.
 
-### Two things this file gets in the way of, structurally
+Runtime ownership has moved to Delores: each coordinator has its own panels and geometry rather than
+bridging Huaci's managers, and the vendored sources are a behavioural reference plus a regression
+harness.
 
-The adapter above predates the taxonomy at the top of this document, and it shows in two places:
-
-1. **It is one coordinator for a surface and two capabilities.** The Companion is a Surface; snapping
-   and the divider are Capabilities. They share a file because Huaci modelled them as one "Spatial"
-   mode. The intended split is `CompanionCoordinator` for the surface, and the two capabilities as
-   services behind the same gesture router the gate already is. The whole adapter is Delores-owned, so
-   this split costs nothing on the upstream side.
-
-2. **Enabling the Companion stops both capabilities** (`applyEnabled` in the adapter). That is not an
-   accident of this code: Huaci gated them itself, in `CompanionInteraction.allowsGhostSnap` and
-   `allowsGhostDivider`, and its `applyPresenceMode` stops both managers when the pet starts. Its
-   model is Ghost XOR Companion — two *presences*, with the ghost overlays belonging to the ghost one —
-   rather than two features that conflict. Neither function carries a comment saying why, and the
-   gesture claim now makes the exclusion unnecessary: a pet drag is Delores' own window and is already
-   excluded from the snap candidate. Making the switches independent is therefore a deliberate
-   departure from the reference, and it needs re-testing of the pet against the snap island, which both
-   live at the top centre of the display.
+The old Ghost XOR Companion exclusion is gone. Huaci turned snap and the divider off whenever the pet
+started. Delores treats those as capabilities that can be enabled together; only the live gesture is
+exclusive. The pet and the snap island can both occupy the top of the display, so that combination
+still needs a machine pass.
 
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
 automated test:

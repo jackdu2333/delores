@@ -30,6 +30,7 @@ enum DeloresOwnSurfaceHitPolicy {
 @MainActor
 final class DeloresSurfaceInteractionGate {
     enum Owner: Equatable {
+        case companion
         case snapping
         case divider
     }

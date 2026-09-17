@@ -18,6 +18,9 @@ enum DeloresContextIslandPlacement {
     /// Keeps the bar off the menu bar's own edges rather than flush against them.
     static let menuBarClearance: CGFloat = 2
 
+    /// The thin processing card shown immediately when the action is pressed.
+    static let preferredWorkingHeight: CGFloat = 78
+
     /// The card's wish once the bar opens for an answer.
     static let preferredExpandedHeight: CGFloat = 390
 

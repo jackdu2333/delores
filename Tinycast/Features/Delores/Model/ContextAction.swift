@@ -51,6 +51,12 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     /// Whether a model answers this one at all, which is what the AI switch gates.
     var needsModel: Bool { kind != .search }
 
+    var definition: DeloresActionDefinition {
+        let backend: DeloresActionDefinition.Backend = kind == .search ? .urlTemplate(searchTemplate) : .languageModel
+        let cap: DeloresActionDefinition.OutputCap = id == "summarize" ? .compact(max: 512) : .scaled(max: 2_048)
+        return DeloresActionDefinition(id: id, title: title, symbol: symbol, backend: backend, prompt: prompt, rewritesSelection: rewritesSelection, outputCap: cap)
+    }
+
     /// What the opened card says while the answer is still on its way.
     var progressTitle: String {
         switch kind {
@@ -207,10 +213,9 @@ extension DeloresContextAction {
     }
 
     /// The on-device window counts the prompt and the reply against one budget, so the reply needs a
-    /// cap of its own. Uniform rather than per-action: a summary that wants to be shorter says so in
-    /// its prompt, and a ceiling that changes with the action is one more thing to get wrong.
+    /// cap of its own. Summarize is compact (512); every other row is scaled (2048).
     func maxOutputTokens(selection: String) -> Int {
-        min(max(selection.count / 3, 64) * 2, 2_048)
+        definition.maxOutputTokens(selection: selection)
     }
 
     /// The browser address for a search action, or nil for an action that is not one.

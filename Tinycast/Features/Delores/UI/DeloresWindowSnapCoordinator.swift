@@ -1,0 +1,122 @@
+import AppKit
+@preconcurrency import ApplicationServices
+@MainActor
+final class DeloresWindowSnapCoordinator {
+    private let settings: AppSettings
+    private let interactionGate: DeloresSurfaceInteractionGate
+    private var snapMonitor: Any?
+    private var snapIsland: DeloresSnapIslandPanel?
+    private var snapMonitorStart = CGPoint.zero
+    private var snapCandidate: SnapCandidate?
+    private var snapIsActive = false
+    private var snapHasClaimedGate = false
+    var onWindowGeometryChanged: ((CGPoint) -> Void)?
+    var onWindowSnapped: ((AXUIElement, DeloresSnapSlot, CGRect, NSScreen) -> Void)?
+    private static let snapDragThreshold: CGFloat = 8
+    private static let snapWindowThreshold: CGFloat = 20
+    private static let snapIslandRevealInset: CGFloat = 110
+    private static let snapTopCenterTriggerWidth: CGFloat = 660
+    private struct SnapCandidate { let window: AXUIElement; let app: NSRunningApplication; let initialFrame: CGRect }
+    init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate) { self.settings = settings; self.interactionGate = interactionGate }
+    func applyEnabled() { settings.deloresWindowSnappingEnabled ? startSnapping() : stopSnapping() }
+    func prepareForTermination() { stopSnapping() }
+    private func startSnapping() {
+        guard snapMonitor == nil else { return }
+        let watched: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseDragged, .leftMouseUp]
+        snapMonitor = NSEvent.addGlobalMonitorForEvents(matching: watched) { [weak self] event in
+            let type = event.type
+            let point = NSEvent.mouseLocation
+            Task { @MainActor [weak self] in self?.handleSnap(type, at: point) }
+        }
+    }
+
+    private func stopSnapping() {
+        if let snapMonitor { NSEvent.removeMonitor(snapMonitor); self.snapMonitor = nil }
+        releaseSnap()
+    }
+
+    /// Everything a snap run leaves behind, cleared in one place so a stop mid-drag cannot leave the
+    /// island up or the interaction gate clamped shut.
+    private func releaseSnap() {
+        snapIsland?.hide(); snapIsland = nil
+        snapCandidate = nil
+        snapIsActive = false
+        snapMonitorStart = .zero
+        if snapHasClaimedGate {
+            snapHasClaimedGate = false
+            interactionGate.release(.snapping)
+        }
+        // A window stopped moving, which is the discrete signal that every cached seam may now be
+        // wrong. Not guessed from a mouse-up: the press that moved it belongs to another app.
+        onWindowGeometryChanged?(NSEvent.mouseLocation)
+    }
+
+    /// Every cached seam is stale now, so discovery runs again on the next opportunity rather than
+    /// on its own clock.
+    private func handleSnap(_ type: NSEvent.EventType, at point: CGPoint) {
+        guard settings.deloresWindowSnappingEnabled else { return }
+        switch type {
+        case .leftMouseDown:
+            snapMonitorStart = point
+            snapCandidate = snapCandidate(at: point)
+            snapIsActive = false
+        case .leftMouseDragged:
+            guard hypot(point.x - snapMonitorStart.x, point.y - snapMonitorStart.y) >= Self.snapDragThreshold else { return }
+            // The gate is claimed only once a window has actually moved. Claiming it on pointer
+            // distance alone would swallow the ordinary text selection this gesture might be.
+            if !snapHasClaimedGate {
+                guard let candidate = snapCandidate, hasMoved(candidate) else { return }
+                guard interactionGate.claim(.snapping) else { return }
+                snapHasClaimedGate = true
+            }
+            guard let screen = DeloresWindowGeometry.screenContaining(point) else { return }
+            let isNearTop = point.y >= screen.visibleFrame.maxY - Self.snapIslandRevealInset
+            let halfCenterWidth = Self.snapTopCenterTriggerWidth / 2.0
+            let isInCenterTop = abs(point.x - screen.frame.midX) <= halfCenterWidth
+
+            if isNearTop && (isInCenterTop || snapIsActive) {
+                snapIsActive = true
+                snapIsland = snapIsland ?? DeloresSnapIslandPanel()
+                snapIsland?.show(on: screen)
+                let slot = snapIsland?.slot(at: point)
+                snapIsland?.setHoveredSlot(slot)
+            } else if snapIsActive {
+                snapIsActive = false
+                snapIsland?.hide()
+            }
+        case .leftMouseUp:
+            defer { releaseSnap() }
+            guard snapIsActive, let candidate = snapCandidate, let snapIsland,
+                  let screen = DeloresWindowGeometry.screenContaining(point),
+                  let slot = snapIsland.slot(at: point) else { return }
+            let target = slot.rect(in: screen.visibleFrame)
+            // Only a window that really went there is worth remembering: see `registerSnappedWindow`.
+            if DeloresWindowGeometry.setWindowFrame(candidate.window, rect: target) {
+                onWindowSnapped?(candidate.window, slot, target, screen)
+            }
+        default:
+            break
+        }
+    }
+
+    /// The window the drag would move, read at the press. Delores' own surfaces are not targets.
+    private func snapCandidate(at point: CGPoint) -> SnapCandidate? {
+        guard Permissions.isAccessibilityTrusted(),
+              let app = NSWorkspace.shared.frontmostApplication,
+              !app.isTerminated,
+              app.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+              let window = DeloresWindowGeometry.focusedWindow(of: app),
+              let frame = AXWindowAccess.frame(of: window)
+        else { return nil }
+        return SnapCandidate(window: window, app: app, initialFrame: frame)
+    }
+
+    /// Whether the candidate window itself has moved, which is what separates a window drag from a
+    /// selection made by dragging across text.
+    private func hasMoved(_ candidate: SnapCandidate) -> Bool {
+        guard let current = AXWindowAccess.frame(of: candidate.window) else { return false }
+        return abs(current.minX - candidate.initialFrame.minX) >= Self.snapWindowThreshold
+            || abs(current.minY - candidate.initialFrame.minY) >= Self.snapWindowThreshold
+    }
+
+}

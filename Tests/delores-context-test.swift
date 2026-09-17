@@ -6,6 +6,10 @@ struct DeloresContextTest {
     static func main() {
         testSelectionPolicy()
         testAnswerAccumulator()
+        testActionSession()
+        testActionConversation()
+        testActionDefinition()
+        MainActor.assumeIsolated { testActionSessionRunner() }
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
         MainActor.assumeIsolated { testSurfaceInteractionGate() }
@@ -484,6 +488,7 @@ struct DeloresContextTest {
         require(gate.claim(.snapping), "a window drag claims the gate")
         require(gate.blocksSelection, "a claimed gesture blocks selection capture")
         require(!gate.claim(.divider), "a second surface cannot claim a gesture in flight")
+        require(!gate.claim(.companion), "the companion cannot take a gesture already owned")
 
         gate.release(.snapping)
         require(gate.owner == nil, "releasing clears the owner")
@@ -498,6 +503,10 @@ struct DeloresContextTest {
         gate.reset()
         require(gate.owner == nil, "reset drops the owner")
         require(!gate.blocksSelection, "reset also drops the release suppression")
+        require(gate.claim(.companion), "the companion claims an idle gate")
+        require(!gate.claim(.snapping), "a pet drag is not also a window snap")
+        gate.release(.companion)
+        require(gate.blocksSelection, "releasing the companion still covers the gesture that ended")
     }
 
     private static func testQuickActionAdmission() {
@@ -542,6 +551,70 @@ struct DeloresContextTest {
         require(capped.text == settled, "a capped answer takes no further deltas")
     }
 
+
+    private static func testActionSession() {
+        var session = DeloresActionSession()
+        require(session.ingest("你好") == .streaming("你好"), "deltas accumulate")
+        require(session.complete() == .finished("你好"), "finished is trimmed")
+        var empty = DeloresActionSession(); require(empty.complete() == .failed(DeloresActionSession.emptyResult), "empty fails")
+        var stopped = DeloresActionSession(); require(stopped.stop() == .stopped(nil), "stop before token")
+        var cap = DeloresActionSession(); let limit = DeloresAnswerAccumulator.maxCharacters
+        _ = cap.ingest(String(repeating: "甲", count: limit - 1))
+        require(cap.ingest("乙丙") == .capped, "cap stops transport")
+        guard case .finished(let text) = cap.complete() else { fatalError("FAIL capped") }
+        require(text.hasSuffix(DeloresAnswerAccumulator.truncationNotice), "capped notice")
+    }
+    private static func testActionConversation() {
+        var c = DeloresActionConversation()
+        c.begin(question: "q")
+        c.noteAnswer("a")
+        c.commitForFollowUp()
+        require(c.settled.count == 2, "exchange kept")
+        c.restart()
+        require(c.settled.isEmpty, "retry clears")
+
+        let long = String(repeating: "x", count: DeloresActionConversation.maxTurnCharacters + 8)
+        let clipped = DeloresActionConversation.kept([
+            .init(role: .user, text: long),
+            .init(role: .assistant, text: "ok"),
+        ])
+        require(clipped[0].text.count == DeloresActionConversation.maxTurnCharacters, "turn clipped")
+
+        var overflow: [DeloresActionConversation.Turn] = []
+        for i in 0..<12 {
+            overflow.append(.init(role: .user, text: "u\(i)"))
+            overflow.append(.init(role: .assistant, text: "a\(i)"))
+        }
+        let even = DeloresActionConversation.kept(overflow)
+        require(even.count == DeloresActionConversation.maxTurnMessages, "keeps twenty")
+        require(even.first?.text == "u2", "oldest pair dropped")
+
+        overflow.append(.init(role: .user, text: "orphan"))
+        let odd = DeloresActionConversation.kept(overflow)
+        require(odd.count == 19, "odd excess drops one extra to keep pairs")
+        require(odd.first?.role == .user, "kept sequence still starts on a question")
+    }
+    private static func testActionDefinition() {
+        let summarize = require(DeloresContextAction.catalog.first { $0.id == "summarize" }, "summarize")
+        require(summarize.maxOutputTokens(selection: "x") == 64, "compact floor")
+        require(summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 512, "512 ceiling")
+        let translate = require(DeloresContextAction.catalog.first { $0.id == "translate" }, "translate")
+        require(translate.maxOutputTokens(selection: "short") == 128, "scaled")
+    }
+    private static func testActionSessionRunner() {
+        require(runSession { $0.yield(.text("你好")); $0.yield(.text("世界")); $0.finish() } == .finished("你好世界"), "runner short stream")
+        require(runSession { $0.finish() } == .failed(DeloresActionSession.emptyResult), "empty stream")
+        require(runSession(isCurrent: { false }) { $0.yield(.text("ghost")); $0.finish() } == nil, "stale generation")
+    }
+    private static func runSession(isCurrent: @escaping () -> Bool = { true }, _ build: @escaping (AsyncThrowingStream<AIStreamEvent, Error>.Continuation) -> Void) -> DeloresActionSession.Outcome? {
+        var outcome: DeloresActionSession.Outcome?
+        Task { @MainActor in
+            let stream: AIProviderStream = AsyncThrowingStream { build($0) }
+            outcome = await DeloresActionSessionRunner.run(stream: stream, isCurrent: isCurrent, onStreaming: { _ in })
+            CFRunLoopStop(CFRunLoopGetMain())
+        }
+        CFRunLoopRun(); return outcome
+    }
     private static func testGesturePolicy() {
         require(
             DeloresSelectionGesturePolicy.qualifies(

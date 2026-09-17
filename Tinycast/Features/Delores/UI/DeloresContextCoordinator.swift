@@ -19,17 +19,13 @@ final class DeloresContextCoordinator {
     /// Names the selection an in-flight answer belongs to. A model keeps writing after the reader has
     /// moved on, and that answer must not land on the selection that replaced it.
     @ObservationIgnored private var actionGeneration = UUID()
-    /// What the card most recently asked and answered, held so the next question can carry it.
-    @ObservationIgnored private var currentTurn: (question: String, answer: String)?
-    /// The exchanges already settled under this card, oldest first. The question asked now is appended
-    /// at send time and joins only once its answer has landed.
-    @ObservationIgnored private var answeredTurns: [AIMessage] = []
+    @ObservationIgnored private var conversation = DeloresActionConversation()
     /// The action and the text it was asked about, so 重试 and a follow-up need not go back to the app
     /// holding the selection — by the time either is wanted, the reader has clicked away from it.
     @ObservationIgnored private var lastRun: (action: DeloresContextAction, selection: String)?
     @ObservationIgnored private var lastFingerprint: DeloresSelectionFingerprint?
     @ObservationIgnored private var lastSelectionUptime = -Double.infinity
-    @ObservationIgnored     private var targetApplication: NSRunningApplication?
+    @ObservationIgnored private var targetApplication: NSRunningApplication?
     private var lastCapturedSelection: (text: String, target: NSRunningApplication, point: CGPoint, timestamp: Date)?
 
     /// The card is re-hosted on every update, which is cheap but not free, and a model emits deltas
@@ -236,154 +232,70 @@ final class DeloresContextCoordinator {
 
     // MARK: - Answering in the island
 
-    /// Runs the action's own prompt on the route bound to it, and writes the reply into the card.
-    ///
-    /// The bar stays up, and so does the selection: the reader came here to read this text, and the
-    /// next thing they usually want is a second action on the same text.
-    ///
-    /// `question` is what the reader typed; nil means the first turn, whose question is the selection
-    /// itself. `carried` is what has already been said under this card, oldest first.
-    private func answer(
-        _ action: DeloresContextAction,
-        selection: String,
-        question: String? = nil,
-        carried: [AIMessage] = []
-    ) {
+    private func answer(_ action: DeloresContextAction, selection: String, question: String? = nil) {
         cancelAnswer()
         let provider: any AIProvider
-        do {
-            // The action's own route, never the chat's. The reader bound a model to this id, and
-            // answering with whatever chat happens to be running is exactly the silent substitution
-            // this seam exists to prevent.
-            provider = try quickActions.provider(forActionID: action.id)
-        } catch {
-            island.showAnswer(.failed(action, reason: error.localizedDescription))
-            return
-        }
-
+        do { provider = try quickActions.provider(forActionID: action.id) }
+        catch { island.showAnswer(.failed(action, reason: error.localizedDescription)); return }
         let asked = question ?? action.message(selection: selection)
         let generation = UUID()
         actionGeneration = generation
         lastRun = (action, selection)
-        currentTurn = (question: asked, answer: "")
+        conversation.begin(question: asked)
         island.showAnswer(.running(action))
-
-        let request = AIRequest(
-            instructions: action.instructions,
-            messages: carried + [AIMessage(role: .user, text: asked)],
-            maxOutputTokens: action.maxOutputTokens(selection: selection))
+        let request = AIRequest(instructions: action.instructions, messages: Self.messages(from: conversation.settled) + [AIMessage(role: .user, text: asked)], maxOutputTokens: action.maxOutputTokens(selection: selection))
         actionTask = Task { @MainActor [weak self] in
-            var answer = DeloresAnswerAccumulator()
             var published = ContinuousClock.now
-            do {
-                for try await event in provider.stream(request) {
-                    guard case .text(let delta) = event else { continue }
-                    answer.append(delta)
-                    guard let self, self.actionGeneration == generation else { return }
-                    // Capped is the end of the reply as far as this card is concerned. Breaking here
-                    // also abandons the stream, which is what stops the transport: a model that has
-                    // already run past 32k characters has nothing left to say to this card.
-                    guard !answer.isCapped else { break }
+            let outcome = await DeloresActionSessionRunner.run(
+                stream: provider.stream(request),
+                isCurrent: { [weak self] in self?.actionGeneration == generation },
+                onStreaming: { [weak self] text in
+                    guard let self else { return }
                     let now = ContinuousClock.now
-                    guard now - published >= Self.streamingInterval else { continue }
+                    guard now - published >= Self.streamingInterval else { return }
                     published = now
-                    self.island.showAnswer(
-                        .partial(action, text: answer.text), animated: false)
-                }
-            } catch is CancellationError {
-                // The reader pressed stop, which is the one cancellation that still has something to
-                // show: whatever arrived before it. The generation is deliberately still valid here —
-                // `cancelAnswer` is what invalidates it, and it is what a *replaced* card uses to say
-                // nothing more; stopping is not replacing.
-                guard let self, self.actionGeneration == generation else { return }
-                let kept = answer.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                self.currentTurn?.answer = kept
-                guard !kept.isEmpty else {
-                // Nothing had landed yet, so there is nothing to keep — but the card still has to say
-                // why it is waiting rather than reading as a press that did nothing.
-                self.island.showAnswer(.stopped(action, text: nil), animated: false)
-                return
-                }
-                self.island.showAnswer(.stopped(action, text: kept), animated: false)
-                return
-            } catch {
-                guard let self, self.actionGeneration == generation else { return }
-                self.island.showAnswer(.failed(action, reason: error.localizedDescription))
-                return
-            }
-            guard let self, self.actionGeneration == generation else { return }
-            let trimmed = answer.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else {
-                self.island.showAnswer(.failed(action, reason: "模型没有返回任何内容。"))
-                return
-            }
-            // Kept as the conversation's other half: the next question carries it, so asking "and for
-            // Windows?" about a translation gets an answer about that translation.
-            self.currentTurn?.answer = trimmed
-            self.island.showAnswer(.partial(action, text: trimmed), animated: false)
+                    self.island.showAnswer(.partial(action, text: text), animated: false)
+                })
+            guard let self, self.actionGeneration == generation, let outcome else { return }
+            self.show(outcome, for: action)
         }
+    }
+
+    private func show(_ outcome: DeloresActionSession.Outcome, for action: DeloresContextAction) {
+        switch outcome {
+        case .finished(let text):
+            conversation.noteAnswer(text)
+            island.showAnswer(.partial(action, text: text), animated: false)
+        case .failed(let reason):
+            island.showAnswer(.failed(action, reason: reason))
+        case .stopped(let text):
+            conversation.noteAnswer(text ?? "")
+            island.showAnswer(.stopped(action, text: text), animated: false)
+        }
+    }
+
+    private static func messages(from turns: [DeloresActionConversation.Turn]) -> [AIMessage] {
+        turns.map { AIMessage(role: $0.role == .user ? .user : .assistant, text: $0.text) }
     }
 
     // MARK: - Stop, retry and follow-up
 
-    /// Ends a reply that is still arriving, keeping what it produced.
-    ///
-    /// Cancelling the task is the whole mechanism: the loop above recognises cancellation and settles
-    /// the card itself, so there is one place that decides what a stopped answer looks like.
     private func stopAnswering() {
         guard let actionTask else { return }
         actionTask.cancel()
         self.actionTask = nil
     }
-
-    /// Asks the same action about the same text once more, for answers that came back broken or cut
-    /// short. The conversation restarts: carrying a half-answer back into the request would ask the
-    /// model to continue one, which is not what pressing 重试 means.
     private func askAgain() {
         guard let (action, selection) = lastRun else { return }
-        answeredTurns = []
-        currentTurn = nil
+        conversation.restart()
         answer(action, selection: selection)
     }
-
-    /// Answers a further question about this card, on the same action and the same selection.
-    ///
-    /// One answer deep is where most of this stops, but asking "shorter" or "for Windows" should not
-    /// mean selecting the text again — and should not lose what was already said, which is what the
-    /// carried turns are for.
     private func followUp(_ question: String) {
         guard let (action, selection) = lastRun else { return }
         let asked = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !asked.isEmpty else { return }
-
-        if let settled = currentTurn, !settled.answer.isEmpty {
-            answeredTurns.append(AIMessage(role: .user, text: settled.question))
-            answeredTurns.append(AIMessage(role: .assistant, text: settled.answer))
-            answeredTurns = Self.kept(answeredTurns)
-        }
-        answer(action, selection: selection, question: asked, carried: answeredTurns)
-    }
-
-    /// The carried conversation, trimmed to a size worth sending.
-    ///
-    /// Ten exchanges is ten times further than a reading surface should be asked to go, and a single
-    /// turn longer than eight thousand characters is more context than it is conversation — dropped
-    /// oldest-first, in pairs, because an unpaired question teaches a model to answer questions nobody
-    /// asked.
-    private static let maxTurnMessages = 20
-    private static let maxTurnCharacters = 8_000
-
-    private static func kept(_ turns: [AIMessage]) -> [AIMessage] {
-        let clipped = turns.map { message in
-            AIMessage(
-                role: message.role,
-                text: message.text.count > maxTurnCharacters
-                    ? String(message.text.prefix(maxTurnCharacters))
-                    : message.text)
-        }
-        let excess = clipped.count - maxTurnMessages
-        guard excess > 0 else { return clipped }
-        return Array(clipped.dropFirst(excess % 2 == 0 ? excess : excess + 1))
+        conversation.commitForFollowUp()
+        answer(action, selection: selection, question: asked)
     }
 
     private func cancelAnswer() {
@@ -428,8 +340,7 @@ final class DeloresContextCoordinator {
         targetApplication = nil
         // Closing out the surface closes out the conversation with it: a question typed under one
         // selection has no business answering another.
-        answeredTurns = []
-        currentTurn = nil
+        conversation.restart()
         lastRun = nil
     }
 

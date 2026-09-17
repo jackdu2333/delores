@@ -385,11 +385,16 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             // predict, and the text is set in a column that does not change width mid-read. A card
             // sized to its own text makes a four-word answer a strip and a paragraph a slab, and the
             // two look like different surfaces.
+            let targetHeight = mode.isWorking
+                ? metrics.scaled(DeloresContextIslandPlacement.preferredWorkingHeight)
+                : metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight)
             size = CGSize(
                 width: width,
-                height: DeloresContextIslandPlacement.expandedHeight(
-                    preferred: metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight),
-                    in: screen))
+                height: mode.isWorking
+                    ? targetHeight
+                    : DeloresContextIslandPlacement.expandedHeight(
+                        preferred: targetHeight,
+                        in: screen))
         } else {
             size = CGSize(width: vessel, height: barHeight)
         }

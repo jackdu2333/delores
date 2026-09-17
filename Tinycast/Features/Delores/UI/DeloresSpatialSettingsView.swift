@@ -93,8 +93,7 @@ struct DeloresSpatialSettingsView: View {
                 SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
                 Text(
                     "The companion that is simply there: patrols the edge of the display, and "
-                        + "reopens your last selection when you double-click it. While it is on, "
-                        + "window snapping and the split divider stay off."
+                        + "reopens your last selection when you double-click it. "
                 )
             }
         } header: {
@@ -132,7 +131,6 @@ struct DeloresSpatialSettingsView: View {
                         + "the layout you want."
                 )
             }
-            .disabled(settings.deloresCompanionEnabled)
             Toggle(isOn: dividerBinding) {
                 SettingsRowTitle(.deloresSpatial, "Enable split divider")
                 Text(
@@ -140,7 +138,6 @@ struct DeloresSpatialSettingsView: View {
                         + "together."
                 )
             }
-            .disabled(settings.deloresCompanionEnabled)
         } header: {
             SettingsSectionHeader(.deloresSpatial)
         } footer: {

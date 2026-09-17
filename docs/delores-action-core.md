@@ -61,11 +61,11 @@ ActionSession                         // Model/. One run of one definition over 
 ├── stop()                            // cancel; whatever arrived is kept and handed back
 └── the accumulation cap, which stops the transport rather than the string
 
-ActionSessionRunner                   // Service/. Definition + selection + provider → ActionSession.
-                                      // Wraps today's QuickActionRunner.run for the one-shot callers.
+ActionSessionRunner                   // Service/. Provider stream → ActionSession.
+                                      // Context always uses it; Quick Action summarize uses it too.
 ```
 
-`ActionSession` is the piece that does not exist yet, and it is the reason Delores could not simply call
+`DeloresActionSession` now holds that session, and it is the reason Delores could not simply call
 `QuickActionRunner.run`: the island needs to show the answer while it arrives, keep what it has when the
 reader stops it, and ask again. None of that is expressible as a function that returns a `String` at the
 end — which is why a second runtime grew.
@@ -98,16 +98,13 @@ This is the decision the rest of Phase B hangs on, which is why it is settled fi
 
 ## The order
 
-1. **`ActionSession` inside Delores, no Tinycast change.** Move the streaming/cancel/keep/retry semantics
+1. **`ActionSession` inside Delores, no Tinycast change.** **Done.** Move the streaming/cancel/keep/retry semantics
    out of `DeloresContextCoordinator` into a `Model/` type, add it to the harness list, and keep every
    current behaviour — the cap that stops the transport, stop keeping what arrived, retry starting the
    conversation over, the ten-exchange trim. The coordinator keeps only: what is selected, which row was
    pressed, where the result goes.
-2. **`ActionDefinition` as the catalog's shape**, with Delores' four rows expressed through it. Still
-   Delores-only; `QuickActionPrompt` untouched.
-3. **Point the Quick Action panel path at the same session**, one action at a time, starting with
-   `summarize` — the action that exists on both sides and whose ceiling currently disagrees. Nothing in
-   its visible behaviour changes except the ceiling becoming one number.
+2. **`ActionDefinition` as the catalog's shape.** **Done.**
+3. **Point the Quick Action panel path at the same session**, starting with `summarize`. **Done for summarize.**
 4. **Only then** decide whether Tinycast's four cases become four definitions or stay an enum that
    produces definitions.
 

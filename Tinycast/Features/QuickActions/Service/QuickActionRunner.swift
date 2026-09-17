@@ -50,6 +50,9 @@ final class QuickActionRunner {
                     text: QuickActionPrompt.message(for: action, selection: selection))
             ],
             maxOutputTokens: maxOutputTokens(for: action, selection: selection))
+        if action.builtInAction == .summarize {
+            return try await runSession(request, using: provider, onDelta: onDelta)
+        }
         var text = ""
         for try await event in provider.stream(request) {
             guard case .text(let delta) = event else { continue }
@@ -63,10 +66,38 @@ final class QuickActionRunner {
         return trimmed
     }
 
+    private static func runSession(
+        _ request: AIRequest, using provider: any AIProvider,
+        onDelta: @MainActor (String) -> Void
+    ) async throws -> String {
+        var published = ""
+        let outcome = await DeloresActionSessionRunner.run(
+            stream: provider.stream(request),
+            isCurrent: { true },
+            onStreaming: { text in
+                let delta = String(text.dropFirst(published.count))
+                published = text
+                if !delta.isEmpty { onDelta(delta) }
+            })
+        switch outcome {
+        case .finished(let text): return text
+        case .failed(let reason) where reason == DeloresActionSession.emptyResult:
+            throw AIProviderError.responseFailed("The model returned nothing.")
+        case .failed(let reason):
+            throw AIProviderError.responseFailed(reason)
+        case .stopped:
+            throw CancellationError()
+        case .none:
+            throw CancellationError()
+        }
+    }
+
     /// The on-device window counts the prompt and the reply against one budget, so both need a cap.
     private static func maxOutputTokens(for action: QuickAction, selection: String) -> Int {
         let approximateTokens = max(selection.count / 3, 64)
-        return action == .summarize
-            ? min(approximateTokens, 512) : min(approximateTokens * 2, 2_048)
+        if action == .summarize {
+            return DeloresActionDefinition.OutputCap.compact(max: 512).tokens(selection: selection)
+        }
+        return min(approximateTokens * 2, 2_048)
     }
 }

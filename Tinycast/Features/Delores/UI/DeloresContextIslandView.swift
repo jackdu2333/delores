@@ -55,7 +55,14 @@ enum DeloresContextIslandMode: Equatable {    case actions
         return answer
     }
 
-    /// Whether the panel needs the tall frame at all.
+    /// True while an answer is being generated and no content has arrived yet.
+    var isWorking: Bool {
+        if let answer, answer.isRunning { return true }
+        if handoffTitle != nil { return true }
+        return false
+    }
+
+    /// Whether the panel needs the card frame at all.
     var opensCard: Bool { answer != nil || handoffTitle != nil }
 }
 
@@ -453,14 +460,10 @@ struct DeloresContextIslandView: View {
             }
         } else if let text = answer.text {
             ScrollView {
-                VStack(alignment: .leading, spacing: metrics.spacing.md) {
-                    // Selectable, because the first thing a reader does with a translation is take
-                    // part of it rather than all of it.
-                    answerParagraph {
-                        Text(text)
-                            .foregroundStyle(Theme.Colors.textPrimary)
-                            .textSelection(.enabled)
-                    }
+                VStack(alignment: .leading, spacing: metrics.spacing.sm) {
+                    DeloresMarkdownReaderView(markdown: text)
+                        .padding(.horizontal, metrics.scaled(10))
+                        .padding(.vertical, metrics.scaled(8))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -707,5 +710,220 @@ struct DeloresContextIslandView: View {
     /// pointer is already inside a neighbour cannot blank the neighbour's own highlight.
     private static func resolvedHover<T: Equatable>(_ inside: Bool, current: T?, id: T) -> T? {
         inside ? id : (current == id ? nil : current)
+    }
+}
+
+
+// MARK: - Delores Markdown Reader View
+
+/// A compact, high-aesthetic Markdown reader for Delores Context Island Result Card.
+/// Designed for small reading surfaces: no oversized headings, clean typography, beautiful code chips.
+struct DeloresMarkdownReaderView: View {
+    let markdown: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(MarkdownBlock.parse(markdown).enumerated()), id: \.offset) { _, block in
+                blockView(block)
+            }
+        }
+        .textSelection(.enabled)
+    }
+
+    @ViewBuilder
+    private func blockView(_ block: MarkdownBlock) -> some View {
+        switch block {
+        case .heading(let level, let text):
+            Text(inlineMarkdown(text))
+                .font(.system(size: headingSize(for: level), weight: .semibold))
+                .foregroundStyle(Theme.Colors.textPrimary)
+                .padding(.top, level <= 2 ? 4 : 2)
+
+        case .paragraph(let text):
+            Text(inlineMarkdown(text))
+                .font(.system(size: 13))
+                .lineSpacing(4)
+                .foregroundStyle(Theme.Colors.textPrimary)
+
+        case .bulletItem(let indent, let text):
+            HStack(alignment: .top, spacing: 6) {
+                Text("•")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
+                    .frame(width: 10, alignment: .trailing)
+                Text(inlineMarkdown(text))
+                    .font(.system(size: 13))
+                    .lineSpacing(3)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+            }
+            .padding(.leading, CGFloat(indent) * 12)
+
+        case .numberedItem(let num, let text):
+            HStack(alignment: .top, spacing: 6) {
+                Text(num + ".")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .frame(width: 16, alignment: .trailing)
+                Text(inlineMarkdown(text))
+                    .font(.system(size: 13))
+                    .lineSpacing(3)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+            }
+
+        case .codeBlock(let lang, let code):
+            VStack(alignment: .leading, spacing: 4) {
+                if let lang, !lang.isEmpty {
+                    Text(lang.lowercased())
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.Colors.textSecondary.opacity(0.7))
+                        .padding(.horizontal, 4)
+                }
+                Text(code)
+                    .font(.system(size: 12, design: .monospaced))
+                    .lineSpacing(3)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    )
+            }
+
+        case .quote(let text):
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Color.accentColor.opacity(0.6))
+                    .frame(width: 3)
+                Text(inlineMarkdown(text))
+                    .font(.system(size: 12.5))
+                    .italic()
+                    .lineSpacing(3)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+            }
+            .padding(.vertical, 2)
+
+        case .divider:
+            Divider()
+                .overlay(Color.primary.opacity(0.1))
+                .padding(.vertical, 4)
+        }
+    }
+
+    private func headingSize(for level: Int) -> CGFloat {
+        switch level {
+        case 1: return 15
+        case 2: return 14
+        default: return 13.5
+        }
+    }
+
+    private func inlineMarkdown(_ text: String) -> AttributedString {
+        (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(text)
+    }
+}
+
+enum MarkdownBlock: Equatable {
+    case heading(level: Int, text: String)
+    case paragraph(text: String)
+    case bulletItem(indent: Int, text: String)
+    case numberedItem(number: String, text: String)
+    case codeBlock(lang: String?, code: String)
+    case quote(text: String)
+    case divider
+
+    static func parse(_ raw: String) -> [MarkdownBlock] {
+        var blocks: [MarkdownBlock] = []
+        let lines = raw.components(separatedBy: .newlines)
+        var i = 0
+
+        while i < lines.count {
+            let line = lines[i]
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            if trimmed.isEmpty {
+                i += 1
+                continue
+            }
+
+            // Fenced code block
+            if trimmed.hasPrefix("```") {
+                let lang = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                var codeLines: [String] = []
+                i += 1
+                while i < lines.count && !lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("```") {
+                    codeLines.append(lines[i])
+                    i += 1
+                }
+                if i < lines.count { i += 1 }
+                blocks.append(.codeBlock(lang: lang.isEmpty ? nil : lang, code: codeLines.joined(separator: "
+")))
+                continue
+            }
+
+            // Divider: --- or *** or ___
+            if trimmed == "---" || trimmed == "***" || trimmed == "___" {
+                blocks.append(.divider)
+                i += 1
+                continue
+            }
+
+            // Heading: # H1, ## H2, etc.
+            if trimmed.hasPrefix("#") {
+                var level = 0
+                while level < trimmed.count && trimmed[trimmed.index(trimmed.startIndex, offsetBy: level)] == "#" {
+                    level += 1
+                }
+                if level <= 6 {
+                    let afterHash = trimmed.dropFirst(level)
+                    if afterHash.hasPrefix(" ") {
+                        let text = String(afterHash).trimmingCharacters(in: .whitespaces)
+                        blocks.append(.heading(level: level, text: text))
+                        i += 1
+                        continue
+                    }
+                }
+            }
+
+            // Blockquote: > text
+            if trimmed.hasPrefix(">") {
+                let quoteText = String(trimmed.dropFirst(1)).trimmingCharacters(in: .whitespaces)
+                blocks.append(.quote(text: quoteText))
+                i += 1
+                continue
+            }
+
+            // Bullet list item: - or *
+            if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
+                let indent = line.prefix(while: { $0 == " " || $0 == "	" }).count / 2
+                let text = String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces)
+                blocks.append(.bulletItem(indent: indent, text: text))
+                i += 1
+                continue
+            }
+
+            // Numbered list item: 1. or 2.
+            let numMatch = trimmed.range(of: #"^\d+[.)]\s+"#, options: .regularExpression)
+            if let match = numMatch {
+                let prefix = String(trimmed[match])
+                let digits = prefix.trimmingCharacters(in: CharacterSet(charactersIn: ".) 	"))
+                let text = String(trimmed[match.upperBound...]).trimmingCharacters(in: .whitespaces)
+                blocks.append(.numberedItem(number: digits, text: text))
+                i += 1
+                continue
+            }
+
+            // Standard paragraph
+            blocks.append(.paragraph(text: line))
+            i += 1
+        }
+
+        return blocks
     }
 }
