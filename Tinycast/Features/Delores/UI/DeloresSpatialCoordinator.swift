@@ -45,6 +45,12 @@ final class DeloresSpatialCoordinator {
     private var splitPair: SplitPair?
     private var dividerStart: DividerDrag?
     private var lastDividerScan = Date.distantPast
+    /// Where the pointer was last answered, so a pointer at rest costs nothing at all. See
+    /// `refreshDivider`.
+    private var lastDividerMouseLocation = CGPoint.zero
+    /// Halves placed by snapping, kept just long enough to be joined. See `registerSnappedWindow`.
+    private var recentLeftSnap: DeloresSnapRecord?
+    private var recentRightSnap: DeloresSnapRecord?
 
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
@@ -62,6 +68,9 @@ final class DeloresSpatialCoordinator {
     /// on and off at its edge.
     private static let dividerHoverTolerance: CGFloat = DeloresDividerPanel.width / 2
     private static let dividerPairGap: CGFloat = 12
+    /// Below this, the pointer has not moved. Sub-pixel jitter from a resting hand would otherwise
+    /// keep the seam scan alive while nothing is happening.
+    private static let dividerMouseEpsilon: CGFloat = 0.5
     /// The seam scan walks every on-screen window, so it runs on a timer rather than per event.
     private static let dividerScanInterval: TimeInterval = 0.08
 
@@ -86,6 +95,13 @@ final class DeloresSpatialCoordinator {
     private struct DividerDrag {
         let pair: SplitPair
         let startX: CGFloat
+    }
+
+    /// A window snapped moments ago, and where it was put.
+    private struct DeloresSnapRecord {
+        let window: AXUIElement
+        let rect: CGRect
+        let when: TimeInterval
     }
 
     init(
@@ -279,6 +295,65 @@ final class DeloresSpatialCoordinator {
             snapHasClaimedGate = false
             interactionGate.release(.snapping)
         }
+        // A window stopped moving, which is the discrete signal that every cached seam may now be
+        // wrong. Not guessed from a mouse-up: the press that moved it belongs to another app.
+        windowGeometryDidChange(at: NSEvent.mouseLocation)
+    }
+
+    /// Every cached seam is stale now, so discovery runs again on the next opportunity rather than
+    /// on its own clock.
+    private func windowGeometryDidChange(at point: CGPoint) {
+        lastDividerScan = .distantPast
+        lastDividerMouseLocation = point
+        guard settings.deloresSplitDividerEnabled, dividerStart == nil else { return }
+        splitPair = nil
+        refreshDivider(at: point)
+    }
+
+    /// Remembers which side of the seam a window was just snapped to.
+    ///
+    /// Ported from the reference, and it is the answer to a seam nobody can summon. Discovery walks
+    /// the window list and asks whether two rectangles happen to touch, which is both expensive and
+    /// approximate; but the instant one half has been placed we already know its identity and side,
+    /// so if the other half arrived recently the pair can simply be named. No window list, and no
+    /// dependence on the pointer crossing the seam while a scan happens to land.
+    private func registerSnappedWindow(
+        _ window: AXUIElement, slot: DeloresSnapSlot, rect: CGRect, screen: NSScreen
+    ) {
+        guard settings.deloresSplitDividerEnabled else { return }
+        let now = Date().timeIntervalSince1970
+        let placed = DeloresSnapRecord(window: window, rect: rect, when: now)
+        let other = slot.isLeftOfSeam ? recentRightSnap : recentLeftSnap
+        if slot.isLeftOfSeam { recentLeftSnap = placed } else { recentRightSnap = placed }
+
+        // Within five minutes: long enough to take in a neighbour put beside it by hand afterwards,
+        // short enough that a half-pair left before lunch is not still waiting to be completed.
+        guard let other, !CFEqual(other.window, window), now - other.when <= 300 else { return }
+        let left = slot.isLeftOfSeam ? placed : other
+        let right = slot.isLeftOfSeam ? other : placed
+        guard let pair = pairJoining(left: left, right: right, screen: screen) else { return }
+        splitPair = pair
+        divider?.show(x: pair.dividerX, y: pair.y, height: pair.height)
+    }
+
+    /// Whether two recently placed windows still sit seam to seam, decided by reading their frames
+    /// back rather than by trusting the rectangles we last asked them for.
+    private func pairJoining(
+        left: DeloresSnapRecord, right: DeloresSnapRecord, screen: NSScreen
+    ) -> SplitPair? {
+        let geometry = AXGeometry(screens: NSScreen.screens)
+        guard let leftFrame = AXWindowAccess.frame(of: left.window),
+              let rightFrame = AXWindowAccess.frame(of: right.window),
+              AXWindowAccess.isSettable(kAXPositionAttribute, on: left.window),
+              AXWindowAccess.isSettable(kAXPositionAttribute, on: right.window)
+        else { return nil }
+        let l = geometry.flip(leftFrame)
+        let r = geometry.flip(rightFrame)
+        guard abs(r.minX - l.maxX) <= Self.dividerPairGap else { return nil }
+        let pair = SplitPair(
+            left: left.window, right: right.window, leftRect: l, rightRect: r, screen: screen)
+        guard pair.height >= 120 else { return nil }
+        return pair
     }
 
     private func handleSnap(_ type: NSEvent.EventType, at point: CGPoint) {
@@ -313,7 +388,11 @@ final class DeloresSpatialCoordinator {
             guard snapIsActive, let candidate = snapCandidate, let snapIsland,
                   let screen = screenContaining(point),
                   let slot = snapIsland.slot(at: point) else { return }
-            setWindowFrame(candidate.window, rect: slot.rect(in: screen.visibleFrame))
+            let target = slot.rect(in: screen.visibleFrame)
+            // Only a window that really went there is worth remembering: see `registerSnappedWindow`.
+            if setWindowFrame(candidate.window, rect: target) {
+                registerSnappedWindow(candidate.window, slot: slot, rect: target, screen: screen)
+            }
         default:
             break
         }
@@ -363,11 +442,13 @@ final class DeloresSpatialCoordinator {
         let panel = divider ?? DeloresDividerPanel()
         divider = panel
         // The overlay is live over the seam and transparent everywhere else, so a press on the
-        // handle is taken here and never reaches the window underneath.
+        // handle is taken here and never reaches the window underneath. Whether it appears at all is
+        // still decided below, which is why the view's own enter and exit only answer "is the reader
+        // on the grip" and never "should this band exist".
         panel.onMouseDown = { [weak self] point in self?.beginDivider(at: point) }
         panel.onMouseDragged = { [weak self] point in self?.dragDivider(to: point) }
         panel.onMouseUp = { [weak self] in self?.endDivider() }
-        panel.onPointerExit = { [weak self] in self?.dividerPointerExited() }
+        panel.onDoubleClick = { [weak self] in self?.resetToFiftyFifty() }
         panel.hide()
         dividerMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
             let point = NSEvent.mouseLocation
@@ -380,20 +461,54 @@ final class DeloresSpatialCoordinator {
         divider?.hide(); divider = nil
         splitPair = nil; dividerStart = nil
         lastDividerScan = .distantPast
+        // Nothing left to pair: the halves were only meaningful while it was running, and a feature
+        // that is off should not be holding windows in memory to join them later.
+        recentLeftSnap = nil
+        recentRightSnap = nil
         interactionGate.release(.divider)
     }
 
     private func hideDivider() {
         splitPair = nil
+        divider?.hideRatio()
         divider?.hide()
     }
 
-    private func dividerPointerExited() {
-        guard dividerStart == nil else { return }
-        hideDivider()
+    /// The halves back to equal, which is almost always where a pair started and rarely where a
+    /// drag leaves it. Double-click rather than a button: the grip is the whole control, and there
+    /// is nowhere on it to put a second one.
+    private func resetToFiftyFifty() {
+        guard Permissions.isAccessibilityTrusted() else { return }
+        guard let pair = splitPair ?? findSplitPair(near: NSEvent.mouseLocation) else { return }
+        let total = pair.leftRect.width + pair.rightRect.width
+        let half = total / 2
+        let left = CGRect(
+            x: pair.leftRect.minX, y: pair.leftRect.minY, width: half, height: pair.leftRect.height)
+        let right = CGRect(
+            x: pair.leftRect.minX + half, y: pair.rightRect.minY,
+            width: total - half, height: pair.rightRect.height)
+        let leftApplied = setWindowFrame(pair.left, rect: left)
+        let rightApplied = setWindowFrame(pair.right, rect: right)
+        // Same rule a refused drag follows: nothing half-applied stays on the screen.
+        guard leftApplied, rightApplied else {
+            if leftApplied { setWindowFrame(pair.left, rect: pair.leftRect) }
+            if rightApplied { setWindowFrame(pair.right, rect: pair.rightRect) }
+            return
+        }
+        splitPair = refreshedPair(pair)
+        if let reloaded = splitPair {
+            divider?.show(x: reloaded.dividerX, y: reloaded.y, height: reloaded.height)
+        }
     }
 
     private func refreshDivider(at point: CGPoint) {
+        // A pointer at rest must cost nothing. This is above every other test on purpose: whether
+        // or not anything else wants to answer, an unmoved pointer has no new information to give,
+        // and the seam scan below walks every window on the screen.
+        let moved = hypot(point.x - lastDividerMouseLocation.x, point.y - lastDividerMouseLocation.y)
+        lastDividerMouseLocation = point
+        guard moved > Self.dividerMouseEpsilon else { return }
+
         guard !settings.deloresCompanionEnabled, Permissions.isAccessibilityTrusted() else {
             hideDivider()
             return
@@ -432,6 +547,16 @@ final class DeloresSpatialCoordinator {
               interactionGate.claim(.divider) else { return }
         splitPair = pair
         dividerStart = DividerDrag(pair: pair, startX: point.x)
+        reportRatio(leftWidth: pair.leftRect.width, total: pair.leftRect.width + pair.rightRect.width)
+    }
+
+    /// The proportions about to be let go of. Reported from the press rather than the first movement
+    /// so the numbers are already there to move away from; rounding to whole percent because "47%
+    /// : 53%" is read at a glance where "46.8% : 53.2%" has to be looked at.
+    private func reportRatio(leftWidth: CGFloat, total: CGFloat) {
+        guard total > 0 else { return }
+        let left = Int((leftWidth / total * 100).rounded())
+        divider?.updateRatio(left: left, right: 100 - left)
     }
 
     private func isNearDivider(_ point: CGPoint, pair: SplitPair) -> Bool {
@@ -482,12 +607,16 @@ final class DeloresSpatialCoordinator {
             return
         }
         divider?.show(x: (left.maxX + right.minX) / 2, y: start.pair.y, height: start.pair.height)
+        reportRatio(leftWidth: leftWidth, total: total)
     }
 
     private func endDivider() {
         dividerStart = nil
         lastDividerScan = .distantPast
         interactionGate.release(.divider)
+        // The badge is about a gesture, so it goes when the gesture does — leaving it up would make
+        // it read as a property of the windows.
+        divider?.hideRatio()
         refreshDivider(at: NSEvent.mouseLocation)
     }
 
@@ -682,6 +811,18 @@ private enum DeloresSnapSlot {
     case leftThird, centerThird, rightThird
     case topLeft, topRight, bottomLeft, bottomRight
 
+    /// Which side of the seam it shares with its neighbour, for pairing. The quarters and the centre
+    /// third answer `false` because neither has one neighbour to pair with: a quarter is stacked, so
+    /// its seam is horizontal and not something this divider resizes, and the centre third has
+    /// something either side of it.
+    var isLeftOfSeam: Bool {
+        switch self {
+        case .left, .mainWorkspace, .leftThird: return true
+        case .right, .sideWorkspace, .rightThird: return false
+        case .centerThird, .topLeft, .topRight, .bottomLeft, .bottomRight: return false
+        }
+    }
+
     func rect(in frame: CGRect) -> CGRect {
         let margin: CGFloat = 6
         let gap: CGFloat = 8
@@ -730,8 +871,13 @@ private final class DeloresSnapIslandPanel: NSPanel {
     private let islandSize = SnapIslandGeometry.size
     private var activeScreen: NSScreen?
     private let hosting: NSHostingView<DeloresSnapIslandView>
+    private let state = DeloresSnapIslandState()
+    /// How far above its resting place the island starts, from the reference's own numbers.
+    private static let enterSlide: CGFloat = 14
+    private static let enterDuration: TimeInterval = 0.24
+
     init() {
-        let hosting = NSHostingView(rootView: DeloresSnapIslandView())
+        let hosting = NSHostingView(rootView: DeloresSnapIslandView(state: state))
         hosting.sizingOptions = []
         hosting.frame = CGRect(origin: .zero, size: islandSize)
         self.hosting = hosting
@@ -743,12 +889,36 @@ private final class DeloresSnapIslandPanel: NSPanel {
         contentView = hosting
     }
     override var canBecomeKey: Bool { false }
+    /// The island drops into place from just above where it will rest, on the reference's own
+    /// numbers — 14pt over 240ms — and its contents come up on a spring inside that. Arriving is
+    /// most of what makes it read as something that appeared *for this drag* rather than as a strip
+    /// that had been sitting there.
+    ///
+    /// Already up on the same display is not re-flown. Dragging near the top fires repeatedly, and
+    /// restarting the animation on every frame would leave the island permanently mid-arrival.
     func show(on screen: NSScreen) {
+        if isVisible, activeScreen?.frame == screen.frame { return }
         activeScreen = screen
-        setFrame(CGRect(x: screen.frame.midX - islandSize.width / 2,
-                        y: screen.visibleFrame.maxY - islandSize.height - 8,
-                        width: islandSize.width, height: islandSize.height), display: true)
+        let width = islandSize.width
+        let height = islandSize.height
+        let resting = CGRect(
+            x: round(screen.frame.midX - width / 2),
+            y: max(screen.visibleFrame.maxY - height - 6, screen.frame.maxY - height - 8),
+            width: width, height: height)
+        setFrame(resting.offsetBy(dx: 0, dy: Self.enterSlide), display: false)
+        alphaValue = 0
         orderFrontRegardless()
+
+        state.isAppearing = false
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            state.isAppearing = true
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.enterDuration
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1, 0.3, 1)
+            animator().setFrame(resting, display: true)
+            animator().alphaValue = 1
+        }
     }
     func hide() { ignoresMouseEvents = true; orderOut(nil) }
     func slot(at point: CGPoint) -> DeloresSnapSlot? {
@@ -789,6 +959,10 @@ private struct SnapIslandGeometry {
     static let cardHeight: CGFloat = 72
     static let bounds = CGRect(origin: .zero, size: size)
     static let quarterCenterY = verticalPadding + cardHeight / 2
+    /// Matches the reference, where both were settled against rendered output: thick enough to see
+    /// against its own pane, thin enough to read as an edge of it rather than a line on it.
+    static let glyphDividerWidth: CGFloat = 1.4
+    static let glyphCornerRadius: CGFloat = 4.5
 
     static func rect(for card: Card) -> CGRect {
         let index = CGFloat(Card.allCases.firstIndex(of: card) ?? 0)
@@ -798,7 +972,18 @@ private struct SnapIslandGeometry {
     }
 }
 
+/// The panels arrive rather than appear, which needs something observable to animate against —
+/// the frame and the alpha are driven from AppKit, but the contents come up on their own curve.
+private final class DeloresSnapIslandState: ObservableObject {
+    @Published var isAppearing = false
+}
+
 private struct DeloresSnapIslandView: View {
+    @ObservedObject var state: DeloresSnapIslandState
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var isDark: Bool { colorScheme == .dark }
+
     var body: some View {
         HStack(spacing: SnapIslandGeometry.gap) {
             card(.halfSplit)
@@ -809,20 +994,45 @@ private struct DeloresSnapIslandView: View {
         .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
         .padding(.vertical, SnapIslandGeometry.verticalPadding)
         .frame(width: SnapIslandGeometry.size.width, height: SnapIslandGeometry.size.height)
-        .background(DeloresVisualEffectView(material: .popover, blending: .behindWindow).clipShape(Capsule()))
+        .background(
+            DeloresVisualEffectView(material: .popover, blending: .behindWindow)
+                .clipShape(Capsule()))
+        .scaleEffect(state.isAppearing ? 1 : 0.96)
+        .opacity(state.isAppearing ? 1 : 0)
+    }
+
+    /// A line that takes the light along its top edge and falls into shadow along its bottom.
+    ///
+    /// Ported from the reference's pane rim, whose comment is worth carrying: a stroke of one
+    /// uniform colour around a card is exactly what makes that card read as *stroked* rather than as
+    /// a pane of something. Every edge in these cards is this instead.
+    private var paneRim: some ShapeStyle {
+        LinearGradient(
+            stops: [
+                .init(color: Color.white.opacity(isDark ? 0.24 : 0.85), location: 0),
+                .init(color: Color.black.opacity(isDark ? 0.05 : 0.06), location: 0.55),
+                .init(color: Color.black.opacity(isDark ? 0.16 : 0.10), location: 1),
+            ],
+            startPoint: .top, endPoint: .bottom)
+    }
+
+    /// The middle stop on its own, for edges too short for the gradient to read along.
+    private var paneMidTone: Color {
+        Color.black.opacity(isDark ? 0.05 : 0.06)
     }
 
     @ViewBuilder
     private func card(_ card: SnapIslandGeometry.Card) -> some View {
+        let geometry = SnapIslandGeometry.self
         ZStack {
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(Color.primary.opacity(0.72), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: geometry.glyphCornerRadius, style: .continuous)
+                .strokeBorder(paneRim, lineWidth: geometry.glyphDividerWidth)
             switch card {
             case .halfSplit:
                 divider(.vertical)
             case .mainSide:
                 HStack(spacing: 0) {
-                    Color.clear.frame(width: SnapIslandGeometry.cardWidth * 2.0 / 3.0 - 0.75)
+                    Color.clear.frame(width: geometry.cardWidth * 2.0 / 3.0 - 0.75)
                     divider(.vertical)
                     Color.clear.frame(maxWidth: .infinity)
                 }
@@ -833,13 +1043,25 @@ private struct DeloresSnapIslandView: View {
                 HStack(spacing: 0) { divider(.vertical); divider(.vertical) }
             }
         }
-        .frame(width: SnapIslandGeometry.cardWidth, height: SnapIslandGeometry.cardHeight)
+        .frame(width: geometry.cardWidth, height: geometry.cardHeight)
     }
 
+    @ViewBuilder
     private func divider(_ axis: Axis) -> some View {
-        Rectangle()
-            .fill(Color.primary.opacity(0.72))
-            .frame(width: axis == .vertical ? 1.5 : nil, height: axis == .horizontal ? 1.5 : nil)
+        let thickness = SnapIslandGeometry.glyphDividerWidth
+        switch axis {
+        case .vertical:
+            // Vertical, so light has somewhere to fall along it.
+            Rectangle()
+                .fill(paneRim)
+                .frame(width: thickness)
+        case .horizontal:
+            // Seen edge-on: a single row of pixels has no room for a gradient to read, so the
+            // middle stop is used flat. Grading it anyway would darken the whole line unevenly.
+            Rectangle()
+                .fill(paneMidTone)
+                .frame(height: thickness)
+        }
     }
 
     private enum Axis { case horizontal, vertical }
@@ -886,14 +1108,26 @@ private struct DeloresSnapGhostView: View {
     }
 }
 
+/// The overlay over the seam between two tiled windows.
+///
+/// Ported rather than redrawn. The width is the interesting part: 100pt of nothing is centred on the
+/// seam, and none of it is opaque — the drawing only appears once the pointer is inside a few points
+/// of the middle, and the panel takes the pointer only there too (`hitTest`, below). What the extra
+/// width buys is room: the ratio badge is 72pt across and the grip carries a blur shadow, and at the
+/// width this needed to be before, both were clipped at the edges. It costs the two windows
+/// underneath nothing, because every point outside the hover zone is passed straight through them.
 private final class DeloresDividerPanel: NSPanel {
     var onMouseDown: ((CGPoint) -> Void)?
     var onMouseDragged: ((CGPoint) -> Void)?
     var onMouseUp: (() -> Void)?
-    var onPointerExit: (() -> Void)?
-    private let handle = DeloresDividerView()
-    /// The hover tolerance is derived from this, so the two cannot drift apart.
-    static let width: CGFloat = 36
+    var onDoubleClick: (() -> Void)?
+
+    private let seam = DeloresDividerView()
+
+    /// Derived into `dividerHoverTolerance`, so the two cannot drift apart: a tolerance wider than
+    /// the band would leave the pointer outside the panel while still wanting it shown, which is
+    /// exactly how an overlay learns to flicker at its own edge.
+    static let width: CGFloat = 100
 
     init() {
         super.init(
@@ -901,31 +1135,219 @@ private final class DeloresDividerPanel: NSPanel {
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; level = .floating; hasShadow = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
+        isReleasedWhenClosed = false; canHide = false
         becomesKeyOnlyIfNeeded = true
         acceptsMouseMovedEvents = true
-        handle.owner = self
-        handle.autoresizingMask = [.width, .height]
-        contentView = handle
+        seam.owner = self
+        seam.autoresizingMask = [.width, .height]
+        contentView = seam
     }
 
-    /// Live only over the seam. Everywhere else the panel is hidden and click-through, so the app
-    /// underneath keeps its own pointer.
     override var canBecomeKey: Bool { true }
 
     func show(x: CGFloat, y: CGFloat, height: CGFloat) {
+        let width = Self.width
         setFrame(
-            CGRect(x: x - Self.width / 2, y: y, width: Self.width, height: max(30, height)),
+            CGRect(x: floor(x - width / 2), y: y, width: width, height: max(30, height)),
             display: true)
-        ignoresMouseEvents = false
         orderFrontRegardless()
+        // Reported the moment the band appears. Without it the grip stays invisible until the
+        // pointer happens to move again, which reads as the whole seam being dead.
+        seam.checkInitialHover()
     }
-    func hide() { ignoresMouseEvents = true; orderOut(nil) }
+
+    func hide() {
+        seam.resetState()
+        orderOut(nil)
+    }
+
+    func updateRatio(left: Int, right: Int) { seam.showRatio(left: left, right: right) }
+    func hideRatio() { seam.hideRatio() }
 }
 
+/// What the seam is made of.
+///
+/// Everything here sits at zero opacity until the pointer arrives, because most of the time nobody
+/// is resizing anything and there should be nothing on the screen to say otherwise. The three parts
+/// answer three questions in the order a reader asks them: *is there a seam here* (the guide track,
+/// dissolving at both ends so it reads as belonging to what is behind it), *can I take hold of it*
+/// (the grip capsule), and *what am I about to get* (the ratio badge, live while dragging).
 private final class DeloresDividerView: NSView {
     weak var owner: DeloresDividerPanel?
-    private var dragging = false
+
+    private static let trackWidth: CGFloat = 1.5
+    private static let handleWidth: CGFloat = 24
+    private static let handleHeight: CGFloat = 36
+    private static let handleCornerRadius: CGFloat = 12
+    private static let badgeWidth: CGFloat = 72
+    private static let badgeHeight: CGFloat = 24
+
+    private let guideTrackLayer = CAGradientLayer()
+    private let gripHandleLayer = CALayer()
+    private let leftBarLayer = CALayer()
+    private let rightBarLayer = CALayer()
+    private let ratioBadgeLayer = CALayer()
+    private let ratioTextLayer = CATextLayer()
+
+    private var isHovered = false
+    private var isDragging = false
+    private var dragStartMouseLocation: NSPoint = .zero
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setupView()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupView()
+    }
+
+    private func setupView() {
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+
+        guideTrackLayer.cornerRadius = 0.75
+        guideTrackLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        guideTrackLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        guideTrackLayer.locations = [0, 0.08, 0.5, 0.92, 1]
+        guideTrackLayer.shadowColor = NSColor.black.cgColor
+        guideTrackLayer.shadowOpacity = 0.15
+        guideTrackLayer.shadowOffset = .zero
+        guideTrackLayer.shadowRadius = 1.5
+        guideTrackLayer.opacity = 0
+        layer?.addSublayer(guideTrackLayer)
+
+        gripHandleLayer.cornerRadius = Self.handleCornerRadius
+        gripHandleLayer.borderWidth = 0.75
+        gripHandleLayer.shadowColor = NSColor.black.cgColor
+        gripHandleLayer.shadowOpacity = 0.20
+        gripHandleLayer.shadowOffset = CGSize(width: 0, height: 2)
+        gripHandleLayer.shadowRadius = 8
+        gripHandleLayer.opacity = 0
+        gripHandleLayer.transform = CATransform3DMakeScale(0.92, 0.92, 1)
+        layer?.addSublayer(gripHandleLayer)
+
+        leftBarLayer.cornerRadius = 1
+        gripHandleLayer.addSublayer(leftBarLayer)
+        rightBarLayer.cornerRadius = 1
+        gripHandleLayer.addSublayer(rightBarLayer)
+
+        ratioBadgeLayer.cornerRadius = 12
+        ratioBadgeLayer.backgroundColor = NSColor(white: 0.12, alpha: 0.75).cgColor
+        ratioBadgeLayer.borderColor = NSColor.white.withAlphaComponent(0.28).cgColor
+        ratioBadgeLayer.borderWidth = 0.75
+        ratioBadgeLayer.shadowColor = NSColor.black.cgColor
+        ratioBadgeLayer.shadowOpacity = 0.22
+        ratioBadgeLayer.shadowOffset = CGSize(width: 0, height: 2)
+        ratioBadgeLayer.shadowRadius = 6
+        ratioBadgeLayer.opacity = 0
+
+        ratioTextLayer.fontSize = 11.5
+        ratioTextLayer.font = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .semibold)
+        ratioTextLayer.foregroundColor = NSColor.white.cgColor
+        ratioTextLayer.alignmentMode = .center
+        ratioTextLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        ratioBadgeLayer.addSublayer(ratioTextLayer)
+
+        layer?.addSublayer(ratioBadgeLayer)
+
+        updateVisualStyles()
+    }
+
+    private func updateVisualStyles() {
+        let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        guideTrackLayer.colors = [
+            NSColor.white.withAlphaComponent(0).cgColor,
+            NSColor(white: 1, alpha: isDark ? 0.25 : 0.22).cgColor,
+            NSColor(white: 1, alpha: isDark ? 0.38 : 0.35).cgColor,
+            NSColor(white: 1, alpha: isDark ? 0.25 : 0.22).cgColor,
+            NSColor.white.withAlphaComponent(0).cgColor,
+        ]
+        gripHandleLayer.backgroundColor = NSColor(
+            white: isDark ? 0.22 : 1, alpha: isDark ? 0.72 : 0.76).cgColor
+        gripHandleLayer.borderColor = NSColor.white.withAlphaComponent(0.65).cgColor
+        // Read against the grip, so they invert with it: light bars on the dark grip, dark on light.
+        let bar = NSColor(white: isDark ? 0.88 : 0.28, alpha: isDark ? 0.85 : 0.75).cgColor
+        leftBarLayer.backgroundColor = bar
+        rightBarLayer.backgroundColor = bar
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateVisualStyles()
+    }
+
+    override func layout() {
+        super.layout()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layoutSublayers()
+        CATransaction.commit()
+    }
+
+    private func layoutSublayers() {
+        let trackX = round((bounds.width - Self.trackWidth) / 2)
+        let insetY: CGFloat = 4
+        guideTrackLayer.frame = CGRect(
+            x: trackX, y: insetY,
+            width: Self.trackWidth, height: max(0, bounds.height - insetY * 2))
+
+        let handleX = round((bounds.width - Self.handleWidth) / 2)
+        let handleY = round((bounds.height - Self.handleHeight) / 2)
+        gripHandleLayer.frame = CGRect(
+            x: handleX, y: handleY, width: Self.handleWidth, height: Self.handleHeight)
+
+        // The two bars that say "this one moves sideways": 2pt wide, 12pt tall, 3pt apart.
+        let barWidth: CGFloat = 2
+        let barHeight: CGFloat = 12
+        let barSpacing: CGFloat = 3
+        let startBarX = round((Self.handleWidth - (barWidth * 2 + barSpacing)) / 2)
+        let barY = round((Self.handleHeight - barHeight) / 2)
+        leftBarLayer.frame = CGRect(x: startBarX, y: barY, width: barWidth, height: barHeight)
+        rightBarLayer.frame = CGRect(
+            x: startBarX + barWidth + barSpacing, y: barY, width: barWidth, height: barHeight)
+
+        // Above the grip by preference, below it when there is no room above — it must never be
+        // clipped, and the panel is exactly as tall as the seam it sits on.
+        let badgeX = round((bounds.width - Self.badgeWidth) / 2)
+        let above = handleY + Self.handleHeight + 8
+        let badgeY =
+            above + Self.badgeHeight <= bounds.height - 4
+            ? above
+            : max(4, handleY - Self.badgeHeight - 8)
+        ratioBadgeLayer.frame = CGRect(
+            x: badgeX, y: badgeY, width: Self.badgeWidth, height: Self.badgeHeight)
+        ratioTextLayer.frame = CGRect(
+            x: 0, y: 4, width: Self.badgeWidth, height: Self.badgeHeight - 8)
+    }
+
+    /// The grip's rectangle, grown a little — a target the size of the drawing itself is small enough
+    /// that taking hold of it feels like aiming.
+    private var handleRect: CGRect {
+        let x = round((bounds.width - Self.handleWidth) / 2)
+        let y = round((bounds.height - Self.handleHeight) / 2)
+        return CGRect(x: x, y: y, width: Self.handleWidth, height: Self.handleHeight)
+            .insetBy(dx: -4, dy: -4)
+    }
+
+    // MARK: Taking or passing the pointer
+
+    /// Whether this point belongs to the seam. The narrow strip either side catches a pointer that
+    /// has not reached the grip yet, so approaching it from the side works as well as landing on it.
+    private func isPointInHoverZone(_ point: NSPoint) -> Bool {
+        abs(point.x - bounds.width / 2) <= 6 || handleRect.contains(point)
+    }
+
+    /// A slightly-wider grip is a fairer target than the drawing.
+    ///
+    /// Returning `nil` is what makes the hundred-point band free: the pointer goes to whichever
+    /// window is underneath, so the seam can be wide without being in the way. During a drag it takes
+    /// everything instead, because letting one go mid-gesture would drop the drag.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        if isDragging { return self }
+        return isPointInHoverZone(point) ? self : nil
+    }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -933,33 +1355,153 @@ private final class DeloresDividerView: NSView {
         addTrackingArea(
             NSTrackingArea(
                 rect: bounds,
-                options: [.activeAlways, .mouseEnteredAndExited, .cursorUpdate],
+                options: [.mouseEnteredAndExited, .mouseMoved, .cursorUpdate, .activeAlways,
+                          .inVisibleRect],
                 owner: self, userInfo: nil))
     }
 
-    override func cursorUpdate(with event: NSEvent) { NSCursor.resizeLeftRight.set() }
-    override func resetCursorRects() { addCursorRect(bounds, cursor: .resizeLeftRight) }
+    /// Only once the grip is actually visible. A resize cursor over nothing would announce a seam
+    /// that, from the reader's side, has not appeared.
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        if isHovered { addCursorRect(handleRect, cursor: .resizeLeftRight) }
+    }
 
-    override func mouseEntered(with event: NSEvent) { NSCursor.resizeLeftRight.set() }
+    override func cursorUpdate(with event: NSEvent) {
+        let localPoint = convert(event.locationInWindow, from: nil)
+        if isPointInHoverZone(localPoint) { NSCursor.resizeLeftRight.set() }
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        if isPointInHoverZone(convert(event.locationInWindow, from: nil)) { setHovered(true) }
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        super.mouseMoved(with: event)
+        let inZone = isPointInHoverZone(convert(event.locationInWindow, from: nil))
+        if inZone && !isHovered {
+            setHovered(true)
+        } else if !inZone && isHovered && !isDragging {
+            setHovered(false)
+        }
+    }
+
     override func mouseExited(with event: NSEvent) {
-        guard !dragging else { return }
-        owner?.onPointerExit?()
+        super.mouseExited(with: event)
+        if !isDragging && isHovered { setHovered(false) }
     }
 
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.controlAccentColor.withAlphaComponent(0.35).setFill()
-        NSBezierPath(
-            roundedRect: NSRect(x: bounds.midX - 2, y: 0, width: 4, height: bounds.height),
-            xRadius: 2, yRadius: 2
-        ).fill()
+    /// Whether the pointer is already on the seam when the band appears, which it is whenever the
+    /// reader has driven the pointer *to* the seam rather than past it.
+    func checkInitialHover() {
+        guard let window, window.frame.contains(NSEvent.mouseLocation) else { return }
+        // Twice translated: screen to the window, then the window to this view, whose bounds are
+        // what `handleRect` is written against. Spelled out rather than nested, because Swift reads
+        // `convert(_:from:)` against both points and rectangles and picks the rectangle.
+        let windowPoint = window.convertPoint(fromScreen: NSEvent.mouseLocation)
+        let localPoint = convert(windowPoint, from: nil)
+        if isPointInHoverZone(localPoint) { setHovered(true) }
     }
 
-    override func mouseDown(with event: NSEvent) { dragging = true; owner?.onMouseDown?(NSEvent.mouseLocation) }
+    private func setHovered(_ hovered: Bool) {
+        guard isHovered != hovered else { return }
+        isHovered = hovered
+        window?.invalidateCursorRects(for: self)
+        animateHoverState(hovered: hovered)
+    }
+
+    private func animateHoverState(hovered: Bool) {
+        CATransaction.begin()
+        if hovered {
+            CATransaction.setAnimationDuration(0.20)
+            CATransaction.setAnimationTimingFunction(
+                CAMediaTimingFunction(controlPoints: 0.16, 1, 0.3, 1))
+            guideTrackLayer.opacity = 1
+            gripHandleLayer.opacity = 1
+            gripHandleLayer.transform = CATransform3DIdentity
+        } else {
+            CATransaction.setAnimationDuration(0.18)
+            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))
+            guideTrackLayer.opacity = 0
+            gripHandleLayer.opacity = 0
+            gripHandleLayer.transform = CATransform3DMakeScale(0.92, 0.92, 1)
+        }
+        CATransaction.commit()
+    }
+
+    // MARK: The ratio badge
+
+    func showRatio(left: Int, right: Int) {
+        ratioTextLayer.string = "\(left)% : \(right)%"
+        guard ratioBadgeLayer.opacity < 0.1 else { return }
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.12)
+        ratioBadgeLayer.opacity = 1
+        CATransaction.commit()
+    }
+
+    func hideRatio() {
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.15)
+        ratioBadgeLayer.opacity = 0
+        CATransaction.commit()
+    }
+
+    // MARK: Gestures
+
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            springPulse()
+            owner?.onDoubleClick?()
+            return
+        }
+        isDragging = true
+        dragStartMouseLocation = NSEvent.mouseLocation
+        owner?.onMouseDown?(dragStartMouseLocation)
+        // Taken hold of: a small swell, answered by an equally small settle on release.
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.12)
+        gripHandleLayer.transform = CATransform3DMakeScale(1.06, 1.06, 1)
+        CATransaction.commit()
+    }
+
     override func mouseDragged(with event: NSEvent) {
-        guard dragging else { return }
+        guard isDragging else { return }
         owner?.onMouseDragged?(NSEvent.mouseLocation)
     }
-    override func mouseUp(with event: NSEvent) { dragging = false; owner?.onMouseUp?() }
+
+    override func mouseUp(with event: NSEvent) {
+        guard isDragging else { return }
+        isDragging = false
+        owner?.onMouseUp?()
+        hideRatio()
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.14)
+        gripHandleLayer.transform = CATransform3DIdentity
+        CATransaction.commit()
+    }
+
+    private func springPulse() {
+        let pulse = CAKeyframeAnimation(keyPath: "transform.scale")
+        pulse.values = [1, 0.88, 1.12, 1]
+        pulse.keyTimes = [0, 0.35, 0.70, 1]
+        pulse.duration = 0.20
+        gripHandleLayer.add(pulse, forKey: "doubleClickPulse")
+    }
+
+    func resetState() {
+        isHovered = false
+        isDragging = false
+        window?.invalidateCursorRects(for: self)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        guideTrackLayer.opacity = 0
+        gripHandleLayer.opacity = 0
+        gripHandleLayer.transform = CATransform3DMakeScale(0.92, 0.92, 1)
+        ratioBadgeLayer.opacity = 0
+        CATransaction.commit()
+    }
 }
 
 private struct DeloresVisualEffectView: NSViewRepresentable {
