@@ -29,7 +29,7 @@ anyway. They have no place to be and nothing of their own to say.
   geometry, the pointer physics and the Escape order all match the vendored reference, which was
   re-read from source and rendered to check rather than assumed. What it still carries itself is its
   own catalogue, prompts and streaming — see below.
-- **Companion** — running, not vendored: patrol, hover, click grammar, and a double-click that reopens
+- **Companion** — running, not vendored: wander, hover, click grammar, and a double-click that reopens
   the last selection's Context Surface. It currently shares one coordinator with two capabilities it
   has nothing to do with; separating them is the next structural step.
 
@@ -237,6 +237,14 @@ Huaci's `AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `ma
 Companion double-click reopens the last captured selection on the Context Surface. Settings live under
 the `Companion & Windows` pane.
 
+How the Companion moves is `Model/CompanionWander.swift`: it stands still, walks one trip along the
+display's perimeter to a destination it drew, then stands still again. Rests and trips are both
+short-bodied and long-tailed, a trip holds one speed from end to end, and a destination is never the
+spot the last one left — an even rhythm at a constant speed is what makes a thing read as mechanical
+rather than as occupied. Randomness is injected rather than drawn, so the whole thing replays from a
+fixed seed in `Tests/delores-context-test.swift` and is asserted rather than watched. Resting runs no
+frames at all: the coordinator schedules a single wake for the moment a rest ends.
+
 Runtime ownership has moved to Delores: each coordinator has its own panels and geometry rather than
 bridging Huaci's managers, and the vendored sources are a behavioural reference plus a regression
 harness.
@@ -260,8 +268,8 @@ automated test:
 - Accessibility is checked per gesture (`Permissions.isAccessibilityTrusted()`); the grant is
   requested from the Settings pane where the reader turns the feature on, never at launch. Without it
   neither snap nor divider engages, and the Settings pane says so.
-- Companion click-through, patrol, and multi-display behaviour have no test and require manual
-  acceptance on the machine's real displays.
+- Companion click-through and multi-display behaviour have no test and require manual acceptance on
+  the machine's real displays. The wander is not among them: it is asserted from a fixed seed.
 
 
 | Area | Owner | Sync posture |

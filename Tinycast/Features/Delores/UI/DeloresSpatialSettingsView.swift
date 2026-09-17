@@ -92,7 +92,7 @@ struct DeloresSpatialSettingsView: View {
             Toggle(isOn: $settings.deloresCompanionEnabled) {
                 SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
                 Text(
-                    "The companion that is simply there: patrols the edge of the display, and "
+                    "The companion that is simply there: it wanders the edge of the display, and "
                         + "reopens your last selection when you double-click it. "
                 )
             }

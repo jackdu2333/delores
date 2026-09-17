@@ -13,6 +13,7 @@ struct DeloresContextTest {
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
         MainActor.assumeIsolated { testSurfaceInteractionGate() }
+        testCompanionWander()
         testQuickActionAdmission()
         testContextActions()
         testCustomRowsOnTheBar()
@@ -680,6 +681,166 @@ struct DeloresContextTest {
         }
     }
 
+    /// The Companion's wander: it rides the display edge without ever cutting across, never ends a
+    /// trip where the last one did, never rests long enough to look dead, and asks for no frame at
+    /// all while it rests. Replayed from a fixed seed, so the randomness is real and the sequence is
+    /// not.
+    private static func testCompanionWander() {
+        let bounds = CGRect(x: 0, y: 0, width: 1200, height: 800)
+        let total = DeloresCompanionWander.perimeter(of: bounds)
+        let least = DeloresCompanionWander.shortTripRange.lowerBound
+        var rng = SeededRandom(seed: 0x5EED_1234)
+
+        let settled = DeloresCompanionWander.settled(
+            at: CGPoint(x: 700, y: 400), in: bounds, at: 0, using: &rng)
+        require(isOnEdge(settled.center, in: bounds), "a settle lands on the edge it will ride")
+        let firstRest = require(restEnd(settled), "a settle stands still before it walks")
+        require(firstRest >= DeloresCompanionWander.shortRestRange.lowerBound, "a rest is not instant")
+        require(firstRest <= DeloresCompanionWander.maximumRest, "a rest stays inside its bound")
+        require(
+            DeloresCompanionWander.nextWake(after: settled) == firstRest,
+            "a rest states when it ends")
+        require(
+            DeloresCompanionWander.advance(settled, elapsed: 0.1, now: 1, in: bounds, using: &rng) == settled,
+            "a rest under its due time changes nothing, and owes no frame")
+
+        let walking = DeloresCompanionWander.advance(
+            settled, elapsed: 0.1, now: firstRest + 0.1, in: bounds, using: &rng)
+        guard case .strolling(let destination, let speed) = walking.phase else {
+            fatalError("FAIL: a rest that has come due sets off")
+        }
+        require(DeloresCompanionWander.speedRange.contains(speed), "a trip holds a speed in range")
+        let leftBehind = DeloresCompanionWander.distanceAlongPerimeter(of: settled.center, in: bounds)
+        require(
+            gap(destination, leftBehind, around: total) >= least - 0.01,
+            "a destination is far enough away not to repeat the spot it left")
+        require(DeloresCompanionWander.nextWake(after: walking) == nil, "a trip runs on frames")
+
+        let late = DeloresCompanionWander.advance(
+            walking, elapsed: 600, now: firstRest + 61, in: bounds, using: &rng)
+        require(late.phase.isWalking, "a capped frame does not finish a trip")
+        let ceiling = CGFloat(DeloresCompanionWander.maximumStep) * DeloresCompanionWander.speedRange.upperBound
+        require(
+            distance(late.center, walking.center) <= ceiling + 0.01,
+            "a frame that arrives late is capped instead of teleporting the body")
+
+        // Both draws have a short body and a long tail. The tail is the whole reason the thing reads
+        // as occupied rather than scheduled.
+        let restDraws = (0..<400).map { _ in DeloresCompanionWander.restDuration(using: &rng) }
+        require(
+            restDraws.allSatisfy { $0 <= DeloresCompanionWander.maximumRest },
+            "no rest outlasts the bound")
+        require(
+            restDraws.allSatisfy { $0 >= DeloresCompanionWander.shortRestRange.lowerBound },
+            "no rest is instant")
+        require(
+            restDraws.contains { $0 > DeloresCompanionWander.shortRestRange.upperBound },
+            "the tail of the rest distribution is a long rest")
+        require(
+            restDraws.contains { $0 <= DeloresCompanionWander.shortRestRange.upperBound },
+            "most rests are pauses")
+        require(Set(restDraws).count > 10, "rests are drawn, not fixed")
+
+        let tripDraws = (0..<400).map { _ in DeloresCompanionWander.tripDistance(in: bounds, using: &rng) }
+        require(
+            tripDraws.allSatisfy { $0 >= DeloresCompanionWander.shortTripRange.lowerBound },
+            "a trip always goes somewhere")
+        require(
+            tripDraws.contains { $0 > DeloresCompanionWander.shortTripRange.upperBound },
+            "the tail of the trip distribution is the long way")
+        require(
+            tripDraws.contains { $0 <= DeloresCompanionWander.shortTripRange.upperBound },
+            "most trips are a few steps")
+        require(Set(tripDraws).count > 10, "trips are drawn, not fixed")
+
+        var state = settled
+        var clock = 0.0
+        var edges = Set<String>()
+        var tripCount = 0
+        var restingFrames = 0
+        var rests: [TimeInterval] = []
+        var destinations: [CGFloat] = []
+        var speeds: [CGFloat] = []
+        while clock < 300 {
+            let elapsed = 1.0 / 20.0
+            clock += elapsed
+            let wasWalking = state.phase.isWalking
+            let next = DeloresCompanionWander.advance(
+                state, elapsed: elapsed, now: clock, in: bounds, using: &rng)
+            require(isOnEdge(next.center, in: bounds), "the body rides an edge and never cuts across")
+            require(
+                bounds.insetBy(dx: -0.01, dy: -0.01).contains(next.center),
+                "the body stays on the display")
+            edges.insert(String(describing: DeloresCompanionWander.edge(for: next.center, in: bounds)))
+            if wasWalking {
+                require(
+                    !next.phase.isWalking || next.phase == state.phase,
+                    "a trip holds its speed and destination until it arrives")
+            }
+            switch next.phase {
+            case .resting(let until):
+                restingFrames += 1
+                if wasWalking { rests.append(until - clock) }
+            case .strolling(let destination, let speed):
+                if !wasWalking {
+                    tripCount += 1
+                    destinations.append(destination)
+                    speeds.append(speed)
+                }
+            }
+            state = next
+        }
+
+        require(tripCount >= 3 && restingFrames > 0, "five minutes hold both walking and resting")
+        require(edges.count >= 2, "a wander is not one fixed edge")
+        require(Set(speeds).count > 1, "trips do not all run at one speed")
+        require(
+            tripCount - 1 <= rests.count && rests.count <= tripCount,
+            "every trip that ended left a rest behind it")
+        for rest in rests {
+            require(rest >= DeloresCompanionWander.shortRestRange.lowerBound, "no rest in the run is instant")
+            require(rest <= DeloresCompanionWander.maximumRest, "no rest in the run outlasts the bound")
+        }
+        for index in 1..<destinations.count {
+            require(
+                gap(destinations[index], destinations[index - 1], around: total) >= least - 0.01,
+                "consecutive destinations never repeat a spot")
+        }
+
+        // A display too small to hold a minimum trip still wanders, and still stays on its edge.
+        let tight = CGRect(x: 0, y: 0, width: 90, height: 60)
+        var tightState = DeloresCompanionWander.settled(
+            at: CGPoint(x: tight.midX, y: tight.midY), in: tight, at: 0, using: &rng)
+        for tick in stride(from: 0.05, through: 30, by: 0.05) {
+            tightState = DeloresCompanionWander.advance(
+                tightState, elapsed: 0.05, now: tick, in: tight, using: &rng)
+            require(
+                isOnEdge(tightState.center, in: tight),
+                "a tiny display still keeps the body on its edge")
+        }
+    }
+
+    private static func isOnEdge(_ point: CGPoint, in bounds: CGRect, tolerance: CGFloat = 0.001) -> Bool {
+        let onVertical = abs(point.x - bounds.minX) <= tolerance || abs(point.x - bounds.maxX) <= tolerance
+        let onHorizontal = abs(point.y - bounds.minY) <= tolerance || abs(point.y - bounds.maxY) <= tolerance
+        return onVertical || onHorizontal
+    }
+
+    private static func distance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+        hypot(a.x - b.x, a.y - b.y)
+    }
+
+    /// The short way round the perimeter between two distances measured along it.
+    private static func gap(_ a: CGFloat, _ b: CGFloat, around total: CGFloat) -> CGFloat {
+        let raw = abs(a - b)
+        return min(raw, total - raw)
+    }
+
+    private static func restEnd(_ state: DeloresCompanionWander.State) -> TimeInterval? {
+        guard case .resting(let until) = state.phase else { return nil }
+        return until
+    }
+
     private static func require<T>(_ value: T?, _ message: String) -> T {
         guard let value else { fatalError("FAIL: \(message)") }
         return value
@@ -687,5 +848,27 @@ struct DeloresContextTest {
 
     private static func require(_ condition: Bool, _ message: String) {
         guard condition else { fatalError("FAIL: \(message)") }
+    }
+}
+
+/// SplitMix64. The wander's randomness stays real; replaying it is what makes it assertable.
+private struct SeededRandom: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) { state = seed }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+}
+
+private extension DeloresCompanionWander.Phase {
+    var isWalking: Bool {
+        if case .strolling = self { return true }
+        return false
     }
 }

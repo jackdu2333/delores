@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4B1D7C202B1D7C2000000001 /* CompanionWander.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1D7C202B1D7C2000000002 /* CompanionWander.swift */; };
 		0047FE6A50E746CCF0FC6810 /* SystemActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AEDBB526AB2C0406D8226D5 /* SystemActionRunner.swift */; };
 		005B39EF22378D1736CE5805 /* TerminalLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAA357A9F0317320CFAADF /* TerminalLogView.swift */; };
 		00BA80B95E15859F0FDA6F16 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F22647E4E1BA19F0FC520 /* AppVersion.swift */; };
@@ -665,6 +666,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4B1D7C202B1D7C2000000002 /* CompanionWander.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionWander.swift; sourceTree = "<group>"; };
 		00B475B5929CC0478EFAC7D8 /* UpdateFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFailure.swift; sourceTree = "<group>"; };
 		00CF6A57ECFDA17248393EA8 /* RaycastScriptImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastScriptImport.swift; sourceTree = "<group>"; };
 		00ECBD55353C83A7F4E93592 /* MCPSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPSettingsSection.swift; sourceTree = "<group>"; };
@@ -2163,6 +2165,7 @@
 				E28A8121E40DA3FA168A714B /* ActionConversation.swift */,
 				BC85596F6189BA3A0E755EF9 /* ActionDefinition.swift */,
 				EE9D4FB970002997A9A7CE03 /* ActionSession.swift */,
+				4B1D7C202B1D7C2000000002 /* CompanionWander.swift */,
 				D18D7E6E42E9E78E3C4189DB /* ContextAction.swift */,
 				F3930A199252FD78B5990F90 /* ContextAnswerAccumulator.swift */,
 				6565F5421C568E6CF069605C /* ContextIslandPlacement.swift */,
@@ -3203,6 +3206,7 @@
 				3BED495FDB5A454D7CD031E1 /* ActionConversation.swift in Sources */,
 				0844064CB8B5277971F3798A /* ActionDefinition.swift in Sources */,
 				7FC45CA0FFDEBF433FC7953E /* ActionSession.swift in Sources */,
+				4B1D7C202B1D7C2000000001 /* CompanionWander.swift in Sources */,
 				F3E2E96356D7301D45F46E96 /* ActionSessionRunner.swift in Sources */,
 				16F81066F7B59AD44CE09261 /* ActivationPolicy.swift in Sources */,
 				D68E7585496722BEC72E788C /* AliasStore.swift in Sources */,
