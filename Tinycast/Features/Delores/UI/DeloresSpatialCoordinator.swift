@@ -22,6 +22,7 @@ final class DeloresSpatialCoordinator {
     private var patrolTimer: Timer?
     private var companion: DeloresCompanionPanel?
     private var snapIsland: DeloresSnapIslandPanel?
+    private var snapGhost: DeloresSnapGhostPanel?
     private var divider: DeloresDividerPanel?
     private var currentSelection = ""
 
@@ -37,6 +38,8 @@ final class DeloresSpatialCoordinator {
     private var snapCandidate: SnapCandidate?
     private var snapIsActive = false
     private var snapHasClaimedGate = false
+    /// The card the pointer is over, so the ghost only redraws when the answer changes.
+    private var snapHoveredSlot: DeloresSnapSlot?
 
     // Split divider
     private var splitPair: SplitPair?
@@ -267,6 +270,8 @@ final class DeloresSpatialCoordinator {
     /// island up or the interaction gate clamped shut.
     private func releaseSnap() {
         snapIsland?.hide(); snapIsland = nil
+        snapGhost?.hide(); snapGhost = nil
+        snapHoveredSlot = nil
         snapCandidate = nil
         snapIsActive = false
         snapMonitorStart = .zero
@@ -297,9 +302,11 @@ final class DeloresSpatialCoordinator {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.show(on: screen)
+                showSnapGhost(for: snapIsland?.slot(at: point), on: screen)
             } else if snapIsActive {
                 snapIsActive = false
                 snapIsland?.hide()
+                showSnapGhost(for: nil, on: screen)
             }
         case .leftMouseUp:
             defer { releaseSnap() }
@@ -330,6 +337,23 @@ final class DeloresSpatialCoordinator {
         guard let current = AXWindowAccess.frame(of: candidate.window) else { return false }
         return abs(current.minX - candidate.initialFrame.minX) >= Self.snapWindowThreshold
             || abs(current.minY - candidate.initialFrame.minY) >= Self.snapWindowThreshold
+    }
+
+    /// Shows where the window will land while a card is under the pointer.
+    ///
+    /// The island without this is four pictures and no answer to "and if I let go here?". The
+    /// reference drew the same preview, and releasing outside a card does nothing by design — so
+    /// without it the whole feature reads as broken rather than as unaimed.
+    private func showSnapGhost(for slot: DeloresSnapSlot?, on screen: NSScreen) {
+        guard slot != snapHoveredSlot else { return }
+        snapHoveredSlot = slot
+        guard let slot else {
+            snapGhost?.hide()
+            return
+        }
+        let panel = snapGhost ?? DeloresSnapGhostPanel()
+        snapGhost = panel
+        panel.show(rect: slot.rect(in: screen.visibleFrame))
     }
 
     // MARK: Split divider
@@ -819,6 +843,47 @@ private struct DeloresSnapIslandView: View {
     }
 
     private enum Axis { case horizontal, vertical }
+}
+
+/// The outline of where the window will land, over the real desktop, while a card is hovered.
+///
+/// Click-through on purpose: it is drawn across the whole target area, which is where the pointer and
+/// the dragged window are, so taking mouse events would break the drag it is describing.
+private final class DeloresSnapGhostPanel: NSPanel {
+    private let hosting: NSHostingView<DeloresSnapGhostView>
+
+    init() {
+        let hosting = NSHostingView(rootView: DeloresSnapGhostView())
+        hosting.sizingOptions = []
+        self.hosting = hosting
+        super.init(
+            contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered, defer: false)
+        isOpaque = false; backgroundColor = .clear; level = .popUpMenu; hasShadow = false
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
+        contentView = hosting
+    }
+
+    override var canBecomeKey: Bool { false }
+
+    func show(rect: CGRect) {
+        setFrame(rect, display: true)
+        orderFrontRegardless()
+    }
+    func hide() { orderOut(nil) }
+}
+
+private struct DeloresSnapGhostView: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(Color.accentColor.opacity(0.10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(
+                        Color.accentColor.opacity(0.85),
+                        style: StrokeStyle(lineWidth: 2, dash: [7, 5])))
+    }
 }
 
 private final class DeloresDividerPanel: NSPanel {

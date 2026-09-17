@@ -23,7 +23,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .snippets: return "Snippets"
         case .navigation: return "Navigation"
         case .windowManagement: return "Window Management"
-        case .delores: return "Delores Spatial"
+        case .delores: return "Companion & Windows"
         case .clipboard: return "Clipboard"
         case .emoji: return "Emoji & Symbols"
         case .calendar: return "Calendar"

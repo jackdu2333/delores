@@ -228,7 +228,9 @@ keys) in one tracking block and reprojects `DeloresCoordinator`, which forwards 
 Companion mode is mutually exclusive with the two ghost window features. The adapter does not compile Huaci's
 `AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `main.swift`; Context remains owned by
 `DeloresCoordinator`, with the adapter receiving the latest captured selection and handing companion double-click
-back to the Context Surface. Settings live under the `Delores Spatial` pane.
+back to the Context Surface. Settings live under the `Companion & Windows` pane — it was called
+`Delores Spatial`, which named it after a word this document had already stopped using and told a
+reader nothing about what is inside it.
 
 Runtime ownership has moved to Delores: the adapter has its own panels and geometry rather than bridging
 Huaci's managers, and the vendored sources are a behavioural reference plus a regression harness.
