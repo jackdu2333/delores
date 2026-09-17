@@ -152,12 +152,30 @@ does cover it is reading the panel's real bounds from outside the process
 ## Phase 1.5 boundary
 
 `AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface
-implementation and is the place where future Surface arbitration will live.
+implementation and is where Surface arbitration lives.
 
 Selection gesture admission uses a window snapshot policy: only visible windows that accept mouse
 events block selection detection. HUDs and drop guides remain pass-through. Quick Action admission
 returns `started`, `busy` or `disabled`; the Context Island closes only for `started` and shows an
 explicit busy state otherwise.
+
+### Surface arbitration
+
+Two surfaces can see the same mouse gesture: the Context Surface reads a release as a completed
+selection, and Spatial reads a drag as a window move or a seam resize. `DeloresSurfaceInteractionGate`
+(`Model/OwnSurfaceHitPolicy.swift`) is the single owner that decides which one gets it.
+
+- Spatial claims the gate (`.snapping` or `.divider`) only once the gesture is unambiguously its own:
+  snapping waits until the candidate window's AX frame has really moved by 20pt, so dragging across
+  text does not claim it.
+- The Context Surface drops a gesture while the gate is held, **and for 350ms after it is released**.
+  The release that ends a Spatial drag is the very event selection detection reacts to, and it asks
+  about it a beat later, so letting go has to keep covering the gesture rather than reopening it.
+- Only one surface can hold the gate at a time, and a release from a surface that no longer holds it
+  is ignored, so a late `mouseUp` cannot free someone else's gesture.
+
+Unit-tested in `Tests/delores-context-test.swift`. The gate covers input admission; it does not
+replace the per-surface hit testing above.
 
 ### Ownership map
 
@@ -165,13 +183,32 @@ explicit busy state otherwise.
 
 `Tinycast/Features/Delores/UI/DeloresSpatialCoordinator.swift` is the only runtime adapter for the vendored
 Companion and Spatial capabilities. It owns lazy `start/stop` for the desktop companion, window snapping and
-split divider; `AppCore` observes the three persisted switches and reprojects the adapter on every change.
+split divider; `AppCore` observes the four persisted switches (`quickActionsEnabled` plus the three Spatial
+keys) in one tracking block and reprojects `DeloresCoordinator`, which forwards to both of its children.
 Companion mode is mutually exclusive with the two ghost window features. The adapter does not compile Huaci's
 `AppDelegate`, `ConfigManager`, `SelectionMonitor`, `LLMService`, or `main.swift`; Context remains owned by
 `DeloresCoordinator`, with the adapter receiving the latest captured selection and handing companion double-click
-back to the Context Surface. Settings live under the `Delores Spatial` pane. The first implementation is a
-Delores-owned vertical slice; visual/material parity with the vendored Huaci reference still requires manual
-acceptance, and Accessibility permission is required for cross-app window movement.
+back to the Context Surface. Settings live under the `Delores Spatial` pane.
+
+Runtime ownership has moved to Delores: the adapter has its own panels and geometry rather than bridging
+Huaci's managers, and the vendored sources are a behavioural reference plus a regression harness.
+
+**Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
+automated test:
+
+- `findSplitPair` filters on-screen windows spanning the pointer's height, but does not yet exclude
+  occluded windows, other Spaces, or apps whose focused window is elsewhere. Snapping captures the
+  frontmost app's focused window at the press.
+- The seam scan walks the window list on a throttled 80ms timer; a cached pair is re-read from AX
+  instead, which is cheaper but still IPC on the main actor.
+- Window eligibility is `isEligible` + position-settable. There is no per-surface rollback beyond the
+  divider's own, and no Space/full-screen/display-change observers beyond the Companion's screen
+  notification.
+- Accessibility is checked per gesture (`Permissions.isAccessibilityTrusted()`); the grant is
+  requested from the Settings pane where the reader turns the feature on, never at launch. Without it
+  neither snap nor divider engages, and the Settings pane says so.
+- Companion click-through, patrol, and multi-display behaviour have no test and require manual
+  acceptance on the machine's real displays.
 
 
 | Area | Owner | Sync posture |
@@ -186,7 +223,7 @@ acceptance, and Accessibility permission is required for cross-app window moveme
 | Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
-| Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester` | Interactive windows only; pass-through overlays remain transparent |
+| Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester`, `DeloresSurfaceInteractionGate` | Interactive windows only; pass-through overlays remain transparent; one gesture belongs to one surface |
 | Quick Action admission | `QuickActionStartResult`, `QuickActionCoordinator` | Shared capability returns an explicit start result |
 | Product identity and build metadata | `project.yml`, generated project, `Info.plist` | Delores-owned seam |
 | Delores model gate | `.github/workflows/ci.yml`, `Scripts/run-delores-tests.sh` | Delores-owned seam |
@@ -250,9 +287,10 @@ The source and its tests are still part of the Delores repository and run indepe
 ```
 
 The source boundary and update procedure are recorded in
-[ADR 0002](adr/0002-vendor-huaci-latest-project.md). The next runtime step is an explicit adapter
-for the Spatial Surface, with a Delores-owned consent setting and lifecycle; it is not a silent
-activation of Huaci's global monitors.
+[ADR 0002](adr/0002-vendor-huaci-latest-project.md). The Spatial Surface now has that explicit
+adapter — a Delores-owned consent setting, a lazy lifecycle and its own panels, see the ownership
+map above. It is not a silent activation of Huaci's global monitors, and the vendored managers are
+still not compiled into the app target.
 
 ## Verification after every sync
 
@@ -262,6 +300,12 @@ activation of Huaci's global monitors.
 ./Scripts/run-tests.sh
 ./Scripts/run-huaci-integration-tests.sh
 ```
+
+What the Delores harness does and does not cover: `run-delores-tests.sh` compiles an explicit list of
+`Model/` files with `Tests/delores-context-test.swift`. A new model file has to be added to that list
+by hand or its seam is silently untested. Everything in `UI/` — the island, the Companion, the snap
+island, the divider — is outside it, so UI-layer policy has no unit test and can only be checked by
+building and watching the running app.
 
 On a machine with Xcode 26 and SwiftLint installed, also run:
 

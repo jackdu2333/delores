@@ -440,6 +440,18 @@ final class AppSettings {
         }
     }
 
+    var deloresCompanionEnabled: Bool {
+        didSet { defaults.set(deloresCompanionEnabled, forKey: Key.deloresCompanionEnabled.rawValue) }
+    }
+
+    var deloresWindowSnappingEnabled: Bool {
+        didSet { defaults.set(deloresWindowSnappingEnabled, forKey: Key.deloresWindowSnappingEnabled.rawValue) }
+    }
+
+    var deloresSplitDividerEnabled: Bool {
+        didSet { defaults.set(deloresSplitDividerEnabled, forKey: Key.deloresSplitDividerEnabled.rawValue) }
+    }
+
     /// Points between tiled windows and the screen edge; `WindowPlacementEngine` caps it.
     var windowGap: Int {
         didSet { defaults.set(windowGap, forKey: Key.windowGap.rawValue) }
@@ -636,6 +648,11 @@ final class AppSettings {
             defaults.stringArray(forKey: Key.menuSearchDisabledApps.rawValue) ?? []
         menuSearchShowsAppleMenu = defaults.bool(forKey: Key.menuSearchShowsAppleMenu.rawValue)
         windowManagementEnabled = defaults.bool(forKey: Key.windowManagementEnabled.rawValue)
+        deloresCompanionEnabled = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue)
+        deloresWindowSnappingEnabled = defaults.bool(
+            forKey: Key.deloresWindowSnappingEnabled.rawValue)
+        deloresSplitDividerEnabled = defaults.bool(
+            forKey: Key.deloresSplitDividerEnabled.rawValue)
         windowManagementShowInLauncher =
             defaults.object(forKey: Key.windowManagementShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.windowManagementShowInLauncher.rawValue)

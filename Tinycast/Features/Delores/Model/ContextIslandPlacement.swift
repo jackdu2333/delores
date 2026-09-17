@@ -3,7 +3,13 @@ import CoreGraphics
 /// Where the Context Island sits: hung from the menu bar, with its top edge as the anchor every
 /// later size grows away from. Pure, so a display's facts are injected rather than read.
 enum DeloresContextIslandPlacement {
+    /// The fallback width, used when the bar cannot measure itself. Not a target: a bar is meant to
+    /// hug its own controls, so a short catalog does not leave two dead ends of glass.
     static let preferredWidth: CGFloat = 420
+
+    /// Below this the bar is narrower than the controls it holds, so a measurement under it is a
+    /// view that has not laid out yet rather than a genuinely narrow bar.
+    static let minimumWidth: CGFloat = 200
 
     /// The bar's wish. A display with a notch reports the whole safe strip as its menu bar, so the
     /// wish survives there; a shallow menu bar caps the bar instead.
@@ -14,6 +20,15 @@ enum DeloresContextIslandPlacement {
 
     /// The card's wish once the bar opens for an answer.
     static let preferredExpandedHeight: CGFloat = 390
+
+    /// The floor under the card's width. The bar hugs its own controls, but a paragraph needs a
+    /// column: a reader who switched most of the catalog off should not get an answer wrapped every
+    /// three words because the bar they left it with is narrow.
+    ///
+    /// 420 is the toolbar this island came from: it calls the same number its reading baseline and
+    /// takes `max(420, collapsed + 88)` for the opened width, so a default catalog opens to exactly
+    /// this. Matching it means an answer is set in the same column it was set in before.
+    static let minimumReadingWidth: CGFloat = 420
 
     /// A card never takes more than this share of what the display actually shows, so the dock and
     /// whatever is behind the window stay reachable on a short screen.
@@ -34,6 +49,13 @@ enum DeloresContextIslandPlacement {
         min(preferred, max(0, screen.visibleFrame.height) * maximumVisibleFraction)
     }
 
+    /// The height the bar is actually given. Exposed so the bar can lay itself out against it
+    /// instead of against its own wish — a bar laid out at 38pt inside a 28pt panel loses its
+    /// bottom edge, which is what clipping the pills looked like.
+    static func collapsedHeight(preferred: CGFloat, in screen: InvocationScreen) -> CGFloat {
+        barHeight(in: screen, preferred: preferred)
+    }
+
     /// `size.height` is the wish; the menu bar may leave less room than that.
     static func collapsedFrame(in screen: InvocationScreen, size: CGSize) -> CGRect {
         let height = barHeight(in: screen, preferred: size.height)
@@ -42,6 +64,43 @@ enum DeloresContextIslandPlacement {
             y: barOriginY(in: screen, height: height),
             width: size.width,
             height: height)
+    }
+
+    /// The bar's width, hugging the controls it actually holds.
+    ///
+    /// The guard is the point of this function rather than an edge case: a hosted view that has not
+    /// laid out yet reports a zero ideal width, and a bar sized to that would clip everything in it.
+    /// Anything at or under `minimumWidth` is therefore read as "no measurement" and falls back —
+    /// too wide is recoverable, too narrow is not. Growth past `preferredWidth` is allowed up to the
+    /// display, because a long catalog of actions should widen the bar rather than crush it.
+    static func barWidth(hugging measured: CGFloat, in screen: InvocationScreen) -> CGFloat {
+        let usable = max(minimumWidth, screen.frame.width - margin * 2)
+        guard measured.isFinite, measured > minimumWidth else {
+            return min(preferredWidth, usable)
+        }
+        return min(measured, usable)
+    }
+
+    /// The panel's width while a card is open: the bar's own width, unless the bar is narrower than
+    /// a readable column. A card never exceeds the display, for the same reason the bar never does —
+    /// and here the display wins over the column, because a card too narrow to read still beats one
+    /// whose right edge is off the screen.
+    static func resultWidth(barWidth: CGFloat, in screen: InvocationScreen) -> CGFloat {
+        let usable = max(0, screen.frame.width - margin * 2)
+        return min(max(barWidth, minimumReadingWidth), usable)
+    }
+
+    /// A card's frame: hung from the same top edge the bar hangs from, and placed horizontally the
+    /// same way. Keeping the bar's left edge instead would slide a wider card off centre, because the
+    /// bar is centred on its display and a card is wider than it.
+    static func expandedFrame(
+        keepingTopEdgeOf anchor: CGRect, size: CGSize, in screen: InvocationScreen
+    ) -> CGRect {
+        CGRect(
+            x: anchoredX(in: screen, width: size.width),
+            y: anchor.maxY - size.height,
+            width: size.width,
+            height: size.height)
     }
 
     /// Anchored by its top edge, so a resize grows downward and the bar never drifts upward.

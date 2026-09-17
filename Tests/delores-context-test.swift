@@ -8,6 +8,7 @@ struct DeloresContextTest {
         testAnswerAccumulator()
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
+        MainActor.assumeIsolated { testSurfaceInteractionGate() }
         testQuickActionAdmission()
         testContextActions()
         testCustomRowsOnTheBar()
@@ -425,6 +426,32 @@ struct DeloresContextTest {
             !DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
                 at: CGPoint(x: 900, y: 900), in: [interactive]),
             "points outside own surfaces remain eligible")
+    }
+
+    /// One mouse gesture belongs to one surface. These are the rules the Context Surface reads
+    /// before it treats a mouse release as a completed selection.
+    @MainActor
+    private static func testSurfaceInteractionGate() {
+        let gate = DeloresSurfaceInteractionGate()
+        require(!gate.blocksSelection, "an idle gate leaves selection capture alone")
+
+        require(gate.claim(.snapping), "a window drag claims the gate")
+        require(gate.blocksSelection, "a claimed gesture blocks selection capture")
+        require(!gate.claim(.divider), "a second surface cannot claim a gesture in flight")
+
+        gate.release(.snapping)
+        require(gate.owner == nil, "releasing clears the owner")
+        // The Context Surface decides on the release that ended the drag, and it asks a beat later:
+        // letting go has to keep covering the gesture rather than reopening it instantly.
+        require(gate.blocksSelection, "a just-released gesture still covers the release that ended it")
+
+        require(gate.claim(.divider), "the divider claims once the drag has been released")
+        gate.release(.snapping)
+        require(gate.owner == .divider, "a stale release cannot free another surface's gesture")
+
+        gate.reset()
+        require(gate.owner == nil, "reset drops the owner")
+        require(!gate.blocksSelection, "reset also drops the release suppression")
     }
 
     private static func testQuickActionAdmission() {

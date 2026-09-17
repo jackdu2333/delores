@@ -111,7 +111,7 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings
         + systemActions + commands + quicklinks + appleShortcuts + fallbacks + ai + quickActions + fileSearch
         + notes
-        + snippets + navigation + windowManagement + clipboard + emoji + calendar
+        + snippets + navigation + windowManagement + delores + clipboard + emoji + calendar
         + extensions + permissions + backup + about
 
     private static let general: [SettingsSearchEntry] = [
@@ -380,6 +380,13 @@ enum SettingsSearchCatalog {
         .init(
             .navigationMenuSearch, "Disabled Applications",
             keywords: ["exclude", "password manager", "ignore", "privacy", "menu bar"])
+    ]
+
+    private static let delores: [SettingsSearchEntry] = [
+        .init(pane: .delores, keywords: ["companion", "pet", "spatial", "snap", "split", "divider"]),
+        .init(.deloresCompanion, "Enable desktop companion", keywords: ["pet", "presence", "companion"]),
+        .init(.deloresSpatial, "Enable window snapping", keywords: ["snap", "drag", "window"]),
+        .init(.deloresSpatial, "Enable split divider", keywords: ["seam", "resize", "tiled"])
     ]
 
     private static let windowManagement: [SettingsSearchEntry] = [

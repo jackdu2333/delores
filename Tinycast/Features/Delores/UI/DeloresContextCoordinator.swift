@@ -11,6 +11,7 @@ final class DeloresContextCoordinator {
     private let aiChat: AIChatCoordinator
     private let island: DeloresContextIslandController
     private let gestureMonitor: SelectionGestureMonitor
+    private let interactionGate: DeloresSurfaceInteractionGate
 
     @ObservationIgnored private var captureTask: Task<Void, Never>?
     @ObservationIgnored private var actionTask: Task<Void, Never>?
@@ -46,12 +47,13 @@ final class DeloresContextCoordinator {
 
     init(
         settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector,
-        aiChat: AIChatCoordinator
+        aiChat: AIChatCoordinator, interactionGate: DeloresSurfaceInteractionGate
     ) {
         self.settings = settings
         self.quickActions = quickActions
         self.injector = injector
         self.aiChat = aiChat
+        self.interactionGate = interactionGate
 
         self.island = DeloresContextIslandController()
         self.gestureMonitor = SelectionGestureMonitor { point in
@@ -84,6 +86,11 @@ final class DeloresContextCoordinator {
         cancelAnswer()
         island.dismiss(notifying: false)
         clearContext()
+        // The Companion reopens "the last selection", and a selection captured before the feature
+        // was switched off is not one the reader can still be reading.
+        lastCapturedSelection = nil
+        lastFingerprint = nil
+        lastSelectionUptime = -Double.infinity
     }
 
     private func captureSelection(after gesture: SelectionGestureMonitor.Gesture) {
@@ -91,6 +98,11 @@ final class DeloresContextCoordinator {
         // dropped before it reads anything: the read would paste over the reader's clipboard to no
         // purpose, and the selection state stays untouched rather than reporting text nobody sees.
         guard !(island.isVisible && island.isPinned) else { return }
+
+        // A window drag or a divider drag is one gesture that belongs to Spatial. Releasing a mouse
+        // button at the end of either is not a selection, and reading the target app for text would
+        // put a Context bar under a window the reader is still moving.
+        guard !interactionGate.blocksSelection else { return }
 
         guard settings.quickActionsEnabled, Permissions.isAccessibilityTrusted(),
             let target = NSWorkspace.shared.frontmostApplication,
@@ -142,8 +154,13 @@ final class DeloresContextCoordinator {
             .map { $0.applying(quickActions.instructionOverride(forActionID: $0.id)) }
     }
 
+    /// Re-opens the card the reader last had, for the Companion's double-click. The feature it
+    /// depends on has to still be on, and the grant it depends on still held: without either, the
+    /// card would come back over text nothing can be done with.
     func showLastCapturedSelection() {
-        guard let lastCapturedSelection else { return }
+        guard settings.quickActionsEnabled, Permissions.isAccessibilityTrusted(),
+            let lastCapturedSelection, isMonitoring
+        else { return }
         let prepared = DeloresPreparedSelection(
             text: lastCapturedSelection.text,
             fingerprint: DeloresSelectionFingerprint(

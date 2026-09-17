@@ -477,9 +477,20 @@ final class AppCore {
 
     /// Permissive guardrails: the text transformed is the reader's own, which `.default` refuses.
     func quickActionProvider(for action: QuickAction) throws -> any AIProvider {
+        try quickActionProvider(forActionID: action.id)
+    }
+
+    /// The same route, resolved by an id rather than by a `QuickAction`.
+    ///
+    /// The Context Surface runs a catalog of its own, and two of its five actions have no Quick Action
+    /// behind them at all — so a caller there holds a stable id and nothing to pass the overload
+    /// above. Sharing this resolution is the whole point: a surface that reached for `aiProvider()`
+    /// instead would quietly run the reader's own text on the chat's model and under the chat's
+    /// guardrails, and neither substitution would announce itself.
+    func quickActionProvider(forActionID id: String) throws -> any AIProvider {
         quickActionSettings.repairModel(
             against: aiSettings.connections, fallback: aiSettings.defaultModel)
-        guard let selection = quickActionSettings.model(for: action) ?? aiSettings.defaultModel
+        guard let selection = quickActionSettings.model(forActionID: id) ?? aiSettings.defaultModel
         else {
             throw AIProviderError.unavailable("Choose a model in Settings \u{2192} Quick Actions.")
         }
@@ -535,7 +546,12 @@ final class AppCore {
                 _ = $0.mcpEnabled
             }, reproject: { $0.mcpCoordinator.applyEnabled() })
         track(
-            { _ = $0.quickActionsEnabled },
+            {
+                _ = $0.quickActionsEnabled
+                _ = $0.deloresCompanionEnabled
+                _ = $0.deloresWindowSnappingEnabled
+                _ = $0.deloresSplitDividerEnabled
+            },
             reproject: {
                 $0.quickActionCoordinator.applyEnabled()
                 $0.deloresCoordinator.applyEnabled()
