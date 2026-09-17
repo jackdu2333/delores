@@ -9,17 +9,22 @@ final class DeloresCompanionCoordinator {
     private var companionDwellTimer: Timer?
     private var companionLeaveTimer: Timer?
     private var screenObserver: NSObjectProtocol?
-    private var patrolTimer: Timer?
+    private var strollTimer: Timer?
+    private var wakeTimer: Timer?
     private var companion: DeloresCompanionPanel?
     private var currentSelection = ""
+    private var wander: DeloresCompanionWander.State?
+    private var isRunning = false
+    private var lastWanderTick: TimeInterval = 0
+    private var rng = SystemRandomNumberGenerator()
     var onOpenContext: (() -> Void)?
-    private var lastPatrolTick = Date()
-    private var patrolEdge: DeloresCompanionEdge = .right
-    private var patrolDirection: CGFloat = 1
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
     private static let companionVisibleRadius: CGFloat = 14
-    private static let companionPatrolSpeed: CGFloat = 30
+    /// Frames while walking. A rest runs none at all, so this is the only frame cost there is.
+    private static let strollFrame: TimeInterval = 1.0 / 20.0
+    /// Monotonic, so a clock change cannot make a rest look overdue or a step look enormous.
+    private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
     init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate, onOpenContext: (() -> Void)? = nil) {
         self.settings = settings; self.interactionGate = interactionGate; self.onOpenContext = onOpenContext
     }
@@ -31,23 +36,29 @@ final class DeloresCompanionCoordinator {
         if captured {
             guard interactionGate.claim(.companion) else { return }
             companion.setCaptured(true)
+            stopWanderTimers()
         } else {
             companion.setCaptured(false)
             interactionGate.release(.companion)
+            guard isRunning, let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
+            settle(at: companion.center, on: screen)
         }
     }
     private func startCompanion() {
         guard companionMonitor == nil, companionLocalMonitor == nil else { return }
         guard let screen = DeloresWindowGeometry.activeScreen() else { return }
+        isRunning = true
         let panel = companion ?? DeloresCompanionPanel()
         companion = panel
         panel.onSingleClick = { [weak self] in self?.companionSingleClick() }
         panel.onDoubleClick = { [weak self] in self?.companionDoubleClick() }
         panel.onLongPress = { [weak self] in self?.companion?.showBubble() }
-        panel.onDrag = { [weak self] point in self?.moveCompanion(to: point) }
+        panel.onDrag = { [weak self] point in self?.dragCompanion(to: point) }
+        panel.onDragEnded = { [weak self] point in self?.dropCompanion(at: point) }
         panel.ignoresMouseEvents = true
-        panel.present(at: spawnPoint(on: screen))
-        lastPatrolTick = Date()
+        let start = spawnPoint(on: screen)
+        panel.present(at: start)
+        settle(at: start, on: screen)
 
         companionMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
             let point = NSEvent.mouseLocation
@@ -65,22 +76,19 @@ final class DeloresCompanionCoordinator {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.relocateCompanion() }
         }
-        patrolTimer?.invalidate()
-        patrolTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.patrolCompanion() }
-        }
-        if let patrolTimer { RunLoop.main.add(patrolTimer, forMode: .common) }
     }
 
     private func stopCompanion() {
+        isRunning = false
         if let companionMonitor { NSEvent.removeMonitor(companionMonitor); self.companionMonitor = nil }
         if let companionLocalMonitor { NSEvent.removeMonitor(companionLocalMonitor); self.companionLocalMonitor = nil }
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver); self.screenObserver = nil }
         companionDwellTimer?.invalidate(); companionDwellTimer = nil
         companionLeaveTimer?.invalidate(); companionLeaveTimer = nil
-        patrolTimer?.invalidate(); patrolTimer = nil
+        stopWanderTimers()
         self.captureCompanion(false)
         companion?.hide(); companion = nil
+        wander = nil
         currentSelection = ""
     }
 
@@ -94,28 +102,53 @@ final class DeloresCompanionCoordinator {
         }
     }
 
-    private func patrolCompanion() {
-        guard let companion, companion.isVisible, !companion.isCaptured else { return }
-        let now = Date()
-        let dt = min(0.25, now.timeIntervalSince(lastPatrolTick))
-        lastPatrolTick = now
-        guard dt > 0, let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
-        let bounds = companionBounds(on: screen)
-        let edge = nearestEdge(companion.center, bounds)
-        if edge != patrolEdge {
-            patrolEdge = edge
-            patrolDirection = 1
+    /// Resting runs no frames at all: one wake is scheduled for the moment the rest ends. Walking is
+    /// the only phase that costs a timer, which is the whole of the Companion's idle budget.
+    private func syncWanderTimers() {
+        guard isRunning, let wander else { stopWanderTimers(); return }
+        switch wander.phase {
+        case .strolling:
+            wakeTimer?.invalidate(); wakeTimer = nil
+            guard strollTimer == nil else { return }
+            lastWanderTick = now
+            let timer = Timer(timeInterval: Self.strollFrame, repeats: true) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.advanceWander() }
+            }
+            strollTimer = timer
+            RunLoop.main.add(timer, forMode: .common)
+        case .resting(let until):
+            strollTimer?.invalidate(); strollTimer = nil
+            wakeTimer?.invalidate()
+            let timer = Timer(timeInterval: max(0, until - now), repeats: false) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.advanceWander() }
+            }
+            wakeTimer = timer
+            RunLoop.main.add(timer, forMode: .common)
         }
-        let step = Self.companionPatrolSpeed * CGFloat(dt) * patrolDirection
-        var point = companion.center
-        switch edge {
-        case .left, .right: point.y += step
-        case .top, .bottom: point.x += step
-        }
-        let settled = snapPoint(point, edge: edge, in: bounds)
-        // The clamp is the corner: turn around rather than sit there grinding against the edge.
-        if settled != point { patrolDirection *= -1 }
-        companion.move(to: settled)
+    }
+
+    private func stopWanderTimers() {
+        strollTimer?.invalidate(); strollTimer = nil
+        wakeTimer?.invalidate(); wakeTimer = nil
+    }
+
+    private func settle(at point: CGPoint, on screen: NSScreen) {
+        wander = DeloresCompanionWander.settled(
+            at: point, in: companionBounds(on: screen), at: now, using: &rng)
+        syncWanderTimers()
+    }
+
+    private func advanceWander() {
+        guard isRunning, let companion, companion.isVisible, let state = wander else { return }
+        guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
+        let tick = now
+        let elapsed = tick - lastWanderTick
+        lastWanderTick = tick
+        let next = DeloresCompanionWander.advance(
+            state, elapsed: elapsed, now: tick, in: companionBounds(on: screen), using: &rng)
+        wander = next
+        companion.move(to: next.center)
+        syncWanderTimers()
     }
 
     private func handleCompanionPointer(at point: CGPoint) {
@@ -150,44 +183,37 @@ final class DeloresCompanionCoordinator {
         }
     }
 
-    private func moveCompanion(to point: CGPoint) {
+    private func dragCompanion(to point: CGPoint) {
         guard let companion, let screen = DeloresWindowGeometry.screenContaining(point) else { return }
-        companion.move(to: snapPoint(point, edge: nearestEdge(point, screen.visibleFrame), in: companionBounds(on: screen)))
+        stopWanderTimers()
+        wander = nil
+        companion.move(to: DeloresCompanionWander.project(point, into: companionBounds(on: screen)))
+    }
+
+    /// A drop stays where it was let go and stands there a beat, which is also what makes the drop
+    /// read as having landed.
+    private func dropCompanion(at point: CGPoint) {
+        guard let companion, let screen = DeloresWindowGeometry.screenContaining(point) else { return }
+        let landed = DeloresCompanionWander.project(point, into: companionBounds(on: screen))
+        companion.move(to: landed)
+        settle(at: landed, on: screen)
     }
 
     private func relocateCompanion() {
         guard let companion, companion.isVisible else { return }
         guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
-        guard !companionBounds(on: screen).contains(companion.center) else { return }
-        companion.move(to: spawnPoint(on: screen))
+        // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
+        guard !companionBounds(on: screen).insetBy(dx: -1, dy: -1).contains(companion.center) else { return }
+        let point = spawnPoint(on: screen)
+        companion.move(to: point)
+        settle(at: point, on: screen)
     }
+
     private func companionBounds(on screen: NSScreen) -> CGRect {
         screen.visibleFrame.insetBy(dx: Self.companionVisibleRadius, dy: Self.companionVisibleRadius)
     }
+
     private func spawnPoint(on screen: NSScreen) -> CGPoint {
         CGPoint(x: screen.visibleFrame.maxX - Self.companionVisibleRadius, y: screen.visibleFrame.midY)
-    }
-    private func nearestEdge(_ point: CGPoint, _ frame: CGRect) -> DeloresCompanionEdge {
-        let distances: [(DeloresCompanionEdge, CGFloat)] = [
-            (.left, abs(point.x - frame.minX)),
-            (.right, abs(frame.maxX - point.x)),
-            (.top, abs(frame.maxY - point.y)),
-            (.bottom, abs(point.y - frame.minY)),
-        ]
-        return distances.min(by: { $0.1 < $1.1 })?.0 ?? .right
-    }
-
-    /// Puts a point onto the given edge, keeping its position along that edge.
-    private func snapPoint(
-        _ point: CGPoint, edge: DeloresCompanionEdge, in frame: CGRect
-    ) -> CGPoint {
-        let x = min(max(point.x, frame.minX), frame.maxX)
-        let y = min(max(point.y, frame.minY), frame.maxY)
-        switch edge {
-        case .left: return CGPoint(x: frame.minX, y: y)
-        case .right: return CGPoint(x: frame.maxX, y: y)
-        case .top: return CGPoint(x: x, y: frame.maxY)
-        case .bottom: return CGPoint(x: x, y: frame.minY)
-        }
     }
 }

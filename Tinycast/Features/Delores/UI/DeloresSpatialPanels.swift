@@ -8,6 +8,7 @@ final class DeloresCompanionPanel: NSPanel {
     var onDoubleClick: (() -> Void)?
     var onLongPress: (() -> Void)?
     var onDrag: ((CGPoint) -> Void)?
+    var onDragEnded: ((CGPoint) -> Void)?
     private var down = CGPoint.zero
     private var dragged = false
     private var longPressTimer: Timer?
@@ -55,7 +56,7 @@ final class DeloresCompanionPanel: NSPanel {
     }
     override func mouseUp(with event: NSEvent) {
         longPressTimer?.invalidate(); longPressTimer = nil
-        guard !dragged else { return }
+        guard !dragged else { dragged = false; onDragEnded?(NSEvent.mouseLocation); return }
         event.clickCount >= 2 ? onDoubleClick?() : onSingleClick?()
     }
 }
@@ -445,7 +446,3 @@ struct DeloresVisualEffectView: NSViewRepresentable {
     }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
-
-enum DeloresCompanionEdge { case top, bottom, left, right }
-
-/// The edge of `frame` the point is closest to. Ties go to the right edge, which is where the
