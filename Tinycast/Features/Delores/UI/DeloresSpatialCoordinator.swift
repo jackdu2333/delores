@@ -62,6 +62,8 @@ final class DeloresSpatialCoordinator {
     /// selection moves the pointer the same distance without moving any window.
     private static let snapWindowThreshold: CGFloat = 20
     private static let snapIslandRevealInset: CGFloat = 110
+    /// Only the center area of the top screen triggers the snap island, avoiding left menus and right status bar icons.
+    private static let snapTopCenterTriggerWidth: CGFloat = 660
     /// The handle is exactly as wide as the hover tolerance on both sides. Anything narrower would
     /// let the pointer leave the panel while still inside the tolerance, and the overlay would flicker
     /// on and off at its edge.
@@ -371,7 +373,11 @@ final class DeloresSpatialCoordinator {
                 snapHasClaimedGate = true
             }
             guard let screen = screenContaining(point) else { return }
-            if point.y >= screen.visibleFrame.maxY - Self.snapIslandRevealInset {
+            let isNearTop = point.y >= screen.visibleFrame.maxY - Self.snapIslandRevealInset
+            let halfCenterWidth = Self.snapTopCenterTriggerWidth / 2.0
+            let isInCenterTop = abs(point.x - screen.frame.midX) <= halfCenterWidth
+
+            if isNearTop && (isInCenterTop || snapIsActive) {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.show(on: screen)
