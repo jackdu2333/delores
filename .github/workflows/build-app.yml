@@ -32,7 +32,7 @@ jobs:
       - name: Build Application
         run: |
           xcodebuild -project Tinycast.xcodeproj \
-            -scheme Tinycast \
+            -scheme Delores \
             -configuration ${{ github.event.inputs.configuration }} \
             -derivedDataPath build/DerivedData \
             ARCHS=arm64 \
