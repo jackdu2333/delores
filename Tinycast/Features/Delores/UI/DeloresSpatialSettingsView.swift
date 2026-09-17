@@ -1,82 +1,157 @@
 import Combine
 import SwiftUI
 
-/// The Delores pane: the Companion Surface, and the two window capabilities behind it.
+/// Everything Delores itself owns: the Context Bar's rows, the Companion, and the two window
+/// capabilities. The file is named for the third because that is what it held first.
 struct DeloresSpatialSettingsView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(QuickActionSettingsStore.self) private var quickActions
 
     /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
     @State private var isTrusted = Permissions.isAccessibilityTrusted()
+    @State private var editingAction: DeloresContextAction?
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         @Bindable var settings = settings
         return Form {
-            Section {
-                Toggle(isOn: $settings.deloresCompanionEnabled) {
-                    SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
-                    Text(
-                        "The companion that is simply there: patrols the edge of the display, and "
-                            + "reopens your last selection when you double-click it. While it is on, "
-                            + "window snapping and the split divider stay off."
-                    )
-                }
-            } header: {
-                SettingsSectionHeader(.deloresCompanion)
-            } footer: {
-                Text(
-                    "The companion is a Surface, not a second chat client: it has no actions, "
-                        + "history or model of its own. It hands you to the Context or Command "
-                        + "Surface, which own those."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Section {
-                if needsAccessibility {
-                    SettingsRow(
-                        title: "Accessibility permission required",
-                        subtitle: needsAccessibilitySubtitle
-                    ) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(Theme.Colors.destructive)
-                            .frame(width: Theme.Size.settingsRowIcon)
-                    } trailing: {
-                        Button("Open System Settings") { Permissions.openAccessibilitySettings() }
-                    }
-                }
-                Toggle(isOn: snappingBinding) {
-                    SettingsRowTitle(.deloresSpatial, "Enable window snapping")
-                    Text(
-                        "Drag a window up to the island at the top of the display, and drop it on "
-                            + "the layout you want."
-                    )
-                }
-                .disabled(settings.deloresCompanionEnabled)
-                Toggle(isOn: dividerBinding) {
-                    SettingsRowTitle(.deloresSpatial, "Enable split divider")
-                    Text(
-                        "Move the pointer onto the seam between two tiled windows to resize them "
-                            + "together."
-                    )
-                }
-                .disabled(settings.deloresCompanionEnabled)
-            } header: {
-                SettingsSectionHeader(.deloresSpatial)
-            } footer: {
-                Text(
-                    "Both read and move other apps' windows through the same Accessibility "
-                        + "permission Tinycast uses to paste. Neither is enabled by default, and "
-                        + "neither is restored from a settings backup."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+            contextBarSection
+            companionSection
+            windowSection
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.delores)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
+        .sheet(item: $editingAction) { action in
+            ContextActionModelSheet(action: action)
+                .environment(quickActions)
+        }
+    }
+
+    /// The rows the bar offers, each with the model that answers it.
+    ///
+    /// This section exists because the bar's catalogue is not the same as Quick Actions': 解释 and 搜索
+    /// have no Quick Action behind them, so they had no row anywhere to be configured from, and the
+    /// two that do overlap could only be reached by finding them in the other pane.
+    @ViewBuilder private var contextBarSection: some View {
+        Section {
+            if !settings.quickActionsEnabled {
+                SettingsRow(
+                    title: "The Context Bar is off",
+                    subtitle: "Turn on Enable Quick Actions to show it when you select text."
+                ) {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                        .frame(width: Theme.Size.settingsRowIcon)
+                }
+            }
+            ForEach(DeloresContextAction.catalog) { action in
+                SettingsRow(title: action.title, subtitle: answerRoute(action)) {
+                    SymbolImage(name: action.symbol, size: Theme.Size.settingsRowIcon)
+                        .frame(width: Theme.Size.settingsRowIcon)
+                } trailing: {
+                    if action.needsModel {
+                        Button {
+                            editingAction = action
+                        } label: {
+                            SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Choose the model for \(action.title)")
+                        .accessibilityLabel("Choose the model for \(action.title)")
+                    }
+                }
+            }
+        } header: {
+            SettingsSectionHeader(.deloresContextBar)
+        } footer: {
+            Text(
+                "These are the buttons on the bar that appears when you select text. A row without "
+                    + "its own model follows the one chosen in the Quick Actions pane."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Which model answers this row, said in the row so the answer does not require opening anything.
+    private func answerRoute(_ action: DeloresContextAction) -> String {
+        if action.kind == .search {
+            return action.searchTemplate
+        }
+        guard let bound = quickActions.modelOverride(forActionID: action.id) else {
+            return "Same as Quick Actions"
+        }
+        guard let effort = bound.effort else { return bound.model }
+        return "\(bound.model) · \(effort)"
+    }
+
+    @ViewBuilder private var companionSection: some View {
+        @Bindable var settings = settings
+        Section {
+            Toggle(isOn: $settings.deloresCompanionEnabled) {
+                SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
+                Text(
+                    "The companion that is simply there: patrols the edge of the display, and "
+                        + "reopens your last selection when you double-click it. While it is on, "
+                        + "window snapping and the split divider stay off."
+                )
+            }
+        } header: {
+            SettingsSectionHeader(.deloresCompanion)
+        } footer: {
+            Text(
+                "The companion is a Surface, not a second chat client: it has no actions, "
+                    + "history or model of its own. It hands you to the Context or Command "
+                    + "Surface, which own those."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder private var windowSection: some View {
+        @Bindable var settings = settings
+        Section {
+            if needsAccessibility {
+                SettingsRow(
+                    title: "Accessibility permission required",
+                    subtitle: needsAccessibilitySubtitle
+                ) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Theme.Colors.destructive)
+                        .frame(width: Theme.Size.settingsRowIcon)
+                } trailing: {
+                    Button("Open System Settings") { Permissions.openAccessibilitySettings() }
+                }
+            }
+            Toggle(isOn: snappingBinding) {
+                SettingsRowTitle(.deloresSpatial, "Enable window snapping")
+                Text(
+                    "Drag a window up to the island at the top of the display, and drop it on "
+                        + "the layout you want."
+                )
+            }
+            .disabled(settings.deloresCompanionEnabled)
+            Toggle(isOn: dividerBinding) {
+                SettingsRowTitle(.deloresSpatial, "Enable split divider")
+                Text(
+                    "Move the pointer onto the seam between two tiled windows to resize them "
+                        + "together."
+                )
+            }
+            .disabled(settings.deloresCompanionEnabled)
+        } header: {
+            SettingsSectionHeader(.deloresSpatial)
+        } footer: {
+            Text(
+                "Both read and move other apps' windows through the same Accessibility "
+                    + "permission Tinycast uses to paste. Neither is enabled by default, and "
+                    + "neither is restored from a settings backup."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 
     /// The window capabilities write window frames, so the grant is asked for where the reader turns
@@ -115,5 +190,45 @@ struct DeloresSpatialSettingsView: View {
         isTrusted
             ? ""
             : "Tinycast can't read or move other apps' windows until it is granted."
+    }
+}
+
+/// The model behind one bar row. Its own sheet rather than a control in the row, matching how a
+/// Quick Action's model is edited — and so the row can say which model it is on without a picker
+/// taking the width it needs to say it in.
+private struct ContextActionModelSheet: View {
+    let action: DeloresContextAction
+    @Environment(QuickActionSettingsStore.self) private var quickActions
+    @Environment(\.dismiss) private var dismiss
+    @State private var selection: AIModelSelection?
+
+    init(action: DeloresContextAction) {
+        self.action = action
+        _selection = State(initialValue: nil)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+            Text("Model for \(action.title)")
+                .font(.title2.weight(.bold))
+            Text("Used every time \(action.title) runs from the bar on the text you have selected.")
+                .foregroundStyle(.secondary)
+
+            QuickActionModelPicker(selection: $selection)
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Save") {
+                    quickActions.setModelOverride(selection, forActionID: action.id)
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(Theme.Spacing.xxl)
+        .frame(width: Theme.Size.editorSheetWidth)
+        .onAppear { selection = quickActions.modelOverride(forActionID: action.id) }
     }
 }

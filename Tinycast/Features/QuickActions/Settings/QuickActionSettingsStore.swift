@@ -65,6 +65,25 @@ final class QuickActionSettingsStore {
         modelOverrides[action.id] = selection
     }
 
+    /// The binding behind one id, and the write for it.
+    ///
+    /// The Context Surface's catalogue is its own: two of its four rows have no Quick Action behind
+    /// them at all, so a caller there holds an id and nothing to pass to the two methods above. The
+    /// read has existed since the model route went id-keyed; this is the write that lets those rows
+    /// be configured where the reader sees them.
+    ///
+    /// No `usesTranslationFramework` guard here, unlike the overload above. That guard exists because
+    /// Apple's translator answers for `BuiltInQuickAction.translate` and a bound route would be
+    /// ignored; the Context Surface's `translate` is a prompt of its own, so its route *is* used.
+    func modelOverride(forActionID id: String) -> AIModelSelection? {
+        modelOverrides[id]
+    }
+
+    func setModelOverride(_ selection: AIModelSelection?, forActionID id: String) {
+        guard modelOverrides[id] != selection else { return }
+        modelOverrides[id] = selection
+    }
+
     /// Nothing chosen takes the route that needs no account, the way chat's own default resolves.
     func resolveModel(appleIntelligenceAvailable: Bool, fallback: AIModelSelection?) {
         guard model == nil else { return }
