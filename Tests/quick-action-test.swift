@@ -178,6 +178,14 @@ struct QuickActionTests {
             "a route through a removed connection is dropped, not rerouted to chat's model")
         expect(reopened.model == .appleIntelligence, "and the shared route is left alone")
 
+        // Translate reads its route before it asks the provider anything, so a dead binding has to be
+        // gone by then: otherwise the press resolves to a model the reader had already let go of.
+        reopened.setModelOverride(api, for: .translate)
+        reopened.repairModel(against: [], fallback: .codex(model: "gpt", effort: nil))
+        expect(
+            reopened.modelOverride(for: .translate) == nil,
+            "a Translate route through a removed connection is dropped before it can pick a backend")
+
         reopened.setModelOverride(.openCode(model: "old", effort: nil), for: .rewrite)
         reopened.repairInstalledModel(
             available: [.claude(model: "sonnet", effort: "medium")],

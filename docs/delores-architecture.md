@@ -60,10 +60,10 @@ stop and the empty-result rule belong to the session, and both surfaces get the 
 
 **`translate` is one id with two backends**, and it is the one row whose press is routed before
 anything is drawn: `DeloresActionDefinition.translationRoute` answers with Apple's translator unless
-the reader bound a model to that id, so the card either takes the framework's one finished string or
-streams a model's answer. 重试 repeats the lane the reader saw, and a follow-up question is always a
-model's turn, handed the framework's answer as settled context. Quick Actions asks the same method, so
-the bar and the palette cannot disagree about what 翻译 means.
+the reader bound a model to that id or Apple cannot do the pair, so the card either takes the
+framework's one finished string or streams a model's answer. 重试 repeats the lane the reader saw, and
+a follow-up question is always a model's turn, handed the framework's answer as settled context. Quick
+Actions asks the same method, so the bar and the palette cannot disagree about what 翻译 means.
 
 It does **not** hand a press to the Quick Action result surface. Earlier in the project a Context press
 did exactly that, and the four Actions were native Quick Actions keeping their own preview and

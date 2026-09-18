@@ -100,7 +100,7 @@ started.
 | --- | --- | --- | --- |
 | Fix Grammar | provider | replaces directly | yes |
 | Rewrite | provider | panel | yes |
-| Translate | Apple Translation, or the provider bound to it | panel | no |
+| Translate | Apple Translation, or a provider for a pair it cannot do | panel | no |
 | Summarize | provider | panel, always | no |
 | a custom action | provider | panel | no |
 

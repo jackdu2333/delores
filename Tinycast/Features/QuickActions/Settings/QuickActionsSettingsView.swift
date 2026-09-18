@@ -187,8 +187,10 @@ struct QuickActionsSettingsView: View {
             Text(
                 "Separate from chat's model on purpose: a shortcut you press all day should not "
                     + "bill an API every time. Apple Intelligence runs on this Mac for nothing. "
-                    + "It answers the Context Bar's rows too except 翻译, and except any row given "
-                    + "a model of its own — those are set in the Delores pane, beside their rows."
+                    + "It answers the Context Bar's rows too, except the ones given a model of "
+                    + "their own — those are set in the Delores pane, beside their rows. 翻译 keeps "
+                    + "Apple's translator unless it is given one, or unless the pair is one Apple "
+                    + "cannot do."
             )
             .font(.caption)
             .foregroundStyle(.secondary)

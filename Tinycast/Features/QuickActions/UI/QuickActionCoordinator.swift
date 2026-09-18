@@ -336,6 +336,12 @@ final class QuickActionCoordinator {
     func translateRoute(
         for selection: String, to target: Locale.Language
     ) async -> DeloresTranslationRoute {
+        // The same repair the provider resolver runs, because the binding that decides this route has
+        // to be the one that will actually answer: a connection deleted in AI Settings must not read as
+        // a binding here and then be discarded one call later, or the press goes to a provider the
+        // reader had already let go of instead of to Apple's translator.
+        store.repairModel(
+            against: core.aiSettings.connections, fallback: core.aiSettings.defaultModel)
         // A bound model answers without asking Apple anything: the reader's choice settles it, and
         // neither the recognizer nor the framework round trip has anything to add to that.
         guard store.modelOverride(forActionID: BuiltInQuickAction.translate.id) == nil else {
