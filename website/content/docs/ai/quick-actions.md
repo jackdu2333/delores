@@ -15,12 +15,12 @@ nothing.
 
 ## The four built-in actions
 
-| Action      | Uses                          | Result by default | Shows changes |
-| ----------- | ----------------------------- | ----------------- | ------------- |
-| Fix Grammar | Your Quick Actions model      | Replace           | Yes           |
-| Rewrite     | Your Quick Actions model      | Preview           | Yes           |
-| Translate   | Apple's translator, on device | Preview           | No            |
-| Summarize   | Your Quick Actions model      | Always a panel    | No            |
+| Action      | Uses                           | Result by default | Shows changes |
+| ----------- | ------------------------------ | ----------------- | ------------- |
+| Fix Grammar | Your Quick Actions model       | Replace           | Yes           |
+| Rewrite     | Your Quick Actions model       | Preview           | Yes           |
+| Translate   | Apple's translator, or a model | Preview           | No            |
+| Summarize   | Your Quick Actions model       | Always a panel    | No            |
 
 Each one has its own launcher command and its own global shortcut, both in
 **Settings → Quick Actions**.
@@ -71,7 +71,8 @@ The pencil button edits it. Deleting one asks first, then frees its shortcut.
 The pencil beside **Fix Grammar**, **Rewrite** or **Summarize** opens the exact prompt Tinycast uses.
 Change it and that action follows your version. **Use Default** brings the original back.
 
-Translate has no prompt, because no language model is involved.
+Translate has no prompt to edit: when a model performs it, its instructions are the language you
+picked under **Translate to** rather than wording of your own.
 
 **Your selection is always treated as material to work on, never as instructions.** A custom prompt
 cannot turn that guard off, because the result gets pasted into your document.
@@ -87,25 +88,36 @@ the model supports it.
 
 ### A model for one action
 
-Any action except Translate can use a model of its own. Open it with the pencil button and pick
-one under **Model**, with its own reasoning effort. A quick grammar fix can stay on a fast model while
-a demanding custom prompt uses a stronger one.
+**Fix Grammar**, **Rewrite** and **Summarize** can each use a model of their own. Open one with the
+pencil button and pick a model under **Model**, with its own reasoning effort. A quick grammar fix can
+stay on a fast model while a demanding custom prompt uses a stronger one.
 
 **Same as Quick Actions** follows the shared model. An action with its own model shows it under its
 name. If you remove its connection or turn its provider off, the action goes back to the shared
 model.
 
+Translate has no pencil here. It runs on Apple's translator unless you give that action a model beside
+the Context Bar's rows in **Settings → Delores**; binding one is what moves it off the translator, and
+removing it moves the action back.
+
 ## Translate
 
-Translate uses **Apple's own translator on your Mac**. It costs nothing and sends nothing to a
-provider.
+Translate runs on **Apple's own translator on your Mac** by default. That lane costs nothing, and
+sends nothing to a provider.
+
+It leaves that lane in two cases, and both of them do send your text to a provider: when you give
+Translate a model of its own, and when Apple cannot take the pair — a language it does not support, or
+text whose language it cannot identify. Those runs cost and send what that model does, like any other
+action.
 
 **Translate to** picks the language. **Same as this Mac** is the default. The list is Apple's, not
 your preferred languages, so it only offers languages the translator can actually reach. Bengali, for
 example, is not on it yet.
 
-The first time you translate into a language, the panel opens and offers to download it, even if
-Translate normally replaces. Once the panel is open you can also translate into another language.
+The first time you translate into a language, the panel opens and offers to download it, even if you
+have set Translate to Replace. A language that is only waiting on its download stays with Apple's
+translator — it is never quietly sent to a model instead. Once the panel is open you can also
+translate into another language.
 
 ## When an action refuses
 
