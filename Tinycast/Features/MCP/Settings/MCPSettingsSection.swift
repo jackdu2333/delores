@@ -12,11 +12,11 @@ struct MCPSettingsSection: View {
         @Bindable var appSettings = appSettings
         Section {
             Toggle(isOn: $appSettings.mcpEnabled) {
-                SettingsRowTitle(.aiMCPServers, "Enable MCP servers")
+                    SettingsRowTitle(.aiMCPServers, "Enable MCP servers")
             }
             Group {
                 if store.servers.isEmpty {
-                    Text("No MCP servers yet.")
+                    Text(L10n.string("No MCP servers yet."))
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.servers) { server in
@@ -41,10 +41,7 @@ struct MCPSettingsSection: View {
             SettingsSectionHeader(.aiMCPServers)
         } footer: {
             Text(
-                "Tools from every enabled server are offered to the model; type @slug to address "
-                    + "one directly. The first call of a chat asks before it runs. Credentials "
-                    + "stay in your login Keychain."
-            )
+                    L10n.string("Tools from every enabled server are offered to the model; type @slug to address one directly. The first call of a chat asks before it runs. Credentials stay in your login Keychain."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -55,9 +52,9 @@ struct MCPSettingsSection: View {
             "Remove \(pendingRemoval?.title ?? "this server")?", isPresented: removalBinding,
             presenting: pendingRemoval
         ) { server in
-            Button("Remove", role: .destructive) { remove(server) }
+            Button(L10n.string("Remove"), role: .destructive) { remove(server) }
         } message: { _ in
-            Text("Its tools stop being offered, and its stored credentials are deleted.")
+            Text(L10n.string("Its tools stop being offered, and its stored credentials are deleted."))
         }
     }
 

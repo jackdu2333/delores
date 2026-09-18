@@ -10,15 +10,15 @@ struct QuickActionModelPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Model")
+            Text(L10n.string("Model"))
                 .font(.callout.weight(.medium))
             HStack(spacing: Theme.Spacing.lg) {
                 AIModelSelectionRows(
                     selection: selection,
                     inheritedTitle: inheritedTitle,
                     select: { selection = $0 },
-                    modelLabel: { Text("Model") },
-                    effortLabel: { Text("Reasoning effort") })
+                    modelLabel: { Text(L10n.string("Model")) },
+                    effortLabel: { Text(L10n.string("Reasoning effort")) })
             }
             .labelsHidden()
             Text(inheritedHelp)

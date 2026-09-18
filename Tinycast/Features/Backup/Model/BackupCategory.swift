@@ -4,7 +4,6 @@ import Foundation
 enum BackupCategory: String, CaseIterable, Identifiable, Sendable {
     case configuration
     case clipboard
-    case notes
     case learning
 
     var id: Self { self }
@@ -28,8 +27,6 @@ enum BackupCategory: String, CaseIterable, Identifiable, Sendable {
             return .init(
                 label: "Clipboard History", symbol: "doc.on.clipboard", subpath: "clipboard",
                 countNoun: "clips")
-        case .notes:
-            return .init(label: "Notes", symbol: "note.text", subpath: "notes", countNoun: "notes")
         case .learning:
             return .init(
                 label: "Launcher Learning", symbol: "chart.line.uptrend.xyaxis",

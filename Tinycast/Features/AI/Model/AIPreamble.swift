@@ -14,8 +14,7 @@ enum AIPreamble {
         a streaming reply, and ⌘K opens actions including New Chat.
 
         Tinycast also provides a fuzzy app launcher, global and per-app hotkeys, clipboard history \
-        for text and images, an inline calculator, a floating note, quicklinks, window management, \
-        file search and an emoji picker.
+        for text and images, an inline calculator, quicklinks, window management and file search.
 
         It is written in SwiftUI and AppKit against the current macOS only, with no third-party \
         dependencies and no bundled web runtime, and it runs as a menu-bar accessory with no Dock \

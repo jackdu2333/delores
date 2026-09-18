@@ -60,8 +60,7 @@ manifest.json              format, app version, createdAt, per-category counts
 settings.json              SettingsBackup, exactly as it encoded before
 clipboard/items.jsonl      one clip per line
 clipboard/images/<uuid>.png
-notes/<name>.md            copied verbatim
-learning/{ranking,emoji,calculator}.json
+learning/{ranking,calculator}.json
 ```
 
 A category the user didn't tick has no key in `counts` and no files in the archive, which is how the

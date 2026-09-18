@@ -114,6 +114,10 @@ walked out from under the bar it opened leaves that bar over nothing. Without a 
 body off screen — the bar goes back to the menu bar, which is its ordinary home, and the reason every
 part of `DeloresContextCompanionHosting` is optional as a whole rather than piece by piece.
 
+Standing on this display's menu bar is still standing here. The body walks `screen.frame`, so a
+selection must not treat `visibleFrame.contains` as "on this display" and fetch the body to the
+visible-frame midpoint.
+
 The Companion's right-click menu is a shell of the same kind, placed by the same call: a body near a
 corner and a menu that does not fit are resolved once, for all three. Like the island it is ordered in
 without key and never takes one, so the way out of it is a click away rather than Escape.
@@ -297,6 +301,14 @@ exclusive. With the pet on, dragging a window over its body opens the snap islan
 top/bottom pet and a vertical one beside a left/right pet. The top-center trigger survives only as
 the no-pet fallback: with the pet off, or its body off that screen, the island opens at the top of
 the display as it always did.
+
+Two rules keep that reachable, and both are asserted in `testCompanionShell` rather than watched.
+An island is placed off the body where it actually stands and only then clamped to the display — the
+body is never moved to make room for one, because a drag chose a body standing there. And the body
+plus the island it grew are one target for the whole climb: the seam between them is `shellGap` of
+dead space otherwise, and a drag crossing it in a single frame would take the island down mid-drag.
+The body walks the display's *whole* frame while a shell is placed against the visible one, so those
+two differ by the Dock and the menu bar, which is exactly the gap the first rule closes.
 
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
 automated test. They are the Spatial half of the story; the full designed-but-unbuilt inventory,

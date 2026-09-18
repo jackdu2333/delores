@@ -16,8 +16,8 @@ struct WindowLayoutsSection: View {
         @Bindable var settings = settings
         return Section {
             Toggle(isOn: $settings.windowLayoutsShowInLauncher) {
-                SettingsRowTitle(.windowManagementLayouts, "Show layouts in launcher")
-                Text("Find your layouts in launcher search, beside the window commands.")
+                    SettingsRowTitle(.windowManagementLayouts, "Show layouts in launcher")
+                Text(L10n.string("Find your layouts in launcher search, beside the window commands."))
             }
 
             if store.layouts.count > Self.filterThreshold {
@@ -46,7 +46,7 @@ struct WindowLayoutsSection: View {
         } header: {
             SettingsSectionHeader(.windowManagementLayouts)
         } footer: {
-            Text("A layout puts named apps at fixed sizes on chosen displays, in one pass.")
+            Text(L10n.string("A layout puts named apps at fixed sizes on chosen displays, in one pass."))
         }
     }
 
@@ -82,7 +82,7 @@ private struct WindowLayoutSettingsRow: View {
                 Image(systemName: "play")
             }
             .buttonStyle(.plain)
-            .help("Run this layout")
+            .help(L10n.string("Run this layout"))
             .accessibilityLabel("Run \(layout.name)")
 
             Button {
@@ -91,7 +91,7 @@ private struct WindowLayoutSettingsRow: View {
                 Image(systemName: "pencil")
             }
             .buttonStyle(.plain)
-            .help("Edit")
+            .help(L10n.string("Edit"))
             .accessibilityLabel("Edit \(layout.name)")
 
             Button {
@@ -100,7 +100,7 @@ private struct WindowLayoutSettingsRow: View {
                 Image(systemName: "plus.square.on.square")
             }
             .buttonStyle(.plain)
-            .help("Duplicate")
+            .help(L10n.string("Duplicate"))
             .accessibilityLabel("Duplicate \(layout.name)")
 
             Button(action: onDelete) {
@@ -108,13 +108,13 @@ private struct WindowLayoutSettingsRow: View {
                     .foregroundStyle(Theme.Colors.destructive)
             }
             .buttonStyle(.plain)
-            .help("Delete")
+            .help(L10n.string("Delete"))
             .accessibilityLabel("Delete \(layout.name)")
 
             Toggle("", isOn: visibilityBinding)
                 .labelsHidden()
                 .toggleStyle(.checkbox)
-                .help("Show in launcher")
+                .help(L10n.string("Show in launcher"))
                 .accessibilityLabel("Show \(layout.name) in launcher")
         }
     }

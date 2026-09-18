@@ -40,20 +40,20 @@ struct QuicklinkEditorSheet: View {
                 .font(.title2.weight(.bold))
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                Text("Name")
+                Text(L10n.string("Name"))
                     .font(.callout.weight(.medium))
-                TextField("Search GitHub", text: $name)
+                TextField(L10n.string("Search GitHub"), text: $name)
                     .textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack {
-                    Text("Link")
+                    Text(L10n.string("Link"))
                         .font(.callout.weight(.medium))
                     Spacer()
                     insertMenu
                 }
-                TextField("https://github.com/search?q={argument}", text: $link)
+                TextField(L10n.string("https://github.com/search?q={argument}"), text: $link)
                     .textFieldStyle(.roundedBorder)
                     .font(.body.monospaced())
                 destinationPreview
@@ -81,9 +81,9 @@ struct QuicklinkEditorSheet: View {
 
             HStack {
                 Spacer()
-                Button("Cancel") { dismiss() }
+                Button(L10n.string("Cancel")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Save", action: save)
+                Button(L10n.string("Save"), action: save)
                     .keyboardShortcut(.defaultAction)
                     .disabled(trimmed(name).isEmpty || trimmed(link).isEmpty)
             }
@@ -101,7 +101,7 @@ struct QuicklinkEditorSheet: View {
         if value.isEmpty {
             EmptyView()
         } else if QuicklinkDestination.containsPlaceholder(value) {
-            Text("Resolved when you open it — placeholders are filled in first.")
+            Text(L10n.string("Resolved when you open it — placeholders are filled in first."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } else if let destination = QuicklinkDestination.detect(value) {
@@ -111,7 +111,7 @@ struct QuicklinkEditorSheet: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
         } else {
-            Text("This doesn't look like a URL, file path, or deeplink.")
+            Text(L10n.string("This doesn't look like a URL, file path, or deeplink."))
                 .font(.caption)
                 .foregroundStyle(.orange)
         }
@@ -120,18 +120,18 @@ struct QuicklinkEditorSheet: View {
     /// Only tokens meaningful in a destination; `{cursor}` and `{snippet:…}` stay literal.
     private var insertMenu: some View {
         Menu("Insert…") {
-            Button("Argument") { insert("{argument}") }
-            Button("Named Argument") { insert("{argument name=\"Query\"}") }
+            Button(L10n.string("Argument")) { insert("{argument}") }
+            Button(L10n.string("Named Argument")) { insert("{argument name=\"Query\"}") }
             Divider()
-            Button("Clipboard") { insert("{clipboard}") }
-            Button("Selected Text") { insert("{selection}") }
+            Button(L10n.string("Clipboard")) { insert("{clipboard}") }
+            Button(L10n.string("Selected Text")) { insert("{selection}") }
             Divider()
-            Button("Date") { insert("{date}") }
-            Button("Time") { insert("{time}") }
-            Button("Date & Time") { insert("{datetime}") }
-            Button("Custom Date Format") { insert("{date format=\"yyyy-MM-dd\"}") }
+            Button(L10n.string("Date")) { insert("{date}") }
+            Button(L10n.string("Time")) { insert("{time}") }
+            Button(L10n.string("Date & Time")) { insert("{datetime}") }
+            Button(L10n.string("Custom Date Format")) { insert("{date format=\"yyyy-MM-dd\"}") }
             Divider()
-            Button("UUID") { insert("{uuid}") }
+            Button(L10n.string("UUID")) { insert("{uuid}") }
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
@@ -147,7 +147,7 @@ struct QuicklinkEditorSheet: View {
 
     private var iconField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Icon")
+            Text(L10n.string("Icon"))
                 .font(.callout.weight(.medium))
             Button {
                 showingIconPicker = true
@@ -172,7 +172,7 @@ struct QuicklinkEditorSheet: View {
 
     private var openWithField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Open With")
+            Text(L10n.string("Open With"))
                 .font(.callout.weight(.medium))
             Button {
                 showingAppPicker = true
@@ -183,7 +183,7 @@ struct QuicklinkEditorSheet: View {
                         Image(nsImage: app.icon).resizable().frame(width: 16, height: 16)
                         Text(app.name).lineLimit(1)
                     } else {
-                        Text("Default app")
+                        Text(L10n.string("Default app"))
                     }
                     Spacer(minLength: 0)
                 }

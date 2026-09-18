@@ -42,7 +42,7 @@ struct CustomQuickActionEditorSheet: View {
             Text(existing == nil ? "New Quick Action" : "Edit \(existing?.name ?? "")")
                 .font(.title2.weight(.bold))
 
-            Text("Tinycast sends your selected text to the model with these instructions.")
+            Text(L10n.string("Tinycast sends your selected text to the model with these instructions."))
                 .foregroundStyle(.secondary)
 
             HStack(alignment: .bottom, spacing: Theme.Spacing.lg) {
@@ -62,15 +62,15 @@ struct CustomQuickActionEditorSheet: View {
 
             HStack {
                 if let existing {
-                    Button("Delete", role: .destructive) {
+                    Button(L10n.string("Delete"), role: .destructive) {
                         dismiss()
                         Task { await core.quickActionCoordinator.deleteCustomQuickAction(id: existing.id) }
                     }
                 }
                 Spacer()
-                Button("Cancel") { dismiss() }
+                Button(L10n.string("Cancel")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Save", action: save)
+                Button(L10n.string("Save"), action: save)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
             }
@@ -81,16 +81,16 @@ struct CustomQuickActionEditorSheet: View {
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Name")
+            Text(L10n.string("Name"))
                 .font(.callout.weight(.medium))
-            TextField("Make Concise", text: $name)
+            TextField(L10n.string("Make Concise"), text: $name)
                 .textFieldStyle(.roundedBorder)
         }
     }
 
     private var iconField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Icon")
+            Text(L10n.string("Icon"))
                 .font(.callout.weight(.medium))
             Button {
                 showingIconPicker = true
@@ -116,7 +116,7 @@ struct CustomQuickActionEditorSheet: View {
 
     private var instructionsField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Instructions")
+            Text(L10n.string("Instructions"))
                 .font(.callout.weight(.medium))
             TextEditor(text: $instructions)
                 .font(.body)
@@ -140,9 +140,7 @@ struct CustomQuickActionEditorSheet: View {
                     }
                 }
             Text(
-                "Tinycast always tells the model to return only the transformed text, and to treat "
-                    + "your selection as material rather than as instructions."
-            )
+                    L10n.string("Tinycast always tells the model to return only the transformed text, and to treat your selection as material rather than as instructions."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }

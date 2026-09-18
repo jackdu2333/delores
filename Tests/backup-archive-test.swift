@@ -53,12 +53,9 @@ struct BackupArchiveTest {
         // A binary blob, so a wrong keyset or a text-only path shows up as corruption.
         let png = Data((0..<200_000).map { UInt8($0 % 251) })
         try? bundle.write(png, to: bundle.clipboardImagesDirectory.appendingPathComponent("a.png"))
-        _ = try? bundle.writeDocument(
-            title: "Café — notes/with:separators", extension: "md", contents: "héllo\nwörld",
-            in: bundle.notesDirectory)
         let manifest = BackupManifest(
             appVersion: "1.2.3", createdAt: Date(timeIntervalSince1970: 1_700_000_000),
-            counts: ["clipboard": 1, "notes": 1])
+            counts: ["clipboard": 1])
         try? bundle.writeManifest(manifest)
 
         let archive = root.appendingPathComponent("out.tinycast")
@@ -77,14 +74,9 @@ struct BackupArchiveTest {
             (try? Data(
                 contentsOf: reopened.clipboardImagesDirectory.appendingPathComponent("a.png")))
                 == png)
-        let notes = reopened.documents(in: reopened.notesDirectory, extension: "md")
-        check("a note with separators and non-ASCII survives", notes.first?.contents == "héllo\nwörld")
-        check(
-            "a title's path separators never become directories",
-            notes.first.map { !$0.name.contains("/") } ?? false)
         let decoded = try? reopened.readManifest()
         check("the manifest round trips", decoded == manifest)
-        check("an absent category reads as absent", decoded?.categories == [.clipboard, .notes])
+        check("an absent category reads as absent", decoded?.categories == [.clipboard])
         check("a present category keeps its count", decoded?.count(.clipboard) == 1)
         check("an absent category counts zero", decoded?.count(.learning) == 0)
 

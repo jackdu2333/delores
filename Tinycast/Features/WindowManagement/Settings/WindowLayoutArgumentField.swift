@@ -12,11 +12,11 @@ struct WindowLayoutArgumentField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Argument")
+            Text(L10n.string("Argument"))
                 .font(.callout.weight(.medium))
             menu
             if isEditingURL {
-                TextField("https://example.com", text: $urlText)
+                TextField(L10n.string("https://example.com"), text: $urlText)
                     .textFieldStyle(.plain)
                     .focused($isURLFocused)
                     .focusEffectDisabled()
@@ -29,16 +29,16 @@ struct WindowLayoutArgumentField: View {
 
     private var menu: some View {
         Menu {
-            Button("None") { clear() }
-            Button("Choose File…") { choose(directories: false) }
-            Button("Choose Folder…") { choose(directories: true) }
-            Button("Enter URL…") {
+            Button(L10n.string("None")) { clear() }
+            Button(L10n.string("Choose File…")) { choose(directories: false) }
+            Button(L10n.string("Choose Folder…")) { choose(directories: true) }
+            Button(L10n.string("Enter URL…")) {
                 urlText = draft.selectedEntry?.argument ?? ""
                 isEditingURL = true
             }
             if !quicklinks.quicklinks.isEmpty {
                 // Copied, not referenced: a run is one pass, with nothing to prompt a placeholder.
-                Section("Quicklinks") {
+                Section(L10n.string("Quicklinks")) {
                     ForEach(quicklinks.quicklinks) { quicklink in
                         Button(quicklink.name) {
                             isEditingURL = false
@@ -57,7 +57,7 @@ struct WindowLayoutArgumentField: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 } else {
-                    Text("None").foregroundStyle(.secondary)
+                    Text(L10n.string("None")).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.sm)
                 Image(systemName: "chevron.down")

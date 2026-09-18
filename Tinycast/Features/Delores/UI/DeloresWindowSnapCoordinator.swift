@@ -131,16 +131,25 @@ final class DeloresWindowSnapCoordinator {
                     islandSize: layout.size, visibleFrame: screen.visibleFrame,
                     bodyRadius: body.radius)
             }
-            // Once up, the island itself holds the run alive: its cards reach further than the
-            // hit frame, and a drag that had found the body would not want it gone the moment it
-            // climbed onto the island.
-            let overIsland = snapIsActive && snapIsland?.frame.contains(point) == true
+            // Once it is up, the island and the body it grew from are one target: the seam between
+            // them is the shell gap, and a drag that crossed that in a single frame would find
+            // nothing under it and take the island down on the way.
+            let onTarget: Bool
+            if let placement = snapBodyPlacement, let body {
+                onTarget =
+                    overBody
+                    || DeloresCompanionShell.dragHoldFrame(
+                        bodyCenter: body.center, islandFrame: placement.frame
+                    ).contains(point)
+            } else {
+                onTarget = overBody
+            }
             // The body stands still from the moment the drag finds it, not from the moment the
             // island appears: what makes a drag feel like it slipped is the thing it was aimed at
             // walking away between the aim and the drop.
-            holdBody(overBody || overIsland)
+            holdBody(onTarget)
 
-            if let placement = snapBodyPlacement, overBody || overIsland {
+            if let placement = snapBodyPlacement, onTarget {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.showBesideBody(placement, on: screen)
