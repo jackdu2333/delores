@@ -38,6 +38,10 @@ targets:
         excludes:
           - Features/Clipboard/Service/ClipboardTextExtractor.swift
           - Features/Clipboard/Service/ClipboardTextHelper.swift
+      - path: Packs/LegacyFeatures
+        excludes:
+          - Tests
+          - RaycastExtensions/Runtime
       # The MIT mark's licence asks the notice to travel with the binary, not just the repo.
       - path: NOTICE.md
         buildPhase: resources
