@@ -53,8 +53,12 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
 
     var definition: DeloresActionDefinition {
         let backend: DeloresActionDefinition.Backend = kind == .search ? .urlTemplate(searchTemplate) : .languageModel
-        let cap: DeloresActionDefinition.OutputCap = id == "summarize" ? .compact(max: 512) : .scaled(max: 2_048)
-        return DeloresActionDefinition(id: id, title: title, symbol: symbol, backend: backend, prompt: prompt, rewritesSelection: rewritesSelection, outputCap: cap)
+        return DeloresActionDefinition(
+            id: id, title: title, symbol: symbol, backend: backend, prompt: prompt,
+            rewritesSelection: rewritesSelection,
+            // The budget is the catalogues' shared policy rather than this row's: the same id asked
+            // for from the Command Surface must not come back a different length.
+            outputCap: DeloresActionDefinition.outputCap(for: id))
     }
 
     /// What the opened card says while the answer is still on its way.

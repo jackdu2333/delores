@@ -49,27 +49,10 @@ final class QuickActionRunner {
                     role: .user,
                     text: QuickActionPrompt.message(for: action, selection: selection))
             ],
-            maxOutputTokens: maxOutputTokens(for: action, selection: selection))
-        if action.builtInAction == .summarize {
-            return try await runSession(request, using: provider, onDelta: onDelta)
-        }
-        var text = ""
-        for try await event in provider.stream(request) {
-            guard case .text(let delta) = event else { continue }
-            text += delta
-            onDelta(delta)
-        }
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw AIProviderError.responseFailed("The model returned nothing.")
-        }
-        return trimmed
-    }
-
-    private static func runSession(
-        _ request: AIRequest, using provider: any AIProvider,
-        onDelta: @MainActor (String) -> Void
-    ) async throws -> String {
+            maxOutputTokens: DeloresActionDefinition.outputCap(for: action.id)
+                .tokens(selection: selection))
+        // One session for every provider-backed action, so the cap, the stop and the empty-result
+        // rule cannot differ by which id was pressed. The boundary to the transport is Delores'.
         var published = ""
         let outcome = await DeloresActionSessionRunner.run(
             stream: provider.stream(request),
@@ -85,19 +68,8 @@ final class QuickActionRunner {
             throw AIProviderError.responseFailed("The model returned nothing.")
         case .failed(let reason):
             throw AIProviderError.responseFailed(reason)
-        case .stopped:
-            throw CancellationError()
-        case .none:
+        case .stopped, .none:
             throw CancellationError()
         }
-    }
-
-    /// The on-device window counts the prompt and the reply against one budget, so both need a cap.
-    private static func maxOutputTokens(for action: QuickAction, selection: String) -> Int {
-        let approximateTokens = max(selection.count / 3, 64)
-        if action == .summarize {
-            return DeloresActionDefinition.OutputCap.compact(max: 512).tokens(selection: selection)
-        }
-        return min(approximateTokens * 2, 2_048)
     }
 }

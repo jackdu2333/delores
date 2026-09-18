@@ -600,6 +600,9 @@ struct DeloresContextTest {
     }
     private static func testActionDefinition() {
         let summarize = require(DeloresContextAction.catalog.first { $0.id == "summarize" }, "summarize")
+        require(DeloresActionDefinition.outputCap(for: "summarize") == .compact(max: 512), "the shared policy caps a digest")
+        require(DeloresActionDefinition.outputCap(for: "explain") == .scaled(max: 2_048), "and lets an answer take its room")
+        require(DeloresActionDefinition.outputCap(for: "custom-row") == .scaled(max: 2_048), "an id it does not know")
         require(summarize.maxOutputTokens(selection: "x") == 64, "compact floor")
         require(summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 512, "512 ceiling")
         let translate = require(DeloresContextAction.catalog.first { $0.id == "translate" }, "translate")
