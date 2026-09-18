@@ -159,7 +159,7 @@ struct BackupBundle: Sendable {
 
     // MARK: - Names
 
-    /// A note or snippet title becomes a filename here, so path separators cannot survive it.
+    /// A document title becomes a filename here, so path separators cannot survive it.
     static func sanitized(_ title: String) -> String {
         let cleaned = title.components(separatedBy: Self.forbidden).joined(separator: "-")
             .trimmingCharacters(in: .whitespacesAndNewlines)

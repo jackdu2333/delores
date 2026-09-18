@@ -65,11 +65,11 @@ struct SettingsHistoryTests {
 
     static func roundTrips() {
         var history = SettingsHistory(current: .general)
-        history.select(.snippets)
+        history.select(.clipboard)
         history.select(.emoji)
 
         history.goBack()
-        expect(history.current == .snippets, "Back walks one entry at a time")
+        expect(history.current == .clipboard, "Back walks one entry at a time")
         expect(history.canGoForward, "and what we left becomes reachable again")
 
         history.goBack()
@@ -83,7 +83,7 @@ struct SettingsHistoryTests {
 
     static func aNewBranchDiscardsTheOldOne() {
         var history = SettingsHistory(current: .general)
-        history.select(.snippets)
+        history.select(.clipboard)
         history.select(.emoji)
         history.goBack()
         history.goBack()
@@ -173,8 +173,8 @@ struct SettingsHistoryTests {
 
     /// A term found in the title has to beat the same term found only in a breadcrumb.
     static func catalogRanksTitlesFirst() {
-        let results = SettingsSearchCatalog.results(for: "extensions")
-        expect(results.first?.tab == .extensions, "“extensions” opens on its own pane")
+        let results = SettingsSearchCatalog.results(for: "backup")
+        expect(results.first?.tab == .backup, "“backup” opens on its own pane")
         expect(
             SettingsSearchCatalog.results(for: "nothing here matches at all").isEmpty,
             "and an unmatched query returns nothing")

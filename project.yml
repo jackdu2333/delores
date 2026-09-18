@@ -38,6 +38,7 @@ targets:
         excludes:
           - Features/Clipboard/Service/ClipboardTextExtractor.swift
           - Features/Clipboard/Service/ClipboardTextHelper.swift
+          - Features/Settings/Panes/CommandsSettingsView.swift
       - path: Packs/LegacyFeatures
         excludes:
           - Tests
