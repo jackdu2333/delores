@@ -9,6 +9,9 @@ final class DeloresCompanionCoordinator {
     private var companionDwellTimer: Timer?
     private var companionLeaveTimer: Timer?
     private var screenObserver: NSObjectProtocol?
+    private var spaceObserver: NSObjectProtocol?
+    private var appObserver: NSObjectProtocol?
+    private var isHiddenForFullscreen = false
     private var strollTimer: Timer?
     private var wakeTimer: Timer?
     private var companion: DeloresCompanionPanel?
@@ -58,7 +61,7 @@ final class DeloresCompanionCoordinator {
     /// another display is a bar nobody can see, and the reason for hanging it off the body is that
     /// it appears where the reader already is.
     func anchorForShell(in visibleFrame: CGRect) -> DeloresCompanionAnchor? {
-        guard isRunning, let companion, companion.isVisible else { return nil }
+        guard isRunning, !isHiddenForFullscreen, let companion, companion.isVisible else { return nil }
         // The display the shell is being grown on, found from the visible frame it was asked about.
         guard let screen = DeloresWindowGeometry.screenContaining(
             CGPoint(x: visibleFrame.midX, y: visibleFrame.midY))
@@ -89,7 +92,7 @@ final class DeloresCompanionCoordinator {
     /// `anchorForShell(in:)` this never moves the body: a drag brought near it is not a wish for it
     /// to travel across displays, and an island beside where the body stands is already beside it.
     func bodyAnchor(on screen: NSScreen) -> DeloresCompanionAnchor? {
-        guard isRunning, let companion, companion.isVisible else { return nil }
+        guard isRunning, !isHiddenForFullscreen, let companion, companion.isVisible else { return nil }
         guard let standing = DeloresWindowGeometry.screenContaining(companion.center),
             standing.frame == screen.frame
         else { return nil }
@@ -194,6 +197,62 @@ final class DeloresCompanionCoordinator {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.relocateCompanion() }
         }
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.evaluateFullscreenPresence()
+                try? await Task.sleep(nanoseconds: 350_000_000)
+                self?.evaluateFullscreenPresence()
+            }
+        }
+        appObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.evaluateFullscreenPresence()
+            }
+        }
+        evaluateFullscreenPresence()
+    }
+
+    private func evaluateFullscreenPresence() {
+        guard isRunning else { return }
+        let fullscreen = isFrontmostAppFullscreen()
+        if fullscreen && !isHiddenForFullscreen {
+            isHiddenForFullscreen = true
+            stopWanderTimers()
+            companionMenu.hide()
+            companion?.hide()
+        } else if !fullscreen && isHiddenForFullscreen {
+            isHiddenForFullscreen = false
+            guard let companion else { return }
+            let screen = DeloresWindowGeometry.screenContaining(companion.center)
+                ?? DeloresWindowGeometry.activeScreen()
+            guard let screen else { return }
+            let bounds = companionBounds(on: screen)
+            var center = companion.center
+            if !bounds.insetBy(dx: -1, dy: -1).contains(center) {
+                center = spawnPoint(on: screen)
+            }
+            companion.present(at: center)
+            settle(at: center, on: screen)
+        }
+    }
+
+    private func isFrontmostAppFullscreen() -> Bool {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return false }
+        if app.bundleIdentifier == Bundle.main.bundleIdentifier { return false }
+        let appElement = AXWindowAccess.application(for: app.processIdentifier)
+        if let target = AXWindowAccess.targetWindow(in: appElement), AXWindowAccess.isFullScreen(target) {
+            return true
+        }
+        let windows = AXWindowAccess.windows(in: appElement)
+        return windows.contains(where: { AXWindowAccess.isFullScreen($0) })
     }
 
     private func stopCompanion() {
@@ -205,6 +264,9 @@ final class DeloresCompanionCoordinator {
         if let companionMonitor { NSEvent.removeMonitor(companionMonitor); self.companionMonitor = nil }
         if let companionLocalMonitor { NSEvent.removeMonitor(companionLocalMonitor); self.companionLocalMonitor = nil }
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver); self.screenObserver = nil }
+        if let spaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver); self.spaceObserver = nil }
+        if let appObserver { NSWorkspace.shared.notificationCenter.removeObserver(appObserver); self.appObserver = nil }
+        isHiddenForFullscreen = false
         companionDwellTimer?.invalidate(); companionDwellTimer = nil
         companionLeaveTimer?.invalidate(); companionLeaveTimer = nil
         stopWanderTimers()
@@ -304,7 +366,7 @@ final class DeloresCompanionCoordinator {
     }
 
     private func advanceWander() {
-        guard isRunning, !isHoldingShell, let companion, companion.isVisible, let state = wander
+        guard isRunning, !isHiddenForFullscreen, !isHoldingShell, let companion, companion.isVisible, let state = wander
         else { return }
         guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
         let tick = now
@@ -327,7 +389,7 @@ final class DeloresCompanionCoordinator {
     }
 
     private func handleCompanionPointer(at point: CGPoint) {
-        guard let companion, companion.isVisible else { return }
+        guard !isHiddenForFullscreen, let companion, companion.isVisible else { return }
         let isInside = companion.frame.contains(point)
         if isInside {
             companionLeaveTimer?.invalidate(); companionLeaveTimer = nil
@@ -375,6 +437,7 @@ final class DeloresCompanionCoordinator {
     }
 
     private func relocateCompanion() {
+        evaluateFullscreenPresence()
         guard let companion, companion.isVisible else { return }
         guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
         // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
