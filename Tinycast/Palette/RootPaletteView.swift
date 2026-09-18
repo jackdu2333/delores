@@ -15,14 +15,8 @@ struct RootPaletteView: View {
     @Environment(FileSearchSession.self) private var fileSearch
     @Environment(MenuSearchSession.self) private var menuSearch
     @Environment(WindowSwitchSession.self) private var windowSwitch
-    @Environment(CalendarStore.self) private var calendarStore
-    /// Observed so the join card's countdown redraws on the minute boundary.
-    @Environment(MeetingClock.self) private var meetingClock
     @Environment(UninstallSession.self) private var uninstall
     @Environment(QuicklinkStore.self) private var quicklinks
-    @Environment(CustomCommandArgumentSession.self) private var customCommandArguments
-    @Environment(SnippetsStore.self) private var snippets
-    @Environment(ExtensionManager.self) private var extensions
     @Environment(AppSettings.self) private var settings
     @Environment(\.metrics) private var metrics
     @FocusState private var searchFocused: Bool
@@ -52,22 +46,15 @@ struct RootPaletteView: View {
             return LauncherScreen(
                 appIndex: appIndex, favorites: favorites, visibility: visibility,
                 currencyRates: currencyRates, core: core, vm: vm, running: selectionIsRunning,
-                meeting: core.calendarCoordinator.cardedMeeting, now: meetingClock.now,
                 openActions: openActions, openArgumentOptions: openArgumentOptions,
                 scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
         case .uninstall:
             return UninstallScreen(
                 session: uninstall, core: core, vm: vm, openActions: openActions)
-        case .customCommandArguments:
-            return CustomCommandArgumentsScreen(
-                session: customCommandArguments, core: core, vm: vm)
         case .quicklinks:
             return QuicklinkListScreen(
                 store: quicklinks, core: core, vm: vm, openActions: openActions,
                 openArgumentOptions: openArgumentOptions)
-        case .snippets:
-            return SnippetsScreen(
-                store: snippets, core: core, vm: vm, openActions: openActions)
         case .emoji:
             return EmojiScreen(
                 index: emojiIndex, frequent: frequentEmoji, pinned: core.pinnedEmoji, core: core, vm: vm,
@@ -81,10 +68,6 @@ struct RootPaletteView: View {
                 session: menuSearch, core: core, vm: vm, openActions: openActions)
         case .switchWindows:
             return WindowSwitchScreen(session: windowSwitch, core: core)
-        case .schedule:
-            return ScheduleScreen(
-                store: calendarStore, clock: meetingClock, core: core, vm: vm,
-                openActions: openActions)
         case .clipboard:
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
@@ -101,30 +84,7 @@ struct RootPaletteView: View {
             return CalculatorHistoryScreen(
                 history: calcHistory, currencyRates: currencyRates, core: core, vm: vm,
                 openActions: openActions)
-        case .extensionCommand:
-            return ExtensionCommandScreen(
-                screen: extensionScreen, extensions: extensions, vm: vm, openActions: openActions)
         }
-    }
-
-    /// The running command's rendered screen, flattened. `.empty` until the first commit lands.
-    private var extensionScreen: ExtensionScreen {
-        guard vm.mode == .extensionCommand, case .rendered(let tree) = extensions.state else {
-            return .empty
-        }
-        return ExtensionScreen(tree: tree, query: vm.query)
-    }
-
-    private func handleFormReturn(_ press: KeyPress) -> KeyPress.Result {
-        guard !vm.isEditingField, !vm.isComposing else { return .ignored }
-        let modifiers = press.modifiers.intersection([.command, .control, .option, .shift])
-        guard modifiers == .command else { return .ignored }
-        activateSelection()
-        return .handled
-    }
-
-    private var isExtensionForm: Bool {
-        vm.mode == .extensionCommand && extensionScreen.kind == .form
     }
 
     /// Selection clamped into the results: one source for highlight, preview and activation.
@@ -223,9 +183,6 @@ struct RootPaletteView: View {
                 let popover = headerAccessory?.optionsMenu(field)
             else { return nil }
             return headerMenu(popover, width: metrics.size.menuWidth)
-        case .extensionAccessory:
-            return extensionCommandScreen?.searchAccessoryMenu(
-                menuSelection: $menuSelection, onActivate: activateMenuItem)
         case nil: return nil
         }
     }
@@ -235,7 +192,7 @@ struct RootPaletteView: View {
         let screen = screen
         let count = screen.rows.count
         let sel = selection(count: count)
-        // The argument forms and an extension's Form have no rows to count, but ↵ still acts.
+        // Screens without rows may still expose a primary action.
         let showActionGroup =
             (count > 0 || vm.mode.isArgumentForm || screen.actsWithoutRows)
             && screen.hasPrimaryAction(at: sel)
@@ -255,15 +212,12 @@ struct RootPaletteView: View {
                     if !isCollapsed {
                         bottomBar(
                             pillLabel: screen.primaryActionTitle, showActionGroup: showActionGroup,
-                            formPrimaryShortcut: isExtensionForm,
+                            formPrimaryShortcut: false,
                             showActions: screen.hasActions(at: sel))
                     }
                 }
                 // The panel has no title bar, so this thin top margin is the only place left to grab it.
                 .overlay(alignment: .top) { topDragStrip }
-                .modifier(
-                    ExtensionToastOverlay(extensions: extensions, showing: vm.mode == .extensionCommand)
-                )
                 // Never conditionally mounted: unmounting strands SwiftUI's hover target and eats clicks.
                 .overlay {
                     Color.black.opacity(0.001)
@@ -331,17 +285,7 @@ struct RootPaletteView: View {
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .menuSearch { menuSearch.filter(vm.query) }
                 if vm.mode == .switchWindows { windowSwitch.filter(vm.query) }
-                // A command that took over the search text filters its own list.
-                if vm.mode == .extensionCommand, let handler = extensionScreen.searchTextHandler {
-                    extensions.dispatch(handler: handler, arguments: [vm.query])
-                }
             }
-            // Anything typed while the command was still starting predates its handler.
-            .onChange(of: extensionScreen.searchTextHandler) { previous, handler in
-                guard previous == nil, let handler, !vm.query.isEmpty else { return }
-                extensions.dispatch(handler: handler, arguments: [vm.query])
-            }
-            .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) {
                 vm.selection = 0
@@ -373,14 +317,6 @@ struct RootPaletteView: View {
                 }
                 if vm.mode != .menuSearch { menuSearch.reset() }
                 if vm.mode != .switchWindows { windowSwitch.reset() }
-                // Leaving the screen any other way than Escape still ends the command's session.
-                if vm.mode != .extensionCommand, extensions.running != nil, !extensions.isAuthorizing {
-                    Task { await extensions.stop() }
-                }
-                // A half-filled argument form: leaving the screen abandons the pending run.
-                if vm.mode != .customCommandArguments {
-                    core.customCommandCoordinator.cancelCustomCommandArguments()
-                }
             }
             // `prepare` may change nothing, so this intent still snaps the scroll to the origin.
             .onChange(of: vm.resetToken) {
@@ -463,7 +399,6 @@ struct RootPaletteView: View {
                     activateMenuItem(menuSelection)
                     return .handled
                 }
-                if isExtensionForm { return handleFormReturn(press) }
                 let screen = screen
                 guard command || option else {
                     guard !vm.isComposing else { return .ignored }
@@ -492,8 +427,6 @@ struct RootPaletteView: View {
                     returnFocusToSearchField()
                 case .clearQuery:
                     vm.query = ""
-                case .exitExtensionScreen:
-                    core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:
                     goBack()
                 case .hidePalette:
@@ -511,10 +444,6 @@ struct RootPaletteView: View {
                 if !menuOpen { advanceTabFocus(backwards: press.modifiers.contains(.shift)) }
                 return .handled
             }
-            .modifier(
-                ExtensionShortcutKeys(
-                    screen: menuOpen ? nil : screen as? ExtensionCommandScreen, selection: sel)
-            )
             // ⌘K toggles the actions panel for the current selection.
             .onKeyPress(phases: .down) { press in
                 guard press.modifiers.contains(.command),
@@ -557,11 +486,8 @@ struct RootPaletteView: View {
                 guard press.modifiers.contains(.command),
                     ASCIIKeyboardLayout.matches(press.key, character: "p")
                 else { return .ignored }
-                switch PaletteFilterAction.resolve(
-                    collapsed: isCollapsed, mode: vm.mode,
-                    commandHasAccessory: extensionCommandScreen?.searchAccessory != nil)
+                switch PaletteFilterAction.resolve(collapsed: isCollapsed, mode: vm.mode)
                 {
-                case .extensionAccessory: toggleExtensionSearchAccessory()
                 case .clipboardFilter: toggleClipboardFilter()
                 case .fileSearchFilter: toggleFileSearchFilter()
                 case .emojiCategory: toggleEmojiCategory()
@@ -672,14 +598,6 @@ struct RootPaletteView: View {
                     )
                 }
             }
-            if !isCollapsed, let command = extensionCommandScreen,
-                let accessory = command.searchAccessory
-            {
-                headerGutter(width: metrics.spacing.md)
-                command.searchAccessoryButton(
-                    accessory, isOpen: openMenu == .extensionAccessory,
-                    action: toggleExtensionSearchAccessory)
-            }
             headerGutter(width: metrics.spacing.md * 2)
         }
         // Identical metrics in both states, so typing can't move the search bar.
@@ -688,12 +606,6 @@ struct RootPaletteView: View {
         .frame(maxWidth: .infinity)
         // Set after the show, so the field it names is focused rather than the search field.
         .onChange(of: vm.pendingArgumentEntryID) { focusPendingArgument() }
-    }
-
-    /// Mode-gated ahead of the cast, which would otherwise cost every other mode a list build.
-    private var extensionCommandScreen: ExtensionCommandScreen? {
-        guard vm.mode == .extensionCommand else { return nil }
-        return screen as? ExtensionCommandScreen
     }
 
     /// Whichever screen offers one; the compact bar has no room for it.
@@ -763,13 +675,6 @@ struct RootPaletteView: View {
     private var searchPrompt: String {
         // Squeezed to the caret, the field has no room for a prompt; beside one it keeps it.
         if headerAccessory?.placement == .afterQuery, vm.mode != .ai { return "" }
-        if vm.mode == .customCommandArguments {
-            return customCommandArguments.prompt ?? vm.mode.placeholder
-        }
-        // Inside a running command the search bar belongs to the extension.
-        if vm.mode == .extensionCommand, let placeholder = extensionScreen.searchPlaceholder {
-            return placeholder
-        }
         return vm.mode.placeholder
     }
 
@@ -926,17 +831,6 @@ struct RootPaletteView: View {
         open(.emojiCategory, highlighting: active)
     }
 
-    /// Opens on the choice the dropdown holds, exactly as the clipboard filter opens on its own.
-    private func toggleExtensionSearchAccessory() {
-        if openMenu == .extensionAccessory {
-            closeMenus()
-            return
-        }
-        guard let accessory = extensionCommandScreen?.searchAccessory else { return }
-        let value = extensions.accessorySelection(accessory)
-        open(.extensionAccessory, highlighting: accessory.index(of: value))
-    }
-
     /// Opens on the selected model, mirroring the clipboard filter's active-row behavior.
     private func toggleAIModel() {
         if openMenu == .aiModel {
@@ -1020,8 +914,7 @@ struct RootPaletteView: View {
         case .app: .bottomLeading
         case .actions: .bottomTrailing
         case .argumentOptions: .belowHeaderTrailing
-        case .clipboardFilter, .fileSearchFilter, .emojiCategory, .aiModel, .aiReasoning,
-            .extensionAccessory:
+        case .clipboardFilter, .fileSearchFilter, .emojiCategory, .aiModel, .aiReasoning:
             .belowHeaderTrailing
         case nil: nil
         }
@@ -1184,10 +1077,7 @@ struct RootPaletteView: View {
         open(.argumentOptions, highlighting: 0)
     }
 
-    /// An extension keeps its own stack, so it can have a step back the palette cannot see.
-    private var hasBackStep: Bool {
-        vm.canGoBack || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
-    }
+    private var hasBackStep: Bool { vm.canGoBack }
 
     /// Never promises a step the click does not take: a root screen closes rather than backs.
     private var backHelp: String {
@@ -1196,10 +1086,6 @@ struct RootPaletteView: View {
     }
 
     private func goBack() {
-        if vm.mode == .extensionCommand {
-            core.extensionCoordinator.exitExtensionScreen()
-            return
-        }
         if !vm.pop() { core.paletteCoordinator.hidePalette() }
     }
 
@@ -1221,7 +1107,6 @@ struct RootPaletteView: View {
 /// The palette's in-window menus. One optional of these is the whole "only one is open" invariant.
 private enum OpenMenu {
     case actions
-    case extensionAccessory
     /// An `options=` argument field's choices, hung under the header where the chip sits.
     case argumentOptions
     case app

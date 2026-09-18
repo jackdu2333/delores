@@ -13,16 +13,28 @@ enum DeloresCompanionShell {
     /// Which creature skin is loaded into the Companion panel.
     enum Kind: String, CaseIterable, Sendable {
         case standard = "standard"
-        case cat = "cat"
         case dog = "dog"
+        case nezuko = "nezuko"
+        case ddoZvzo = "ddoZvzo"
+        case whaledou = "whaledou"
+        case xiaoHei = "xiaoHei"
+        case gugugaga = "gugugaga"
+        case lillia = "lillia"
+        case cat = "cat"
         case duck = "duck"
         case redPanda = "redPanda"
 
         var resourceName: String {
             switch self {
             case .standard: return "CompanionAtlas.generated"
-            case .cat: return "CompanionAtlas-cat.generated"
             case .dog: return "CompanionAtlas-dog.generated"
+            case .nezuko: return "CompanionAtlas-nezuko.generated"
+            case .ddoZvzo: return "CompanionAtlas-ddoZvzo.generated"
+            case .whaledou: return "CompanionAtlas-whaledou.generated"
+            case .xiaoHei: return "CompanionAtlas-xiaoHei.generated"
+            case .gugugaga: return "CompanionAtlas-gugugaga.generated"
+            case .lillia: return "CompanionAtlas-lillia.generated"
+            case .cat: return "CompanionAtlas-cat.generated"
             case .duck: return "CompanionAtlas-duck.generated"
             case .redPanda: return "CompanionAtlas-redPanda.generated"
             }
@@ -30,10 +42,16 @@ enum DeloresCompanionShell {
 
         var displayName: String {
             switch self {
-            case .standard: return "Delores (Default)"
+            case .standard: return "Delores (默认小精灵)"
+            case .dog: return "July (赤柴犬)"
+            case .nezuko: return "Nezuko (祢豆子码农)"
+            case .ddoZvzo: return "ddo-zvzo (呆萌小黄鸡)"
+            case .whaledou: return "Whaledou (鲸鱼豆豆)"
+            case .xiaoHei: return "Xiao Hei (罗小黑/黑猫)"
+            case .gugugaga: return "咕咕嘎嘎 (呆呆鸭)"
+            case .lillia: return "Lillia (雪梅莉莉娅)"
             case .cat: return "Cat (小猫)"
-            case .dog: return "Dog (小狗)"
-            case .duck: return "Duck (小鸭子)"
+            case .duck: return "Duck (黄鸭)"
             case .redPanda: return "Red Panda (小熊猫)"
             }
         }

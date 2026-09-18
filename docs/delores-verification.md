@@ -151,6 +151,7 @@ The Companion's wander is a pure model, asserted from a fixed seed in
 | Watch it for about five minutes on a normal display | Long still stretches between trips; one constant speed per trip; it rides a screen edge and never cuts across the middle; more than one edge gets used; never still for longer than a minute |
 | Drag it somewhere and let go | It stays where it landed and stands there a beat before setting off, rather than resuming the trip it was on |
 | Rest the pointer on it, counting to one | The first 0.25s is still click-through, so a click there belongs to the app underneath; after that the click is the companion's, and the app you were typing in should not lose keyboard focus |
+| Rest the pointer on it again, then right-click | A menu beside the body: the creatures with `当前` on the one in use, then `关闭宠物` · `恢复顶部状态栏`. A press on a creature changes it at once; the last row takes the body away, and the Context bar's home goes back to the menu bar. A click anywhere else closes the menu, and it must never take the keyboard from the app you were in |
 | Change the display arrangement while it is walking | It stays on screen. It must not jump to the right-hand edge at mid-height, which is what a screen change used to do |
 | Enter a full-screen space (video, slides) | Record what actually happens. Delores has no full-screen suppression yet, so the companion is expected to still be visible; that is an accepted gap, not a pass |
 | Idle cost, companion on and resting | No periodic work between trips; a rest schedules one wake rather than running a frame timer |
@@ -171,3 +172,6 @@ what the manual pass above has to cover.
   reach it. Double-clicking it to reopen the last selection is also gated on Accessibility permission.
 - Its expressions do not fall back to idle, the capture change is not signalled to the reader, and the
   no-selection double-click shows no bubble.
+- The menu on the body is pointer-only by construction: it takes no key, so it leaves on a click away
+  rather than Escape and has no keyboard navigation. A keyboard-only reader cannot open it at all,
+  which is the same gap the accessibility label above is waiting on.

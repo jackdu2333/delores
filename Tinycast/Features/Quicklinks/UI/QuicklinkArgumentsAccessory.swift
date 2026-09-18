@@ -63,7 +63,7 @@ enum QuicklinkArgumentsAccessory {
     }
 
     private static func menu(
-        for argument: SnippetTemplateEngine.MissingArgument, value: Binding<String>
+        for argument: QuicklinkTemplateEngine.MissingArgument, value: Binding<String>
     ) -> PopoverMenuContent {
         PopoverMenuContent(
             header: argument.name,

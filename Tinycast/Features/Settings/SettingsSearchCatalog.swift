@@ -111,8 +111,8 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings
         + systemActions + commands + quicklinks + appleShortcuts + fallbacks + ai + quickActions + fileSearch
         + notes
-        + snippets + navigation + windowManagement + delores + clipboard + emoji + calendar
-        + extensions + permissions + backup + about
+        + navigation + windowManagement + delores + clipboard + emoji
+        + permissions + backup + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -203,19 +203,10 @@ enum SettingsSearchCatalog {
     private static let commands: [SettingsSearchEntry] = [
         .init(
             pane: .commands,
-            keywords: ["custom", "script", "shell", "terminal"]),
+            keywords: ["built-in", "launcher", "terminal"]),
         .init(
             .commandsCommands, "Enable Commands",
-            keywords: ["hide", "visibility"]),
-        .init(
-            .commandsCustomCommands, "Enable custom commands",
-            keywords: ["script", "shell"]),
-        .init(
-            .commandsCustomCommands, "Add Custom Command",
-            keywords: ["new", "script", "shell", "shortcut"]),
-        .init(
-            .commandsCustomCommands, "Import Raycast Scripts",
-            keywords: ["raycast", "script", "folder", "directory", "migrate"])
+            keywords: ["hide", "visibility"])
     ]
 
     private static let quicklinks: [SettingsSearchEntry] = [
@@ -346,24 +337,6 @@ enum SettingsSearchCatalog {
             keywords: ["shortcut", "new note", "search notes"])
     ]
 
-    private static let snippets: [SettingsSearchEntry] = [
-        .init(
-            pane: .snippets,
-            keywords: ["expansion", "keyword", "text replacement", "template"]),
-        .init(
-            .snippetsSnippets, "Enable snippets",
-            keywords: ["expansion", "keystrokes", "accessibility"]),
-        .init(
-            group: .snippetsCommands, "Snippet commands",
-            keywords: ["shortcut", "hotkey", "launcher", "browser"]),
-        .init(
-            .snippetsLibrary, "New Snippet",
-            keywords: ["add", "keyword", "expansion"]),
-        .init(
-            .snippetsLibrary, "Snippets Folder",
-            keywords: ["reveal", "finder", "markdown", "files"])
-    ]
-
     private static let navigation: [SettingsSearchEntry] = [
         .init(
             pane: .navigation,
@@ -467,91 +440,13 @@ enum SettingsSearchCatalog {
             keywords: ["columns", "density", "zoom", "six", "eight", "ten"])
     ]
 
-    private static let calendar: [SettingsSearchEntry] = [
-        .init(
-            pane: .calendar,
-            keywords: ["meetings", "events", "zoom", "join", "schedule"]),
-        .init(
-            .calendarCalendar, "Join meetings from Tinycast",
-            keywords: ["zoom", "meet", "teams", "permission"]),
-        .init(
-            .calendarSchedule, "Upcoming meetings in launcher",
-            keywords: ["count", "limit", "events"]),
-        .init(
-            .calendarSchedule, "Include Tomorrow's Events",
-            keywords: ["next day", "range"]),
-        .init(
-            .calendarJoining, "Show the join card",
-            keywords: ["hud", "timing", "early", "reminder"]),
-        .init(
-            .calendarJoining, "Auto Join Meetings",
-            keywords: ["automatic", "start"]),
-        .init(
-            .calendarJoining, "Confirm before joining",
-            keywords: ["ask", "prompt"]),
-        .init(
-            .calendarJoining, "Camera Preview",
-            keywords: ["webcam", "mirror", "video", "check"]),
-        .init(
-            .calendarMenuBar, "Calendar in Menu Bar",
-            keywords: ["status item", "menubar", "date"]),
-        .init(
-            .calendarMenuBar, "Show Upcoming Events",
-            keywords: ["menubar", "next event", "title"]),
-        .init(
-            .calendarMenuBar, "Only show events with meetings",
-            keywords: ["links", "filter", "menubar"]),
-        .init(
-            .calendarMenuBar, "Hide Current Event",
-            keywords: ["started", "time left", "menubar"]),
-        .init(
-            group: .calendarCommands, "Calendar commands",
-            keywords: ["shortcut", "launcher", "join", "schedule", "create event"]),
-        .init(
-            group: .calendarCalendars, "Calendars",
-            keywords: ["accounts", "sources", "choose", "icloud", "google"])
-    ]
-
-    private static let extensions: [SettingsSearchEntry] = [
-        .init(
-            pane: .extensions,
-            keywords: ["raycast", "plugins", "store", "javascript"]),
-        .init(
-            .extensionsExtensions, "Enable extensions",
-            keywords: ["raycast", "third party", "javascript"]),
-        .init(
-            group: .extensionsCompatibility, "Compatibility",
-            keywords: ["supported", "unsupported", "raycast api"]),
-        .init(
-            group: .extensionsInstalled, "Installed extensions",
-            keywords: ["library", "uninstall", "preferences", "appearance", "alias", "shortcut"]),
-        .init(
-            .extensionsInstall, "Search extensions",
-            keywords: ["store", "browse", "install", "registry"]),
-        .init(
-            group: .extensionsInstall, "Registries",
-            keywords: ["github", "source", "store"]),
-        .init(
-            .extensionsInstall, "Import from Raycast",
-            keywords: ["migrate", "existing"]),
-        .init(
-            .extensionsInstall, "Add from folder",
-            keywords: ["local", "develop", "sideload"]),
-        .init(
-            .extensionsStorage, "Leftover files",
-            keywords: ["clean up", "disk", "reclaim", "cache"])
-    ]
-
     private static let permissions: [SettingsSearchEntry] = [
         .init(
             pane: .permissions,
             keywords: ["privacy", "tcc", "access", "grant"]),
         .init(
             .permissionsAccessibility, "Accessibility",
-            keywords: ["paste", "keystrokes", "privacy", "grant"]),
-        .init(
-            .permissionsCalendars, "Calendars",
-            keywords: ["events", "privacy", "grant", "eventkit"])
+            keywords: ["paste", "keystrokes", "privacy", "grant"])
     ]
 
     private static let backup: [SettingsSearchEntry] = [

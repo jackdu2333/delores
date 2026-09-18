@@ -9,10 +9,7 @@ STATUS=0
 # The hardened-runtime entitlement each usage string needs before tccd will show its prompt.
 RESOURCE_ENTITLEMENTS=(
     NSAppleEventsUsageDescription=com.apple.security.automation.apple-events
-    NSCameraUsageDescription=com.apple.security.device.camera
     NSMicrophoneUsageDescription=com.apple.security.device.audio-input
-    NSCalendarsFullAccessUsageDescription=com.apple.security.personal-information.calendars
-    NSCalendarsWriteOnlyAccessUsageDescription=com.apple.security.personal-information.calendars
     NSContactsUsageDescription=com.apple.security.personal-information.addressbook
     NSLocationWhenInUseUsageDescription=com.apple.security.personal-information.location
     NSPhotoLibraryUsageDescription=com.apple.security.personal-information.photos-library

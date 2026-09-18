@@ -27,9 +27,6 @@ enum SettingsBackupCoverage {
         "fileSearchScopes": .fileSearchScopes,
         "fileSearchIgnorePatterns": .fileSearchIgnorePatterns,
         "notesEnabled": .notesEnabled,
-        "customCommandsEnabled": .customCommandsEnabled,
-        "customCommandsShowInLauncher": .customCommandsShowInLauncher,
-        "snippetsShowInLauncher": .snippetsShowInLauncher,
         "navigationEnabled": .navigationEnabled,
         "menuSearchDisabledApps": .menuSearchDisabledApps,
         "menuSearchShowsAppleMenu": .menuSearchShowsAppleMenu,
@@ -44,16 +41,6 @@ enum SettingsBackupCoverage {
         "quicklinkSelectionFallback": .quicklinkSelectionFallback,
         "quicklinkConfirmsBeforeDelete": .quicklinkConfirmsBeforeDelete,
         "appleShortcutsEnabled": .appleShortcutsEnabled,
-        "extensionsShowInLauncher": .extensionsShowInLauncher,
-        "calendarShowInLauncher": .calendarShowInLauncher,
-        "calendarLauncherLimit": .calendarLauncherLimit,
-        "calendarIncludesTomorrow": .calendarIncludesTomorrow,
-        "joinWindowMinutes": .joinWindowMinutes,
-        "autoJoinConfirms": .autoJoinConfirms,
-        "menuBarEvents": .menuBarEvents,
-        "calendarMenuBarDisplay": .calendarMenuBarDisplay,
-        "menuBarLinkedEventsOnly": .menuBarLinkedEventsOnly,
-        "hideCurrentEvent": .hideCurrentEvent,
         "supportReminders": .supportReminders,
         "companionSize": .deloresCompanionSize,
         "companionKind": .deloresCompanionKind
@@ -69,27 +56,10 @@ enum SettingsBackupCoverage {
     static let deliberatelyExcluded: [String: String] = [
         AppSettingsKey.clipboardTextSearchEnabled.rawValue:
             "Background OCR is an opt-in processing choice on this Mac; a backup must not enable it.",
-        AppSettingsKey.snippetsEnabled.rawValue:
-            "Doubles as keyword-expansion consent; an import must not enable keystroke listening.",
-        AppSettingsKey.extensionPackageManager.rawValue:
-            "Names a tool on this Mac; the machine a backup lands on may not have it.",
-        AppSettingsKey.extensionRegistries.rawValue:
-            "A registry is a source of executable code; adding one has to be a deliberate act.",
-        AppSettingsKey.extensionCustomSearchPaths.rawValue:
-            "Machine-local toolchain paths; the Mac a backup lands on may not have them, or may have "
-            + "something else there.",
-        AppSettingsKey.extensionsEnabled.rawValue:
-            "Doubles as consent to run third-party JavaScript; an import must not switch it on.",
         AppSettingsKey.palettePosition.rawValue:
             "Machine-local geometry: every entry names a display this Mac has, and no other one.",
         AppSettingsKey.autoSwitchInputSource.rawValue:
             "Names a keyboard input source installed on this Mac; another Mac may not have it.",
-        AppSettingsKey.calendarEnabled.rawValue:
-            "Doubles as consent to read your calendar; an import must not grant calendar access.",
-        AppSettingsKey.autoJoinMeetings.rawValue:
-            "Arms the app to open meeting links unattended; an import must not switch that on.",
-        AppSettingsKey.cameraPreview.rawValue:
-            "Turns the camera on before a meeting; an import must not grant that.",
         AppSettingsKey.aiEnabled.rawValue:
             "No other AI setting travels in a backup, so an import would arm a feature it cannot "
             + "configure.",

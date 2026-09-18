@@ -33,13 +33,11 @@ struct LauncherList: View {
     /// Calc answers a typed query and the card an empty one, so only one ever leads.
     enum LeadCard: Equatable {
         case calc(CalcResult)
-        case meeting(MeetingEvent, now: Date)
         case color(ColorValue)
 
         var sectionTitle: String {
             switch self {
             case .calc: return "Calculator"
-            case .meeting: return "Meeting"
             case .color: return "Color"
             }
         }
@@ -47,7 +45,6 @@ struct LauncherList: View {
         var rowID: String {
             switch self {
             case .calc: return "calc-card"
-            case .meeting: return "meeting-card"
             case .color: return "color-card"
             }
         }
@@ -106,9 +103,8 @@ struct LauncherList: View {
         }
         // Publication order, so rows match the flat index.
         let kinds: [AppEntry.Kind] = [
-            .meeting, .application, .systemSettings, .extensionCommand, .quicklink, .appleShortcut,
-            .snippet, .systemAction, .windowLayout, .windowCommand, .customCommand, .quickAction,
-            .command
+            .application, .systemSettings, .quicklink, .appleShortcut, .systemAction,
+            .windowLayout, .windowCommand, .quickAction, .command
         ]
         for kind in kinds {
             guard let group = grouped[kind], !group.isEmpty else { continue }
@@ -197,8 +193,6 @@ private struct LeadCardView: View {
         switch card {
         case .calc(let result):
             CalculatorCard(result: result, selected: selected)
-        case .meeting(let meeting, let now):
-            MeetingCard(meeting: meeting, now: now, selected: selected)
         case .color(let color):
             ColorCard(color: color, selected: selected)
         }
@@ -274,10 +268,6 @@ private struct AppRow: View {
                 }
             }
             Spacer()
-            if let refresh = app.backgroundRefresh {
-                ExtensionRefreshIndicator(state: refresh)
-                    .font(metrics.typography.rowTrailing)
-            }
             // Holding ⌘ turns the trailing label into the chord that launches this row.
             if let slot, palette.commandHeld {
                 HStack(spacing: metrics.spacing.xxs) {

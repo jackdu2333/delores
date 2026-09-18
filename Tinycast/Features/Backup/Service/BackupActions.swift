@@ -12,10 +12,6 @@ enum BackupActions {
     struct RaycastOutcome {
         var summary: SettingsBackup.ApplySummary
         var clipboardImported: Int
-        var snippetsImported: Int
-        var snippetsNeedEnabling: Bool
-        /// Set when the snippet files couldn't be written; the rest of the import still applied.
-        var snippetsError: String?
         var quicklinksImported: Int
         /// Set when the library wouldn't open; the rest of the import still applied.
         var quicklinksError: String?
@@ -88,15 +84,6 @@ enum BackupActions {
         _ categories: Set<BackupCategory>, from staging: BackupStaging, to core: AppCore
     ) async -> BackupApplier.Summary? {
         let bundle = staging.bundle
-        if categories.contains(.configuration),
-            let data = try? Data(contentsOf: bundle.settingsURL),
-            let backup = try? SettingsBackup(json: data)
-        {
-            let commands = backup.customCommands?.count ?? 0
-            let shortcuts = backup.hotkeys?.customCommands?.count ?? 0
-            guard await confirmExecutableImport(core: core, commands: commands, shortcuts: shortcuts)
-            else { return nil }
-        }
         return await BackupApplier.apply(categories, from: bundle, to: core)
     }
 
@@ -145,20 +132,6 @@ enum BackupActions {
             }
         }.value
         // Reported, not thrown: it must not abort the rest of what was asked for.
-        var snippetsImported = 0
-        var snippetsError: String?
-        if !result.snippets.isEmpty {
-            do {
-                // Start the store first, so imported snippets reach the launcher at once.
-                if core.settings.snippetsEnabled {
-                    await core.snippetsStore.start()
-                }
-                snippetsImported =
-                    try await core.snippetsStore.importSnippets(result.snippets).count
-            } catch {
-                snippetsError = error.localizedDescription
-            }
-        }
         var quicklinksImported = 0
         var quicklinksError: String?
         if !result.quicklinks.isEmpty {
@@ -178,9 +151,6 @@ enum BackupActions {
         return RaycastOutcome(
             summary: summary,
             clipboardImported: imported,
-            snippetsImported: snippetsImported,
-            snippetsNeedEnabling: snippetsImported > 0 && !core.settings.snippetsEnabled,
-            snippetsError: snippetsError,
             quicklinksImported: quicklinksImported,
             quicklinksError: quicklinksError,
             missingImages: result.missingImages)
@@ -226,13 +196,11 @@ enum BackupActions {
         }
         var imported: [String] = []
         if summary.clipboard > 0 { imported.append("\(summary.clipboard) clips") }
-        if summary.snippets > 0 { imported.append("\(summary.snippets) snippets") }
         if summary.notes > 0 { imported.append("\(summary.notes) notes") }
         if summary.learning > 0 { imported.append("\(summary.learning) learning records") }
         if !imported.isEmpty {
             parts.append("Imported " + imported.joined(separator: ", ") + ".")
         }
-        if summary.snippetsNeedEnabling { parts.append(snippetsNeedEnablingText) }
         parts.append(contentsOf: summary.problems)
         return parts.isEmpty ? nothingImportedText : parts.joined(separator: " ")
     }
@@ -253,10 +221,6 @@ enum BackupActions {
 
     static let nothingImportedText = "Nothing to import from this file."
 
-    /// No import may grant keystroke listening, so say the switch an imported keyword needs is off.
-    private static let snippetsNeedEnablingText =
-        "Turn on Snippets in Settings to use their keywords."
-
     /// Not everything an import applies settles in the running app, so say to relaunch.
     private static let restartAfterImportText = "Quit and reopen Tinycast to finish."
 
@@ -266,14 +230,6 @@ enum BackupActions {
         if let applied = appliedText(outcome.summary) { parts.append(applied) }
         if outcome.clipboardImported > 0 {
             parts.append("Imported \(outcome.clipboardImported) clipboard entries.")
-        }
-        if outcome.snippetsImported > 0 {
-            let noun = outcome.snippetsImported == 1 ? "snippet" : "snippets"
-            parts.append("Imported \(outcome.snippetsImported) \(noun).")
-        }
-        if outcome.snippetsNeedEnabling { parts.append(snippetsNeedEnablingText) }
-        if let snippetsError = outcome.snippetsError {
-            parts.append("Couldn’t import snippets: \(snippetsError)")
         }
         if outcome.quicklinksImported > 0 {
             let noun = outcome.quicklinksImported == 1 ? "quicklink" : "quicklinks"
@@ -299,29 +255,10 @@ enum BackupActions {
         if s.hiddenItems > 0 { parts.append("\(s.hiddenItems) hidden items") }
         if s.aliases > 0 { parts.append("\(s.aliases) aliases") }
         if s.pinnedEmoji > 0 { parts.append("\(s.pinnedEmoji) pinned emoji and symbols") }
-        if s.customCommands > 0 { parts.append("\(s.customCommands) custom commands") }
         if s.quicklinks > 0 { parts.append("\(s.quicklinks) quicklinks") }
         if s.windowLayouts > 0 { parts.append("\(s.windowLayouts) window layouts") }
         guard !parts.isEmpty else { return nil }
         return "Applied " + parts.joined(separator: ", ") + "."
-    }
-
-    private static func confirmExecutableImport(
-        core: AppCore, commands: Int, shortcuts: Int
-    ) async
-        -> Bool
-    {
-        guard commands > 0 || shortcuts > 0 else { return true }
-        let commandText = commands == 1 ? "1 custom command" : "\(commands) custom commands"
-        let shortcutText =
-            shortcuts == 1 ? "1 global shortcut" : "\(shortcuts) global shortcuts"
-        // Red glyph for a real warning, plain button: importing destroys nothing.
-        return await core.confirm(
-            title: "Import executable commands?",
-            message:
-                "This backup contains \(commandText) and \(shortcutText). Custom commands can run "
-                + "arbitrary shell code. Only import files you trust.",
-            symbol: importSymbol, confirmTitle: "Import", confirmRole: .standard)
     }
 
     private static func dateStamp() -> String {

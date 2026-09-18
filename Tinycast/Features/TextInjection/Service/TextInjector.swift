@@ -168,7 +168,6 @@ final class TextInjector {
         targetApp: NSRunningApplication?
     ) -> Bool {
         guard generation == automaticGeneration,
-            settings.snippetsEnabled,
             Permissions.isAccessibilityTrusted(),
             targetAcceptsInjection(targetApp)
         else { return false }
@@ -182,7 +181,7 @@ final class TextInjector {
     ) -> Bool {
         switch target {
         case .ownEditor(let editor):
-            return generation == automaticGeneration && settings.snippetsEnabled && editor.isEditable
+            return generation == automaticGeneration && editor.isEditable
         case .external(let app):
             return automaticExpansionIsAllowed(generation: generation, targetApp: app)
         case nil:
@@ -193,8 +192,8 @@ final class TextInjector {
     func captureExpansionContext(
         target: InjectionTarget?,
         clipboardHistory: [String]
-    ) -> SnippetTemplateEngine.ExpansionContext {
-        SnippetTemplateEngine.ExpansionContext(
+    ) -> QuicklinkTemplateEngine.ExpansionContext {
+        QuicklinkTemplateEngine.ExpansionContext(
             clipboardHistory: clipboardHistory,
             selection: selection(in: target),
             now: Date(),

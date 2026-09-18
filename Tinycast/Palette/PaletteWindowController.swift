@@ -73,8 +73,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             panel.contentView?.layoutSubtreeIfNeeded()
             core.inputSourceSwitcher.beginSession(
                 preferredInputSourceID: core.settings.autoSwitchInputSourceID)
-            // Events go stale while the palette is closed, and the countdown only ticks while up.
-            core.calendarCoordinator.paletteDidShow()
             core.palette.noteVisible(true)
             core.clipboardStore.setTextSearchActive(true)
             // Only while we are on screen: a system-wide tap has no business outliving the window.
@@ -142,7 +140,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         panel?.orderOut(nil)
         commandEscapeTap.disable()
         core.inputSourceSwitcher.endSession()
-        core.calendarCoordinator.paletteDidHide()
         core.palette.noteVisible(false)
         core.clipboardStore.setTextSearchActive(false)
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
@@ -166,8 +163,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// Pop to Root Search: reset now, or after the delay unless a reopen consumes it.
     private func schedulePopToRoot() {
-        // Don't pop to root if an extension is waiting for OAuth authorization in the browser.
-        guard !core.extensions.isAuthorizing else { return }
         popToRootTimer?.invalidate()
         let timeout = core.settings.popToRootTimeout
         guard timeout != .immediately else {
@@ -177,7 +172,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         popToRootTimer = Timer.scheduledTimer(withTimeInterval: timeout.interval, repeats: false) {
             [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, !self.core.extensions.isAuthorizing else { return }
+                guard let self else { return }
                 self.popToRootTimer = nil
                 self.popToRoot()
             }
@@ -191,7 +186,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// Skip the Pop to Root Search delay, for a close that means to reset as well as hide.
     func popToRootNow() {
-        guard !core.extensions.isAuthorizing else { return }
         popToRootTimer?.invalidate()
         popToRootTimer = nil
         popToRoot()
@@ -333,18 +327,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             guard let core = self?.core, core.palette.query.isEmpty else { return false }
             // A form field owns the key: the text it deletes is the field's, not a query's.
             if core.palette.isEditingField { return false }
-            // The argument form steps back through the answers first, one key per field.
-            if core.palette.mode == .customCommandArguments,
-                let previous = core.customCommandArguments.retreat()
-            {
-                core.palette.query = previous
-                core.palette.selection = 0
-                return true
-            }
-            if core.palette.mode == .extensionCommand {
-                core.extensionCoordinator.exitExtensionScreen()
-                return true
-            }
             if core.palette.mode == .ai, core.aiChatCoordinator.removeLastAttachment() {
                 return true
             }

@@ -3,7 +3,7 @@ import SwiftUI
 /// The inline argument fields beside the search field, one per `{argument}` the link declares.
 struct QuicklinkArgumentsRow: View {
     @Environment(\.metrics) private var metrics
-    let arguments: [SnippetTemplateEngine.MissingArgument]
+    let arguments: [QuicklinkTemplateEngine.MissingArgument]
     /// The quicklink's glyph, anchoring the strip to the row; nil where that row is already listed.
     let symbol: String?
     /// Binding factory keyed by argument name — the values live in `PaletteState.commandArguments`.
@@ -54,7 +54,7 @@ struct QuicklinkArgumentsRow: View {
 
     /// The header shrinks the search field to exactly the room left over.
     static func totalWidth(
-        for arguments: [SnippetTemplateEngine.MissingArgument], hasIcon: Bool,
+        for arguments: [QuicklinkTemplateEngine.MissingArgument], hasIcon: Bool,
         metrics: InterfaceMetrics
     ) -> CGFloat {
         let fields = arguments.reduce(0) { $0 + fieldWidth(for: $1, metrics: metrics) }
@@ -63,7 +63,7 @@ struct QuicklinkArgumentsRow: View {
     }
 
     static func fieldWidth(
-        for argument: SnippetTemplateEngine.MissingArgument, metrics: InterfaceMetrics
+        for argument: QuicklinkTemplateEngine.MissingArgument, metrics: InterfaceMetrics
     ) -> CGFloat {
         let name = CGFloat(argument.name.count) * metrics.scaled(7)
         return min(max(name + metrics.scaled(34), metrics.scaled(72)), metrics.scaled(160))
@@ -73,7 +73,7 @@ struct QuicklinkArgumentsRow: View {
 /// Shared chrome, so a typed field and a chosen one read as the same control.
 private struct ArgumentFieldChrome: ViewModifier {
     @Environment(\.metrics) private var metrics
-    let argument: SnippetTemplateEngine.MissingArgument
+    let argument: QuicklinkTemplateEngine.MissingArgument
     let isFocused: Bool
     /// Visited, left, and still empty — the only state that earns a warning edge.
     let isOwed: Bool
@@ -112,7 +112,7 @@ private struct ArgumentFieldChrome: ViewModifier {
 private struct ArgumentField: View {
 
     @Environment(\.metrics) private var metrics
-    let argument: SnippetTemplateEngine.MissingArgument
+    let argument: QuicklinkTemplateEngine.MissingArgument
     @Binding var text: String
     let isFocused: Bool
     let isOwed: Bool
@@ -139,7 +139,7 @@ private struct ArgumentField: View {
 /// An `options=` argument: the value is picked from the palette's own menu, never typed.
 private struct ArgumentChoiceField: View {
     @Environment(\.metrics) private var metrics
-    let argument: SnippetTemplateEngine.MissingArgument
+    let argument: QuicklinkTemplateEngine.MissingArgument
     @Binding var text: String
     let isFocused: Bool
     let isOwed: Bool

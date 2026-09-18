@@ -5,7 +5,6 @@ struct SettingsBackup: Codable {
 
     var settings: SettingsData?
     var hotkeys: HotkeyBackup?
-    var customCommands: [CustomCommand]?
     var quicklinks: [Quicklink]?
     var windowLayouts: [WindowLayout]?
     var favoriteApps: [String]?
@@ -44,10 +43,6 @@ struct SettingsBackup: Codable {
         var fileSearchScopes: [String]?
         var fileSearchIgnorePatterns: [String]?
         var notesEnabled: Bool?
-        // `snippetsEnabled` is absent: an import must not enable keystroke listening.
-        var customCommandsEnabled: Bool?
-        var customCommandsShowInLauncher: Bool?
-        var snippetsShowInLauncher: Bool?
         // Safe to carry: it grants no permission class paste doesn't already prompt for.
         var navigationEnabled: Bool?
         var menuSearchDisabledApps: [String]?
@@ -57,27 +52,13 @@ struct SettingsBackup: Codable {
         var windowGap: Int?
         var windowCycle: String?
         var windowLayoutsShowInLauncher: Bool?
-        // Carried, unlike `snippetsEnabled`: opening a link grants no permission class of its own.
         var quicklinksEnabled: Bool?
         var quicklinksShowInLauncher: Bool?
-        var extensionsShowInLauncher: Bool?
         var quicklinkOpensNewWindow: Bool?
         var quicklinkSelectionFallback: String?
         var quicklinkConfirmsBeforeDelete: Bool?
         // Carried like quicklinks: running a shortcut the user built grants no permission class.
         var appleShortcutsEnabled: Bool?
-        // `calendarEnabled` is absent: an import must not grant calendar access.
-        var calendarShowInLauncher: Bool?
-        var calendarLauncherLimit: Int?
-        // Carried: it narrows what is read rather than widening what may be reached.
-        var calendarIncludesTomorrow: Bool?
-        var joinWindowMinutes: Int?
-        // `autoJoinMeetings` and `cameraPreview` are absent: an import must arm neither.
-        var autoJoinConfirms: Bool?
-        var menuBarEvents: Int?
-        var calendarMenuBarDisplay: Int?
-        var menuBarLinkedEventsOnly: Bool?
-        var hideCurrentEvent: Int?
         // Safe to carry: it silences a prompt rather than granting anything.
         var supportReminders: Bool?
         // Safe to carry for the opposite reason — it grants nothing at all, it only says how large
@@ -93,7 +74,6 @@ struct SettingsBackup: Codable {
         var commands: [String: HotKeyBinding]?
         var apps: [String: HotKeyBinding]?
         var panes: [String: HotKeyBinding]?
-        var customCommands: [String: HotKeyBinding]?
         var systemActions: [String: HotKeyBinding]?
         var windowCommands: [String: HotKeyBinding]?
         var quicklinks: [String: HotKeyBinding]?
@@ -108,7 +88,6 @@ struct SettingsBackup: Codable {
         var hiddenItems = 0
         var aliases = 0
         var pinnedEmoji = 0
-        var customCommands = 0
         var quicklinks = 0
         var windowLayouts = 0
     }
@@ -148,9 +127,6 @@ extension SettingsBackup {
             fileSearchScopes: s.fileSearchScopes,
             fileSearchIgnorePatterns: s.fileSearchIgnorePatterns,
             notesEnabled: s.notesEnabled,
-            customCommandsEnabled: s.customCommandsEnabled,
-            customCommandsShowInLauncher: s.customCommandsShowInLauncher,
-            snippetsShowInLauncher: s.snippetsShowInLauncher,
             navigationEnabled: s.navigationEnabled,
             menuSearchDisabledApps: s.menuSearchDisabledApps,
             menuSearchShowsAppleMenu: s.menuSearchShowsAppleMenu,
@@ -161,20 +137,10 @@ extension SettingsBackup {
             windowLayoutsShowInLauncher: s.windowLayoutsShowInLauncher,
             quicklinksEnabled: s.quicklinksEnabled,
             quicklinksShowInLauncher: s.quicklinksShowInLauncher,
-            extensionsShowInLauncher: s.extensionsShowInLauncher,
             quicklinkOpensNewWindow: s.quicklinkOpensNewWindow,
             quicklinkSelectionFallback: s.quicklinkSelectionFallback.rawValue,
             quicklinkConfirmsBeforeDelete: s.quicklinkConfirmsBeforeDelete,
             appleShortcutsEnabled: s.appleShortcutsEnabled,
-            calendarShowInLauncher: s.calendarShowInLauncher,
-            calendarLauncherLimit: s.calendarLauncherLimit.rawValue,
-            calendarIncludesTomorrow: s.calendarIncludesTomorrow,
-            joinWindowMinutes: s.joinWindowMinutes.rawValue,
-            autoJoinConfirms: s.autoJoinConfirms,
-            menuBarEvents: s.menuBarEvents.rawValue,
-            calendarMenuBarDisplay: s.calendarMenuBarDisplay.rawValue,
-            menuBarLinkedEventsOnly: s.menuBarLinkedEventsOnly,
-            hideCurrentEvent: s.hideCurrentEvent.rawValue,
             supportReminders: s.supportRemindersEnabled,
             companionSize: s.deloresCompanionSize.rawValue,
             companionKind: s.deloresCompanionKind.rawValue)
@@ -194,10 +160,6 @@ extension SettingsBackup {
             uniqueKeysWithValues: hk.boundPaneBundleIDs.compactMap { id in
                 hk.binding(for: .settingsPane(bundleID: id)).map { (id, $0) }
             })
-        hotkeys.customCommands = Dictionary(
-            uniqueKeysWithValues: hk.boundCustomCommandIDs.compactMap { id in
-                hk.binding(for: .customCommand(id: id)).map { (id.uuidString.lowercased(), $0) }
-            })
         hotkeys.systemActions = Dictionary(
             uniqueKeysWithValues: SystemAction.ID.allCases.compactMap { id in
                 hk.binding(for: .systemAction(id: id)).map { (id.rawValue, $0) }
@@ -216,7 +178,6 @@ extension SettingsBackup {
             })
         backup.hotkeys = hotkeys
 
-        backup.customCommands = core.customCommands.commands
         backup.quicklinks = core.quicklinks.quicklinks
         backup.windowLayouts = core.windowLayouts.layouts
         backup.favoriteApps = core.favorites.keys
@@ -231,9 +192,6 @@ extension SettingsBackup {
     func apply(to core: AppCore) -> ApplySummary {
         var summary = ApplySummary()
         if let s = settings { summary.settingsFields = applySettings(s, to: core) }
-        if let customCommands {
-            summary.customCommands = core.customCommandCoordinator.replaceCustomCommands(customCommands)
-        }
         // Before the hotkeys, so a restored binding has its quicklink to attach to.
         if let quicklinks {
             summary.quicklinks = core.quicklinkCoordinator.replaceQuicklinks(quicklinks)
@@ -371,18 +329,6 @@ extension SettingsBackup {
             settings.notesEnabled = flag
             count += 1
         }
-        if let flag = s.customCommandsEnabled {
-            settings.customCommandsEnabled = flag
-            count += 1
-        }
-        if let flag = s.customCommandsShowInLauncher {
-            settings.customCommandsShowInLauncher = flag
-            count += 1
-        }
-        if let flag = s.snippetsShowInLauncher {
-            settings.snippetsShowInLauncher = flag
-            count += 1
-        }
         if let flag = s.navigationEnabled {
             settings.navigationEnabled = flag
             count += 1
@@ -419,10 +365,6 @@ extension SettingsBackup {
             settings.quicklinksEnabled = flag
             count += 1
         }
-        if let flag = s.extensionsShowInLauncher {
-            settings.extensionsShowInLauncher = flag
-            count += 1
-        }
         if let flag = s.quicklinksShowInLauncher {
             settings.quicklinksShowInLauncher = flag
             count += 1
@@ -443,44 +385,6 @@ extension SettingsBackup {
         }
         if let flag = s.quicklinkConfirmsBeforeDelete {
             settings.quicklinkConfirmsBeforeDelete = flag
-            count += 1
-        }
-        if let flag = s.calendarShowInLauncher {
-            settings.calendarShowInLauncher = flag
-            count += 1
-        }
-        if let raw = s.calendarLauncherLimit, let limit = CalendarLauncherLimit(rawValue: raw) {
-            settings.calendarLauncherLimit = limit
-            count += 1
-        }
-        if let flag = s.calendarIncludesTomorrow {
-            settings.calendarIncludesTomorrow = flag
-            count += 1
-        }
-        if let raw = s.joinWindowMinutes, let window = JoinWindow(rawValue: raw) {
-            settings.joinWindowMinutes = window
-            count += 1
-        }
-        if let flag = s.autoJoinConfirms {
-            settings.autoJoinConfirms = flag
-            count += 1
-        }
-        if let raw = s.menuBarEvents, let lead = MenuBarEvents(rawValue: raw) {
-            settings.menuBarEvents = lead
-            count += 1
-        }
-        if let raw = s.calendarMenuBarDisplay,
-            let display = CalendarMenuBarDisplay(rawValue: raw)
-        {
-            settings.calendarMenuBarDisplay = display
-            count += 1
-        }
-        if let flag = s.menuBarLinkedEventsOnly {
-            settings.menuBarLinkedEventsOnly = flag
-            count += 1
-        }
-        if let raw = s.hideCurrentEvent, let hide = HideCurrentEvent(rawValue: raw) {
-            settings.hideCurrentEvent = hide
             count += 1
         }
         if let flag = s.supportReminders {
@@ -514,12 +418,6 @@ extension SettingsBackup {
         }
         for (id, b) in hotkeys.apps ?? [:] { apply(b, .app(bundleID: id)) }
         for (id, b) in hotkeys.panes ?? [:] { apply(b, .settingsPane(bundleID: id)) }
-        for (rawID, b) in hotkeys.customCommands ?? [:] {
-            guard let id = UUID(uuidString: rawID), core.customCommands.command(id: id) != nil else {
-                continue
-            }
-            apply(b, .customCommand(id: id))
-        }
         for (rawID, b) in hotkeys.systemActions ?? [:] {
             guard let id = SystemAction.ID(rawValue: rawID) else { continue }
             apply(b, .systemAction(id: id))

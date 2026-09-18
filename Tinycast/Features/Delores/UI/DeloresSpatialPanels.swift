@@ -157,6 +157,7 @@ final class DeloresCompanionPanel: NSPanel {
     var onSingleClick: (() -> Void)?
     var onDoubleClick: (() -> Void)?
     var onLongPress: (() -> Void)?
+    var onRightClick: (() -> Void)?
     var onDrag: ((CGPoint) -> Void)?
     var onDragEnded: ((CGPoint) -> Void)?
     private var down = CGPoint.zero
@@ -248,6 +249,12 @@ final class DeloresCompanionPanel: NSPanel {
         longPressTimer?.invalidate(); longPressTimer = nil
         guard !dragged else { dragged = false; onDragEnded?(NSEvent.mouseLocation); return }
         event.clickCount >= 2 ? onDoubleClick?() : onSingleClick?()
+    }
+
+    /// Behind the same gate as every other pointer gesture: the panel ignores mouse events until the
+    /// pointer has rested on the body, so what this opens is the body's own menu, not the desk's.
+    override func rightMouseDown(with event: NSEvent) {
+        onRightClick?()
     }
 }
 

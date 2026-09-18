@@ -40,7 +40,6 @@ final class FallbackCoordinator {
         switch fallback {
         case .builtin(.aiChat): core.aiChatCoordinator.ask(query)
         case .builtin(.searchFiles): core.fileSearchCoordinator.show(query: query)
-        case .builtin(.runShellCommand): core.customCommandCoordinator.runShellCommand(query)
         case .quicklink(let id): core.quicklinkCoordinator.openQuicklink(id: id, filling: query)
         }
     }
@@ -66,8 +65,6 @@ final class FallbackCoordinator {
         switch builtin {
         case .aiChat: return settings.aiEnabled
         case .searchFiles: return settings.fileSearchEnabled
-        // Its own capability: this shell is not the custom-command library's switch to hold.
-        case .runShellCommand: return true
         }
     }
 }

@@ -22,7 +22,6 @@ extension SettingsAnchor {
     static let systemActionsSystemActions = Self(tab: .systemActions, title: "System Actions")
 
     static let commandsCommands = Self(tab: .commands, title: "Commands")
-    static let commandsCustomCommands = Self(tab: .commands, title: "Custom Commands")
 
     static let quicklinksQuicklinks = Self(tab: .quicklinks, title: "Quicklinks")
     static let quicklinksCommands = Self(tab: .quicklinks, title: "Commands")
@@ -58,10 +57,6 @@ extension SettingsAnchor {
     static let notesNotes = Self(tab: .notes, title: "Notes")
     static let notesCommands = Self(tab: .notes, title: "Commands")
 
-    static let snippetsSnippets = Self(tab: .snippets, title: "Snippets")
-    static let snippetsCommands = Self(tab: .snippets, title: "Commands")
-    static let snippetsLibrary = Self(tab: .snippets, title: "Library")
-
     static let navigationNavigation = Self(tab: .navigation, title: "Navigation")
     static let navigationCommands = Self(tab: .navigation, title: "Commands")
     static let navigationMenuSearch = Self(tab: .navigation, title: "Search Menu Bar Items")
@@ -86,21 +81,7 @@ extension SettingsAnchor {
     static let emojiCommands = Self(tab: .emoji, title: "Commands")
     static let emojiAppearance = Self(tab: .emoji, title: "Appearance")
 
-    static let calendarCalendar = Self(tab: .calendar, title: "Calendar")
-    static let calendarCommands = Self(tab: .calendar, title: "Commands")
-    static let calendarSchedule = Self(tab: .calendar, title: "Schedule")
-    static let calendarJoining = Self(tab: .calendar, title: "Joining")
-    static let calendarMenuBar = Self(tab: .calendar, title: "Menu Bar")
-    static let calendarCalendars = Self(tab: .calendar, title: "Calendars")
-
-    static let extensionsExtensions = Self(tab: .extensions, title: "Extensions")
-    static let extensionsCompatibility = Self(tab: .extensions, title: "Compatibility")
-    static let extensionsInstalled = Self(tab: .extensions, title: "Installed")
-    static let extensionsInstall = Self(tab: .extensions, title: "Install")
-    static let extensionsStorage = Self(tab: .extensions, title: "Storage")
-
     static let permissionsAccessibility = Self(tab: .permissions, title: "Accessibility")
-    static let permissionsCalendars = Self(tab: .permissions, title: "Calendars")
 
     static let backupExport = Self(tab: .backup, title: "Export")
     static let backupImport = Self(tab: .backup, title: "Import")

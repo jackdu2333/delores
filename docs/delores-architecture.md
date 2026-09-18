@@ -30,8 +30,11 @@ anyway. They have no place to be and nothing of their own to say.
   re-read from source and rendered to check rather than assumed. What it still carries itself is its
   own catalogue, prompts and streaming — see below.
 - **Companion** — running, not vendored: wander, hover, click grammar, and a double-click that reopens
-  the last selection's Context Surface. It currently shares one coordinator with two capabilities it
-  has nothing to do with; separating them is the next structural step.
+  the last selection's Context Surface. A right-click on the body opens the menu that is about the body
+  itself: which creature it is, and whether it is there at all. Both of its rows write the two keys the
+  Companion pane already owns, so the body gains an entry point to existing settings rather than a
+  configuration surface of its own. It currently shares one coordinator with two capabilities it has
+  nothing to do with; separating them is the next structural step.
 
 The gap between the surfaces and the core, measured against both catalogues, is written up in
 [delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,
@@ -110,6 +113,10 @@ acting as the spine the card grows away from. While such a bar is up the body st
 walked out from under the bar it opened leaves that bar over nothing. Without a Companion — or with its
 body off screen — the bar goes back to the menu bar, which is its ordinary home, and the reason every
 part of `DeloresContextCompanionHosting` is optional as a whole rather than piece by piece.
+
+The Companion's right-click menu is a shell of the same kind, placed by the same call: a body near a
+corner and a menu that does not fit are resolved once, for all three. Like the island it is ordered in
+without key and never takes one, so the way out of it is a click away rather than Escape.
 
 **Its size is a setting, and the geometry takes that size as a parameter.** Two steps and no others —
 48 and 96 — because the sprite is authored at a fixed size and drawn at a whole number of its own

@@ -4,7 +4,6 @@ import SwiftUI
 enum SettingsKey {
     /// The launcher icon's visibility — read by its `MenuBarExtra` and the General toggle.
     static let showInMenuBar = "showInMenuBar"
-    static let calendarMenuBarDisplay = "calendarMenuBarDisplay"
 }
 
 /// Delay before a closed palette pops to root; an unset key reads as `.immediately`.
@@ -23,93 +22,6 @@ enum PopToRootTimeout: Int, CaseIterable, Identifiable, Sendable {
     }
 
     var interval: TimeInterval { TimeInterval(rawValue) }
-}
-
-/// How early the join card appears, and how long past the start it stays. See UpcomingWindow.
-enum JoinWindow: Int, CaseIterable, Identifiable, Sendable {
-    case one = 1
-    case two = 2
-    case five = 5
-    case ten = 10
-    case fifteen = 15
-
-    var id: Int { rawValue }
-
-    var title: String { rawValue == 1 ? "1 minute" : "\(rawValue) minutes" }
-}
-
-/// How early the calendar item picks the next event up. Zero, which `integer(forKey:)` also
-/// returns unset, keeps it for the rest of today.
-enum MenuBarEvents: Int, CaseIterable, Identifiable, Sendable {
-    case today = 0
-    case two = 2
-    case five = 5
-    case ten = 10
-    case thirty = 30
-
-    var id: Int { rawValue }
-
-    var title: String { self == .today ? "Today" : "\(rawValue) minutes before" }
-}
-
-/// The calendar's independent menu-bar presence. Zero matches an unset preference.
-enum CalendarMenuBarDisplay: Int, CaseIterable, Identifiable, Sendable {
-    case disabled = 0
-    case meetingIcon = 1
-    case meetingTitle = 2
-
-    var id: Int { rawValue }
-
-    var title: String {
-        switch self {
-        case .disabled: "Disabled"
-        case .meetingIcon: "Meeting Icon"
-        case .meetingTitle: "Meeting Title"
-        }
-    }
-}
-
-/// How long a started event holds the menu bar. Zero, the default, means it goes as it starts.
-enum CalendarLauncherLimit: Int, CaseIterable, Identifiable, Sendable {
-    case one = 1
-    case three = 3
-    case five = 5
-    case all = 0
-
-    var id: Int { rawValue }
-
-    var title: String {
-        switch self {
-        case .one: "1 next"
-        case .three: "3 next"
-        case .five: "5 next"
-        case .all: "All"
-        }
-    }
-
-    var maximum: Int? { self == .all ? nil : rawValue }
-}
-
-/// Whether a started event remains in the menu bar long enough to show its time left.
-enum HideCurrentEvent: Int, CaseIterable, Identifiable, Sendable {
-    case dontHide = -1
-    case automatically = 0
-    case afterFive = 5
-    case afterTen = 10
-    case afterThirty = 30
-
-    var id: Int { rawValue }
-
-    var title: String {
-        switch self {
-        case .dontHide: "Keep visible — show time left"
-        case .automatically: "Automatically"
-        default: "After \(rawValue) minutes"
-        }
-    }
-
-    var hidesAtStart: Bool { self == .automatically }
-    var minutes: Int? { rawValue > 0 ? rawValue : nil }
 }
 
 @MainActor
@@ -284,30 +196,9 @@ final class AppSettings {
         didSet { defaults.set(aiEnabled, forKey: Key.aiEnabled.rawValue) }
     }
 
-    var customCommandsEnabled: Bool {
-        didSet { defaults.set(customCommandsEnabled, forKey: Key.customCommandsEnabled.rawValue) }
-    }
-
-    /// With the feature on, controls only whether its launcher section appears.
-    var customCommandsShowInLauncher: Bool {
-        didSet {
-            defaults.set(
-                customCommandsShowInLauncher, forKey: Key.customCommandsShowInLauncher.rawValue)
-        }
-    }
-
-    /// Also keyword-expansion consent, so it confirms first and never rides a backup.
-    var snippetsEnabled: Bool {
-        didSet { defaults.set(snippetsEnabled, forKey: Key.snippetsEnabled.rawValue) }
-    }
-
     /// Off out of the box: on means Tinycast may read a selection anywhere and type over it.
     var quickActionsEnabled: Bool {
         didSet { defaults.set(quickActionsEnabled, forKey: Key.quickActionsEnabled.rawValue) }
-    }
-
-    var snippetsShowInLauncher: Bool {
-        didSet { defaults.set(snippetsShowInLauncher, forKey: Key.snippetsShowInLauncher.rawValue) }
     }
 
     var navigationEnabled: Bool {
@@ -324,105 +215,6 @@ final class AppSettings {
         didSet {
             defaults.set(menuSearchShowsAppleMenu, forKey: Key.menuSearchShowsAppleMenu.rawValue)
         }
-    }
-
-    /// Consent to run third-party JavaScript: it confirms, defaults off, rides no backup.
-    var extensionsEnabled: Bool {
-        didSet { defaults.set(extensionsEnabled, forKey: Key.extensionsEnabled.rawValue) }
-    }
-
-    var extensionsShowInLauncher: Bool {
-        didSet {
-            defaults.set(extensionsShowInLauncher, forKey: Key.extensionsShowInLauncher.rawValue)
-        }
-    }
-
-    /// Only a source registry needs one — the store serves extensions already built.
-    var extensionPackageManager: ExtensionPackageManager {
-        didSet {
-            defaults.set(
-                extensionPackageManager.rawValue, forKey: Key.extensionPackageManager.rawValue)
-        }
-    }
-
-    /// Seeded with the store and the official repository; a user can add their own.
-    var extensionRegistries: [ExtensionRegistry] {
-        didSet {
-            guard let data = try? JSONEncoder().encode(extensionRegistries) else { return }
-            defaults.set(data, forKey: Key.extensionRegistries.rawValue)
-        }
-    }
-
-    /// For a toolchain Tinycast doesn't know — mise or Nix shims are the common case.
-    var extensionCustomSearchPaths: [String] {
-        didSet {
-            defaults.set(
-                extensionCustomSearchPaths, forKey: Key.extensionCustomSearchPaths.rawValue)
-        }
-    }
-
-    /// Doubles as calendar-access consent, so only `CalendarCoordinator` may write it.
-    var calendarEnabled: Bool {
-        didSet { defaults.set(calendarEnabled, forKey: Key.calendarEnabled.rawValue) }
-    }
-
-    var calendarShowInLauncher: Bool {
-        didSet {
-            defaults.set(calendarShowInLauncher, forKey: Key.calendarShowInLauncher.rawValue)
-        }
-    }
-
-    var calendarLauncherLimit: CalendarLauncherLimit {
-        didSet {
-            defaults.set(calendarLauncherLimit.rawValue, forKey: Key.calendarLauncherLimit.rawValue)
-        }
-    }
-
-    /// Narrows the fetch itself rather than what is shown, so every surface reads the same days.
-    var calendarIncludesTomorrow: Bool {
-        didSet {
-            defaults.set(calendarIncludesTomorrow, forKey: Key.calendarIncludesTomorrow.rawValue)
-        }
-    }
-
-    var joinWindowMinutes: JoinWindow {
-        didSet { defaults.set(joinWindowMinutes.rawValue, forKey: Key.joinWindowMinutes.rawValue) }
-    }
-
-    /// Arms the app to open meeting links unattended, so only the Calendar pane's switch writes it.
-    var autoJoinMeetings: Bool {
-        didSet { defaults.set(autoJoinMeetings, forKey: Key.autoJoinMeetings.rawValue) }
-    }
-
-    var autoJoinConfirms: Bool {
-        didSet { defaults.set(autoJoinConfirms, forKey: Key.autoJoinConfirms.rawValue) }
-    }
-
-    /// Doubles as camera consent, so only the Calendar pane's switch writes it.
-    var cameraPreview: Bool {
-        didSet { defaults.set(cameraPreview, forKey: Key.cameraPreview.rawValue) }
-    }
-
-    var menuBarEvents: MenuBarEvents {
-        didSet { defaults.set(menuBarEvents.rawValue, forKey: Key.menuBarEvents.rawValue) }
-    }
-
-    var calendarMenuBarDisplay: CalendarMenuBarDisplay {
-        didSet {
-            defaults.set(
-                calendarMenuBarDisplay.rawValue, forKey: Key.calendarMenuBarDisplay.rawValue)
-        }
-    }
-
-    var menuBarLinkedEventsOnly: Bool {
-        didSet {
-            defaults.set(
-                menuBarLinkedEventsOnly, forKey: Key.menuBarLinkedEventsOnly.rawValue)
-        }
-    }
-
-    var hideCurrentEvent: HideCurrentEvent {
-        didSet { defaults.set(hideCurrentEvent.rawValue, forKey: Key.hideCurrentEvent.rawValue) }
     }
 
     /// Off means fully off: no launcher entries, and a still-registered shortcut moves nothing.
@@ -596,63 +388,7 @@ final class AppSettings {
         notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         aiEnabled = defaults.bool(forKey: Key.aiEnabled.rawValue)
         mcpEnabled = defaults.bool(forKey: Key.mcpEnabled.rawValue)
-        customCommandsEnabled = defaults.bool(forKey: Key.customCommandsEnabled.rawValue)
-        // These default on, so absence must be distinguished from a stored `false`.
-        customCommandsShowInLauncher =
-            defaults.object(forKey: Key.customCommandsShowInLauncher.rawValue) == nil
-            || defaults.bool(forKey: Key.customCommandsShowInLauncher.rawValue)
-        snippetsEnabled = defaults.bool(forKey: Key.snippetsEnabled.rawValue)
         quickActionsEnabled = defaults.bool(forKey: Key.quickActionsEnabled.rawValue)
-        snippetsShowInLauncher =
-            defaults.object(forKey: Key.snippetsShowInLauncher.rawValue) == nil
-            || defaults.bool(forKey: Key.snippetsShowInLauncher.rawValue)
-        // Opt-in, unlike its siblings: until it is asked for, nothing about extensions is loaded.
-        extensionsEnabled = defaults.bool(forKey: Key.extensionsEnabled.rawValue)
-        extensionsShowInLauncher =
-            defaults.object(forKey: Key.extensionsShowInLauncher.rawValue) == nil
-            || defaults.bool(forKey: Key.extensionsShowInLauncher.rawValue)
-        extensionPackageManager =
-            defaults.string(forKey: Key.extensionPackageManager.rawValue)
-            .flatMap(ExtensionPackageManager.init(rawValue:)) ?? .automatic
-        extensionRegistries =
-            defaults.data(forKey: Key.extensionRegistries.rawValue)
-            .flatMap { try? JSONDecoder().decode([ExtensionRegistry].self, from: $0) }
-            ?? ExtensionRegistry.defaults
-        extensionCustomSearchPaths =
-            defaults.stringArray(forKey: Key.extensionCustomSearchPaths.rawValue) ?? []
-        // Opt-in, like extensions: until it is asked for, EventKit is never loaded.
-        calendarEnabled = defaults.bool(forKey: Key.calendarEnabled.rawValue)
-        calendarShowInLauncher =
-            defaults.object(forKey: Key.calendarShowInLauncher.rawValue) == nil
-            || defaults.bool(forKey: Key.calendarShowInLauncher.rawValue)
-        calendarLauncherLimit =
-            defaults.object(forKey: Key.calendarLauncherLimit.rawValue)
-            .flatMap { $0 as? Int }
-            .flatMap(CalendarLauncherLimit.init(rawValue:)) ?? .three
-        calendarIncludesTomorrow =
-            defaults.object(forKey: Key.calendarIncludesTomorrow.rawValue) == nil
-            || defaults.bool(forKey: Key.calendarIncludesTomorrow.rawValue)
-        joinWindowMinutes =
-            JoinWindow(rawValue: defaults.integer(forKey: Key.joinWindowMinutes.rawValue)) ?? .five
-        autoJoinMeetings = defaults.bool(forKey: Key.autoJoinMeetings.rawValue)
-        autoJoinConfirms =
-            defaults.object(forKey: Key.autoJoinConfirms.rawValue) == nil
-            || defaults.bool(forKey: Key.autoJoinConfirms.rawValue)
-        cameraPreview = defaults.bool(forKey: Key.cameraPreview.rawValue)
-        // Both default to their zero case, so an unset key needs no presence check.
-        menuBarEvents =
-            MenuBarEvents(rawValue: defaults.integer(forKey: Key.menuBarEvents.rawValue)) ?? .today
-        calendarMenuBarDisplay =
-            CalendarMenuBarDisplay(
-                rawValue: defaults.integer(forKey: Key.calendarMenuBarDisplay.rawValue))
-            ?? .disabled
-        menuBarLinkedEventsOnly =
-            defaults.object(forKey: Key.menuBarLinkedEventsOnly.rawValue) == nil
-            || defaults.bool(forKey: Key.menuBarLinkedEventsOnly.rawValue)
-        hideCurrentEvent =
-            defaults.object(forKey: Key.hideCurrentEvent.rawValue)
-            .flatMap { $0 as? Int }
-            .flatMap(HideCurrentEvent.init(rawValue:)) ?? .dontHide
         navigationEnabled = defaults.bool(forKey: Key.navigationEnabled.rawValue)
         menuSearchDisabledApps =
             defaults.stringArray(forKey: Key.menuSearchDisabledApps.rawValue) ?? []

@@ -8,15 +8,12 @@ enum HotKeyAction: Hashable, Sendable {
     case command(CommandID)
     case app(bundleID: String)
     case settingsPane(bundleID: String)
-    case customCommand(id: UUID)
     case systemAction(id: SystemAction.ID)
     case windowCommand(id: WindowCommand.ID)
     case windowLayout(id: UUID)
     case quicklink(id: UUID)
     case quickAction(id: UUID)
     case appleShortcut(id: UUID)
-    /// Keyed by `AppEntry.id`, which is what survives a reinstall of the extension.
-    case extensionCommand(entryID: String)
 
     /// The UserDefaults key, and the `HotKeyCenter` registration id: one per action.
     var defaultsKey: String {
@@ -25,14 +22,12 @@ enum HotKeyAction: Hashable, Sendable {
         case .command(let id): "hotkey." + id.rawValue
         case .app(let bundleID): "hotkey.app." + bundleID
         case .settingsPane(let bundleID): "hotkey.pane." + bundleID
-        case .customCommand(let id): "hotkey.customCommand." + id.uuidString.lowercased()
         case .systemAction(let id): "hotkey.systemAction." + id.rawValue
         case .windowCommand(let id): "hotkey.windowCommand." + id.rawValue
         case .windowLayout(let id): "hotkey.windowLayout." + id.uuidString.lowercased()
         case .quicklink(let id): "hotkey.quicklink." + id.uuidString.lowercased()
         case .quickAction(let id): "hotkey.quickAction." + id.uuidString.lowercased()
         case .appleShortcut(let id): "hotkey.appleShortcut." + id.uuidString.lowercased()
-        case .extensionCommand(let entryID): "hotkey.extensionCommand." + entryID
         }
     }
 

@@ -12,6 +12,7 @@ final class DeloresCompanionCoordinator {
     private var strollTimer: Timer?
     private var wakeTimer: Timer?
     private var companion: DeloresCompanionPanel?
+    private let companionMenu = DeloresCompanionMenuController()
     private var currentSelection = ""
     private var wander: DeloresCompanionWander.State?
     private var isRunning = false
@@ -170,6 +171,8 @@ final class DeloresCompanionCoordinator {
         panel.onLongPress = { [weak self] in self?.companion?.showBubble() }
         panel.onDrag = { [weak self] point in self?.dragCompanion(to: point) }
         panel.onDragEnded = { [weak self] point in self?.dropCompanion(at: point) }
+        panel.onRightClick = { [weak self] in self?.companionRightClick() }
+        companionMenu.onClose = { [weak self] in self?.releaseShell() }
         panel.ignoresMouseEvents = true
         let start = spawnPoint(on: screen)
         panel.present(at: start)
@@ -195,6 +198,8 @@ final class DeloresCompanionCoordinator {
 
     private func stopCompanion() {
         isRunning = false
+        // Anything the body opened goes with it, the menu included.
+        companionMenu.hide()
         // The Companion is going away, so nothing it was holding itself still for survives it.
         shellHolds = 0
         if let companionMonitor { NSEvent.removeMonitor(companionMonitor); self.companionMonitor = nil }
@@ -219,11 +224,50 @@ final class DeloresCompanionCoordinator {
         }
     }
 
+    /// The two things a reader asks about the body itself: which creature it is, and whether it is
+    /// there at all. Both rows write the keys the Settings pane writes, so this is an entry point to
+    /// two settings rather than a configuration surface the body grew of its own.
+    private func companionRightClick() {
+        guard let companion, companion.isVisible,
+            let screen = DeloresWindowGeometry.screenContaining(companion.center)
+        else { return }
+        let anchor = DeloresCompanionMenuController.Anchor(
+            petCenter: companion.center,
+            petFrame: companion.frame,
+            edge: DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: screen)),
+            bodyRadius: bodyRadius,
+            visibleFrame: screen.visibleFrame)
+        let landed = companionMenu.show(
+            companionMenuItems(), anchoredTo: anchor, metrics: settings.interfaceSize.metrics)
+        // Held while it is up: the menu hangs off the body, and a body that walked out from under it
+        // would leave it hanging over nothing.
+        holdForShell()
+        guard landed != companion.center else { return }
+        companion.move(to: landed)
+    }
+
+    private func companionMenuItems() -> [PopoverMenuItem] {
+        let creatures = DeloresCompanionShell.Kind.allCases.map { kind in
+            PopoverMenuItem(
+                title: kind.displayName, icon: .blank,
+                detail: kind == settings.deloresCompanionKind ? "当前" : nil,
+                action: { [weak self] in self?.settings.deloresCompanionKind = kind })
+        }
+        return creatures + [
+            PopoverMenuItem(
+                title: "关闭宠物", icon: .symbol("eye.slash"), startsSection: true,
+                detail: "恢复顶部状态栏",
+                action: { [weak self] in self?.settings.deloresCompanionEnabled = false }),
+        ]
+    }
+
     /// Resting runs no frames at all: one wake is scheduled for the moment the rest ends. Walking is
     /// the only phase that costs a timer, which is the whole of the Companion's idle budget.
     private func syncWanderTimers() {
         // A body with nowhere to go is idle: being dragged, being held, or simply stopped.
-        guard isRunning, let wander else { stopWanderTimers(); companion?.rest(); return }
+        guard isRunning, !isHoldingShell, let wander else {
+            stopWanderTimers(); companion?.rest(); return
+        }
         switch wander.phase {
         case .strolling:
             wakeTimer?.invalidate(); wakeTimer = nil

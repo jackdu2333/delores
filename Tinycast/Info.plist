@@ -20,19 +20,6 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>Raycast and Delores URL Scheme</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>raycast</string>
-				<string>tinycast</string>
-				<string>com.raycast</string>
-			</array>
-		</dict>
-	</array>
 	<!-- Exported, but deliberately no CFBundleDocumentTypes: claiming the type would make a
 	     double-clicked .tinycast launch straight into writing over someone's data. The identifier
 	     is fixed rather than per-channel so Dev and stable can read each other's exports. -->
@@ -65,10 +52,6 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Delores uses automation to perform system actions you explicitly run.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Delores shows a camera preview so you can check yourself, and take a photo to the clipboard.</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Delores reads today's and tomorrow's events so you can join a meeting from the palette.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Delores uses Bluetooth access only when you run the Toggle Bluetooth action.</string>
 	<key>NSHumanReadableCopyright</key>

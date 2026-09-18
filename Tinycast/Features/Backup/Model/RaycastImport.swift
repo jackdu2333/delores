@@ -11,12 +11,11 @@ struct RaycastImportOptions: OptionSet, Sendable {
     static let clipboardHistory = RaycastImportOptions(rawValue: 1 << 5)
     static let popToRoot = RaycastImportOptions(rawValue: 1 << 6)
     static let compactMode = RaycastImportOptions(rawValue: 1 << 7)
-    static let snippets = RaycastImportOptions(rawValue: 1 << 8)
-    static let aliases = RaycastImportOptions(rawValue: 1 << 9)
-    static let quicklinks = RaycastImportOptions(rawValue: 1 << 10)
+    static let aliases = RaycastImportOptions(rawValue: 1 << 8)
+    static let quicklinks = RaycastImportOptions(rawValue: 1 << 9)
     static let all: RaycastImportOptions = [
         .shortcuts, .favorites, .emojiSkinTone, .launchAtLogin, .menuBarVisibility, .clipboardHistory,
-        .popToRoot, .compactMode, .snippets, .aliases, .quicklinks
+        .popToRoot, .compactMode, .aliases, .quicklinks
     ]
 }
 
@@ -25,7 +24,6 @@ enum RaycastImport {
     struct Result {
         var backup: SettingsBackup
         var clipboard: [ClipboardItem]
-        var snippets: [Snippet]
         var quicklinks: [Quicklink]
         /// Image clips whose file no longer exists, reported so the UI can note them.
         var missingImages: Int
@@ -87,7 +85,6 @@ enum RaycastImport {
             return Result(
                 backup: trimmed,
                 clipboard: keepClipboard ? clipboard : [],
-                snippets: options.contains(.snippets) ? snippets : [],
                 quicklinks: options.contains(.quicklinks) ? quicklinks : [],
                 missingImages: keepClipboard ? missingImages : 0)
         }

@@ -2,7 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-private final class DeloresFirstMouseHostingView<Content: View>: NSHostingView<Content> {
+final class DeloresFirstMouseHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
     }
