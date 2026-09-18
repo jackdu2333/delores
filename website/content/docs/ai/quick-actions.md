@@ -105,10 +105,11 @@ removing it moves the action back.
 Translate runs on **Apple's own translator on your Mac** by default. That lane costs nothing, and
 sends nothing to a provider.
 
-It leaves that lane in two cases, and both of them do send your text to a provider: when you give
-Translate a model of its own, and when Apple cannot take the pair — a language it does not support, or
-text whose language it cannot identify. Those runs cost and send what that model does, like any other
-action.
+It leaves that lane in two cases: when you give Translate a model of its own, and when Apple cannot
+take the pair — a language it does not support, or text whose language it cannot identify. Both use
+that model instead of the translator, so the run costs and sends what any other action on that model
+does: a remote model sends your selection to its provider and may bill you, while **Apple
+Intelligence** runs on your Mac and sends nothing.
 
 **Translate to** picks the language. **Same as this Mac** is the default. The list is Apple's, not
 your preferred languages, so it only offers languages the translator can actually reach. Bengali, for
