@@ -29,6 +29,35 @@ jobs:
           echo "Using $XCODE_PATH"
           echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
 
+      # This lane hands back the artifact that gets installed over the last one, so every build signs
+      # with the same identity: macOS hangs the Accessibility grant on the signing identity, while an
+      # ad-hoc build has none to hang it on — only its own code hash, which no rebuild reproduces.
+      # Losing these secrets costs nothing; losing the identity costs one last re-grant (docs/signing.md).
+      - name: Import signing certificate
+        env:
+          P12_BASE64: ${{ secrets.DELORES_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.DELORES_SIGNING_P12_PASSWORD }}
+        run: |
+          if [ -z "${P12_BASE64}" ]; then
+            echo "::error::DELORES_SIGNING_P12_BASE64 is not set. An unsigned build makes every update ask for Accessibility again — see docs/delores-release.md."
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KPW="$(openssl rand -base64 24)"
+          echo "${P12_BASE64}" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KPW" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KPW" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "${P12_PASSWORD}" -A -T /usr/bin/codesign
+          # Let codesign use the key without an interactive prompt.
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KPW" "$KEYCHAIN" >/dev/null
+          # Prepend to the search list so xcodebuild's codesign finds the identity by name.
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | sed 's/"//g')
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      # No signing, entitlement or hardened-runtime overrides: the project's own Release settings are
+      # what ships, and verify-signature.sh exists to assert them. Overriding them is how this lane
+      # came to hand back an unsigned build at all.
       - name: Build Application
         run: |
           xcodebuild -project Tinycast.xcodeproj \
@@ -37,25 +66,45 @@ jobs:
             -derivedDataPath build/DerivedData \
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_ENTITLEMENTS="" \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Locate and Stage .app Bundle
-        run: |
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="HuaciGongju CodeSign" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp=none"
           APP_PATH="$(find build/DerivedData -name '*.app' -maxdepth 5 -type d | head -n 1)"
           if [ -z "$APP_PATH" ]; then
-            echo "Error: .app bundle not found"
+            echo "::error::.app bundle not found"
             find build/DerivedData -type d
             exit 1
           fi
           echo "Found app at $APP_PATH"
+          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
+
+      # The one property this artifact exists to keep. What macOS records has to name the certificate,
+      # which any later build reproduces; a `cdhash` requirement names these exact bytes, and the next
+      # build is a different bundle, so tccd treats it as an app it has never seen.
+      - name: Assert the grant survives an update
+        run: |
+          REQUIREMENT="$(codesign -d -r- "$APP_PATH" 2>&1)"
+          echo "$REQUIREMENT"
+          case "$REQUIREMENT" in
+            *'certificate leaf'*) ;;
+            *) echo "::error::the signature is ad-hoc, so its requirement is a code hash and macOS will ask for Accessibility again on the next update"; exit 1 ;;
+          esac
+
+      # Debug carries no hardened runtime on purpose — library validation refuses its `.debug.dylib` —
+      # so only the configuration that ships is held to the notarization rules.
+      - name: Assert the signature is notarizable
+        if: github.event.inputs.configuration == 'Release'
+        run: ./Scripts/verify-signature.sh "$APP_PATH"
+
+      - name: Locate and Stage .app Bundle
+        run: |
           mkdir -p dist
-          cp -R "$APP_PATH" dist/
           APP_NAME="$(basename "$APP_PATH")"
+          ditto "$APP_PATH" "dist/$APP_NAME"
           cd dist
-          zip -r -y "${APP_NAME%.app}.zip" "$APP_NAME"
+          # `ditto`, not `zip`: only a ditto archive still verifies after extraction, and the seal is
+          # load-bearing now — an unverifiable signature is a grant macOS has already forgotten.
+          ditto -c -k --keepParent --sequesterRsrc "$APP_NAME" "${APP_NAME%.app}.zip"
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
