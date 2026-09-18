@@ -141,6 +141,13 @@ enum DeloresCompanionShell {
         return distLeft <= distRight ? .left : .right
     }
 
+    /// The menu bar and Dock of this display are still this display. `visibleFrame.contains` is the
+    /// wrong question: the body walks `screen.frame`, so a body on the menu bar sits outside the
+    /// visible frame on purpose.
+    static func isOnSameDisplay(bodyScreenFrame: CGRect?, shellScreenFrame: CGRect) -> Bool {
+        bodyScreenFrame == shellScreenFrame
+    }
+
     // MARK: - Shells
 
     /// Where a dragged window counts as having been brought to the body. Generous on purpose: a
@@ -151,6 +158,16 @@ enum DeloresCompanionShell {
         let side: CGFloat = 60
         return CGRect(
             x: center.x - side / 2, y: center.y - side / 2, width: side, height: side)
+    }
+
+    /// The body's own target and the island it grew, as one rect: what a drag may be holding while
+    /// an island is up.
+    ///
+    /// Separate from `dragHitFrame` because the seam between them is `shellGap` of nothing: a drag
+    /// that crosses it in one frame finds no target under it, so the run is torn down there — the
+    /// gesture failing at its last step, after the reader had already committed to it.
+    static func dragHoldFrame(bodyCenter: CGPoint, islandFrame: CGRect) -> CGRect {
+        dragHitFrame(center: bodyCenter).union(islandFrame)
     }
 
     /// A closed bar: grown from the body's inward side, level with its centre.
@@ -176,6 +193,11 @@ enum DeloresCompanionShell {
     /// body rides — horizontal above or below the body, vertical beside it. The body may open one
     /// from the bottom edge, unlike a bar: an island is a preview that lives for the length of a
     /// drag, not a surface the reader reads from.
+    ///
+    /// Placed off where the body stands, and only then clamped to the display. The body does not
+    /// move for an island — a drag chose a body standing there — so a placement derived from a body
+    /// first snapped *into* the visible frame is a placement for a body that is not there, and it
+    /// leaves the reader a stretch of nothing to cross on the way to the island.
     static func planIslandOpening(
         petCenter: CGPoint,
         edge: DeloresCompanionEdge,
@@ -183,9 +205,10 @@ enum DeloresCompanionShell {
         visibleFrame: CGRect,
         bodyRadius: CGFloat
     ) -> Placement {
-        placeShell(
-            petCenter: petCenter, edge: edge, shellSize: islandSize,
-            visibleFrame: visibleFrame, bodyRadius: bodyRadius)
+        let frame = inwardFrame(
+            petVisible: circleFrame(center: petCenter, bodyRadius: bodyRadius),
+            edge: edge, shellSize: islandSize)
+        return Placement(petCenter: petCenter, edge: edge, frame: clamp(frame, to: visibleFrame))
     }
 
     /// An opened card: the bar stays level with the body's centre and the answer hangs downward from
@@ -235,7 +258,9 @@ enum DeloresCompanionShell {
         visibleFrame: CGRect,
         bodyRadius: CGFloat
     ) -> Placement {
-        var center = snapCenter(petCenter, to: edge, in: visibleFrame, bodyRadius: bodyRadius)
+        // Stand where the body is. Snapping into `visibleFrame` first would fetch a body off the
+        // menu bar — the same mistake `planIslandOpening` already stopped making.
+        var center = petCenter
         var frame = inwardFrame(
             petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
             edge: edge, shellSize: shellSize)
@@ -248,9 +273,7 @@ enum DeloresCompanionShell {
             if overflowLeft > 0 { shift += overflowLeft }
             if overflowRight > 0 { shift -= overflowRight }
             if shift != 0 {
-                center = snapCenter(
-                    CGPoint(x: center.x + shift, y: center.y), to: edge, in: visibleFrame,
-                    bodyRadius: bodyRadius)
+                center = CGPoint(x: center.x + shift, y: center.y)
                 frame = inwardFrame(
                     petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
                     edge: edge, shellSize: shellSize)
@@ -262,9 +285,7 @@ enum DeloresCompanionShell {
             if overflowBottom > 0 { shift += overflowBottom }
             if overflowTop > 0 { shift -= overflowTop }
             if shift != 0 {
-                center = snapCenter(
-                    CGPoint(x: center.x, y: center.y + shift), to: edge, in: visibleFrame,
-                    bodyRadius: bodyRadius)
+                center = CGPoint(x: center.x, y: center.y + shift)
                 frame = inwardFrame(
                     petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
                     edge: edge, shellSize: shellSize)
