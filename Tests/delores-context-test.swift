@@ -884,7 +884,7 @@ struct DeloresContextTest {
         require(last.minX == 0.4, "the frame index is the column")
 
         // Ruling 2: one timer drives the step and the frame together, so this is a trade, not a saving.
-        require(DeloresCompanionAnimation.walkFrame == 1.0 / 12.0, "walking is pinned at 12 fps")
+        require(DeloresCompanionAnimation.walkFrame == 1.0 / 8.0, "walking is pinned at an ambling 8 fps")
         require(DeloresCompanionAnimation.breathDuration == 2.0, "a breath is two seconds across two frames")
     }
 
@@ -1074,7 +1074,10 @@ struct DeloresContextTest {
         var rests: [TimeInterval] = []
         var destinations: [CGFloat] = []
         var speeds: [CGFloat] = []
-        while clock < 300 {
+        // The lazy pacing loiters far more than it walks, so the replay needs a longer window to
+        // see the same amount of world: at five minutes the body can honestly still be on its
+        // first edge. Fifteen minutes is the new calibration, not a loosened assertion.
+        while clock < 900 {
             let elapsed = 1.0 / 20.0
             clock += elapsed
             let wasWalking = state.phase.isWalking
@@ -1104,7 +1107,7 @@ struct DeloresContextTest {
             state = next
         }
 
-        require(tripCount >= 3 && restingFrames > 0, "five minutes hold both walking and resting")
+        require(tripCount >= 3 && restingFrames > 0, "fifteen minutes hold both walking and resting")
         require(edges.count >= 2, "a wander is not one fixed edge")
         require(Set(speeds).count > 1, "trips do not all run at one speed")
         require(

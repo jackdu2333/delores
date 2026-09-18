@@ -34,22 +34,24 @@ enum DeloresCompanionWander {
     }
 
     /// Most rests are a pause; the tail is what makes the thing read as occupied rather than
-    /// scheduled. An even rhythm is the thing that looks mechanical.
-    static let shortRestRange: ClosedRange<TimeInterval> = 2...8
+    /// scheduled. An even rhythm is the thing that looks mechanical. Long rests are the lazy
+    /// default now — the Companion loiters far more than it walks.
+    static let shortRestRange: ClosedRange<TimeInterval> = 4...14
     static let longRestRange: ClosedRange<TimeInterval> = 20...60
-    static let longRestChance = 0.25
+    static let longRestChance = 0.4
 
     /// Past this a motionless Companion reads as a dead one, so no rest is allowed to reach it.
     static let maximumRest: TimeInterval = longRestRange.upperBound
 
     /// A trip holds one speed from end to end. Held, because a speed that jitters reads as a fault
-    /// and a speed that never varies reads as a motor.
-    static let speedRange: ClosedRange<CGFloat> = 16...34
+    /// and a speed that never varies reads as a motor. Slow on purpose: the Companion ambles
+    /// along its loop, it does not commute.
+    static let speedRange: ClosedRange<CGFloat> = 8...18
 
     /// How far a trip goes. Most are a few steps and a look around; the tail is the long way, which
     /// is what keeps the walking from reading as a metronome.
-    static let shortTripRange: ClosedRange<CGFloat> = 120...360
-    static let longTripChance = 0.2
+    static let shortTripRange: ClosedRange<CGFloat> = 90...240
+    static let longTripChance = 0.15
 
     /// A frame that arrives late — a slept machine, a stalled run loop — must not fling the body
     /// across the display.

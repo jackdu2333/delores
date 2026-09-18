@@ -5,7 +5,7 @@
 > [desktop-pet](https://github.com/Imzl-zl/desktop-pet)（原生 Swift）两个开源项目源码评审；
 > 同日经产品宪法三层评审，四项裁决已并入正文（标为「裁决 1–4」）。按「实施步骤」执行。
 >
-> 裁决摘要：**1** 呼吸不排 Timer，交给 Core Animation；**2** 12 fps 是位移与切帧的统一帧率，
+> 裁决摘要：**1** 呼吸不排 Timer，交给 Core Animation；**2** 8 fps 是位移与切帧的统一帧率，
 > 是取舍不是纯收益；**3** 朝向取位移的水平分量，竖边保持上一朝向；**4** 排在当前 Shell WIP 之后。
 
 ## 一句话结论
@@ -109,15 +109,19 @@ layer.add(animation, forKey: "breath")
 关键帧动画（眨眼帧序列），播完回落 idle。这是静止期间主线程唯一的唤醒来源，量级为 3–8 s 一次
 且非周期性——与「每 0.5 s 一次的常驻呼吸」不是一个数量级，可以接受，并在门禁里写明。
 
-## 裁决 2：12 fps 是位移与切帧的统一帧率
+## 裁决 2：8 fps 是位移与切帧的统一帧率
 
 `strollFrame = 1/20` 这个 timer 不只切帧，它同时驱动 `advanceWander()` → `companion.move(to:)`。
-降到 12 fps，**位移本身也变成 12 fps**（speed 16–34 pt/s → 每帧 1.3–2.8 pt）。
+降到 8 fps，**位移本身也变成 8 fps**（speed 8–18 pt/s → 每帧 1.0–2.25 pt）。
 
-所以这不是「timer 触发省 40%」的纯收益，而是一次取舍：行走的位移平滑度下降，换来帧率更符合
-像素味、唤醒次数减少 40%。**接受，但必须按取舍记录，不得写成优化。**
+所以这不是「timer 触发省 60%」的纯收益，而是一次取舍：行走的位移平滑度下降，换来帧率更符合
+像素味、唤醒次数减少 60%。**接受，但必须按取舍记录，不得写成优化。**
 
-解耦（位移 20 fps、切帧 12 fps）需要两个 timer，与「不新增 timer」冲突，不采用。
+解耦（位移 20 fps、切帧 8 fps）需要两个 timer，与「不新增 timer」冲突，不采用。
+
+> 2026-09-18 应用户要求调成懒散节奏：walkFrame 12→8 fps，speed 16–34→8–18 pt/s，短歇
+> 2–8→4–14 s，长歇概率 0.25→0.4，短程 120–360→90–240 pt，长途概率 0.2→0.15。Companion
+> 的默认状态从「散步」改成「闲逛」：多数时间在原地歇着，走起来也是拖沓的步频。
 
 ## 裁决 3：朝向取位移的水平分量，竖边保持上一朝向
 
@@ -175,7 +179,7 @@ DeloresCompanionCoordinator            DeloresCompanionCoordinator   ← 不动�
                                                  ├─ magnificationFilter = .nearest
                                                  └─ 呼吸 = CA 离散关键帧（见裁决 1）
 
-DeloresCompanionWander（Model）        ← 完全不动：静止零 timer、走路 20fps 的骨架
+DeloresCompanionWander（Model）        ← 完全不动：静止零 timer、走路由单一 timer 驱动的骨架
                                          新增两条只读映射（放 Model 层，可进 harness）：
                                          ① 位移的水平分量 → 朝向行（走左/走右，见裁决 3）
                                          ② wander 相位 → 动画行（resting/holding/captured
@@ -195,12 +199,13 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 | 行 | 动画 | 帧格 | 帧率 | 驱动 |
 | --- | --- | --- | --- | --- |
 | 0 | idle 呼吸（2 帧）+ 眨眼（1 帧） | 3/5 格 | 呼吸 1 fps | **CA 离散关键帧，无限重复（裁决 1）**；眨眼 = 一次性 Timer 排期 3–8 s，播一次即回落 |
-| 1 | 走左 | 5/5 格 | 12 fps | 由 strollTimer 顺带切帧 |
-| 2 | 走右 | 5/5 格 | 12 fps | 同上 |
+| 1 | 走左 | 5/5 格 | 8 fps | 由 strollTimer 顺带切帧 |
+| 2 | 走右 | 5/5 格 | 8 fps | 同上 |
 | 3 | 反应：glance（2）+ wave（2）+ chat（1） | 5/5 格 | 8–12 fps | 一次性 CA 动画播 1–2 循环回落 idle |
 
 **帧率策略（借 desktop-pet 生产验证）**：idle 呼吸恒钳 1–2 fps 封顶，与任何用户设置无关
-（"calm CPU win"）；行走 12 fps——从当前 `strollFrame = 1/20` **下调**，12 fps 更有像素味。
+（"calm CPU win"）；行走 8 fps——从初版 `strollFrame = 1/20` **下调**，慢步频配合懒散人设
+（见裁决 2）。
 行走切帧不新增 timer：`advanceWander()` 每 tick 已在主线程，顺带推进帧序，代价见裁决 2。
 
 资产生成走 `Scripts/gen-companion-atlas.js`（Node，同 `gen-emoji.js` 家风）：输入源帧
@@ -249,7 +254,7 @@ desktop-pet 的 `SpriteSlicer` 算法与 petex 的格式文档即参考库。此
 | 1 | 资产与生成脚本 | 源帧 + `gen-companion-atlas.js` + `Resources/` 下图集 PNG + `Model/CompanionAtlas.generated.swift` | 脚本重跑幂等；图集尺寸/行列符合规格；生成物已提交 |
 | 2 | Model 层映射 | `CompanionAnimation.swift` 纯函数：① 相位→行；② `facing(from:to:fallback:)`（裁决 3）；③ `contentsRect(row:frame:)`，y 轴翻转只在这里发生一次。进 `run-delores-tests.sh` 清单 | ✅ 2026-09-18：harness 断言全过（resting/held→idle、strolling 左右→对应行、竖边 dx==0 保持 fallback、帧矩形与帧率钳制值） |
 | 3 | CALayer 换心 | `DeloresCompanionBodyView`（空壳 NSView + CALayer）；删 `DeloresCompanionView` 与玻璃圆；呼吸接 CA 离散动画（裁决 1）；尺寸 44→48，真相源收进 `DeloresCompanionShell.visibleSize` | ✅ 2026-09-18：xcodebuild 零错误零警告，图集已进 bundle；材质差异已补记进架构文档；像素锐利度与「无玻璃底」仍需真机肉眼 |
-| 4 | 手势表情接线 | `play()` → `react()`；wander 相位驱动 `rest()` / `step(frame:facing:)`；捕获、持 shell、拖拽一律 idle；帧率降到 12 fps（裁决 2） | ✅ 2026-09-18：编译通过、harness 通过。**五手势的实际观感与「播完回落 idle」仍需真机手动验收** |
+| 4 | 手势表情接线 | `play()` → `react()`；wander 相位驱动 `rest()` / `step(frame:facing:)`；捕获、持 shell、拖拽一律 idle；帧率降到 8 fps（裁决 2） | ✅ 2026-09-18：编译通过、harness 通过。**五手势的实际观感与「播完回落 idle」仍需真机手动验收** |
 | 5 | 设置页 | 尺寸档位 48/96 两档（`DeloresCompanionShell.Size`）；身体半径成为**注入参数**而非静态常量——这正是裁决 4 说的返工 | ✅ 2026-09-18：编译、harness、settings-search 全过。Shell 那 98 行断言因本就按 `radius` 书写，尺寸注入后**无一条需要改**。**切档后无像素抖、跨屏拖拽不糊仍需真机肉眼** |
 | 6 | 验收门禁 | 见下 | 全绿 |
 
