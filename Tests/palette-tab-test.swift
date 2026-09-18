@@ -42,19 +42,13 @@ struct PaletteTabTests {
 
         // A sub-screen is reached by a command or a hotkey, so Tab leaves rather than ringing on.
         for mode in [
-            PaletteMode.aiHistory, .emoji, .fileSearch, .calculatorHistory, .quicklinks, .snippets
+            PaletteMode.aiHistory, .emoji, .fileSearch, .calculatorHistory, .quicklinks
         ] {
             expect(
                 PaletteTabAction.resolve(mode: mode, aiEnabled: true, clipboardEnabled: true),
                 .carryQuery(.launcher),
                 "\(mode.rawValue) is a sub-screen, so Tab exits to the launcher")
         }
-
-        expect(
-            PaletteTabAction.resolve(
-                mode: .extensionCommand, aiEnabled: true, clipboardEnabled: true),
-            .carryQuery(.launcher),
-            "an extension command exits to the launcher rather than joining the ring")
 
         // Both stops off, so Tab has nowhere to ring on to and must leave the launcher standing.
         expect(

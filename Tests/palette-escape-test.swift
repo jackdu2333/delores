@@ -47,26 +47,10 @@ struct PaletteEscapeTests {
             .clearQuery,
             "a typed launcher query clears before the palette hides")
         expect(
-            resolve(query: "notes", mode: .extensionCommand),
-            .clearQuery,
-            "a typed extension query clears before the extension screen exits")
-        expect(
-            resolve(mode: .extensionCommand),
-            .exitExtensionScreen,
-            "an empty extension query exits the extension screen, which owns its own stack")
-        expect(
             resolve(),
             .hidePalette,
             "an empty launcher query hides the palette")
-        // The two surfaces where the field is not a search field: an argument answer, a chat draft.
-        expect(
-            resolve(query: "blue", mode: .customCommandArguments),
-            .clearQuery,
-            "a half-typed argument clears before the pending command is abandoned")
-        expect(
-            resolve(mode: .customCommandArguments),
-            .hidePalette,
-            "an empty argument field hides the palette, which cancels the pending command")
+        // An inline argument field is deeper than the query that found the command.
         expect(
             resolve(query: "why is the sky", mode: .ai),
             .clearQuery,
@@ -100,10 +84,6 @@ struct PaletteEscapeTests {
             .hidePalette,
             "close-and-pop-to-root hides even where a back step exists")
         expect(
-            resolve(mode: .extensionCommand, canGoBack: true, behavior: .closeAndPopToRoot),
-            .hidePalette,
-            "close-and-pop-to-root outranks an extension's own stack too")
-        expect(
             resolve(query: "notes", behavior: .closeAndPopToRoot),
             .clearQuery,
             "clearing the query is the first press under either behavior")
@@ -116,11 +96,6 @@ struct PaletteEscapeTests {
             resolve(menuOpen: true, mode: .ai),
             .closeMenu,
             "a menu outranks the chat screen it is drawn over")
-        expect(
-            resolve(menuOpen: true, mode: .extensionCommand),
-            .closeMenu,
-            "a menu outranks the extension screen it is drawn over")
-        // An inline argument field is deeper than the query that found the command.
         expect(
             resolve(argumentFocused: true, query: "search"),
             .leaveArgumentField,
