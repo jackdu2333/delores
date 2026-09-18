@@ -147,6 +147,10 @@ final class DeloresCompanionBodyView: NSView {
     func stop() {
         sprite.removeAllAnimations()
     }
+
+    func applyKind(_ kind: DeloresCompanionShell.Kind) {
+        sprite.contents = Self.atlas(for: kind)
+    }
 }
 
 final class DeloresCompanionPanel: NSPanel {
@@ -757,6 +761,3 @@ struct DeloresVisualEffectView: NSViewRepresentable {
     }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
-    func applyKind(_ kind: DeloresCompanionShell.Kind) {
-        sprite.contents = Self.atlas(for: kind)
-    }
