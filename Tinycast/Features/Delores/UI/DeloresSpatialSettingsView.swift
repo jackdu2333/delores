@@ -69,7 +69,7 @@ struct DeloresSpatialSettingsView: View {
                 "These are the buttons on the bar that appears when you select text. A row without "
                     + "its own model follows the one chosen in the Quick Actions pane. 翻译 keeps "
                     + "Apple's translator until you bind a model to it, and falls back to that "
-                    "shared model for a language Apple's translator does not have."
+                    + "shared model for a language Apple's translator does not have."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
