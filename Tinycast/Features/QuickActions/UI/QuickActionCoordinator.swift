@@ -260,12 +260,15 @@ final class QuickActionCoordinator {
     private func generate(
         _ state: QuickActionPanelState, streaming: Bool
     ) async throws -> String {
-        if state.action.usesTranslationFramework {
+        if state.action.usesTranslationFramework,
+            await translateRoute(for: state.original) == .translationFramework
+        {
             return try await TextTranslator.translate(state.original, to: state.targetLanguage)
         }
         let provider = try core.quickActionProvider(for: state.action)
         return try await QuickActionRunner.run(
             state.action, selection: state.original, using: provider,
+            translatingInto: TextTranslator.displayName(of: state.targetLanguage),
             instructionOverride: store.settings.instructionOverride(for: state.action),
             onDelta: { delta in
                 guard streaming else { return }
@@ -319,6 +322,18 @@ final class QuickActionCoordinator {
         let stored = store.settings.targetLanguage
         guard !stored.isEmpty else { return Locale.current.language }
         return Locale.Language(identifier: stored)
+    }
+
+    /// Which backend answers the one id both catalogues call `translate`, asked before anything runs.
+    ///
+    /// One decision for both surfaces, because they share the id: the reader's own binding if they made
+    /// one, and Apple's translator otherwise whenever it has the pair. A pair it merely supports still
+    /// counts, so a language nobody downloaded waits to be downloaded rather than becoming an AI bill.
+    func translateRoute(for selection: String) async -> DeloresTranslationRoute {
+        let availability = await TextTranslator.availability(of: selection, to: targetLanguage)
+        return DeloresActionDefinition.translationRoute(
+            hasModelBinding: store.modelOverride(forActionID: BuiltInQuickAction.translate.id) != nil,
+            availability: availability)
     }
 
     /// The provider this action runs on: the model the reader bound to it, and the permissive

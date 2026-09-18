@@ -24,4 +24,42 @@ struct DeloresActionDefinition: Equatable, Hashable, Sendable, Identifiable {
     static func outputCap(for id: String) -> OutputCap {
         id == "summarize" ? .compact(max: 512) : .scaled(max: 2_048)
     }
+
+    /// The backend an id runs on when nothing has chosen otherwise.
+    ///
+    /// `translate` is the one id both catalogues ship that Apple's translator can perform, and it is
+    /// the default because that translator is free and better at the job; a model answers it only when
+    /// the reader binds one to the id. Every other id is a prompt, so only a model can answer it.
+    static func defaultBackend(for id: String) -> Backend {
+        id == "translate" ? .translationFramework : .languageModel
+    }
+
+    /// One id, two backends: which of them answers `translate` on this Mac.
+    ///
+    /// The reader's own binding wins. Otherwise Apple's translator answers whenever it has the pair —
+    /// a pair it merely supports counts, because falling through to a provider here would bill the
+    /// reader for a language they can download for nothing.
+    static func translationRoute(
+        hasModelBinding: Bool, availability: DeloresTranslationAvailability
+    ) -> DeloresTranslationRoute {
+        guard !hasModelBinding else { return .languageModel }
+        switch availability {
+        case .installed, .supported: return .translationFramework
+        case .unsupported, .undetectable: return .languageModel
+        }
+    }
+}
+
+/// What Apple's translator says about one pair, asked before anything runs.
+///
+/// `Translation`'s own status cannot come into `Model/`, so the router is handed the part of it that
+/// decides: whether the pair is ready, merely available, or beyond the framework — and whether the
+/// text's own language could be told at all, which is a case the framework reports as nothing.
+enum DeloresTranslationAvailability: Equatable, Sendable {
+    case installed, supported, unsupported, undetectable
+}
+
+/// Which of the two answers one press.
+enum DeloresTranslationRoute: Equatable, Sendable {
+    case translationFramework, languageModel
 }

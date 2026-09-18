@@ -249,6 +249,19 @@ struct DeloresContextTest {
         require(
             translated != QuickActionPrompt.instructions(for: QuickAction.translate),
             "the chat lane says more than the panel lane's bare boundary")
+        require(
+            QuickActionPrompt.instructions(for: QuickAction.translate, translatingInto: "Japanese")
+                == translated,
+            "a model standing in for the framework is asked for the translation the chat lane asks")
+        require(
+            QuickActionPrompt.instructions(
+                for: BuiltInQuickAction.translate, override: "Ignore that.", translatingInto: "Japanese")
+                == translated,
+            "a reader's wording cannot drop the language translate's model was asked for")
+        require(
+            QuickActionPrompt.instructions(for: QuickAction.summarize, translatingInto: "Japanese")
+                == QuickActionPrompt.instructions(for: QuickAction.summarize),
+            "a target language is read for translate and nothing else")
 
         require(
             QuickActionPrompt.chatInstructions(
@@ -614,6 +627,26 @@ struct DeloresContextTest {
                 == DeloresActionDefinition.OutputCap.compact(max: 512)
                     .tokens(selection: String(repeating: "a", count: 9_000)),
             "Context summarize and Quick Action summarize share the compact 512 cap")
+        require(
+            translate.definition.backend == .translationFramework,
+            "the bar's 翻译 says Apple's translator is what answers it with no model bound")
+        require(
+            DeloresActionDefinition.defaultBackend(for: "translate") == .translationFramework
+                && DeloresActionDefinition.defaultBackend(for: "explain") == .languageModel
+                && DeloresActionDefinition.defaultBackend(for: "custom-row") == .languageModel,
+            "translate is the one id Apple's translator owns by default")
+        // `translationRoute` picks between Apple's translator and a model; its labels say which.
+        let route = DeloresActionDefinition.translationRoute
+        require(
+            route(true, .installed) == .languageModel && route(true, .undetectable) == .languageModel,
+            "a model bound to the id answers it, whatever this Mac can do on its own")
+        require(
+            route(false, .installed) == .translationFramework
+                && route(false, .supported) == .translationFramework,
+            "an unbound translate keeps the translator, including a pair only waiting to download")
+        require(
+            route(false, .unsupported) == .languageModel && route(false, .undetectable) == .languageModel,
+            "a pair Apple cannot do, or a text whose language it cannot tell, falls to a model")
     }
     private static func testActionSessionRunner() {
         require(runSession { $0.yield(.text("你好")); $0.yield(.text("世界")); $0.finish() } == .finished("你好世界"), "runner short stream")

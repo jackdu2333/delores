@@ -67,7 +67,9 @@ struct DeloresSpatialSettingsView: View {
         } footer: {
             Text(
                 "These are the buttons on the bar that appears when you select text. A row without "
-                    + "its own model follows the one chosen in the Quick Actions pane."
+                    + "its own model follows the one chosen in the Quick Actions pane. 翻译 keeps "
+                    + "Apple's translator until you bind a model to it, and falls back to that "
+                    "shared model for a language Apple's translator does not have."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -79,11 +81,12 @@ struct DeloresSpatialSettingsView: View {
         if action.kind == .search {
             return action.searchTemplate
         }
-        guard let bound = quickActions.modelOverride(forActionID: action.id) else {
-            return "Same as Quick Actions"
+        if let bound = quickActions.modelOverride(forActionID: action.id) {
+            guard let effort = bound.effort else { return bound.model }
+            return "\(bound.model) · \(effort)"
         }
-        guard let effort = bound.effort else { return bound.model }
-        return "\(bound.model) · \(effort)"
+        // The row says what will answer it, and for 翻译 that is not the pane's model.
+        return action.definition.backend == .languageModel ? "Same as Quick Actions" : "Apple's translator"
     }
 
     @ViewBuilder private var companionSection: some View {
@@ -215,6 +218,9 @@ private struct ContextActionModelSheet: View {
         _selection = State(initialValue: nil)
     }
 
+    /// 翻译 has a backend of its own, so "no route" does not mean the Quick Actions model for it.
+    private var keepsAppleTranslator: Bool { action.definition.backend == .translationFramework }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
             Text("Model for \(action.title)")
@@ -222,7 +228,13 @@ private struct ContextActionModelSheet: View {
             Text("Used every time \(action.title) runs from the bar on the text you have selected.")
                 .foregroundStyle(.secondary)
 
-            QuickActionModelPicker(selection: $selection)
+            QuickActionModelPicker(
+                selection: $selection,
+                inheritedTitle: keepsAppleTranslator ? "Apple's translator" : "Same as Quick Actions",
+                inheritedHelp: keepsAppleTranslator
+                    ? "With nothing bound this row keeps Apple's translator; a pair it does not have "
+                        + "falls back to the shared model."
+                    : "Same as Quick Actions follows the Model section of the Quick Actions pane.")
 
             HStack {
                 Spacer()

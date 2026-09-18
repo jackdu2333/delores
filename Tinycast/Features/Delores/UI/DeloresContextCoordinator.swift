@@ -39,7 +39,7 @@ final class DeloresContextCoordinator {
     @ObservationIgnored private var conversation = DeloresActionConversation()
     /// The action and the text it was asked about, so 重试 and a follow-up need not go back to the app
     /// holding the selection — by the time either is wanted, the reader has clicked away from it.
-    @ObservationIgnored private var lastRun: (action: DeloresContextAction, selection: String)?
+    @ObservationIgnored private var lastRun: (action: DeloresContextAction, selection: String, path: RunPath)?
     @ObservationIgnored private var lastFingerprint: DeloresSelectionFingerprint?
     @ObservationIgnored private var lastSelectionUptime = -Double.infinity
     @ObservationIgnored private var targetApplication: NSRunningApplication?
@@ -49,6 +49,10 @@ final class DeloresContextCoordinator {
     /// far faster than anyone reads them. Coalescing keeps the answer visibly growing without
     /// rebuilding the surface two hundred times for one paragraph.
     private static let streamingInterval: Duration = .milliseconds(160)
+
+    /// Which lane answered one press. 重试 repeats the lane the reader saw rather than choosing again:
+    /// a retry is the same question asked once more, not a new one about a backend that has moved.
+    private enum RunPath: Equatable { case model, translationFramework }
 
     private(set) var context: InvocationContext?
     private(set) var isMonitoring = false
@@ -257,13 +261,39 @@ final class DeloresContextCoordinator {
                 aiChat.ask(prompt)
             }
         case .ai:
-            answer(action, selection: selection.text)
+            beginAnswer(action, selection: selection.text)
+        }
+    }
+
+    /// Where one press goes, before any card is on screen.
+    ///
+    /// 翻译 is the one row that can be answered from two places — Apple's translator unless the reader has
+    /// given that id a model — so the choice is made here, once, rather than inside the run: a card that
+    /// changed backend halfway through would be one nobody could read.
+    private func beginAnswer(_ action: DeloresContextAction, selection: String) {
+        guard action.definition.backend == .translationFramework else {
+            answer(action, selection: selection, path: .model)
+            return
+        }
+        let generation = UUID()
+        actionGeneration = generation
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let route = await self.quickActions.translateRoute(for: selection)
+            guard self.actionGeneration == generation else { return }
+            switch route {
+            case .languageModel: self.answer(action, selection: selection, path: .model)
+            case .translationFramework:
+                self.answerWithTheTranslationFramework(action, selection: selection)
+            }
         }
     }
 
     // MARK: - Answering in the island
 
-    private func answer(_ action: DeloresContextAction, selection: String, question: String? = nil) {
+    private func answer(
+        _ action: DeloresContextAction, selection: String, path: RunPath, question: String? = nil
+    ) {
         cancelAnswer()
         let provider: any AIProvider
         do { provider = try quickActions.provider(forActionID: action.id) }
@@ -271,7 +301,7 @@ final class DeloresContextCoordinator {
         let asked = question ?? action.message(selection: selection)
         let generation = UUID()
         actionGeneration = generation
-        lastRun = (action, selection)
+        lastRun = (action, selection, path)
         conversation.begin(question: asked)
         island.showAnswer(.running(action))
         let request = AIRequest(instructions: action.instructions, messages: Self.messages(from: conversation.settled) + [AIMessage(role: .user, text: asked)], maxOutputTokens: action.maxOutputTokens(selection: selection))
@@ -289,6 +319,37 @@ final class DeloresContextCoordinator {
                 })
             guard let self, self.actionGeneration == generation, let outcome else { return }
             self.show(outcome, for: action)
+        }
+    }
+
+    /// Apple's translator, in the card the reader is already looking at.
+    ///
+    /// No provider and nothing to stream: the framework hands back one finished string, so the card goes
+    /// up as running and then holds the whole translation. The answer joins the conversation either way,
+    /// because a follow-up question about it is still a model's turn.
+    private func answerWithTheTranslationFramework(
+        _ action: DeloresContextAction, selection: String
+    ) {
+        cancelAnswer()
+        let generation = UUID()
+        actionGeneration = generation
+        lastRun = (action, selection, .translationFramework)
+        conversation.begin(question: action.message(selection: selection))
+        island.showAnswer(.running(action))
+        let target = quickActions.targetLanguage
+        actionTask = Task { @MainActor [weak self] in
+            do {
+                let text = try await TextTranslator.translate(selection, to: target)
+                guard let self, self.actionGeneration == generation else { return }
+                self.conversation.noteAnswer(text)
+                self.island.showAnswer(.partial(action, text: text), animated: false)
+            } catch is CancellationError {
+                // A reader who stopped the run asked for nothing, which is not a failure to read.
+                return
+            } catch {
+                guard let self, self.actionGeneration == generation else { return }
+                self.island.showAnswer(.failed(action, reason: error.localizedDescription))
+            }
         }
     }
 
@@ -317,16 +378,20 @@ final class DeloresContextCoordinator {
         self.actionTask = nil
     }
     private func askAgain() {
-        guard let (action, selection) = lastRun else { return }
+        guard let (action, selection, path) = lastRun else { return }
         conversation.restart()
-        answer(action, selection: selection)
+        switch path {
+        case .model: answer(action, selection: selection, path: .model)
+        case .translationFramework: answerWithTheTranslationFramework(action, selection: selection)
+        }
     }
     private func followUp(_ question: String) {
-        guard let (action, selection) = lastRun else { return }
+        guard let (action, selection, _) = lastRun else { return }
         let asked = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !asked.isEmpty else { return }
         conversation.commitForFollowUp()
-        answer(action, selection: selection, question: asked)
+        // A follow-up asks about the answer, so it is a model's turn whatever produced that answer.
+        answer(action, selection: selection, path: .model, question: asked)
     }
 
     private func cancelAnswer() {

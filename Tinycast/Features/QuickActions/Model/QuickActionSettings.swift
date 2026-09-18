@@ -42,6 +42,7 @@ struct QuickActionSettings: Equatable, Sendable {
         BuiltInQuickAction(rawValue: id).flatMap(instructionOverride(for:))
     }
 
+    /// Translate's task names the language the reader picked, so it is not theirs to replace here.
     mutating func setInstructionOverride(_ instructions: String?, for action: BuiltInQuickAction) {
         guard !action.usesTranslationFramework else { return }
         instructionOverrides[action] = instructions

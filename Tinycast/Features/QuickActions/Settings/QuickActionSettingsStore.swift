@@ -60,8 +60,9 @@ final class QuickActionSettingsStore {
         modelOverrides[action.id]
     }
 
+    /// `translate` takes a route like any other: binding it is what moves the id off Apple's translator.
     func setModelOverride(_ selection: AIModelSelection?, for action: QuickAction) {
-        guard !action.usesTranslationFramework, modelOverrides[action.id] != selection else { return }
+        guard modelOverrides[action.id] != selection else { return }
         modelOverrides[action.id] = selection
     }
 
@@ -72,9 +73,8 @@ final class QuickActionSettingsStore {
     /// read has existed since the model route went id-keyed; this is the write that lets those rows
     /// be configured where the reader sees them.
     ///
-    /// No `usesTranslationFramework` guard here, unlike the overload above. That guard exists because
-    /// Apple's translator answers for `BuiltInQuickAction.translate` and a bound route would be
-    /// ignored; the Context Surface's `translate` is a prompt of its own, so its route *is* used.
+    /// Both overloads agree, because an id is a route like any other and `translate` is where that
+    /// shows: a binding on it is what moves the id off Apple's translator and onto a model.
     func modelOverride(forActionID id: String) -> AIModelSelection? {
         modelOverrides[id]
     }

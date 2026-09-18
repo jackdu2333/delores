@@ -51,8 +51,30 @@ enum TextTranslator {
         do {
             let session = TranslationSession(installedSource: source, target: target)
             return try await session.translate(text).targetText
+        } catch is CancellationError {
+            // A reader who stopped the run asked for nothing, which is not a failure to read.
+            throw CancellationError()
         } catch {
             throw Failure.failed
+        }
+    }
+
+    /// The pair question, asked without translating.
+    ///
+    /// `translate` answers it too, but by throwing: this is the same answer as a value, because the
+    /// router has to know which backend this Mac can offer *before* anything is on screen, and a text
+    /// whose language cannot be told is a case the framework does not report at all.
+    static func availability(
+        of text: String, to target: Locale.Language
+    ) async -> DeloresTranslationAvailability {
+        guard let source = sourceLanguage(of: text) else { return .undetectable }
+        // The same language needs no pair: `translate` hands the text straight back.
+        guard !source.isEquivalent(to: target) else { return .installed }
+        switch await LanguageAvailability().status(from: source, to: target) {
+        case .installed: return .installed
+        case .supported: return .supported
+        case .unsupported: return .unsupported
+        @unknown default: return .unsupported
         }
     }
 

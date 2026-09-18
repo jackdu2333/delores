@@ -3,8 +3,8 @@
 Act on whatever text is selected, in whatever app is frontmost. Four are shipped: Fix Grammar,
 Rewrite, Translate and Summarize, each with its own bindable shortcut **and its own launcher command**,
 both listed in **Settings → Quick Actions**. Three go through the AI provider layer; Translate goes to
-Apple's own translator. The result either replaces the selection or arrives in a floating panel, per
-action.
+Apple's own translator, and to a model only when the reader binds one to that id. The result either
+replaces the selection or arrives in a floating panel, per action.
 
 A **custom Quick Action** is a name, a glyph and a prompt, run through the same provider. It takes a
 shortcut and a launcher row like any other.
@@ -46,7 +46,9 @@ provider protocol and the connections behind it.
 - **An action may override that route, and only by choice.** `quickActionModelOverrides` is keyed by
   `QuickAction.id`, so the built-in four and custom actions share one lookup,
   `QuickActionSettingsStore.model(for:)`. An absent entry follows `quickActionModel`, so nothing
-  changes until the reader picks a model in the action's sheet. Translate never takes one.
+  changes until the reader picks a model in the action's sheet. Translate takes one too: its own
+  default is Apple's translator, and a binding on that id is what replaces the translator with a model
+  — on the bar and in the palette at once, because both catalogues ship the same id.
 - **A dead override is dropped, never rerouted.** Repair walks every override beside the shared
   route: a vanished catalog model moves to its command's first model, like the shared route, but a
   removed connection or an unavailable command deletes the entry instead of borrowing chat's model.
@@ -71,7 +73,9 @@ provider protocol and the connections behind it.
   is prepended and no control removes it.
 - **Each model action owns its instructions and its route.** The pencil on Fix Grammar, Rewrite and
   Summarize opens a sheet prefilled with the exact built-in prompt and the action's model. Saving
-  replaces both for only that action; Use Default restores the prompt. Translate has no editor because no model handles translation. The same
+  replaces both for only that action; Use Default restores the prompt. Translate has no editor: its
+  instructions are the task plus the language the reader picked, and it is given a model, if any, beside
+  the Context Bar's rows in the Delores pane. The same
   pencil on a custom action opens its editor, which owns the name and glyph too.
 - **A custom action never travels in a backup.** Neither the record, its shortcut nor its route, for
   the reason `quickActionInstructions` already doesn't: an import must never change what a shortcut
@@ -94,7 +98,7 @@ started.
 | --- | --- | --- | --- |
 | Fix Grammar | provider | replaces directly | yes |
 | Rewrite | provider | panel | yes |
-| Translate | Apple Translation | panel | no |
+| Translate | Apple Translation, or the provider bound to it | panel | no |
 | Summarize | provider | panel, always | no |
 | a custom action | provider | panel | no |
 
@@ -144,6 +148,14 @@ only what the reader actually changed, so a new action arrives with its own defa
 whatever a missing key would have meant.
 
 ## Translation
+
+**The translator is the default, not the only answer.** `DeloresActionDefinition.translationRoute`
+decides one press: a model the reader bound to the `translate` id answers it, and otherwise Apple's
+translator does, whenever `TextTranslator.availability(of:to:)` says this Mac has the pair — a pair it
+merely supports counts, because falling through to a provider there would bill for a language that
+downloads for nothing. Only an unsupported pair, or a text whose language `NLLanguageRecognizer`
+cannot identify, reaches a model unasked. Both catalogues ship the same id, so the bar and the palette
+reach one decision through the one call, `QuickActionCoordinator.translateRoute(for:)`.
 
 `TextTranslator` uses Apple's translator rather than the language model: it runs on device, costs
 nothing on every route, and a 3B model is markedly worse at it. `NLLanguageRecognizer` supplies the

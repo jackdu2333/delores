@@ -50,10 +50,18 @@ selection gesture
 
 The island owns its own catalogue. `DeloresContextAction` defines the four rows
 (translate/explain/summarize/search) with their prompts, and which of them rewrites the selection. It
-reads exactly three things from Quick Actions and nothing else: the sections the reader wrote in
-Settings, a per-action prompt override they wrote there, and the model route bound to an action id
-(`quickActions.provider(forActionID:)`). The answer is streamed into the island's own card by
-`DeloresContextCoordinator.answer`, which builds the `AIRequest` and consumes `provider.stream`.
+reads exactly four things from Quick Actions and nothing else: the rows the reader wrote in Settings, a
+per-action prompt override they wrote there, the model route bound to an action id
+(`quickActions.provider(forActionID:)`), and the backend that route means for `translate`
+(`quickActions.translateRoute(for:)`, below). A model's answer is streamed into the island's own card
+by `DeloresContextCoordinator.answer`, which builds the `AIRequest` and consumes `provider.stream`.
+
+**`translate` is one id with two backends**, and it is the one row whose press is routed before
+anything is drawn: `DeloresActionDefinition.translationRoute` answers with Apple's translator unless
+the reader bound a model to that id, so the card either takes the framework's one finished string or
+streams a model's answer. 重试 repeats the lane the reader saw, and a follow-up question is always a
+model's turn, handed the framework's answer as settled context. Quick Actions asks the same method, so
+the bar and the palette cannot disagree about what 翻译 means.
 
 It does **not** hand a press to the Quick Action result surface. Earlier in the project a Context press
 did exactly that, and the four Actions were native Quick Actions keeping their own preview and
@@ -307,7 +315,7 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
 | Quick Action entry with a captured selection | `QuickActionCoordinator` | **Withdrawn**: the selection-aware `run` overload and its `begin(selectionOverride:)` were removed when the Context Surface stopped executing native Quick Actions — its catalog is its own, and the whole overload had no remaining caller |
 | Per-action route for a Context Surface action that no Quick Action backs | `AppCore.quickActionProvider(forActionID:)`, `QuickActionSettingsStore.model(forActionID:)` **and now `modelOverride(forActionID:)` / `setModelOverride(_:forActionID:)`**, `QuickActionCoordinator.provider(forActionID:)` | One small integration seam. Id-keyed, so a per-action model binding survives a catalog Delores owns; `quickActionProvider(for:)` and `model(for:)` now delegate to these, so no behaviour moved. The two by-id accessors were added when the bar's rows got a settings section of their own — the read existed, the write did not, and `setModelOverride(_:for:)` cannot serve an id like `explain` that no `QuickAction` can be made from |
-| Reader-replaceable per-action prompt, reached by id | `QuickActionCoordinator.instructionOverride(forActionID:)`, `QuickActionSettings.instructionOverride(forActionID:)` | The Context Surface applies it to any catalog row whose id is also a `BuiltInQuickAction`, so a prompt rewritten in Settings reaches the bar. Id-keyed for the same reason the model route is: the two catalogues overlap without agreeing. `provider(for:)` and `targetLanguage` are **still unreferenced** — delete them the next time the chat handoff is designed and they remain unused |
+| Reader-replaceable per-action prompt, reached by id | `QuickActionCoordinator.instructionOverride(forActionID:)`, `QuickActionSettings.instructionOverride(forActionID:)` | The Context Surface applies it to any catalog row whose id is also a `BuiltInQuickAction`, so a prompt rewritten in Settings reaches the bar. Id-keyed for the same reason the model route is: the two catalogues overlap without agreeing. `provider(for:)` is **still unreferenced** — delete them the next time the chat handoff is designed and they remain unused |
 | Custom Quick Actions on the Context Surface | `QuickActionCoordinator.customQuickActionRows`, `DeloresContextAction.available(aiEnabled:customActions:)` | One-way: the bar copies the rows Settings owns and never writes one, so neither catalogue can be changed by the surface that borrowed it. The row's entry id is its binding key, so a model bound in Settings survives the trip |
 | Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |

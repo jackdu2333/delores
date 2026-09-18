@@ -97,6 +97,19 @@ Decided (nono, 2026-09-17): **one action id, two backends.** So:
 
 This is the decision the rest of Phase B hangs on, which is why it is settled first.
 
+**Landed (2026-09-18).** `DeloresActionDefinition.translationRoute(hasModelBinding:availability:)`
+holds the policy, `TextTranslator.availability(of:to:)` is the framework's answer it is asked with, and
+`QuickActionCoordinator.translateRoute(for:)` is the one call both surfaces make. Three details the
+shape turns on:
+
+- **The binding is `modelOverride(forActionID:)`, not `model(forActionID:)`.** The second falls back to
+  the catalogue-wide model that every row already has, so reading it would make `translate`
+  model-backed always — the opposite of the decision.
+- **A pair the framework merely supports keeps the framework**, so 翻译 offers the download it needs
+  rather than quietly becoming provider traffic.
+- **重试 repeats the lane the reader saw** rather than deciding again, and a follow-up question is a
+  model's turn handed the framework's answer as settled context.
+
 ## The order
 
 1. **`ActionSession` inside Delores, no Tinycast change.** **Done.** Move the streaming/cancel/keep/retry semantics
@@ -109,7 +122,8 @@ This is the decision the rest of Phase B hangs on, which is why it is settled fi
    `QuickActionRunner.run` keeps no direct-stream loop and no second cap: each provider-backed action goes
    through `DeloresActionSessionRunner`, and the budget comes from the shared `outputCap(for:)`, so the
    stop, the empty-result rule and the ceiling are the session's for every id. Apple's Translation framework
-   is not provider-backed, so it does not enter here — it is the next step under Translate.
+   is not provider-backed, so it does not enter here: which backend answers `translate` is the Translate
+   section's decision, and both surfaces now ask it there.
 4. **Only then** decide whether Tinycast's four cases become four definitions or stay an enum that
    produces definitions. **Open** — nothing above settles it either way.
 

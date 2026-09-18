@@ -2,15 +2,28 @@ import Foundation
 
 /// Chat's `AIPreamble` is not sent here: it describes a launcher nobody is asking the model about.
 enum QuickActionPrompt {
-    static func instructions(for action: QuickAction, override: String? = nil) -> String {
+    static func instructions(
+        for action: QuickAction, override: String? = nil,
+        translatingInto targetLanguageName: String? = nil
+    ) -> String {
         switch action {
-        case .builtIn(let builtIn): return instructions(for: builtIn, override: override)
+        case .builtIn(let builtIn):
+            return instructions(
+                for: builtIn, override: override, translatingInto: targetLanguageName)
         case .custom(let custom): return boundary + "\n\n" + custom.instructions
         }
     }
 
-    static func instructions(for action: BuiltInQuickAction, override: String? = nil) -> String {
+    /// `targetLanguageName` is only read for `translate`: a model performs it in place of Apple's
+    /// translator whenever the reader gave the id a model, and it is then the only source of the task.
+    static func instructions(
+        for action: BuiltInQuickAction, override: String? = nil,
+        translatingInto targetLanguageName: String? = nil
+    ) -> String {
         if !action.usesTranslationFramework, let override { return override }
+        if action == .translate, let targetLanguageName {
+            return boundary + "\n\n" + translateTask(into: targetLanguageName)
+        }
         return switch action {
         case .fixGrammar:
             boundary + """
@@ -39,7 +52,8 @@ enum QuickActionPrompt {
             request.
             """
         case .translate:
-            // Apple's translator does this one; exhaustive so a new action cannot forget a prompt.
+            // Reached only with no language to translate into; exhaustive so a new action cannot
+            // forget a prompt.
             boundary
         }
     }
@@ -62,8 +76,8 @@ enum QuickActionPrompt {
         return lines.joined(separator: "\n")
     }
 
-    /// The chat path runs no translation framework, so translate carries its own task there
-    /// instead of the bare boundary the panel path leaves to `TextTranslator`.
+    /// The chat path runs no translation framework, so translate carries its own task there — the
+    /// same sentence the panel now asks for when the reader has given the id a model instead.
     /// Nil for every other action: its own instructions already carry the whole task.
     ///
     /// The language arrives already named — `TextTranslator.displayName(of:)` owns that spelling,
@@ -79,9 +93,15 @@ enum QuickActionPrompt {
     ) -> String? {
         if let override { return boundary + "\n\n" + override }
         guard action.builtInAction == .translate else { return nil }
-        return boundary + "\n\n" + """
-            Translate the text into \(name). Keep the writer's formatting and line breaks, and \
-            return only the translation.
-            """
+        return boundary + "\n\n" + translateTask(into: name)
+    }
+
+    /// The one sentence a model needs to do the job Apple's translator would otherwise do. Shared, so
+    /// the panel lane and the chat lane cannot come to ask for different translations.
+    private static func translateTask(into name: String) -> String {
+        """
+        Translate the text into \(name). Keep the writer's formatting and line breaks, and return \
+        only the translation.
+        """
     }
 }

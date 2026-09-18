@@ -38,12 +38,14 @@ final class QuickActionRunner {
     /// No transcript to grow, so a caller showing progress reads `onDelta` and the rest just await.
     static func run(
         _ action: QuickAction, selection: String, using provider: any AIProvider,
+        translatingInto targetLanguageName: String? = nil,
         instructionOverride: String?,
         onDelta: @MainActor (String) -> Void = { _ in }
     ) async throws -> String {
         let request = AIRequest(
             instructions: QuickActionPrompt.instructions(
-                for: action, override: instructionOverride),
+                for: action, override: instructionOverride,
+                translatingInto: targetLanguageName),
             messages: [
                 AIMessage(
                     role: .user,

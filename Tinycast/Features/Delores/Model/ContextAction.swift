@@ -52,7 +52,8 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     var needsModel: Bool { kind != .search }
 
     var definition: DeloresActionDefinition {
-        let backend: DeloresActionDefinition.Backend = kind == .search ? .urlTemplate(searchTemplate) : .languageModel
+        let backend: DeloresActionDefinition.Backend =
+            kind == .search ? .urlTemplate(searchTemplate) : DeloresActionDefinition.defaultBackend(for: id)
         return DeloresActionDefinition(
             id: id, title: title, symbol: symbol, backend: backend, prompt: prompt,
             rewritesSelection: rewritesSelection,
