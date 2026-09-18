@@ -23,12 +23,12 @@ struct AISettingsView: View {
             Section {
                 Toggle(isOn: $appSettings.aiEnabled) {
                     SettingsRowTitle(.aiAI, "Enable AI")
-                    Text(L10n.string("Chat with the model you choose; nothing is loaded or sent until it is on."))
+                    Text("Chat with the model you choose; nothing is loaded or sent until it is on.")
                 }
                 SettingsRow(
                     title: "Providers", subtitle: providerSummary, anchor: .aiProviders
                 ) {
-                    Button(L10n.string("Manage…")) { providersPresented = true }
+                    Button("Manage…") { providersPresented = true }
                 }
             } header: {
                 SettingsSectionHeader(.aiAI)
@@ -77,11 +77,11 @@ struct AISettingsView: View {
                 select: { $0.map(settings.select) },
                 modelLabel: {
                     SettingsRowTitle(.aiDefault, "Default model")
-                    Text(L10n.string("Used by Tinycast features unless they ask you to choose another model."))
+                    Text("Used by Tinycast features unless they ask you to choose another model.")
                 },
                 effortLabel: {
                     SettingsRowTitle(.aiDefault, "Reasoning effort")
-                    Text(L10n.string("Applied when the default model supports reasoning effort."))
+                    Text("Applied when the default model supports reasoning effort.")
                 }
             )
         } header: {
@@ -125,14 +125,14 @@ struct AISettingsView: View {
         @Bindable var settings = settings
         return Section {
             Toggle(isOn: $settings.webSearchEnabled) {
-                    SettingsRowTitle(.aiChat, "Web search")
+                SettingsRowTitle(.aiChat, "Web search")
                 Text(
                     "Sends prompts on to a search engine when the route offers one — Codex and OpenRouter.")
             }
         } header: {
             SettingsSectionHeader(.aiChat)
         } footer: {
-            Text(L10n.string("Images pasted into the chat go to any model that accepts them; others never see one."))
+            Text("Images pasted into the chat go to any model that accepts them; others never see one.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -145,28 +145,30 @@ struct AISettingsView: View {
                 ForEach(AIOpensTo.allCases) { Text($0.title).tag($0) }
             } label: {
                 SettingsRowTitle(.aiConversations, "Opens to")
-                Text(L10n.string("What summoning AI Chat lands on."))
+                Text("What summoning AI Chat lands on.")
             }
             if settings.opensTo == .recent {
                 Picker(selection: $settings.newChatAfter) {
                     ForEach(AINewChatAfter.allCases) { Text($0.title).tag($0) }
                 } label: {
                     SettingsRowTitle(.aiConversations, "Start a new conversation after")
-                    Text(L10n.string("Idle this long and the next summon starts fresh instead."))
+                    Text("Idle this long and the next summon starts fresh instead.")
                 }
             }
             Picker(selection: $settings.retention) {
                 ForEach(AIRetention.allCases) { Text($0.title).tag($0) }
             } label: {
                 SettingsRowTitle(.aiConversations, "Keep conversations")
-                Text(L10n.string("Older conversations are deleted permanently."))
+                Text("Older conversations are deleted permanently.")
             }
             .onChange(of: settings.retention) { core.aiChatCoordinator.applyRetention() }
         } header: {
             SettingsSectionHeader(.aiConversations)
         } footer: {
             Text(
-                    L10n.string("Conversations stay on this Mac. Nothing here is carried in a settings backup — which chats a Mac keeps is that Mac's business."))
+                "Conversations stay on this Mac. Nothing here is carried in a settings backup — which "
+                    + "chats a Mac keeps is that Mac's business."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -176,8 +178,8 @@ struct AISettingsView: View {
         @Bindable var settings = settings
         return Section {
             Toggle(isOn: $settings.systemPromptEnabled) {
-                    SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
-                Text(L10n.string("Off sends nothing ahead of your message, not even what Tinycast says about itself."))
+                SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
+                Text("Off sends nothing ahead of your message, not even what Tinycast says about itself.")
             }
             SystemPromptEditor(text: $settings.systemPrompt)
                 .settingsEnabled(settings.systemPromptEnabled)
@@ -185,7 +187,9 @@ struct AISettingsView: View {
             SettingsSectionHeader(.aiSystemPrompt)
         } footer: {
             Text(
-                    L10n.string("Your text is sent ahead of every message in every chat, after what Tinycast already tells the model about itself. Both are billed again on each turn."))
+                "Your text is sent ahead of every message in every chat, after what Tinycast "
+                    + "already tells the model about itself. Both are billed again on each turn."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -195,8 +199,8 @@ struct AISettingsView: View {
         @Bindable var settings = settings
         return VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(L10n.string("AI Providers")).font(.title2.weight(.bold))
-                Text(L10n.string("Use an installed account or connect an API endpoint."))
+                Text("AI Providers").font(.title2.weight(.bold))
+                Text("Use an installed account or connect an API endpoint.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -211,7 +215,7 @@ struct AISettingsView: View {
 
             HStack {
                 Spacer()
-                Button(L10n.string("Done")) { providersPresented = false }
+                Button("Done") { providersPresented = false }
                     .keyboardShortcut(.defaultAction)
             }
             .padding(Theme.Spacing.xxl)
@@ -228,12 +232,12 @@ struct AISettingsView: View {
             isPresented: removalPresented,
             titleVisibility: .visible
         ) {
-            Button(L10n.string("Remove Connection"), role: .destructive) {
+            Button("Remove Connection", role: .destructive) {
                 if let pendingRemoval { removeConnection(pendingRemoval) }
             }
-            Button(L10n.string("Cancel"), role: .cancel) { pendingRemoval = nil }
+            Button("Cancel", role: .cancel) { pendingRemoval = nil }
         } message: {
-            Text(L10n.string("Its saved API key will also be deleted from Keychain."))
+            Text("Its saved API key will also be deleted from Keychain.")
         }
         .onAppear {
             loadKeyStatuses()
@@ -258,7 +262,9 @@ struct AISettingsView: View {
             SettingsSectionHeader(.aiInstalledAI)
         } footer: {
             Text(
-                    L10n.string("Tinycast uses the Codex, Claude and OpenCode commands already installed and signed in on this Mac. Tinycast never stores or asks for their API keys."))
+                "Tinycast uses the Codex, Claude and OpenCode commands already installed and signed "
+                    + "in on this Mac. Tinycast never stores or asks for their API keys."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -274,25 +280,25 @@ struct AISettingsView: View {
                 } label: {
                     HStack {
                         ProgressView().controlSize(.small)
-                        Text(L10n.string("Checking Codex…")).foregroundStyle(.secondary)
+                        Text("Checking Codex…").foregroundStyle(.secondary)
                     }
                 }
             case .idle, .signedOut:
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Copy Sign-In Command")) { copySignInCommand(.codex) }
-                        Button(L10n.string("Check Again")) { subscription.refresh() }
+                        Button("Copy Sign-In Command") { copySignInCommand(.codex) }
+                        Button("Check Again") { subscription.refresh() }
                         providerToggle(.codex)
                     }
                 } label: {
-                    Text(L10n.string("Codex · Sign in required"))
-                    Text(L10n.string("Run codex login in Terminal, then check again."))
+                    Text("Codex · Sign in required")
+                    Text("Run codex login in Terminal, then check again.")
                 }
             case .connected:
                 if let account = subscription.account {
                     LabeledContent {
                         providerActions {
-                            Button(L10n.string("Refresh")) { subscription.refresh() }
+                            Button("Refresh") { subscription.refresh() }
                             providerToggle(.codex)
                         }
                     } label: {
@@ -302,7 +308,7 @@ struct AISettingsView: View {
                                 revealHelp: "Click to reveal the signed-in account",
                                 hideHelp: "Click to hide the signed-in account")
                         } else {
-                            Text(L10n.string("Codex · Ready"))
+                            Text("Codex · Ready")
                         }
                         Text(
                             account.planTitle == "API key" ? "Codex API key" : "ChatGPT \(account.planTitle)")
@@ -311,26 +317,26 @@ struct AISettingsView: View {
             case .unavailable(let message):
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Install Codex CLI…")) {
+                        Button("Install Codex CLI…") {
                             if let url = URL(string: "https://developers.openai.com/codex/cli") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
-                        Button(L10n.string("Check Again")) { subscription.refresh() }
+                        Button("Check Again") { subscription.refresh() }
                         providerToggle(.codex)
                     }
                 } label: {
-                    Text(L10n.string("Codex · Not installed"))
+                    Text("Codex · Not installed")
                     Text(message)
                 }
             case .failed(let message):
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Try Again")) { subscription.refresh() }
+                        Button("Try Again") { subscription.refresh() }
                         providerToggle(.codex)
                     }
                 } label: {
-                    Label(L10n.string("Codex check failed"), systemImage: "exclamationmark.triangle")
+                    Label("Codex check failed", systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
                     Text(message)
                 }
@@ -357,7 +363,7 @@ struct AISettingsView: View {
             case .ready:
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Refresh")) {
+                        Button("Refresh") {
                             installedAI.refresh(kind: kind)
                         }
                         providerToggle(kind)
@@ -371,8 +377,8 @@ struct AISettingsView: View {
             case .signInRequired:
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Copy Sign-In Command")) { copySignInCommand(kind) }
-                        Button(L10n.string("Check Again")) {
+                        Button("Copy Sign-In Command") { copySignInCommand(kind) }
+                        Button("Check Again") {
                             installedAI.refresh(kind: kind)
                         }
                         providerToggle(kind)
@@ -384,8 +390,8 @@ struct AISettingsView: View {
             case .notInstalled:
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Install…")) { NSWorkspace.shared.open(kind.installURL) }
-                        Button(L10n.string("Check Again")) {
+                        Button("Install…") { NSWorkspace.shared.open(kind.installURL) }
+                        Button("Check Again") {
                             installedAI.refresh(kind: kind)
                         }
                         providerToggle(kind)
@@ -397,7 +403,7 @@ struct AISettingsView: View {
             case .failed(let message):
                 LabeledContent {
                     providerActions {
-                        Button(L10n.string("Try Again")) {
+                        Button("Try Again") {
                             installedAI.refresh(kind: kind)
                         }
                         providerToggle(kind)
@@ -417,8 +423,8 @@ struct AISettingsView: View {
         LabeledContent {
             providerActions { providerToggle(kind) }
         } label: {
-            Text(L10n.text(kind.title))
-            Text(L10n.string("Disabled"))
+            Text(kind.title)
+            Text("Disabled")
         }
     }
 
@@ -445,7 +451,7 @@ struct AISettingsView: View {
     private var apiConnectionsSection: some View {
         Section {
             if settings.connections.isEmpty {
-                Text(L10n.string("No API connections yet."))
+                Text("No API connections yet.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(settings.connections) { connection in
@@ -467,14 +473,16 @@ struct AISettingsView: View {
                 }
             }
             if keyError {
-                Label(L10n.string("The login Keychain could not be accessed."), systemImage: "exclamationmark.triangle")
+                Label("The login Keychain could not be accessed.", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
             }
         } header: {
             SettingsSectionHeader(.aiAPIConnections)
         } footer: {
             Text(
-                    L10n.string("OpenAI, Claude, Gemini and OpenRouter are presets. Custom OpenAI-compatible endpoints are supported too. API keys stay in your login Keychain."))
+                "OpenAI, Claude, Gemini and OpenRouter are presets. Custom OpenAI-compatible "
+                    + "endpoints are supported too. API keys stay in your login Keychain."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }

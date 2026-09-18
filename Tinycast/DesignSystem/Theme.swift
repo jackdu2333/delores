@@ -21,11 +21,15 @@ enum Theme {
         static let chatFollowTailSlack: CGFloat = 44
         /// Space above every header but the first, reading as the previous section's close.
         static let sectionSpacing: CGFloat = 12
+        /// Emoji tiles need a little more separation so adjacent category grids stay distinct.
+        static let emojiSectionSpacing: CGFloat = 14
     }
 
     enum Radius {
         static let panel: CGFloat = 26
         static let row: CGFloat = 10
+        /// Emoji tiles are roomier than list rows, so their corners take one larger step.
+        static let emojiCell: CGFloat = 12
         static let menu: CGFloat = 6
         /// Hover highlight behind a popover menu row.
         static let menuRow: CGFloat = 10
@@ -53,6 +57,23 @@ enum Theme {
     enum Size {
         static let panelWidth: CGFloat = 750
         static let panelHeight: CGFloat = 475
+        /// Opening size on a first run and the floor: below it the title bar's own parts collide.
+        static let noteWindow = CGSize(width: 440, height: 180)
+        static let noteEditorInset: CGFloat = 16
+        /// Shorter than the horizontal inset, so the first line sits close under the title bar.
+        static let noteEditorTopInset: CGFloat = 6
+        static let noteSearchHeight: CGFloat = 34
+        /// The switcher popover, sized independently of a note window that can be 180pt tall.
+        static let noteSwitcher = CGSize(width: 300, height: 240)
+        static let noteSwitcherEmptyHeight: CGFloat = 96
+        static let noteSwitcherDrop: CGFloat = 56
+        static let noteFooterHeight: CGFloat = 28
+        /// Holds the launcher's 36-point action capsule with the same margin its own bar gives it.
+        static let noteTitlebar: CGFloat = 52
+        /// Symmetric, so the title stays centred on the window while clearing lights and capsule.
+        static let noteTitleInset: CGFloat = 120
+        /// Nine points crowds the palette's 26-point corner, so Notes seats its lights further in.
+        static let noteTrafficLightInset: CGFloat = 20
         /// Fraction of visible height above the palette's top edge; it grows downward.
         static let paletteTopMarginFraction: CGFloat = 0.18
         static let headerHeight: CGFloat = 44
@@ -93,6 +114,8 @@ enum Theme {
         static let compactKeyCap: CGFloat = 15
         static let heroKeyCap: CGFloat = 22
         static let menuButton: CGFloat = 36
+        static let noteGlyph: CGFloat = 16
+        static let noteEmptyGlyph: CGFloat = 28
         /// Hit target for a chat message footer glyph; its caption symbol floats inside it.
         static let chatMessageAction: CGFloat = 16
         /// A one-pixel markdown rule and table header separator.
@@ -102,10 +125,15 @@ enum Theme {
         /// The uninstall list's leading checkbox / lock glyph.
         static let checkbox: CGFloat = 16
         static let clipboardListWidth: CGFloat = 290
+        /// Symmetric clearance between the emoji grid and both panel edges.
+        static let emojiGridInset: CGFloat = 16
+        static let emojiCell: CGFloat = 56
         static let menuWidth: CGFloat = 276
         /// The clipboard type filter's menu; `menuWidth` is far too wide for six short rows.
         static let clipboardFilterMenuWidth: CGFloat = 200
         static let fileSearchFilterMenuWidth: CGFloat = 200
+        /// Fits "Shapes & Punctuation", the longest category title.
+        static let emojiCategoryMenuWidth: CGFloat = 220
         /// Stated, not padded: the cap below counts rows, so a capped menu would land mid-row.
         static let menuRowHeight: CGFloat = menuIcon + Spacing.md * 2
         static let menuRowSpacing: CGFloat = 1
@@ -152,6 +180,8 @@ enum Theme {
         static let interfaceSizeSegment: CGFloat = 40
         /// The sidebar's search field; matches a grouped `Form` row's control height.
         static let settingsSearchField: CGFloat = 28
+        /// One density preview; five fit across the Emoji settings detail pane.
+        static let emojiSettingsGridPreview: CGFloat = 72
         /// The layout editor. Height is stated so selecting an entry cannot resize the sheet.
         static let layoutEditorSheet = CGSize(width: 900, height: 660)
         /// The inspector column; the preview takes the rest, keeping the split two-to-one.
@@ -275,6 +305,7 @@ enum Theme {
         static let menuIcon = Font.body
         static let menuSymbolSize: CGFloat = 14
         static let menuSymbolWeight = Font.Weight.medium
+        static let noteTitle = Font.headline
     }
 
     enum Colors {
@@ -319,6 +350,14 @@ enum Theme {
         static let selection = ramp(dark: 0.10, light: 0.09)
         /// Mouse hover: a fainter layer, visually distinct from selection.
         static let rowHover = ramp(dark: 0.05, light: 0.045)
+        /// Emoji grid chrome: a quiet tile at rest, with two legible rings on interaction.
+        static let emojiCell = ramp(dark: 0.045, light: 0.04)
+        static let emojiHoverBorder = ramp(dark: 0.42, light: 0.34)
+        static let emojiSelectionBorder = adaptive(
+            dark: NSColor(srgbRed: 0.96, green: 0.90, blue: 0.72, alpha: 0.92),
+            light: .srgbInk(0, alpha: 0.72))
+        static let emojiInnerBorder = adaptive(
+            dark: .srgbInk(0, alpha: 0.72), light: .srgbInk(1, alpha: 0.72))
         static let menuHover = ramp(dark: 0.10, light: 0.09)
         static let separator = ramp(dark: 0.10, light: 0.12)
         /// Small control surfaces: kbd chips, glyph tiles.
@@ -330,6 +369,7 @@ enum Theme {
         static let textSecondary = ramp(dark: 0.60, light: 0.60)
         static let textTertiary = ramp(dark: 0.40, light: 0.42)
         static let menuSymbol = ramp(dark: 0.70, light: 0.70)
+        static let noteText = ramp(dark: 0.90, light: 0.85)
         static let iconPlaceholder = ramp(dark: 0.06, light: 0.06)
         /// The faint wash behind the Onboarding header.
         static let sheen = ramp(dark: 0.04, light: 0.04)

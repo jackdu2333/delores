@@ -23,14 +23,15 @@ struct TinycastApp: App {
     @CommandsBuilder
     private var menuBarCommands: some Commands {
         CommandGroup(replacing: .appInfo) {
-            Button(L10n.format("About %@", appName)) { AppCore.shared.settingsCoordinator.showAbout() }
+            Button("About \(appName)") { AppCore.shared.settingsCoordinator.showAbout() }
+            Button("Check for Updates…") { AppCore.shared.updateCoordinator.checkForUpdates() }
         }
         CommandGroup(replacing: .appSettings) {
-            Button(L10n.string("Settings…")) { AppCore.shared.settingsCoordinator.showSettings() }
+            Button("Settings…") { AppCore.shared.settingsCoordinator.showSettings() }
                 .keyboardShortcut(",")
         }
         CommandGroup(replacing: .appTermination) {
-            Button(L10n.string("Close Settings")) { AppCore.shared.settingsCoordinator.closeSettings() }
+            Button("Close Settings") { AppCore.shared.settingsCoordinator.closeSettings() }
                 .keyboardShortcut("q")
         }
     }

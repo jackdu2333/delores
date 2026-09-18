@@ -37,7 +37,7 @@ struct DeloresSpatialSettingsView: View {
         Section {
             if !settings.quickActionsEnabled {
                 SettingsRow(
-                    title: L10n.string("The Context Bar is off"),
+                    title: "The Context Bar is off",
                     subtitle: "Turn on Enable Quick Actions to show it when you select text."
                 ) {
                     Image(systemName: "info.circle")
@@ -57,8 +57,8 @@ struct DeloresSpatialSettingsView: View {
                             SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
                         }
                         .buttonStyle(.plain)
-                        .help(L10n.format("Choose the model for %@", action.title))
-                        .accessibilityLabel(L10n.format("Choose the model for %@", action.title))
+                        .help("Choose the model for \(action.title)")
+                        .accessibilityLabel("Choose the model for \(action.title)")
                     }
                 }
             }
@@ -66,7 +66,11 @@ struct DeloresSpatialSettingsView: View {
             SettingsSectionHeader(.deloresContextBar)
         } footer: {
             Text(
-                    L10n.string("These are the buttons on the bar that appears when you select text. A row without its own model follows the one chosen in the Quick Actions pane. 翻译 keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have."))
+                "These are the buttons on the bar that appears when you select text. A row without "
+                    + "its own model follows the one chosen in the Quick Actions pane. 翻译 keeps "
+                    + "Apple's translator until you bind a model to it, and falls back to that "
+                    + "shared model for a language Apple's translator does not have."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -82,43 +86,48 @@ struct DeloresSpatialSettingsView: View {
             return "\(bound.model) · \(effort)"
         }
         // The row says what will answer it, and for 翻译 that is not the pane's model.
-        return action.definition.backend == .languageModel ? L10n.string("Same as Quick Actions") : L10n.string("Apple's translator")
+        return action.definition.backend == .languageModel ? "Same as Quick Actions" : "Apple's translator"
     }
 
     @ViewBuilder private var companionSection: some View {
         @Bindable var settings = settings
         Section {
             Toggle(isOn: $settings.deloresCompanionEnabled) {
-                    SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
+                SettingsRowTitle(.deloresCompanion, "Enable desktop companion")
                 Text(
-                    L10n.string("The companion that is simply there: it wanders the edge of the display, and reopens your last selection when you double-click it. "))
+                    "The companion that is simply there: it wanders the edge of the display, and "
+                        + "reopens your last selection when you double-click it. "
+                )
             }
             Picker(selection: $settings.deloresCompanionSize) {
-                Text(L10n.string("Regular")).tag(DeloresCompanionShell.Size.regular)
-                Text(L10n.string("Large")).tag(DeloresCompanionShell.Size.large)
+                Text("Regular").tag(DeloresCompanionShell.Size.regular)
+                Text("Large").tag(DeloresCompanionShell.Size.large)
             } label: {
                 SettingsRowTitle(.deloresCompanion, "Size")
                 // Why there are two and no slider: the sprite is authored at a fixed size and drawn
                 // at a whole number of its own pixels. Anything between the two would put a
                 // fractional number of screen pixels under one drawn pixel, which is what shimmers.
-                Text(L10n.string("Two sizes only, because it is drawn at a whole number of its own pixels."))
+                Text("Two sizes only, because it is drawn at a whole number of its own pixels.")
             }
             .settingsEnabled(settings.deloresCompanionEnabled)
 
             Picker(selection: $settings.deloresCompanionKind) {
                 ForEach(DeloresCompanionShell.Kind.allCases, id: \.self) { kind in
-                    Text(L10n.text(kind.displayName)).tag(kind)
+                    Text(kind.displayName).tag(kind)
                 }
             } label: {
                 SettingsRowTitle(.deloresCompanion, "Pet Creature")
-                Text(L10n.string("Choose which companion creature accompanies you around your display."))
+                Text("Choose which companion creature accompanies you around your display.")
             }
             .settingsEnabled(settings.deloresCompanionEnabled)
         } header: {
             SettingsSectionHeader(.deloresCompanion)
         } footer: {
             Text(
-                    L10n.string("The companion is a Surface, not a second chat client: it has no actions, history or model of its own. It hands you to the Context or Command Surface, which own those."))
+                "The companion is a Surface, not a second chat client: it has no actions, "
+                    + "history or model of its own. It hands you to the Context or Command "
+                    + "Surface, which own those."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -129,31 +138,38 @@ struct DeloresSpatialSettingsView: View {
         Section {
             if needsAccessibility {
                 SettingsRow(
-                    title: L10n.string("Accessibility permission required"),
+                    title: "Accessibility permission required",
                     subtitle: needsAccessibilitySubtitle
                 ) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(Theme.Colors.destructive)
                         .frame(width: Theme.Size.settingsRowIcon)
                 } trailing: {
-                    Button(L10n.string("Open System Settings")) { Permissions.openAccessibilitySettings() }
+                    Button("Open System Settings") { Permissions.openAccessibilitySettings() }
                 }
             }
             Toggle(isOn: snappingBinding) {
-                    SettingsRowTitle(.deloresSpatial, "Enable window snapping")
+                SettingsRowTitle(.deloresSpatial, "Enable window snapping")
                 Text(
-                    L10n.string("Drag a window up to the island at the top of the display, and drop it on the layout you want."))
+                    "Drag a window up to the island at the top of the display, and drop it on "
+                        + "the layout you want."
+                )
             }
             Toggle(isOn: dividerBinding) {
-                    SettingsRowTitle(.deloresSpatial, "Enable split divider")
+                SettingsRowTitle(.deloresSpatial, "Enable split divider")
                 Text(
-                    L10n.string("Move the pointer onto the seam between two tiled windows to resize them together."))
+                    "Move the pointer onto the seam between two tiled windows to resize them "
+                        + "together."
+                )
             }
         } header: {
             SettingsSectionHeader(.deloresSpatial)
         } footer: {
             Text(
-                    L10n.string("Both read and move other apps' windows through the same Accessibility permission Tinycast uses to paste. Neither is enabled by default, and neither is restored from a settings backup."))
+                "Both read and move other apps' windows through the same Accessibility "
+                    + "permission Tinycast uses to paste. Neither is enabled by default, and "
+                    + "neither is restored from a settings backup."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -217,23 +233,24 @@ private struct ContextActionModelSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text(L10n.format("Model for %@", action.title))
+            Text("Model for \(action.title)")
                 .font(.title2.weight(.bold))
-            Text(L10n.format("Used every time %@ runs from the bar on the text you have selected.", action.title))
+            Text("Used every time \(action.title) runs from the bar on the text you have selected.")
                 .foregroundStyle(.secondary)
 
             QuickActionModelPicker(
                 selection: $selection,
-                inheritedTitle: keepsAppleTranslator ? L10n.string("Apple's translator") : L10n.string("Same as Quick Actions"),
+                inheritedTitle: keepsAppleTranslator ? "Apple's translator" : "Same as Quick Actions",
                 inheritedHelp: keepsAppleTranslator
-                    ? L10n.string("With nothing bound this row keeps Apple's translator; a pair it does not have falls back to the shared model.")
-                    : L10n.string("Same as Quick Actions follows the Model section of the Quick Actions pane."))
+                    ? "With nothing bound this row keeps Apple's translator; a pair it does not have "
+                        + "falls back to the shared model."
+                    : "Same as Quick Actions follows the Model section of the Quick Actions pane.")
 
             HStack {
                 Spacer()
-                Button(L10n.string("Cancel")) { dismiss() }
+                Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button(L10n.string("Save")) {
+                Button("Save") {
                     quickActions.setModelOverride(selection, forActionID: action.id)
                     dismiss()
                 }

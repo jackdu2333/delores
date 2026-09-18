@@ -14,7 +14,7 @@ struct DisabledApplicationsList: View {
             }
         }
 
-        Button(L10n.string("Add Application…")) { picking = true }
+        Button("Add Application…") { picking = true }
             .popover(isPresented: $picking, arrowEdge: .bottom) {
                 AppPickerPopover(excluded: Set(bundleIDs)) { bundleID in
                     if let bundleID { bundleIDs.append(bundleID) }
@@ -36,7 +36,7 @@ struct DisabledApplicationsSection: View {
         } header: {
             SettingsSectionHeader(anchor)
         } footer: {
-            Text(L10n.text(footer))
+            Text(footer)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

@@ -28,8 +28,10 @@ open with an `## Invariants` section; read it before changing anything in that a
 [quick actions](features/quick-actions.md) ·
 [clipboard](features/clipboard.md) ·
 [calculator](features/calculator.md) ·
+[emoji](features/emoji.md) ·
 [file search](features/file-search.md) ·
 [menu search](features/menu-search.md) ·
+[notes](features/notes.md) ·
 [quicklinks](features/quicklinks.md) ·
 [Apple Shortcuts](features/apple-shortcuts.md) ·
 [hotkeys](features/hotkeys.md) ·
@@ -39,11 +41,12 @@ open with an `## Invariants` section; read it before changing anything in that a
 [uninstall](features/uninstall.md) ·
 [backup](features/backup.md) ·
 [Raycast import](features/raycast-import.md) ·
+[updates](features/updates.md) ·
+[support](features/support.md)
 
-Raycast Extensions, Snippets, Calendar/Meeting/Camera, Custom Commands, Updates, Notes, Support
-reminders, the Emoji picker and Clipboard OCR are preserved as parked feature packs under
-[`Packs/LegacyFeatures/`](../Packs/LegacyFeatures/README.md), but are not part of the active Delores
-target.
+Raycast Extensions, Snippets, Calendar/Meeting/Camera and Custom Commands are preserved as parked
+feature packs under [`Packs/LegacyFeatures/`](../Packs/LegacyFeatures/README.md), but are not part of the
+active Delores target.
 
 ## Contributing
 

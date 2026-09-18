@@ -1,9 +1,9 @@
 # Tinycast
 
 A native macOS menu-bar launcher: fuzzy app launcher, global and per-app hotkeys, a text/image
-clipboard history, an inline calculator, quicklinks, window management and AI actions. Retired
-feature packs are preserved under `Packs/LegacyFeatures/` and are not part of the Delores
-application target.
+clipboard history, an inline calculator, a floating note, quicklinks, window management, AI actions
+and an emoji picker. Retired feature packs are preserved under `Packs/LegacyFeatures/` and are not
+part of the Delores application target.
 SwiftUI + AppKit, running as an accessory with no Dock icon (`LSUIElement`). Zero third-party
 dependencies.
 

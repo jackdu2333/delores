@@ -11,7 +11,7 @@ struct WindowLayoutDisplayTabs: View {
                 tab(display, ordinal: index + 1)
             }
         }
-        .accessibilityLabel(L10n.string("Display"))
+        .accessibilityLabel("Display")
     }
 
     private func tab(_ display: WindowLayoutDisplay, ordinal: Int) -> some View {
@@ -56,7 +56,7 @@ struct WindowLayoutPositionGrid: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .accessibilityLabel(L10n.string("Position"))
+        .accessibilityLabel("Position")
     }
 
     private func cell(_ anchor: WindowLayoutAnchor) -> some View {

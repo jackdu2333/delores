@@ -6,6 +6,7 @@ enum BackupApplier {
     struct Summary: Sendable {
         var settings: SettingsBackup.ApplySummary?
         var clipboard = 0
+        var notes = 0
         var learning = 0
         /// Reported rather than thrown: a failure here must not abort the categories after it.
         var problems: [String] = []
@@ -23,6 +24,9 @@ enum BackupApplier {
         if categories.contains(.clipboard) {
             summary.clipboard = await importClipboard(bundle, into: core.clipboardStore)
             if summary.clipboard > 0 { core.clipboardStore.load() }
+        }
+        if categories.contains(.notes) {
+            summary.notes = await applyNotes(bundle, to: core)
         }
         if categories.contains(.learning) {
             summary.learning = applyLearning(bundle, to: core)
@@ -70,10 +74,24 @@ enum BackupApplier {
         }
     }
 
+    private static func applyNotes(_ bundle: BackupBundle, to core: AppCore) async -> Int {
+        let documents = bundle.documents(in: bundle.notesDirectory, extension: "md")
+        guard !documents.isEmpty else { return 0 }
+        return await core.notesStore.importNotes(
+            documents.map {
+                NotesRepository.Incoming(
+                    title: ($0.name as NSString).deletingPathExtension, source: $0.contents)
+            })
+    }
+
     private static func applyLearning(_ bundle: BackupBundle, to core: AppCore) -> Int {
         var applied = 0
         if let records = bundle.decodeLearning(.ranking, as: [LauncherRankingRecord].self) {
             core.launcherRanking.replace(records)
+            applied += records.count
+        }
+        if let records = bundle.decodeLearning(.emoji, as: [FrequentEmoji].self) {
+            core.frequentEmoji.replace(records)
             applied += records.count
         }
         if let entries = bundle.decodeLearning(.calculator, as: [CalcHistoryEntry].self) {

@@ -152,6 +152,10 @@ run clipboard-test         Tinycast/Features/Clipboard/Model/ClipboardStore.swif
 # `Q` is the URL detector a drag payload builds its link with, rather than a second one.
 Q=Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift
 run clipboard-search-test  Tinycast/Features/Clipboard/Model/*.swift $Q
+run clipboard-text-test    Tinycast/Features/Clipboard/Model/*.swift $Q \
+                           Tinycast/Features/Clipboard/Service/ClipboardTextExtractor.swift \
+                           Tinycast/Features/Clipboard/Service/ClipboardTextIndexer.swift \
+                           Tinycast/Features/Clipboard/Service/ClipboardTextWorker.swift
 run pasteboard-test        Tinycast/Platform/PasteboardFiles.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
@@ -168,6 +172,25 @@ run index clipboard-file-performance \
                            Tinycast/Features/Clipboard/Model/ColorFormat.swift \
                            Tinycast/Features/Clipboard/Model/ColorSpaces.swift \
                            Tinycast/Features/Clipboard/Service/ClipboardManager.swift
+run emoji-test             Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Tinycast/Features/Emoji/Model/EmojiGridGeometry.swift \
+                           Tinycast/Features/Emoji/Model/EmojiData.generated.swift
+run emoji-search-test      Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Tinycast/Features/Emoji/Model/EmojiData.generated.swift \
+                           Tinycast/Features/Emoji/Service/EmojiIndex.swift \
+                           Tinycast/Features/Emoji/Service/FrequentEmojiStore.swift \
+                           Tinycast/Features/Emoji/Service/PinnedEmojiStore.swift \
+                           Tinycast/Features/Launcher/Model/SearchRelevance.swift \
+                           Tinycast/Platform/AppPaths.swift Tinycast/Platform/Memo.swift
+run index emoji-search-performance \
+                           Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Tinycast/Features/Emoji/Model/EmojiData.generated.swift \
+                           Tinycast/Features/Emoji/Service/EmojiIndex.swift \
+                           Tinycast/Features/Emoji/Service/FrequentEmojiStore.swift \
+                           Tinycast/Features/Launcher/Model/SearchRelevance.swift \
+                           Tinycast/Platform/AppPaths.swift Tinycast/Platform/Memo.swift
+run palette-selection-test Tinycast/Features/PaletteRowIndex.swift \
+                           Tinycast/Features/Emoji/Model/EmojiGridGeometry.swift
 run appearance-test        Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/DesignSystem/InterfaceMetrics.swift \
@@ -189,6 +212,7 @@ run ai-instructions-test   Tinycast/Features/AI/Model/AIInstructions.swift \
 run hover-arming-test      Tinycast/Palette/HoverArming.swift \
                            Tinycast/Palette/PaletteState.swift \
                            Tinycast/Palette/PaletteMode.swift \
+                           Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
                            Tinycast/Features/FileSearch/Model/FileSearchFilter.swift \
@@ -206,6 +230,7 @@ run palette-escape-test    Tinycast/Palette/PaletteMode.swift \
 run palette-navigation-test Tinycast/Palette/PaletteState.swift \
                            Tinycast/Palette/PaletteMode.swift \
                            Tinycast/Palette/HoverArming.swift \
+                           Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
                            Tinycast/Features/FileSearch/Model/FileSearchFilter.swift \
@@ -283,6 +308,18 @@ run quicklink-test         Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkArchive.swift \
                            Tinycast/Features/Quicklinks/Model/RaycastQuicklinkImport.swift
+run notes-test             Tinycast/Platform/Signposts.swift \
+                           $L/SearchRelevance.swift \
+                           Tinycast/Features/Notes/Model/*.swift \
+                           Tinycast/Features/Notes/Service/*.swift
+run notes-editor-test      Tinycast/Platform/Signposts.swift \
+                           Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/DesignSystem/InterfaceMetrics.swift \
+                           Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
+                           Tinycast/Features/Notes/Model/NoteDocument.swift \
+                           Tinycast/Features/Notes/UI/NoteTextView.swift \
+                           Tinycast/Features/Notes/UI/NoteEditorView.swift
 run slow -O raycast-test   Tinycast/Features/Backup/Model/RaycastImportError.swift \
                            Tinycast/Features/Backup/Service/RaycastDecoder.swift \
                            Tinycast/Features/Backup/Service/Scrypt.swift \
@@ -297,12 +334,14 @@ run backup-archive-test    Tinycast/Platform/AppPaths.swift \
                            Tinycast/Features/Backup/Model/BackupManifest.swift \
                            Tinycast/Features/Backup/Service/BackupStaging.swift
 run settings-history-test  Tinycast/Features/Settings/SettingsTab.swift \
-                           Tinycast/Platform/L10n.swift \
                            Tinycast/Features/Settings/SettingsHistory.swift \
                            Tinycast/Features/Settings/SettingsAnchor.swift \
                            Tinycast/Features/Settings/SettingsNavigationState.swift \
                            Tinycast/Features/Settings/SettingsSearchCatalog.swift \
                            $L/SearchRelevance.swift
+run updates-test           Tinycast/Features/Updates/Model/*.swift \
+                           Tinycast/Features/Updates/Service/BundleSignature.swift
+run support-test           Tinycast/Features/Support/Model/*.swift
 run ai-provider-test       Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/*.swift \
                            Tinycast/Features/AI/Settings/AISettingsStore.swift

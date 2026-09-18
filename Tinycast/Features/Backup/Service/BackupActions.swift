@@ -196,6 +196,7 @@ enum BackupActions {
         }
         var imported: [String] = []
         if summary.clipboard > 0 { imported.append("\(summary.clipboard) clips") }
+        if summary.notes > 0 { imported.append("\(summary.notes) notes") }
         if summary.learning > 0 { imported.append("\(summary.learning) learning records") }
         if !imported.isEmpty {
             parts.append("Imported " + imported.joined(separator: ", ") + ".")
@@ -253,6 +254,7 @@ enum BackupActions {
         if s.favorites > 0 { parts.append("\(s.favorites) favorites") }
         if s.hiddenItems > 0 { parts.append("\(s.hiddenItems) hidden items") }
         if s.aliases > 0 { parts.append("\(s.aliases) aliases") }
+        if s.pinnedEmoji > 0 { parts.append("\(s.pinnedEmoji) pinned emoji and symbols") }
         if s.quicklinks > 0 { parts.append("\(s.quicklinks) quicklinks") }
         if s.windowLayouts > 0 { parts.append("\(s.windowLayouts) window layouts") }
         guard !parts.isEmpty else { return nil }

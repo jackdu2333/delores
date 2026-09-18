@@ -10,7 +10,7 @@ struct SettingsSearchField: View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("", text: $query, prompt: Text(L10n.string("Search")))
+            TextField("", text: $query, prompt: Text("Search"))
                 .textFieldStyle(.plain)
                 .labelsHidden()
                 .focused($focused)
@@ -23,7 +23,7 @@ struct SettingsSearchField: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(L10n.string("Clear search"))
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -32,6 +32,6 @@ struct SettingsSearchField: View {
         .background { Color.clear.frosted(in: Capsule()) }
         .contentShape(.rect)
         .onTapGesture { focused = true }
-        .accessibilityLabel(L10n.string("Search settings"))
+        .accessibilityLabel("Search settings")
     }
 }

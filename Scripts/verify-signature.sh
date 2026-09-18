@@ -24,10 +24,12 @@ ENTITLEMENTS="$(mktemp)"
 trap 'rm -f "$ENTITLEMENTS"' EXIT
 codesign -d --entitlements - --xml "$APP" > "$ENTITLEMENTS" 2>/dev/null
 
-BIN="$APP/Contents/MacOS/$NAME"
-INFO="$(codesign -dv --verbose=2 "$BIN" 2>&1)"
-[[ "$INFO" =~ flags=0x[0-9a-f]+\([^\)]*runtime ]] ||
-    fail "${BIN##*/}: hardened runtime not enabled"
+# The helper is signed by its own embed phase, which is where the runtime flag goes missing.
+for BIN in "$APP/Contents/MacOS/$NAME" "$APP/Contents/Helpers/ClipboardTextHelper"; do
+    INFO="$(codesign -dv --verbose=2 "$BIN" 2>&1)"
+    [[ "$INFO" =~ flags=0x[0-9a-f]+\([^\)]*runtime ]] ||
+        fail "${BIN##*/}: hardened runtime not enabled"
+done
 
 codesign --verify --deep --strict "$APP" || fail "$NAME.app: the seal does not verify"
 

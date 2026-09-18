@@ -1,30 +1,32 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
-        fallbacks, ai, quickActions, fileSearch, navigation, windowManagement, delores,
-        clipboard, permissions, backup, about
+        fallbacks, ai, quickActions, fileSearch, notes, navigation, windowManagement, delores,
+        clipboard, emoji, permissions, backup, about
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
     var title: String {
         switch self {
-        case .general: return L10n.string("General")
-        case .applications: return L10n.string("Applications")
-        case .systemSettings: return L10n.string("System Settings")
-        case .systemActions: return L10n.string("System Actions")
-        case .commands: return L10n.string("Commands")
-        case .quicklinks: return L10n.string("Quicklinks")
-        case .appleShortcuts: return L10n.string("Apple Shortcuts")
-        case .fallbacks: return L10n.string("Fallbacks")
-        case .ai: return L10n.string("AI")
-        case .quickActions: return L10n.string("Quick Actions")
-        case .fileSearch: return L10n.string("File Search")
-        case .navigation: return L10n.string("Navigation")
-        case .windowManagement: return L10n.string("Window Management")
-        case .delores: return L10n.string("Delores")
-        case .clipboard: return L10n.string("Clipboard")
-        case .permissions: return L10n.string("Permissions")
-        case .backup: return L10n.string("Backup")
-        case .about: return L10n.string("About")
+        case .general: return "General"
+        case .applications: return "Applications"
+        case .systemSettings: return "System Settings"
+        case .systemActions: return "System Actions"
+        case .commands: return "Commands"
+        case .quicklinks: return "Quicklinks"
+        case .appleShortcuts: return "Apple Shortcuts"
+        case .fallbacks: return "Fallbacks"
+        case .ai: return "AI"
+        case .quickActions: return "Quick Actions"
+        case .fileSearch: return "File Search"
+        case .notes: return "Notes"
+        case .navigation: return "Navigation"
+        case .windowManagement: return "Window Management"
+        case .delores: return "Delores"
+        case .clipboard: return "Clipboard"
+        case .emoji: return "Emoji & Symbols"
+        case .permissions: return "Permissions"
+        case .backup: return "Backup"
+        case .about: return "About"
         }
     }
 
@@ -41,10 +43,12 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .ai: return "sparkles"
         case .quickActions: return "wand.and.sparkles"
         case .fileSearch: return "doc.text.magnifyingglass"
+        case .notes: return "text.page"
         case .navigation: return "arrow.left.arrow.right"
         case .windowManagement: return "macwindow"
         case .delores: return "sparkles"
         case .clipboard: return "doc.on.clipboard"
+        case .emoji: return "face.smiling"
         case .permissions: return "lock.shield"
         case .backup: return "arrow.up.arrow.down.circle"
         case .about: return "info.circle"
@@ -60,10 +64,10 @@ enum SettingsSection: CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: return L10n.string("General")
-        case .launcher: return L10n.string("Launcher")
-        case .features: return L10n.string("Features")
-        case .advanced: return L10n.string("Advanced")
+        case .general: return "General"
+        case .launcher: return "Launcher"
+        case .features: return "Features"
+        case .advanced: return "Advanced"
         }
     }
 
@@ -77,8 +81,8 @@ enum SettingsSection: CaseIterable, Identifiable {
             ]
         case .features:
             return [
-                .ai, .quickActions, .fileSearch, .navigation,
-                .windowManagement, .delores, .clipboard
+                .ai, .quickActions, .fileSearch, .notes, .navigation,
+                .windowManagement, .delores, .clipboard, .emoji
             ]
         case .advanced: return [.backup, .about]
         }

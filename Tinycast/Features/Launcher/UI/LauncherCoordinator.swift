@@ -14,6 +14,7 @@ final class LauncherCoordinator {
     private let fileSearchCoordinator: FileSearchCoordinator
     private let menuSearchCoordinator: MenuSearchCoordinator
     private let windowSwitchCoordinator: WindowSwitchCoordinator
+    private let notesCoordinator: NotesCoordinator
     /// The backup commands only, which need the live stores to gather from and apply to.
     private unowned let core: AppCore
 
@@ -29,6 +30,7 @@ final class LauncherCoordinator {
         fileSearchCoordinator: FileSearchCoordinator,
         menuSearchCoordinator: MenuSearchCoordinator,
         windowSwitchCoordinator: WindowSwitchCoordinator,
+        notesCoordinator: NotesCoordinator,
         core: AppCore
     ) {
         self.ranking = ranking
@@ -42,6 +44,7 @@ final class LauncherCoordinator {
         self.fileSearchCoordinator = fileSearchCoordinator
         self.menuSearchCoordinator = menuSearchCoordinator
         self.windowSwitchCoordinator = windowSwitchCoordinator
+        self.notesCoordinator = notesCoordinator
         self.core = core
     }
 
@@ -134,6 +137,8 @@ final class LauncherCoordinator {
             paletteCoordinator.togglePalette(mode: .calculatorHistory)
         case .clipboardHistory:
             paletteCoordinator.togglePalette(mode: .clipboard)
+        case .searchEmoji:
+            paletteCoordinator.togglePalette(mode: .emoji)
         case .searchFiles:
             fileSearchCoordinator.show()
         case .searchMenuItems:
@@ -142,6 +147,15 @@ final class LauncherCoordinator {
             windowSwitchCoordinator.show()
         case .openInBrowser:
             break  // Query-driven: each runs where the typed text is, never through this funnel.
+        case .showNotes:
+            dismissPalette()
+            notesCoordinator.toggle()
+        case .createNote:
+            dismissPalette()
+            notesCoordinator.createNote()
+        case .searchNotes:
+            dismissPalette()
+            notesCoordinator.searchNotes()
         case .searchQuicklinks:
             paletteCoordinator.togglePalette(mode: .quicklinks)
         case .createWindowLayout:
@@ -168,12 +182,18 @@ final class LauncherCoordinator {
         case .importFromRaycast:
             dismissPalette()
             settingsCoordinator.showBackupSettings()
+        case .checkForUpdates:
+            dismissPalette()
+            core.updateCoordinator.checkForUpdates()
         case .settings:
             dismissPalette()
             settingsCoordinator.showSettings()
         case .about:
             dismissPalette()
             settingsCoordinator.showAbout()
+        case .support:
+            dismissPalette()
+            core.supportCoordinator.showSupport()
         case .quit:
             NSApp.terminate(nil)
         }

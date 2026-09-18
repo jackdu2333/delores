@@ -78,7 +78,7 @@ struct MCPServerEditor: View {
             Form {
                 Section {
                     field("Name") {
-                        TextField(L10n.string("Name"), text: $name, prompt: Text(L10n.string("GitHub")))
+                        TextField("Name", text: $name, prompt: Text("GitHub"))
                     }
                     field("Handle") {
                         Text("@\(MCPSlug.normalize(name.isEmpty ? target.server.slug : name))")
@@ -93,27 +93,27 @@ struct MCPServerEditor: View {
                     }
                     if kind == .http {
                         field("URL") {
-                            TextField(L10n.string("URL"), text: $url, prompt: Text(L10n.string("https://example.com/mcp")))
+                            TextField("URL", text: $url, prompt: Text("https://example.com/mcp"))
                         }
                         field("Header") {
-                            TextField(L10n.string("Header"), text: $headerName, prompt: Text(L10n.string("Authorization")))
+                            TextField("Header", text: $headerName, prompt: Text("Authorization"))
                         }
                         field("Value") {
-                            SecureField(L10n.string("Value"), text: $headerValue, prompt: Text(L10n.string("Bearer …")))
+                            SecureField("Value", text: $headerValue, prompt: Text("Bearer …"))
                         }
                     } else {
                         field("Command") {
-                            TextField(L10n.string("Command"), text: $command, prompt: Text(L10n.string("npx")))
+                            TextField("Command", text: $command, prompt: Text("npx"))
                         }
                         field("Arguments") {
                             TextField(
                                 "Arguments", text: $argumentText,
-                                prompt: Text(L10n.string("-y @modelcontextprotocol/server-filesystem ~/Desktop")))
+                                prompt: Text("-y @modelcontextprotocol/server-filesystem ~/Desktop"))
                         }
                         field("Environment") {
                             TextField(
                                 "Environment", text: $environmentText,
-                                prompt: Text(L10n.string("GITHUB_TOKEN=…")), axis: .vertical
+                                prompt: Text("GITHUB_TOKEN=…"), axis: .vertical
                             )
                             .lineLimit(2...5)
                         }
@@ -133,7 +133,7 @@ struct MCPServerEditor: View {
                 }
 
                 Section {
-                    Toggle(L10n.string("Offer this server's tools"), isOn: $isEnabled)
+                    Toggle("Offer this server's tools", isOn: $isEnabled)
                     field("Trust") {
                         Picker("Trust", selection: $trust) {
                             ForEach(MCPTrust.allCases) { Text($0.title).tag($0) }
@@ -141,7 +141,7 @@ struct MCPServerEditor: View {
                         .labelsHidden()
                     }
                     HStack(spacing: Theme.Spacing.lg) {
-                        Button(L10n.string("Test Connection"), action: test)
+                        Button("Test Connection", action: test)
                             .disabled(probe == .running)
                         probeLabel
                     }
@@ -150,7 +150,9 @@ struct MCPServerEditor: View {
                     }
                 } footer: {
                     Text(
-                    L10n.string("Ask Each Chat puts the first tool call of every conversation through a confirmation. Never Allow withholds the server without removing it."))
+                        "Ask Each Chat puts the first tool call of every conversation through a "
+                            + "confirmation. Never Allow withholds the server without removing it."
+                    )
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
@@ -160,8 +162,8 @@ struct MCPServerEditor: View {
             Divider()
             HStack(spacing: Theme.Spacing.lg) {
                 Spacer()
-                Button(L10n.string("Cancel"), action: onCancel).keyboardShortcut(.cancelAction)
-                Button(L10n.string("Save"), action: save).keyboardShortcut(.defaultAction)
+                Button("Cancel", action: onCancel).keyboardShortcut(.cancelAction)
+                Button("Save", action: save).keyboardShortcut(.defaultAction)
             }
             .padding(Theme.Spacing.xl)
         }

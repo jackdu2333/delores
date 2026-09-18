@@ -55,9 +55,11 @@ extension SettingsTab {
         case .ai: [.aiChat]
         case .quickActions: [.fixGrammar, .rewrite, .translate, .summarize]
         case .fileSearch: [.searchFiles]
+        case .notes: [.showNotes, .createNote, .searchNotes]
         case .navigation: [.switchWindows, .searchMenuItems]
         case .windowManagement: [.createWindowLayout, .captureWindowLayout]
         case .clipboard: [.clipboardHistory]
+        case .emoji: [.searchEmoji]
         default: []
         }
     }

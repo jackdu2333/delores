@@ -21,7 +21,7 @@ struct AppleShortcutsSettingsView: View {
             Section {
                 Toggle(isOn: $settings.appleShortcutsEnabled) {
                     SettingsRowTitle(.appleShortcutsAppleShortcuts, "Enable Apple Shortcuts")
-                    Text(L10n.string("Search and run the shortcuts you built in the Shortcuts app."))
+                    Text("Search and run the shortcuts you built in the Shortcuts app.")
                 }
             } header: {
                 SettingsSectionHeader(.appleShortcutsAppleShortcuts)
@@ -42,12 +42,14 @@ struct AppleShortcutsSettingsView: View {
         Section {
             SettingsFilterField(prompt: "Search shortcuts…", query: $query)
             LauncherItemsList(entries: entries, query: query, isEnabled: true)
-            Button(L10n.string("Open Shortcuts")) { core.appleShortcutCoordinator.openShortcutsApp() }
+            Button("Open Shortcuts") { core.appleShortcutCoordinator.openShortcutsApp() }
         } header: {
             SettingsSectionHeader(.appleShortcutsShortcuts)
         } footer: {
             Text(
-                    L10n.string("Create and edit shortcuts in the Shortcuts app. A shortcut works even when it is hidden from the launcher."))
+                "Create and edit shortcuts in the Shortcuts app. A shortcut works even when it is "
+                    + "hidden from the launcher."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }

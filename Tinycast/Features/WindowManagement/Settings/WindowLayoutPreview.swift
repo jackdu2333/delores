@@ -70,7 +70,7 @@ struct WindowLayoutPreviewCanvas: View {
                     }
                 } else {
                     plate
-                    Text(L10n.string("This display isn't connected."))
+                    Text("This display isn't connected.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

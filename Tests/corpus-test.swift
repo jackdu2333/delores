@@ -45,14 +45,14 @@ struct CorpusTest {
 
     /// The chosen entry must match its query. A miss here is a naming bug, not a ranking one.
     /// One case short of the corpus: `exten` is a recorded pick its entry cannot match.
-    static let requiredMatched = 51
+    static let requiredMatched = 58
     /// Cold means zero learned history — how good the ranking is for a brand-new user.
-    static let requiredTop1Cold = 38
-    static let requiredTop5Cold = 50
+    static let requiredTop1Cold = 39
+    static let requiredTop5Cold = 55
     /// Every unprotected case must be winnable by using it — the assertion the band ladder failed.
-    static let requiredReachable = 50
+    static let requiredReachable = 55
     /// Cases the firewall deliberately keeps unreachable; each names its escape in the fixture.
-    static let allowedProtected = 1
+    static let allowedProtected = 3
     /// Picks a user would plausibly spend before giving up on the launcher entirely.
     static let reachablePicks = 20
 

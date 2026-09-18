@@ -191,6 +191,36 @@
       "executableName": null
     },
     {
+      "key": "command:show-notes",
+      "kind": "command",
+      "name": "Show Notes",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
+      "key": "command:create-note",
+      "kind": "command",
+      "name": "Create Note",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
+      "key": "command:search-notes",
+      "kind": "command",
+      "name": "Search Notes",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
       "key": "command:search-files",
       "kind": "command",
       "name": "Search Files",
@@ -204,6 +234,16 @@
       "key": "command:search-snippets",
       "kind": "command",
       "name": "Search Snippets",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
+      "key": "command:search-emoji",
+      "kind": "command",
+      "name": "Search Emoji & Symbols",
       "strongNames": [],
       "translations": [],
       "ownerName": null,
@@ -1861,9 +1901,29 @@
       "executableName": null
     },
     {
+      "key": "command:check-for-updates",
+      "kind": "command",
+      "name": "Check for Updates",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
       "key": "command:about",
       "kind": "command",
       "name": "About Tinycast",
+      "strongNames": [],
+      "translations": [],
+      "ownerName": null,
+      "bundleID": null,
+      "executableName": null
+    },
+    {
+      "key": "command:support",
+      "kind": "command",
+      "name": "Support Tinycast",
       "strongNames": [],
       "translations": [],
       "ownerName": null,
@@ -2954,9 +3014,36 @@
       "criterion": "one of six commands starting 'Search'"
     },
     {
+      "query": "sea",
+      "expect": "command:search-emoji",
+      "criterion": "…and a second, learned apart from the first"
+    },
+    {
       "query": "sear",
       "expect": "command:search-snippets",
       "criterion": "…and a third, one keystroke further in"
+    },
+    {
+      "query": "search",
+      "expect": "command:search-notes",
+      "criterion": "a rival command is named exactly the query",
+      "protected": true,
+      "note": "the Brew extension ships a command named exactly 'Search'. Escape: a user alias."
+    },
+    {
+      "query": "not",
+      "expect": "command:create-note",
+      "criterion": "a command reached by a word in its middle"
+    },
+    {
+      "query": "note",
+      "expect": "command:search-notes",
+      "criterion": "…and a different one, one keystroke further in"
+    },
+    {
+      "query": "crea",
+      "expect": "command:create-note",
+      "criterion": "two 'Create' commands, split by use alone"
     },
     {
       "query": "creat",
@@ -2987,6 +3074,11 @@
       "query": "file",
       "expect": "command:search-files",
       "criterion": "a command reached by its object, not its verb"
+    },
+    {
+      "query": "emoji",
+      "expect": "command:search-emoji",
+      "criterion": "…and by a word at the end of its name"
     },
     {
       "query": "ai",
@@ -3084,6 +3176,13 @@
       "query": "svgl",
       "expect": "extension:svgl/request",
       "criterion": "…and a second sibling under the same title"
+    },
+    {
+      "query": "notes",
+      "expect": "command:show-notes",
+      "criterion": "an app named exactly the query",
+      "protected": true,
+      "note": "Notes.app is named exactly 'notes'; P1 protects an exact name hit. Escape: a user alias."
     },
     {
       "query": "exten",

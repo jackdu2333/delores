@@ -25,13 +25,13 @@ struct SettingsRow<Icon: View, Trailing: View>: View {
                 }
                 .lineLimit(1)
                 if let subtitle {
-                    Text(L10n.text(subtitle))
+                    Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(subtitleLineLimit)
                         .fixedSize(horizontal: false, vertical: true)
                         .truncationMode(.middle)
-                        .help(L10n.text(subtitle))
+                        .help(subtitle)
                 }
             }
             Spacer(minLength: Theme.Spacing.lg)
@@ -73,11 +73,11 @@ struct FeatureSwitchSection: View {
         Section {
             Toggle(isOn: $isEnabled) {
                 SettingsRowTitle(anchor, enableTitle)
-                Text(L10n.text(enableSubtitle))
+                Text(enableSubtitle)
             }
             Toggle(isOn: $showsInLauncher) {
-                Text(L10n.string("Show in launcher"))
-                Text(L10n.text(launcherSubtitle))
+                Text("Show in launcher")
+                Text(launcherSubtitle)
             }
             // The switch above stays live so the feature can always be turned back on.
             .settingsEnabled(isEnabled)
@@ -99,7 +99,7 @@ struct SettingsFilterField: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             // `prompt:` + `labelsHidden`, or the form makes the placeholder a left-column heading.
-            TextField("", text: $query, prompt: Text(L10n.text(prompt)))
+            TextField("", text: $query, prompt: Text(prompt))
                 .textFieldStyle(.plain)
                 .labelsHidden()
                 .focused($focused)
@@ -112,7 +112,7 @@ struct SettingsFilterField: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(L10n.string("Clear search"))
+                .accessibilityLabel("Clear search")
             }
         }
         .contentShape(.rect)
@@ -131,7 +131,7 @@ struct AliasField: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.menu, style: .continuous)
-        let placeholder = Text(L10n.string("Add Alias")).foregroundStyle(Theme.Colors.textSecondary)
+        let placeholder = Text("Add Alias").foregroundStyle(Theme.Colors.textSecondary)
         HStack(spacing: Theme.Spacing.xs) {
             TextField("", text: $draft, prompt: placeholder)
                 .textFieldStyle(.plain)
@@ -153,7 +153,7 @@ struct AliasField: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(L10n.format("Clear alias for %@", name))
+                .accessibilityLabel("Clear alias for \(name)")
             }
         }
         .onAppear { draft = aliases.alias(for: key) ?? "" }
@@ -177,7 +177,7 @@ struct AliasField: View {
                 focused ? Color.accentColor : Theme.Colors.cardStroke, lineWidth: 1)
         )
         .clipShape(shape)
-        .accessibilityLabel(L10n.format("Alias for %@", name))
+        .accessibilityLabel("Alias for \(name)")
     }
 
     /// The one commit path — ↵ or focus landing elsewhere; a blank draft removes the alias.

@@ -22,19 +22,21 @@ struct QuickActionsSettingsView: View {
                 Toggle(isOn: enabledBinding) {
                     SettingsRowTitle(.quickActionsQuickActions, "Enable Quick Actions")
                     Text(
-                    L10n.string("Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the Context Island."))
+                        "Act on the text you have selected in any app. Delores reads a selection "
+                            + "only after a shortcut or a completed selection gesture, then shows "
+                            + "the Context Island.")
                 }
                 if appSettings.quickActionsEnabled, !isTrusted {
                     // Every shortcut fails without it; better said here than found one press later.
                     SettingsRow(
-                        title: L10n.string("Accessibility permission required"),
+                        title: "Accessibility permission required",
                         subtitle: "Tinycast can't read your selection until it is granted."
                     ) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(Theme.Colors.destructive)
                             .frame(width: Theme.Size.settingsRowIcon)
                     } trailing: {
-                        Button(L10n.string("Open System Settings")) { Permissions.openAccessibilitySettings() }
+                        Button("Open System Settings") { Permissions.openAccessibilitySettings() }
                     }
                 }
             } header: {
@@ -110,7 +112,10 @@ struct QuickActionsSettingsView: View {
             SettingsSectionHeader(.quickActionsActions)
         } footer: {
             Text(
-                    L10n.string("Replace puts the result straight into your document — undo in the app you were in brings it back. Preview shows it in a panel first. The checkbox lists the action in the launcher; its shortcut works either way."))
+                "Replace puts the result straight into your document — undo in the app you were in "
+                    + "brings it back. Preview shows it in a panel first. The checkbox lists the "
+                    + "action in the launcher; its shortcut works either way."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -145,8 +150,8 @@ struct QuickActionsSettingsView: View {
 
     private func resultPicker(title: String, selection: Binding<Bool>) -> some View {
         Picker("", selection: selection) {
-            Text(L10n.string("Replace")).tag(false)
-            Text(L10n.string("Preview")).tag(true)
+            Text("Replace").tag(false)
+            Text("Preview").tag(true)
         }
         .labelsHidden()
         .fixedSize()
@@ -168,18 +173,25 @@ struct QuickActionsSettingsView: View {
                 modelLabel: {
                     SettingsRowTitle(.quickActionsModel, "Model")
                     Text(
-                    L10n.string("Used by every action without a model of its own, 翻译 included for a pair Apple's translator cannot do."))
+                        "Used by every action without a model of its own, 翻译 included for a pair "
+                            + "Apple's translator cannot do.")
                 },
                 effortLabel: {
                     SettingsRowTitle(.quickActionsModel, "Reasoning effort")
-                    Text(L10n.string("Applied when the selected model supports reasoning effort."))
+                    Text("Applied when the selected model supports reasoning effort.")
                 }
             )
         } header: {
             SettingsSectionHeader(.quickActionsModel)
         } footer: {
             Text(
-                    L10n.string("Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. 翻译 keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do."))
+                "Separate from chat's model on purpose: a shortcut you press all day should not "
+                    + "bill an API every time. Apple Intelligence runs on this Mac for nothing. "
+                    + "It answers the Context Bar's rows too, except the ones given a model of "
+                    + "their own — those are set in the Delores pane, beside their rows. 翻译 keeps "
+                    + "Apple's translator unless it is given one, or unless the pair is one Apple "
+                    + "cannot do."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -188,19 +200,22 @@ struct QuickActionsSettingsView: View {
     private var languageSection: some View {
         Section {
             Picker(selection: languageBinding) {
-                Text(L10n.string("Same as this Mac")).tag("")
+                Text("Same as this Mac").tag("")
                 ForEach(core.quickActionCoordinator.offeredLanguages, id: \.minimalIdentifier) {
                     Text(TextTranslator.displayName(of: $0)).tag($0.minimalIdentifier)
                 }
             } label: {
                 SettingsRowTitle(.quickActionsTranslate, "Translate to")
-                Text(L10n.string("The panel can still translate into another language once it is open."))
+                Text("The panel can still translate into another language once it is open.")
             }
         } header: {
             SettingsSectionHeader(.quickActionsTranslate)
         } footer: {
             Text(
-                    L10n.string("Apple's own translator runs on this Mac, so it costs nothing and reaches no provider; a language downloads the first time you use it. Binding a model to 翻译 replaces the translator, and that route bills like any other."))
+                "Apple's own translator runs on this Mac, so it costs nothing and reaches no "
+                    + "provider; a language downloads the first time you use it. Binding a model to "
+                    + "翻译 replaces the translator, and that route bills like any other."
+            )
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -332,12 +347,12 @@ struct QuickActionsSettingsView: View {
                 QuickActionModelPicker(selection: $model)
 
                 HStack {
-                    Button(L10n.string("Use Default")) { instructions = builtIn }
+                    Button("Use Default") { instructions = builtIn }
                         .disabled(instructions == builtIn)
                     Spacer()
-                    Button(L10n.string("Cancel")) { dismiss() }
+                    Button("Cancel") { dismiss() }
                         .keyboardShortcut(.cancelAction)
-                    Button(L10n.string("Save")) {
+                    Button("Save") {
                         onSave(instructions == builtIn ? nil : instructions, model)
                         dismiss()
                     }

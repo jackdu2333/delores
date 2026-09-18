@@ -38,12 +38,12 @@ struct AIConnectionEditorSheet: View {
                 Section {
                     editorField("Name") {
                         TextField(
-                            "Name", text: $connection.name, prompt: Text(L10n.string("Optional label")))
+                            "Name", text: $connection.name, prompt: Text("Optional label"))
                     }
                     editorField("Provider") {
                         Picker("Provider", selection: $connection.provider) {
                             ForEach(AIProviderKind.allCases) { provider in
-                                Text(L10n.text(provider.title)).tag(provider)
+                                Text(provider.title).tag(provider)
                             }
                         }
                         .labelsHidden()
@@ -58,7 +58,7 @@ struct AIConnectionEditorSheet: View {
                             "API Key", text: $key, prompt: Text(apiKeyPlaceholder))
                     }
                     if storedKeyMatchesTarget {
-                        Label(L10n.string("A key is already stored in Keychain"), systemImage: "lock.fill")
+                        Label("A key is already stored in Keychain", systemImage: "lock.fill")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else if target.hasStoredKey {
@@ -81,7 +81,7 @@ struct AIConnectionEditorSheet: View {
                     modelDiscoveryContent
                 } header: {
                     HStack {
-                        Text(L10n.string("Models"))
+                        Text("Models")
                         Spacer()
                         if !connection.models.isEmpty {
                             Text("\(connection.models.count) selected")
@@ -92,7 +92,9 @@ struct AIConnectionEditorSheet: View {
                     }
                 } footer: {
                     Text(
-                    L10n.string("Search the models available to this key and add one or more. Exact model IDs remain available when discovery is unsupported."))
+                        "Search the models available to this key and add one or more. Exact model "
+                            + "IDs remain available when discovery is unsupported."
+                    )
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
@@ -102,8 +104,8 @@ struct AIConnectionEditorSheet: View {
             Divider()
             HStack(spacing: Theme.Spacing.lg) {
                 Spacer()
-                Button(L10n.string("Cancel"), action: onCancel).keyboardShortcut(.cancelAction)
-                Button(L10n.string("Save"), action: save).keyboardShortcut(.defaultAction)
+                Button("Cancel", action: onCancel).keyboardShortcut(.cancelAction)
+                Button("Save", action: save).keyboardShortcut(.defaultAction)
             }
             .padding(Theme.Spacing.xl)
         }
@@ -130,22 +132,22 @@ struct AIConnectionEditorSheet: View {
         case .waitingForKey:
             ForEach(connection.models, id: \.self) { model in selectedModelRow(model) }
             if AIEndpointPolicy.isLoopback(connection.baseURL) {
-                Label(L10n.string("Checking this local endpoint for models…"), systemImage: "network")
+                Label("Checking this local endpoint for models…", systemImage: "network")
                     .foregroundStyle(.secondary)
             } else {
-                Label(L10n.string("Enter an API key to search its available models."), systemImage: "key")
+                Label("Enter an API key to search its available models.", systemImage: "key")
                     .foregroundStyle(.secondary)
             }
         case .loading:
             ForEach(connection.models, id: \.self) { model in selectedModelRow(model) }
             HStack(spacing: Theme.Spacing.md) {
                 ProgressView().controlSize(.small)
-                Text(L10n.string("Loading available models…")).foregroundStyle(.secondary)
+                Text("Loading available models…").foregroundStyle(.secondary)
             }
         case .loaded(let models):
             ForEach(connection.models, id: \.self) { model in selectedModelRow(model) }
             if models.isEmpty {
-                Label(L10n.string("No compatible text models were returned."), systemImage: "info.circle")
+                Label("No compatible text models were returned.", systemImage: "info.circle")
                     .foregroundStyle(.secondary)
                 manualModelField
             } else {
@@ -160,7 +162,7 @@ struct AIConnectionEditorSheet: View {
             }
         case .failed(let message, let allowsManualEntry):
             LabeledContent {
-                Button(L10n.string("Try Again")) { discoveryRevision += 1 }
+                Button("Try Again") { discoveryRevision += 1 }
             } label: {
                 Label(message, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
@@ -182,10 +184,10 @@ struct AIConnectionEditorSheet: View {
                 .foregroundStyle(.secondary)
         } else if matches.isEmpty {
             if connection.models.contains(where: { $0.caseInsensitiveCompare(query) == .orderedSame }) {
-                Label(L10n.string("This model is already added."), systemImage: "checkmark.circle")
+                Label("This model is already added.", systemImage: "checkmark.circle")
                     .foregroundStyle(.secondary)
             } else {
-                Label(L10n.string("No available model matches this key."), systemImage: "magnifyingglass")
+                Label("No available model matches this key.", systemImage: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 if connection.provider == .openAICompatible {
                     Button("Use “\(query)” anyway") { addModel(query) }
@@ -219,7 +221,7 @@ struct AIConnectionEditorSheet: View {
 
     private var manualModelField: some View {
         editorField("Model ID") {
-            TextField(L10n.string("Model ID"), text: $modelQuery, prompt: Text(modelPlaceholder))
+            TextField("Model ID", text: $modelQuery, prompt: Text(modelPlaceholder))
                 .onSubmit(addManualModel)
         }
     }

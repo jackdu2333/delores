@@ -14,7 +14,7 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
 
     var body: some View {
         if modelGroups.isEmpty {
-            Label(L10n.string("No AI provider configured"), systemImage: "sparkles")
+            Label("No AI provider configured", systemImage: "sparkles")
                 .foregroundStyle(.secondary)
         } else {
             Picker(selection: modelBinding) {
@@ -25,7 +25,7 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
                 ForEach(modelGroups) { group in
                     Section(group.title) {
                         ForEach(group.options) { option in
-                            Text(L10n.text(option.title)).tag(Optional(option.selection))
+                            Text(option.title).tag(Optional(option.selection))
                         }
                     }
                 }
@@ -35,7 +35,7 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
             if !efforts.isEmpty {
                 Picker(selection: effortBinding) {
                     ForEach(efforts) { effort in
-                        Text(L10n.text(effort.title)).tag(effort.id)
+                        Text(effort.title).tag(effort.id)
                     }
                 } label: {
                     effortLabel()

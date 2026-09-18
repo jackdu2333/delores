@@ -25,7 +25,7 @@ struct WindowLayoutInspector: View {
                 nameField
                 gapToggle
                 Divider()
-                sectionLabel(L10n.string("Layout"))
+                sectionLabel("Layout")
                 WindowLayoutEntryPicker(draft: draft, displays: displays)
                 if draft.selectedEntry != nil {
                     WindowLayoutArgumentField(draft: draft)
@@ -48,9 +48,9 @@ struct WindowLayoutInspector: View {
     private var nameField: some View {
         @Bindable var draft = draft
         return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            sectionLabel(L10n.string("Name"))
+            sectionLabel("Name")
             HStack(spacing: Theme.Spacing.sm) {
-                TextField(L10n.string("Office"), text: $draft.name)
+                TextField("Office", text: $draft.name)
                     .textFieldStyle(.plain)
                     .focused($nameFocused)
                     .focusEffectDisabled()
@@ -68,7 +68,7 @@ struct WindowLayoutInspector: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(L10n.string("Choose an icon"))
+                .accessibilityLabel("Choose an icon")
                 .popover(isPresented: $showingIconPicker, arrowEdge: .bottom) {
                     SymbolPicker(
                         selection: $draft.iconSymbol, fallback: WindowLayout.sfSymbol,
@@ -102,7 +102,7 @@ struct WindowLayoutInspector: View {
 
     private var sizeFields: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            sectionLabel(L10n.string("Size"))
+            sectionLabel("Size")
             HStack(spacing: Theme.Spacing.md) {
                 WindowLayoutNumberField(
                     label: "W", name: "Width", suffix: "%",
@@ -120,7 +120,7 @@ struct WindowLayoutInspector: View {
 
     private var offsetFields: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            sectionLabel(L10n.string("Offset"))
+            sectionLabel("Offset")
             HStack(spacing: Theme.Spacing.md) {
                 WindowLayoutNumberField(
                     label: "X", name: "Horizontal offset", suffix: "pt",
@@ -136,7 +136,7 @@ struct WindowLayoutInspector: View {
 
     private var positionField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            sectionLabel(L10n.string("Position"))
+            sectionLabel("Position")
             WindowLayoutPositionGrid(selection: entry.anchor, onSelect: draft.setAnchor)
         }
     }

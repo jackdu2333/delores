@@ -43,11 +43,11 @@ struct BackupSettingsView: View {
                     if exporting {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button(L10n.string("Export…")) { runExport() }.disabled(exportSelection.isEmpty)
+                        Button("Export…") { runExport() }.disabled(exportSelection.isEmpty)
                     }
                 } label: {
                     SettingsRowTitle(.backupExport, "Export Backup")
-                    Text(L10n.string("Choose what to include, then save it as a single .tinycast file."))
+                    Text("Choose what to include, then save it as a single .tinycast file.")
                 }
                 BackupCategorySelection(selection: $exportSelection)
                 if let backupStatus { statusRow(backupStatus) }
@@ -57,7 +57,7 @@ struct BackupSettingsView: View {
 
             Section {
                 LabeledContent {
-                    Button(L10n.string("Choose…")) { chooseBackupFile() }
+                    Button("Choose…") { chooseBackupFile() }
                 } label: {
                     SettingsRowTitle(.backupImport, "Backup File")
                     Text(backupFileSubtitle)
@@ -69,12 +69,12 @@ struct BackupSettingsView: View {
                         if importingBackup {
                             ProgressView().controlSize(.small)
                         } else {
-                            Button(L10n.string("Import")) { runBackupImport() }
+                            Button("Import") { runBackupImport() }
                                 .disabled(importSelection.isEmpty)
                         }
                     } label: {
-                        Text(L10n.string("Import"))
-                        Text(L10n.string("Only the categories you tick are restored."))
+                        Text("Import")
+                        Text("Only the categories you tick are restored.")
                     }
                 }
             } header: {
@@ -83,14 +83,14 @@ struct BackupSettingsView: View {
 
             Section {
                 LabeledContent {
-                    Button(L10n.string("Choose…")) { chooseRaycastFile() }
+                    Button("Choose…") { chooseRaycastFile() }
                 } label: {
                     SettingsRowTitle(.backupImportFromRaycast, "Raycast Export")
                     Text(raycastFileSubtitle)
                 }
                 LabeledContent {
                     SecureField(
-                        "Passphrase", text: $passphrase, prompt: Text(L10n.string("Export password"))
+                        "Passphrase", text: $passphrase, prompt: Text("Export password")
                     )
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
@@ -99,19 +99,19 @@ struct BackupSettingsView: View {
                     .frame(width: 160)
                     .onSubmit(runRaycastImport)
                 } label: {
-                    Text(L10n.string("Passphrase"))
-                    Text(L10n.string("The password you set when exporting from Raycast."))
+                    Text("Passphrase")
+                    Text("The password you set when exporting from Raycast.")
                 }
                 LabeledContent {
                     if importing {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button(L10n.string("Import")) { runRaycastImport() }
+                        Button("Import") { runRaycastImport() }
                             .disabled(!isRaycastExport || passphrase.isEmpty || selection.isEmpty)
                     }
                 } label: {
-                    Text(L10n.string("Import"))
-                    Text(L10n.string("Choose what to bring over, then import."))
+                    Text("Import")
+                    Text("Choose what to bring over, then import.")
                 }
                 RaycastImportSelection(selection: $selection)
                 conflictNotice
@@ -129,7 +129,7 @@ struct BackupSettingsView: View {
     private var conflictNotice: some View {
         if raycastRunning {
             LabeledContent {
-                Button(L10n.string("Quit Raycast")) { BackupActions.quitRaycast() }
+                Button("Quit Raycast") { BackupActions.quitRaycast() }
             } label: {
                 Label(
                     "Raycast is running — quit it to avoid hotkey conflicts.",

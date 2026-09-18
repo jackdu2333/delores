@@ -52,9 +52,13 @@ struct SettingsBackupTest {
         check(
             "user ignore patterns ride the settings backup",
             mirrored["fileSearchIgnorePatterns"] == .fileSearchIgnorePatterns)
+        check("notes enablement rides the settings backup", mirrored["notesEnabled"] == .notesEnabled)
         check(
             "clipboard enablement rides the settings backup",
             mirrored["clipboardEnabled"] == .clipboardEnabled)
+        check(
+            "emoji grid density rides the settings backup",
+            mirrored["emojiGridColumns"] == .emojiGridColumns)
 
         // Capability grants stay local, so importing a backup cannot silently arm them.
         for key: AppSettingsKey in [.quickActionsEnabled] {

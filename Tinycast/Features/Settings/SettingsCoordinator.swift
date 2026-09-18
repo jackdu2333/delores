@@ -12,7 +12,7 @@ final class SettingsCoordinator {
     init(core: AppCore) {
         self.core = core
         window = AppWindowController(
-            title: L10n.string("Settings"), contentSize: Theme.Size.settingsWindow, resizable: true,
+            title: "Settings", contentSize: Theme.Size.settingsWindow, resizable: true,
             autosaveName: "SettingsWindow", activation: core.activationPolicy)
     }
 
