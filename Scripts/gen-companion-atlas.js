@@ -20,7 +20,7 @@ const zlib = require("zlib");
 const CELL = 24;
 const SCALE = 2;
 const COLUMNS = 5;
-const ROWS = 4;
+const ROWS = 6;
 const FRAME_PX = CELL * SCALE;
 
 const TRANSPARENT = 0;
@@ -175,11 +175,25 @@ function frame(row, col) {
       return col < WALK.length ? creature({ ...WALK[col], gaze: 1 }) : grid();
     case 2:
       return col < WALK.length ? mirror(creature({ ...WALK[col], gaze: 1 })) : grid();
-    default:
+    case 3:
       // Reaction: glance (2), wave (2), chat (1).
       if (col < 2) return creature({ gaze: col === 0 ? -1 : 1 });
       if (col < 4) return creature({ arm: col === 2 ? 0 : 2 });
       return creature({ mouth: "open" });
+    case 4:
+      // Daze / Restful: yawn, stretch, flop/nap.
+      if (col === 0) return creature({ mouth: "open", blink: true });
+      if (col === 1) return creature({ lift: -1, lean: 2, arm: 0 });
+      if (col === 2) return creature({ lift: 2, blink: true });
+      if (col === 3) return creature({ lift: 2, blink: true, breathe: 1 });
+      return grid();
+    default:
+      // Acrobatics / Jump & Roll.
+      if (col === 0) return creature({ lift: 2, step: 0 });
+      if (col === 1) return creature({ lift: -3, lean: 1, step: 1 });
+      if (col === 2) return creature({ lift: 1, lean: 1, mouth: "open" });
+      if (col === 3) return creature({ lift: 0, lean: 0, blink: true });
+      return grid();
   }
 }
 
@@ -204,7 +218,7 @@ function blit(cell, col, row) {
 
 // How many cells of each row carry a frame. The generated Swift states these too, from this one
 // list, so the sheet and the constants cannot disagree about where a row ends.
-const FRAMES_PER_ROW = [3, 4, 4, 5];
+const FRAMES_PER_ROW = [3, 4, 4, 5, 4, 4];
 
 for (let row = 0; row < ROWS; row++) {
   for (let col = 0; col < COLUMNS; col++) {
@@ -298,6 +312,8 @@ enum CompanionAtlas {
         case walkLeft = 1
         case walkRight = 2
         case reaction = 3
+        case daze = 4
+        case acrobatics = 5
 
         /// How many of the row's cells carry a frame. The rest are padding, and asking for one is
         /// a caller bug rather than something to clamp here.
@@ -306,6 +322,8 @@ enum CompanionAtlas {
             case .idle: return ${FRAMES_PER_ROW[0]}
             case .walkLeft, .walkRight: return ${FRAMES_PER_ROW[1]}
             case .reaction: return ${FRAMES_PER_ROW[3]}
+            case .daze: return ${FRAMES_PER_ROW[4]}
+            case .acrobatics: return ${FRAMES_PER_ROW[5]}
             }
         }
     }

@@ -194,7 +194,7 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 
 ## 初版图集规格（建议，资产制作时可调）
 
-5 列 × 4 行，每格 48×48 艺术像素，PNG-8 带调色板（文件体积再省约 75%）：
+5 列 × 6 行，每格 48×48 艺术像素，PNG-8 带调色板（文件体积再省约 75%）：
 
 | 行 | 动画 | 帧格 | 帧率 | 驱动 |
 | --- | --- | --- | --- | --- |
@@ -202,6 +202,8 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 | 1 | 走左 | 5/5 格 | 8 fps | 由 strollTimer 顺带切帧 |
 | 2 | 走右 | 5/5 格 | 8 fps | 同上 |
 | 3 | 反应：glance（2）+ wave（2）+ chat（1） | 5/5 格 | 8–12 fps | 一次性 CA 动画播 1–2 循环回落 idle |
+| 4 | 待机闲趣：yawn / stretch / flop 趴地 | 4/5 格 | 2–4 fps | 长歇期间一次性 CA 动画，播完回落 idle |
+| 5 | 杂技特写：hop / roll / landing 翻滚 | 4/5 格 | 5–8 fps | 特殊互动或掉落一次性 CA 动画，播完回落 idle |
 
 **帧率策略（借 desktop-pet 生产验证）**：idle 呼吸恒钳 1–2 fps 封顶，与任何用户设置无关
 （"calm CPU win"）；行走 8 fps——从初版 `strollFrame = 1/20` **下调**，慢步频配合懒散人设

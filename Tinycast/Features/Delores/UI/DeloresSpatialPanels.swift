@@ -107,6 +107,36 @@ final class DeloresCompanionBodyView: NSView {
         sprite.add(play, forKey: Self.reactionKey)
     }
 
+    /// Play a one-shot daze/restful behavior (yawn, stretch, flop) during a prolonged rest.
+    func daze() {
+        sprite.removeAnimation(forKey: Self.breathKey)
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        let play = CAKeyframeAnimation(keyPath: "contentsRect")
+        play.values = (0..<CompanionAtlas.Row.daze.frameCount).map { frame in
+            DeloresCompanionAnimation.contentsRect(row: .daze, frame: frame)
+        }
+        play.calculationMode = .discrete
+        play.duration = DeloresCompanionAnimation.dazeDuration
+        play.repeatCount = 1
+        sprite.add(play, forKey: Self.reactionKey)
+    }
+
+    /// Play an acrobatic maneuver (hop, roll, land) and return smoothly to idle.
+    func performAcrobatics() {
+        sprite.removeAnimation(forKey: Self.breathKey)
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
+        let play = CAKeyframeAnimation(keyPath: "contentsRect")
+        play.values = (0..<CompanionAtlas.Row.acrobatics.frameCount).map { frame in
+            DeloresCompanionAnimation.contentsRect(row: .acrobatics, frame: frame)
+        }
+        play.calculationMode = .discrete
+        play.duration = DeloresCompanionAnimation.acrobaticsDuration
+        play.repeatCount = 1
+        sprite.add(play, forKey: Self.reactionKey)
+    }
+
     /// Nothing is watching any more, so nothing should still be running behind an ordered-out panel —
     /// a hidden window is not composited, but leaving the loop attached is a thing to explain later.
     func stop() {

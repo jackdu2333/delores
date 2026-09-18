@@ -26,6 +26,12 @@ enum DeloresCompanionAnimation {
     /// One loop of a reaction. Played twice and then left, at a rate a pixel reads as deliberate.
     static let reactionDuration: TimeInterval = 0.24
 
+    /// Duration for lazy loitering / daze behaviors (yawn, stretch, flop).
+    static let dazeDuration: TimeInterval = 1.6
+
+    /// Duration for acrobatic hops or rolling maneuvers.
+    static let acrobaticsDuration: TimeInterval = 0.8
+
     /// Cells in a walk cycle. Both walk rows are the same length, because one is the other mirrored.
     static var walkFrameCount: Int { CompanionAtlas.Row.walkLeft.frameCount }
 

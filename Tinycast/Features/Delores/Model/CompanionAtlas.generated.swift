@@ -8,7 +8,7 @@ enum CompanionAtlas {
     static let frameWidth: CGFloat = 48
     static let frameHeight: CGFloat = 48
     static let columns = 5
-    static let rows = 4
+    static let rows = 6
 
     static var imageSize: CGSize { CGSize(width: frameWidth * CGFloat(columns), height: frameHeight * CGFloat(rows)) }
 
@@ -17,6 +17,8 @@ enum CompanionAtlas {
         case walkLeft = 1
         case walkRight = 2
         case reaction = 3
+        case daze = 4
+        case acrobatics = 5
 
         /// How many of the row's cells carry a frame. The rest are padding, and asking for one is
         /// a caller bug rather than something to clamp here.
@@ -25,6 +27,8 @@ enum CompanionAtlas {
             case .idle: return 3
             case .walkLeft, .walkRight: return 4
             case .reaction: return 5
+            case .daze: return 4
+            case .acrobatics: return 4
             }
         }
     }

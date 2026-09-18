@@ -914,8 +914,8 @@ struct DeloresContextTest {
         require(top.minX == 0, "the first frame of the first row is the sheet's left edge")
         require(top.maxY == 1, "and its top edge — the flip is what puts the first row up there")
         require(top.width == 0.2, "a frame is one column of five")
-        require(top.height == 0.25, "and one row of four")
-        let last = DeloresCompanionAnimation.contentsRect(row: .reaction, frame: 2)
+        require(abs(top.height - (1.0 / 6.0)) < 0.0001, "and one row of six")
+        let last = DeloresCompanionAnimation.contentsRect(row: .acrobatics, frame: 2)
         require(last.minY == 0, "the last row sits on the sheet's bottom edge")
         require(last.minX == 0.4, "the frame index is the column")
 
