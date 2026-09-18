@@ -97,10 +97,12 @@ struct ExtensionTests {
     static func runtimeURL() -> URL {
         let candidates = [
             URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                .appendingPathComponent("Tinycast/Resources/RaycastRuntime.generated.js"),
+                .appendingPathComponent(
+                    "Packs/LegacyFeatures/RaycastExtensions/Runtime/RaycastRuntime.generated.js"),
             URL(fileURLWithPath: #filePath)
                 .deletingLastPathComponent().deletingLastPathComponent()
-                .appendingPathComponent("Tinycast/Resources/RaycastRuntime.generated.js")
+                .appendingPathComponent(
+                    "Packs/LegacyFeatures/RaycastExtensions/Runtime/RaycastRuntime.generated.js")
         ]
         return candidates.first { FileManager.default.fileExists(atPath: $0.path) } ?? candidates[0]
     }

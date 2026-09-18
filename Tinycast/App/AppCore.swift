@@ -168,9 +168,7 @@ final class AppCore {
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
         self.clipboardManager = clipboardManager
-        textInjector = TextInjector(
-            clipboardManager: clipboardManager,
-            settings: settings)
+        textInjector = TextInjector(clipboardManager: clipboardManager)
         let noteSelectionKey = "notesActiveFileName"
         notesStore = NotesStore(
             repository: NotesRepository(

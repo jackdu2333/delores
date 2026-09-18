@@ -28,26 +28,25 @@ open with an `## Invariants` section; read it before changing anything in that a
 [quick actions](features/quick-actions.md) ·
 [clipboard](features/clipboard.md) ·
 [calculator](features/calculator.md) ·
-[calendar](features/calendar.md) ·
-[camera](features/camera.md) ·
 [emoji](features/emoji.md) ·
 [file search](features/file-search.md) ·
 [menu search](features/menu-search.md) ·
 [notes](features/notes.md) ·
-[snippets](features/snippets.md) ·
 [quicklinks](features/quicklinks.md) ·
 [Apple Shortcuts](features/apple-shortcuts.md) ·
 [hotkeys](features/hotkeys.md) ·
 [navigation](features/navigation.md) ·
 [window management](features/window-management.md) ·
 [window layouts](features/window-layouts.md) ·
-[custom commands](features/custom-commands.md) ·
 [uninstall](features/uninstall.md) ·
 [backup](features/backup.md) ·
 [Raycast import](features/raycast-import.md) ·
-[Raycast extensions](features/extensions.md) ·
 [updates](features/updates.md) ·
 [support](features/support.md)
+
+Raycast Extensions, Snippets, Calendar/Meeting/Camera and Custom Commands are preserved as parked
+feature packs under [`Packs/LegacyFeatures/`](../Packs/LegacyFeatures/README.md), but are not part of the
+active Delores target.
 
 ## Contributing
 

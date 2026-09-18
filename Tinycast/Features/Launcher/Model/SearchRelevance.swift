@@ -166,7 +166,7 @@ struct SearchAlias: Sendable, Hashable {
     enum Role: Int, Sendable, CaseIterable {
         /// Machine-facing: bundle id, executable name.
         case technical = 0
-        /// What provides the entry rather than what it is — the extension a command came from.
+        /// What provides an entry rather than what it is; optional for provider-backed catalogs.
         case owner = 1
         /// Another way to say the same name: a localization, an alternate, a romanization.
         case translation = 2

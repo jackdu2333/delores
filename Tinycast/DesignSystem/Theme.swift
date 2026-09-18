@@ -200,7 +200,7 @@ enum Theme {
         static let layoutPositionStroke: CGFloat = 1.5
         /// A position cell's clickable row; the glyph floats inside it, so the whole cell hits.
         static let layoutPositionCell: CGFloat = 34
-        /// Settings editor modals (Custom Commands, Snippets): fixed width, intrinsic height.
+        /// Settings editor modals: fixed width, intrinsic height.
         static let editorSheetWidth: CGFloat = 480
         /// The multi-line box inside those modals; it scrolls rather than grows the sheet.
         static let editorTextHeight: CGFloat = 120
@@ -211,10 +211,6 @@ enum Theme {
         static let dialogWidth: CGFloat = 420
         /// A dialog's leading glyph, larger than a row icon: it carries the subject.
         static let dialogIcon: CGFloat = 32
-        /// 16:9 at the dialog's own width, so the two surfaces read as siblings.
-        static let cameraPreview = CGSize(width: 420, height: 236)
-        /// 16:9 again, wider: the standalone camera is the surface, not a confirmation on one.
-        static let cameraStage = CGSize(width: 560, height: 315)
         /// Wider than a dialog: a Quick Action's result is prose to read, not a sentence to answer.
         static let quickActionPanel: CGFloat = 520
         /// Matched to the title's cap height; a row-sized glyph beside it reads as an error.

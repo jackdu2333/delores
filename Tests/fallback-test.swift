@@ -63,17 +63,15 @@ struct FallbackTests {
     static func ordering() {
         let ai = Fallback.builtin(.aiChat)
         let files = Fallback.builtin(.searchFiles)
-        let shell = Fallback.builtin(.runShellCommand)
         let link = Fallback.quicklink(UUID())
 
         check(
             "no stored order keeps the offered order",
-            Fallback.ordered([ai, files, shell], by: []) == [ai, files, shell])
+            Fallback.ordered([ai, files], by: []) == [ai, files])
 
         check(
             "a stored order is honoured",
-            Fallback.ordered([ai, files, shell], by: [shell.id, ai.id, files.id])
-                == [shell, ai, files])
+            Fallback.ordered([ai, files], by: [files.id, ai.id]) == [files, ai])
 
         // A quicklink created after the last reorder must land at the end, not vanish.
         check(

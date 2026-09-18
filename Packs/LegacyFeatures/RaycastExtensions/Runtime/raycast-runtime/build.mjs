@@ -1,4 +1,4 @@
-// Bundles the embedded extension runtime into Tinycast/Resources/RaycastRuntime.generated.js.
+// Bundles the parked extension runtime into the legacy pack's generated resource.
 //
 //   pnpm install && node gen-enums.mjs && node build.mjs
 //
@@ -8,7 +8,7 @@ import { build } from "esbuild";
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const outFile = resolve("../../Tinycast/Resources/RaycastRuntime.generated.js");
+const outFile = resolve("../RaycastRuntime.generated.js");
 const dev = process.argv.includes("--dev");
 
 mkdirSync(dirname(outFile), { recursive: true });

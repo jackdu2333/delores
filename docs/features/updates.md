@@ -37,8 +37,8 @@ release feed the website already reads is the feed the app reads.
 - **Relaunching goes through `NSApp.terminate`, never `exit`.** That is what flushes a pending note
   draft and hands back the Hyper Key's HID-level caps remap, which outlives the process.
 - **An automatic prompt defers to whatever the user is doing, and is never spent unshown.**
-  `UpdateReadiness` withholds it while a snippet is expanding, an extension command is running, an
-  uninstall is trashing, a shortcut is being recorded, a prompt or dialog is up, or the palette is
+  `UpdateReadiness` withholds it while an uninstall is trashing, a shortcut is being recorded, a
+  prompt or dialog is up, or the palette is
   open. A withheld prompt is still owed: `presentIfAvailable` answers `false`, the version is left
   unannounced, and the pump re-offers it every two minutes for half an hour before falling back to
   the daily rhythm. That is what a hand-launched copy depends on — its one announcement falls 30 s
@@ -55,8 +55,7 @@ release feed the website already reads is the feed the app reads.
   none, so it comes back whole.
 - **The notes are laid out by `ReleaseNotesView`, which is this feature's own.** `AttributedString`
   parses inline styling only; headings and bullets are placed by hand or they arrive as literal `##`
-  and `*`. `ExtensionMarkdownView` does the same job and is deliberately not reused — an extension's
-  views never leave `Features/Extensions/`.
+  and `*`.
 - **`@handle` and `#304` are linked by the app, never by the release body.** GitHub autolinks both on
   the web, and a bare mention is what notifies the contributor, so the published body keeps them
   plain and `ReleaseNotes` spells them as Markdown links on the way to the window. Both point at
@@ -117,7 +116,7 @@ One route, whatever the install came from:
    `open` on a bundle id that is still running would only re-activate the instance on its way out.
 
 Nothing here touches `~/Library/Preferences`, `~/Library/Caches` or `Application Support`, so no
-setting, clipboard entry, note or snippet is affected by an update, by `brew upgrade`, or by both.
+setting, clipboard entry, note or quicklink is affected by an update, by `brew upgrade`, or by both.
 
 ## Releasing into it
 

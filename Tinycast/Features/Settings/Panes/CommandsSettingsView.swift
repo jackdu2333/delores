@@ -2,8 +2,6 @@ import SwiftUI
 
 /// The built-in command catalogue; user-authored shell commands live in the retired pack.
 struct CommandsSettingsView: View {
-    @Environment(AppSettings.self) private var settings
-
     var body: some View {
         Form {
             LauncherItemsSection(

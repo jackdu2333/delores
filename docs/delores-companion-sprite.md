@@ -216,7 +216,7 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 
 资产生成走 `Scripts/gen-companion-atlas.js`（Node，同 `gen-emoji.js` 家风）：输入源帧
 PNG，输出图集 + `CompanionAtlas.generated.swift`（行列枚举与帧数常量）。生成物不手改，
-且**必须提交**——构建不得依赖 Node（同 `RaycastRuntime.generated.js`）。
+且**必须提交**——构建不得依赖 Node。
 
 **归属**：`CompanionAtlas.generated.swift` 放 `Features/Delores/Model/`（纯常量，可进 harness）；
 图集 PNG 放 `Tinycast/Resources/`。

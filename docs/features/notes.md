@@ -26,10 +26,9 @@ commands and global shortcuts can show, search, or extend the collection.
   window shows its empty state and Create Note still works from there.
 - **The user owns the window size.** AppKit resizes and autosaves the frame; the controller only
   clamps it to the floor below which the title bar's own parts collide.
-- **The editor is the one surface snippets expand into.** `NoteTextView` adopts `InjectableTextView`,
-  so a typed keyword — and the Snippets browser's ↵ — is written straight into the text storage
-  rather than posted as events at whichever app happens to be frontmost. Nothing else in Tinycast
-  adopts it: see [snippets.md](snippets.md#text-delivery-and-pasteboard-safety).
+- **The editor is an in-process injection target.** `NoteTextView` adopts `InjectableTextView`, so a
+  Quicklink or Quick Action write can update its text storage directly rather than posting events at
+  whichever app happens to be frontmost.
 
 ## Storage and identity
 
