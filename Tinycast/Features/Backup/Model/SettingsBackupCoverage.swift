@@ -55,7 +55,8 @@ enum SettingsBackupCoverage {
         "menuBarLinkedEventsOnly": .menuBarLinkedEventsOnly,
         "hideCurrentEvent": .hideCurrentEvent,
         "supportReminders": .supportReminders,
-        "companionSize": .deloresCompanionSize
+        "companionSize": .deloresCompanionSize,
+        "companionKind": .deloresCompanionKind
     ]
 
     /// The `SettingsData` fields no `AppSettings` key stands behind, and what they read instead.

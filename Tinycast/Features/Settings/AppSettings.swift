@@ -450,6 +450,10 @@ final class AppSettings {
         didSet { defaults.set(deloresCompanionSize.rawValue, forKey: Key.deloresCompanionSize.rawValue) }
     }
 
+    var deloresCompanionKind: DeloresCompanionShell.Kind {
+        didSet { defaults.set(deloresCompanionKind.rawValue, forKey: Key.deloresCompanionKind.rawValue) }
+    }
+
     var deloresWindowSnappingEnabled: Bool {
         didSet { defaults.set(deloresWindowSnappingEnabled, forKey: Key.deloresWindowSnappingEnabled.rawValue) }
     }
@@ -657,6 +661,8 @@ final class AppSettings {
         deloresCompanionEnabled = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue)
         deloresCompanionSize = DeloresCompanionShell.Size(
             rawValue: defaults.integer(forKey: Key.deloresCompanionSize.rawValue)) ?? .regular
+        deloresCompanionKind = DeloresCompanionShell.Kind(
+            rawValue: defaults.string(forKey: Key.deloresCompanionKind.rawValue) ?? "") ?? .duck
         deloresWindowSnappingEnabled = defaults.bool(
             forKey: Key.deloresWindowSnappingEnabled.rawValue)
         deloresSplitDividerEnabled = defaults.bool(

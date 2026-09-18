@@ -41,6 +41,7 @@ enum AppSettingsKey: String, CaseIterable {
     case windowGap = "windowManagementGap"
     case deloresCompanionEnabled = "deloresCompanionEnabled"
     case deloresCompanionSize = "deloresCompanionSize"
+    case deloresCompanionKind = "deloresCompanionKind"
     case deloresWindowSnappingEnabled = "deloresWindowSnappingEnabled"
     case deloresSplitDividerEnabled = "deloresSplitDividerEnabled"
     case windowCycle = "windowManagementCycleMode"

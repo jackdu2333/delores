@@ -10,6 +10,35 @@ import CoreGraphics
 /// The body stays *outside* the shell in every case: a bar that covered the Companion would take
 /// away the thing the reader clicked to get it.
 enum DeloresCompanionShell {
+    /// Which creature skin is loaded into the Companion panel.
+    enum Kind: String, CaseIterable, Sendable {
+        case standard = "standard"
+        case cat = "cat"
+        case dog = "dog"
+        case duck = "duck"
+        case redPanda = "redPanda"
+
+        var resourceName: String {
+            switch self {
+            case .standard: return "CompanionAtlas.generated"
+            case .cat: return "CompanionAtlas-cat.generated"
+            case .dog: return "CompanionAtlas-dog.generated"
+            case .duck: return "CompanionAtlas-duck.generated"
+            case .redPanda: return "CompanionAtlas-redPanda.generated"
+            }
+        }
+
+        var displayName: String {
+            switch self {
+            case .standard: return "Delores (Default)"
+            case .cat: return "Cat (小猫)"
+            case .dog: return "Dog (小狗)"
+            case .duck: return "Duck (小鸭子)"
+            case .redPanda: return "Red Panda (小熊猫)"
+            }
+        }
+    }
+
     /// How large the body is drawn. Two steps and no others: the sprite is authored at 48 px, so the
     /// only question is how many authored pixels a point is worth. Anything between the two puts a
     /// fractional number of device pixels under one authored pixel, which is what makes pixel art

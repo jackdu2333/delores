@@ -110,6 +110,16 @@ struct DeloresSpatialSettingsView: View {
                 Text("Two sizes only, because it is drawn at a whole number of its own pixels.")
             }
             .settingsEnabled(settings.deloresCompanionEnabled)
+
+            Picker(selection: $settings.deloresCompanionKind) {
+                ForEach(DeloresCompanionShell.Kind.allCases, id: \.self) { kind in
+                    Text(kind.displayName).tag(kind)
+                }
+            } label: {
+                SettingsRowTitle(.deloresCompanion, "Pet Creature")
+                Text("Choose which companion creature accompanies you around your display.")
+            }
+            .settingsEnabled(settings.deloresCompanionEnabled)
         } header: {
             SettingsSectionHeader(.deloresCompanion)
         } footer: {

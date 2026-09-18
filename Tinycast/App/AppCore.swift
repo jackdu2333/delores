@@ -562,6 +562,9 @@ final class AppCore {
             { _ = $0.deloresCompanionSize },
             reproject: { $0.deloresCoordinator.applyCompanionSize() })
         track(
+            { _ = $0.deloresCompanionKind },
+            reproject: { $0.deloresCoordinator.applyCompanionKind() })
+        track(
             {
                 _ = $0.calendarEnabled
                 _ = $0.calendarShowInLauncher

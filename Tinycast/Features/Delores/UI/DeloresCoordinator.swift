@@ -38,6 +38,7 @@ final class DeloresCoordinator {
 
     /// The body is drawn at another step, which changes where it may stand as well as how big it is.
     func applyCompanionSize() { companion.applyCompanionSize() }
+    func applyCompanionKind() { companion.applyCompanionKind() }
     func applyEnabled() {
         // The first call is launch, and the main actor is still digesting startup: every mouse
         // event these surfaces install lands on it, and a backlog at launch is paid in the apps

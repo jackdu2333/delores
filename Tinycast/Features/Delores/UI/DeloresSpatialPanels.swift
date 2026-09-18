@@ -12,12 +12,17 @@ final class DeloresCompanionBodyView: NSView {
     private static let breathKey = "breath"
     private static let reactionKey = "reaction"
 
-    /// The one decoded sheet, loaded once for the life of the app. Every frame is a rectangle into it,
-    /// so no pose ever decodes anything.
-    private static let atlas: CGImage? = {
-        guard let image = Bundle.main.image(forResource: "CompanionAtlas.generated") else { return nil }
-        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-    }()
+    /// Cached decoded atlas images per creature kind.
+    private static var atlasCache: [DeloresCompanionShell.Kind: CGImage] = [:]
+
+    private static func atlas(for kind: DeloresCompanionShell.Kind) -> CGImage? {
+        if let cached = atlasCache[kind] { return cached }
+        guard let image = Bundle.main.image(forResource: kind.resourceName)
+                ?? Bundle.main.image(forResource: "CompanionAtlas.generated") else { return nil }
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        atlasCache[kind] = cg
+        return cg
+    }
 
     private let sprite = CALayer()
 
@@ -38,7 +43,7 @@ final class DeloresCompanionBodyView: NSView {
             "position": NSNull(),
             "bounds": NSNull(),
         ]
-        sprite.contents = Self.atlas
+        sprite.contents = Self.atlas(for: .duck)
         sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
         layer?.addSublayer(sprite)
     }
@@ -198,6 +203,10 @@ final class DeloresCompanionPanel: NSPanel {
         setFrame(
             CGRect(origin: origin(for: center), size: CGSize(width: next.side, height: next.side)),
             display: true)
+    }
+
+    func applyKind(_ kind: DeloresCompanionShell.Kind) {
+        body.applyKind(kind)
     }
     func hide() { setCaptured(false); body.stop(); orderOut(nil); longPressTimer?.invalidate() }
     func setCaptured(_ captured: Bool) {
@@ -748,3 +757,6 @@ struct DeloresVisualEffectView: NSViewRepresentable {
     }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
+    func applyKind(_ kind: DeloresCompanionShell.Kind) {
+        sprite.contents = Self.atlas(for: kind)
+    }

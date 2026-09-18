@@ -110,6 +110,11 @@ final class DeloresCompanionCoordinator {
         settle(at: landed, on: screen)
     }
 
+    func applyCompanionKind() {
+        guard let companion, companion.isVisible else { return }
+        companion.applyKind(settings.deloresCompanionKind)
+    }
+
     /// Stands the body still while a shell it opened is on screen.
     func holdForShell() {
         shellHolds += 1
