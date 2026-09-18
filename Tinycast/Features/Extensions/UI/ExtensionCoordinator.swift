@@ -74,10 +74,19 @@ final class ExtensionCoordinator {
         runExtensionCommand(entry)
     }
 
-    /// A `raycast://extensions/…` link: the same command the launcher would run, by slug.
-    func runDeepLink(_ link: ExtensionDeepLink) {
+    /// A `raycast://extensions/…` link. Anything on this Mac can open one, so it arrives as untrusted
+    /// IPC: the command is resolved and named, but it only runs once the user has confirmed it.
+    func authorizeDeepLink(_ link: ExtensionDeepLink) {
         guard settings.extensionsEnabled else {
             core.showMessage("Extensions are disabled — enable them in Settings", tone: .danger)
+            return
+        }
+        // A link can ask to run with nothing on screen, which is the one case the user cannot see.
+        // Refused rather than promoted to the foreground: the link does not get to choose that.
+        guard link.launchType != .background else {
+            core.showMessage(
+                "A link can't run '\(link.commandName)' in the background — run it from the launcher",
+                tone: .danger)
             return
         }
         guard let (owner, command) = extensions.resolve(link) else {
@@ -89,9 +98,24 @@ final class ExtensionCoordinator {
                 command.mode.unsupportedReason ?? "This command isn't supported yet", tone: .danger)
             return
         }
-        run(
-            owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
-            launchType: link.launchType)
+        // The palette hides before the dialog: it floats, and a sheet behind it is unreachable.
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        NSApp.activate(ignoringOtherApps: true)
+        Task {
+            guard
+                await core.confirm(
+                    title: "Run \(command.title)?",
+                    message:
+                        "An external link is asking to run this command from \(owner.title). "
+                        + "Anything on this Mac can open that kind of link, so continue only if you "
+                        + "expected it.",
+                    symbol: "puzzlepiece.extension", confirmTitle: "Run", tone: .neutral,
+                    confirmRole: .standard)
+            else { return }
+            run(
+                owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
+                launchType: .userInitiated)
+        }
     }
 
     // MARK: - Managing one extension from the launcher

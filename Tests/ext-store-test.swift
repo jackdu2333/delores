@@ -12,6 +12,8 @@ struct ExtensionStoreTests {
         registryDefaults()
         storeResponse()
         gitHubTree()
+        commitPin()
+        provenance()
         manifestSummary()
         packageManagers()
         abbreviation()
@@ -189,6 +191,60 @@ struct ExtensionStoreTests {
             "and omitted otherwise",
             ExtensionStoreResponse.treeURL(owner: "raycast", repository: "extensions", sha: "abc")?
                 .absoluteString.contains("recursive") == false)
+    }
+
+    // MARK: - Pinned commits and install provenance
+
+    static func commitPin() {
+        print("\n# pinned commits")
+
+        let endpoint =
+            ExtensionStoreResponse.commitURL(
+                owner: "raycast", repository: "extensions", ref: "main")?.absoluteString ?? ""
+        check(
+            "a ref resolves through the commits endpoint",
+            endpoint == "https://api.github.com/repos/raycast/extensions/commits/main")
+        check(
+            "a slash in a ref is encoded rather than read as a path segment",
+            ExtensionStoreResponse.escapedRef("feature/nested") == "feature%2Fnested")
+
+        let sha = "0123456789abcdef0123456789abcdef01234567"
+        check(
+            "a commit response yields its sha",
+            (try? ExtensionStoreResponse.parseCommit(Data(#"{"sha":"\#(sha)"}"#.utf8))) == sha)
+        // An empty sha would otherwise be pinned and persisted as though it named a commit.
+        check(
+            "an empty sha is not a commit",
+            (try? ExtensionStoreResponse.parseCommit(Data(#"{"sha":""}"#.utf8))) == nil)
+        check(
+            "GitHub's error body is surfaced instead of a commit",
+            (try? ExtensionStoreResponse.parseCommit(Data(#"{"message":"Not Found"}"#.utf8))) == nil)
+
+        let raw =
+            ExtensionStoreResponse.rawFileURL(
+                owner: "raycast", repository: "extensions", commit: sha,
+                path: "extensions/demo/package.json"
+            )?.absoluteString ?? ""
+        check("a file comes from the pinned commit", raw.contains("/\(sha)/"))
+    }
+
+    static func provenance() {
+        print("\n# install provenance")
+
+        let provenance = ExtensionInstallProvenance(
+            owner: "raycast", repository: "extensions", path: "extensions/demo",
+            requestedRef: "main", commit: "0123456789abcdef0123456789abcdef01234567")
+        guard let data = try? JSONEncoder().encode(provenance),
+            let decoded = try? JSONDecoder().decode(ExtensionInstallProvenance.self, from: data)
+        else {
+            check("provenance round-trips", false)
+            return
+        }
+        check("provenance round-trips", decoded == provenance)
+        // The catalog reads a missing or corrupt file as nil, which is what keeps an install visible.
+        check(
+            "a file without provenance decodes as nil rather than a bogus value",
+            (try? JSONDecoder().decode(ExtensionInstallProvenance.self, from: Data("{}".utf8))) == nil)
     }
 
     static func manifestSummary() {

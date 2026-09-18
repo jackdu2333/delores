@@ -9,9 +9,15 @@ that is silently assumed to pass is how a broken build reaches the default branc
 It is a record, not a task list. Update the results when a check runs again; do not delete the rows
 that say why something could not run, or the next person re-derives them.
 
-**The machine changed on 2026-09-17**: Xcode 27.0 is installed and selected, so the build and the
-SwiftUI-macro harnesses now run here. SwiftLint is *not* currently installed, so `lint.sh` is the one
-check that cannot.
+**Current status, read 2026-09-18 at `245dfd9`: Xcode is not installed.** `xcode-select -p` says
+`/Library/Developer/CommandLineTools`, there is no `Xcode.app` under `/Applications`, and
+`xcodebuild -version` refuses with "requires Xcode". The build therefore cannot run here, and
+`./Scripts/run-tests.sh` is **66 of 73** — all seven failures are the missing SwiftUI macros.
+SwiftLint 0.65.1 *is* installed, and `./Scripts/lint.sh` is lint-clean, but only with the
+`TOOLCHAIN_DIR` override below; the bare form still aborts. Everything below that describes Xcode 27
+as installed and selected is a historical reading, kept because it is what the `BUILD SUCCEEDED` and
+73/73 rows were recorded against — not a fact about this machine now. Check `xcode-select -p` before
+trusting any row.
 
 ## The machine this was recorded on
 
@@ -120,8 +126,19 @@ the script: macOS strips `DYLD_*` when exec'ing a platform binary, and the scrip
 is `/bin/bash`. A plain environment variable survives, which is why `TOOLCHAIN_DIR` is the
 one to use.
 
-SwiftLint is not installed on this machine as of 2026-09-17, so neither form currently runs.
-Reinstall it with `brew install swiftlint` before relying on the lint half of the definition of done.
+**That part was the 2026-09-17 reading.** SwiftLint is installed again as of the 2026-09-18 status at
+the top, so the `TOOLCHAIN_DIR` form runs and is lint-clean. The bare form still aborts:
+`sourcekitdInProc.framework` ships inside Xcode, and there is none to load.
+
+## What CI is for
+
+The step list lives in [release.md](release.md#continuous-integration), which owns the description of
+`.github/workflows/ci.yml`. What matters here is that CI is now the **only** place the app target is
+compiled when this machine cannot: every harness compiles a subset of the shipped sources, so a green
+suite says nothing about target membership, a missing resource, a macro that needs the app's flags or
+a broken generated project. Adding a Swift file is the case to watch — `project.yml` and the
+committed `Tinycast.xcodeproj` decide membership, so a new file that no harness names has to be
+registered by running `xcodegen generate` and committing both.
 
 ## Manual acceptance on real displays
 

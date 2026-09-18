@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Merges every enabled registry; the store wins, because it is prebuilt.
 struct ExtensionStoreClient: Sendable {
@@ -13,6 +14,8 @@ struct ExtensionStoreClient: Sendable {
     }()
 
     private let session: URLSession
+    /// Per client, so a second search reuses the tree the first one walked.
+    private let folders = FolderCache()
 
     init(session: URLSession = ExtensionStoreClient.defaultSession) {
         self.session = session
@@ -124,7 +127,7 @@ struct ExtensionStoreClient: Sendable {
 
     /// Trees, not contents: contents caps a directory at 1000 silently.
     private func folderNames(in registry: ExtensionRegistry) async throws -> [String] {
-        if let cached = await FolderCache.shared.names(for: registry.id) { return cached }
+        if let cached = folders.names(for: registry.id) { return cached }
 
         let sha = try await treeSHA(
             owner: registry.owner, repository: registry.repository, path: registry.path,
@@ -134,7 +137,7 @@ struct ExtensionStoreClient: Sendable {
                 owner: registry.owner, repository: registry.repository, sha: sha)
         else { throw ExtensionStoreError.malformedResponse }
         let names = try ExtensionStoreResponse.parseTree(try await get(url)).directoryNames
-        await FolderCache.shared.store(names, for: registry.id)
+        folders.store(names, for: registry.id)
         return names
     }
 
@@ -147,8 +150,11 @@ struct ExtensionStoreClient: Sendable {
     /// anonymous budget is 60 an hour — an extension with 17 of them used to spend a third of it.
     func downloadFolder(
         owner: String, repository: String, path: String, ref: String, to destination: URL
-    ) async throws {
-        let root = try await treeSHA(owner: owner, repository: repository, path: path, ref: ref)
+    ) async throws -> String {
+        // One commit for the whole download: a branch can move between two requests, and a tree from
+        // one revision whose files come from another is not an install anyone can reproduce.
+        let commit = try await commitSHA(owner: owner, repository: repository, ref: ref)
+        let root = try await treeSHA(owner: owner, repository: repository, path: path, ref: commit)
         guard
             let url = ExtensionStoreResponse.treeURL(
                 owner: owner, repository: repository, sha: root, recursive: true)
@@ -163,12 +169,11 @@ struct ExtensionStoreClient: Sendable {
         for entry in tree.tree where entry.isFile {
             let components = entry.path.split(separator: "/").map(String.init)
             guard !components.contains(where: Self.skippedDirectories.contains) else { continue }
-            let escaped =
-                "\(owner)/\(repository)/\(ref)/\(path)/\(entry.path)"
-                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
-            guard let raw = URL(string: "https://raw.githubusercontent.com/\(escaped)") else {
-                continue
-            }
+            guard
+                let raw = ExtensionStoreResponse.rawFileURL(
+                    owner: owner, repository: repository, commit: commit,
+                    path: "\(path)/\(entry.path)")
+            else { continue }
             let target = components.reduce(destination) { $0.appendingPathComponent($1) }
             try fileManager.createDirectory(
                 at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -177,6 +182,7 @@ struct ExtensionStoreClient: Sendable {
                 try fileManager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target.path)
             }
         }
+        return commit
     }
 
     /// Walks a path to the tree it names: the trees API takes a sha, and a ref only for the root.
@@ -199,6 +205,14 @@ struct ExtensionStoreClient: Sendable {
             sha = next
         }
         return sha
+    }
+
+    /// A branch or tag is a name that can move; an install is pinned to what it named just now.
+    private func commitSHA(owner: String, repository: String, ref: String) async throws -> String {
+        guard
+            let url = ExtensionStoreResponse.commitURL(owner: owner, repository: repository, ref: ref)
+        else { throw ExtensionStoreError.malformedResponse }
+        return try ExtensionStoreResponse.parseCommit(try await get(url))
     }
 
     func download(_ url: URL) async throws -> Data {
@@ -226,12 +240,11 @@ struct ExtensionStoreClient: Sendable {
     }
 }
 
-/// Per session: re-fetching per keystroke spends GitHub's anonymous limit fast.
-private actor FolderCache {
-    static let shared = FolderCache()
+/// Re-fetching per keystroke spends GitHub's anonymous limit fast. One per client rather than one per
+/// process: a lock suffices, because this is a memo and not a concurrency boundary.
+private final class FolderCache: Sendable {
+    private let cached = Mutex<[UUID: [String]]>([:])
 
-    private var cached: [UUID: [String]] = [:]
-
-    func names(for registry: UUID) -> [String]? { cached[registry] }
-    func store(_ names: [String], for registry: UUID) { cached[registry] = names }
+    func names(for registry: UUID) -> [String]? { cached.withLock { $0[registry] } }
+    func store(_ names: [String], for registry: UUID) { cached.withLock { $0[registry] = names } }
 }

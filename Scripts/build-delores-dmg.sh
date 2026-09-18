@@ -32,6 +32,11 @@ APP="$DERIVED/Build/Products/Release/Delores.app"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 DMG="build/Delores-${VERSION}.dmg"
 
+# The verifier owns every signature rule, so it runs before anything is packaged: a DMG carrying a
+# build it would reject is worse than no DMG, because the failure only shows up at launch.
+echo "▸ Verifying ${APP##*/}…"
+./Scripts/verify-signature.sh "$APP"
+
 echo "▸ Packaging ${DMG}"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT

@@ -378,7 +378,7 @@ final class AppCore {
             paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
             return
         }
-        extensionCoordinator.runDeepLink(link)
+        extensionCoordinator.authorizeDeepLink(link)
     }
 
     /// The store-backed half of the conflict message; `HotKeyManager` names the catalogs itself.

@@ -299,6 +299,7 @@ run ext-icon-test          Tinycast/Platform/Appearance.swift \
                            Tinycast/Features/Extensions/Model/ExtensionRefreshPolicy.swift \
                            Tinycast/Features/Extensions/Model/ExtensionRefreshState.swift \
                            Tinycast/Features/Extensions/Model/RenderNode.swift \
+                           Tinycast/Features/Extensions/Model/ExtensionInstallProvenance.swift \
                            Tinycast/Features/Extensions/Service/ExtensionCatalog.swift \
                            Tinycast/Features/Extensions/Service/ExtensionFetcher.swift \
                            Tinycast/Features/Extensions/Service/ExtensionNodeShims.swift \
@@ -375,6 +376,7 @@ E=Tinycast/Features/Extensions
 run symbols-test           $E/Service/SymbolCatalog.swift
 run ext-cleanup-test       $E/Service/ExtensionCleanup.swift \
                            $E/Service/ExtensionCatalog.swift \
+                           $E/Model/ExtensionInstallProvenance.swift \
                            $E/Model/ExtensionManifest.swift \
                            $E/Model/ExtensionLaunchType.swift \
                            $E/Model/ExtensionRefreshPolicy.swift \
@@ -387,6 +389,7 @@ run ext-metadata-test      $E/Model/ExtensionCommandMetadata.swift \
                            $E/Service/ExtensionCommandMetadataStore.swift
 run ext-store-test         $E/Model/ExtensionRegistry.swift \
                            $E/Model/ExtensionPackageManager.swift \
+                           $E/Model/ExtensionInstallProvenance.swift \
                            $E/Model/ExtensionStoreResponse.swift
 run ext-form-test          $E/Model/ExtensionFormMetrics.swift \
                            $E/Model/ExtensionFormField.swift \
@@ -415,6 +418,7 @@ run slow ext-test          -parse-as-library \
                            $E/Model/ExtensionPickerItem.swift \
                            $E/Model/ExtensionSearchAccessory.swift \
                            $E/Service/ExtensionCatalog.swift \
+                           $E/Model/ExtensionInstallProvenance.swift \
                            $E/Service/ExtensionFetcher.swift \
                            $E/Service/ExtensionIconCache.swift \
                            $E/Service/ExtensionNodeShims.swift \

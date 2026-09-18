@@ -411,6 +411,15 @@ the folder holds, and the file bodies come from `raw.githubusercontent.com`, whi
 does not count. A `truncated` listing is a prefix, so it throws rather than install part of an
 extension.
 
+**An install is pinned to one commit.** A registry's `ref` is usually a branch, so it is resolved
+once through the commits API before anything is fetched, and every later request — the tree walk and
+each file body — names that commit. Reading the tree at one revision and the files at another would
+install a mixture that never existed, and it is the commit rather than the branch that says what is
+actually running a week later. A source install keeps the pair as `.install-provenance.json` inside
+the extension's own directory: the ref the registry named plus the commit it resolved to, read back
+through `InstalledExtension.provenance`. Store, Raycast and local installs carry none, because a
+prebuilt zip has no commit of ours to name.
+
 Installing from a source registry runs `<package manager> install --ignore-scripts`, then
 **`node_modules/.bin/ray build -e dist -o <build dir>` directly — never the manifest's `build`
 script.** That script is `ray build`, whose default environment is `dev`, and dev mode *installs into
@@ -485,6 +494,15 @@ keep working. Anything else on a claimed scheme just reopens the palette, and an
 so rather than failing silently. `ExtensionDeepLink` owns the claimed schemes and the parsing,
 covered by `Tests/ext-test.swift`; an extension's own `open("raycast://…")` resolves through the same
 `ExtensionManager.resolve(_:)` instead of launching Raycast.
+
+**An external link is untrusted IPC, so it asks first.** Anything on this Mac can open a `raycast://`
+or `tinycast://` URL, which makes a deeplink a way for another app to drive a command that carries the
+extension's own authority. `ExtensionCoordinator.authorizeDeepLink(_:)` resolves the command, names it
+in a confirmation dialog and runs it as `userInitiated` only once the user agrees; a
+`launchType=background` link is refused rather than promoted, because a command running with nothing
+on screen is the one case the user cannot see. Parsing and authorization stay separate — a link still
+has to parse before any of this — and an extension's own internal `open("raycast://…")` does not go
+through the gate.
 
 ## Background refresh
 
@@ -687,6 +705,7 @@ never shares with an installed copy.
 | What | Where | Gone on uninstall |
 | --- | --- | --- |
 | The extension | `extensions/<name>/` | yes |
+| Where a source install came from | `extensions/<name>/.install-provenance.json` | yes |
 | `LocalStorage`, `Cache`, preferences | `extension-data/<safe name>.json` | yes |
 | Command subtitle, refresh state | `extension-commands.json` | yes |
 | `environment.supportPath` | `extension-support/<safe name>/` | yes |

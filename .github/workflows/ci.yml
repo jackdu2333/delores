@@ -1,9 +1,14 @@
 name: CI
 
-# The job is a merge gate. There is no xcodebuild step: the full Debug build costs minutes and the
-# release workflow already builds before it ships, so CI keeps to the two checks that finish in about
-# a minute. Both go through the scripts rather than naming rules or harnesses here, so this file
-# cannot drift from them. See docs/testing.md.
+# The job is a merge gate. It runs the standalone harnesses, the Delores harness, the upstream-drift
+# regression and lint, and then builds the app target itself.
+#
+# The build is the one check nothing else can cover: every harness compiles a *subset* of the shipped
+# sources, so target membership, a missing resource, a macro that only expands under the app's flags
+# and a broken generated project are all invisible to a green harness run. It is unsigned and Debug
+# because it proves the target compiles and nothing here ships. Everything else goes through the
+# scripts rather than naming rules or harnesses here, so this file cannot drift from them. See
+# docs/testing.md.
 #
 # A push to the default branch and a PR both run it.
 #
@@ -67,6 +72,20 @@ jobs:
             exit 0
           fi
           ./Scripts/run-huaci-integration-tests.sh
+
+      - name: Build the Delores target
+        run: |
+          xcodebuild -project Tinycast.xcodeproj \
+            -scheme Delores \
+            -configuration Debug \
+            -derivedDataPath build/DerivedData \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
       # `if: always()` so a failing harness still surfaces the lint annotations in the same run.
       # Warnings annotate the diff; only lint *errors* fail the job, matching a local run.

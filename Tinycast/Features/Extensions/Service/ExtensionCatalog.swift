@@ -20,6 +20,10 @@ struct InstalledExtension: Sendable, Hashable, Identifiable {
 
     var assetsPath: String { directory.appendingPathComponent("assets").path }
 
+    /// Where this install came from, when a GitHub registry is where it came from. Read on demand:
+    /// the file is written once at install and nothing sweeps it.
+    var provenance: ExtensionInstallProvenance? { ExtensionCatalog.provenance(in: directory) }
+
     /// The prebuilt CommonJS bundle for a command, or nil when the install is incomplete.
     func bundleURL(for command: ExtensionCommand) -> URL? {
         let url = directory.appendingPathComponent("\(command.name).js")
@@ -81,6 +85,14 @@ enum ExtensionCatalog {
     /// npm-style names flattened to one path segment; a second copy that drifts orphans every file.
     static func safeName(_ name: String) -> String {
         name.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: "@", with: "")
+    }
+
+    /// Nil for a store, Raycast or local install, which carry no commit to pin. A missing or corrupt
+    /// file reads as nil rather than hiding an extension that is otherwise installed.
+    nonisolated static func provenance(in directory: URL) -> ExtensionInstallProvenance? {
+        let url = directory.appendingPathComponent(ExtensionInstallProvenance.fileName)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(ExtensionInstallProvenance.self, from: data)
     }
 
     private static func supportDirectory() -> URL {
@@ -191,7 +203,9 @@ enum ExtensionCatalog {
 
     /// Manifest, built commands and `assets/` only — never `node_modules` or `.js.map`s.
     @discardableResult
-    static func install(from source: URL) throws -> InstalledExtension {
+    static func install(
+        from source: URL, provenance: ExtensionInstallProvenance? = nil
+    ) throws -> InstalledExtension {
         guard let manifest = try? ExtensionManifest.load(directory: source) else {
             throw InstallError.notAnExtension(source)
         }
@@ -222,6 +236,11 @@ enum ExtensionCatalog {
                 try fm.copyItem(at: assets, to: destination.appendingPathComponent("assets"))
             }
             try restoreExecutablePermissions(in: destination)
+            if let provenance {
+                try JSONEncoder().encode(provenance).write(
+                    to: destination.appendingPathComponent(ExtensionInstallProvenance.fileName),
+                    options: .atomic)
+            }
         } catch {
             throw InstallError.copyFailed(error.localizedDescription)
         }

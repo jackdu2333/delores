@@ -90,6 +90,46 @@ enum ExtensionStoreResponse {
         return components?.url
     }
 
+    /// What a registry's ref named when the install started. A branch is a moving name, so reading
+    /// the tree at one revision and the files at another is not an install anyone can reproduce.
+    static func commitURL(owner: String, repository: String, ref: String) -> URL? {
+        URLComponents(
+            string: "https://api.github.com/repos/\(owner)/\(repository)/commits/\(escapedRef(ref))"
+        )?.url
+    }
+
+    /// GitHub reads a slash in a ref as another path segment, so refs like feature/x arrive encoded.
+    static func escapedRef(_ ref: String) -> String {
+        let unreserved = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+        return ref.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ref
+    }
+
+    /// A ref resolved to the commit it names.
+    struct GitCommit: Decodable, Sendable {
+        let sha: String
+    }
+
+    /// The commit a ref resolves to, or a thrown message when GitHub answered with an error instead.
+    static func parseCommit(_ data: Data) throws -> String {
+        if let commit = try? JSONDecoder().decode(GitCommit.self, from: data), !commit.sha.isEmpty {
+            return commit.sha
+        }
+        struct Message: Decodable { let message: String }
+        if let error = try? JSONDecoder().decode(Message.self, from: data) {
+            throw ExtensionStoreError.registryRejected(error.message)
+        }
+        throw ExtensionStoreError.malformedResponse
+    }
+
+    /// One file of a resolved commit: a tree says a path exists, this says what it holds.
+    static func rawFileURL(owner: String, repository: String, commit: String, path: String) -> URL? {
+        let escaped =
+            "\(owner)/\(repository)/\(commit)/\(path)"
+            .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+        guard let escaped else { return nil }
+        return URL(string: "https://raw.githubusercontent.com/\(escaped)")
+    }
+
     /// A Git tree: what a directory holds, by sha rather than by path.
     struct GitTree: Decodable, Sendable {
         let tree: [Entry]

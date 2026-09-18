@@ -3,6 +3,11 @@
 How a build reaches a user. The local development loop is in [development.md](development.md);
 the signing identity itself is in [signing.md](signing.md).
 
+> **Delores note.** This document describes the inherited Tinycast release lane. Delores has no
+> public release channel and must not consume Tinycast's feed, Homebrew casks or signing identity;
+> the Delores rules live in [delores-release.md](delores-release.md). The continuous-integration
+> section below `does` describe this tree's workflow, since Delores owns `.github/workflows/ci.yml`.
+
 ## Packaging a DMG locally
 
 ```sh
@@ -50,25 +55,29 @@ Removing that line would reintroduce exactly those three problems. See
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every PR, on a `macos-26` runner with Xcode 26 (the same selection
-step as the release workflow). One job, a merge gate; a new push cancels the in-flight run for the
-same ref. Two steps, both of which shell out to a script rather than naming rules or harnesses in the
-workflow, so neither can drift:
+`.github/workflows/ci.yml` is the merge gate, on a `macos-26` runner with Xcode 26 (the same selection
+step as the release workflow). One job; a new push cancels the in-flight run for the same ref. It runs
+on pull requests, on pushes to `integration/delores` — the default branch, which is developed by
+pushing straight to it — and on demand, so the ref CI exists to protect is one it actually sees. The
+checks go through the scripts below rather than naming rules or harnesses in the workflow, so none of
+them can drift:
 
-- **the harnesses** — `./Scripts/run-tests.sh`.
+- **the harnesses** — `./Scripts/run-tests.sh`, `./Scripts/run-delores-tests.sh`, and
+  `./Tests/upstream-drift-test.sh`. The vendored Huaci harness skips itself where the runner's SDK is
+  below 27, because that snapshot uses a macOS 27 member no earlier SDK declares.
+- **the app target** — an unsigned `Debug` build of the `Delores` scheme, with
+  `CODE_SIGNING_ALLOWED=NO` and no entitlements. **This is the one check nothing else covers.** Every
+  harness compiles a *subset* of the shipped sources, so target membership, a missing resource, a
+  macro that only expands under the app's flags and a broken generated project are all invisible to a
+  green harness run; the build is the only step that compiles what a user runs. It is deliberately
+  unsigned and Debug — it proves the target compiles, and nothing in CI ships.
 - **lint** — `./Scripts/lint.sh`, with `SWIFTLINT_REPORTER=github-actions-logging` so every violation
   is annotated **inline on the PR diff** instead of being buried in the log. It runs under
   `if: always()`, so a failing harness still surfaces the lint annotations in the same run. Warnings
   annotate only; **lint errors fail the job**, exactly as a local run does.
 
-It does **not** run on pushes to `main`. `pull_request` builds the merge result, so re-running after a
-merge would re-test content CI has already seen. A direct push to `main` therefore gets no run at all —
-use **Actions → CI → Run workflow** if one ever needs checking.
-
-There is **no `xcodebuild` step**: a Debug build costs minutes on every run and the release workflow
-builds before it ships anyway, so CI keeps to the checks that finish in about a minute. The
-consequence is that a change compiling nowhere still turns the PR green — **build locally before you
-open one**. See [testing.md](testing.md#definition-of-done).
+[delores-verification.md](delores-verification.md) records what each of these last said on the Delores
+machine, including why one of them cannot run there.
 
 ## Releasing
 

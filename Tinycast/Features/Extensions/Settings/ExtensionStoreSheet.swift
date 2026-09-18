@@ -192,7 +192,7 @@ struct ExtensionStoreSheet: View {
             searching = false
             searched = true
         }
-        let found = await ExtensionStoreClient().search(trimmed, in: registries)
+        let found = await core.extensions.searchRegistries(trimmed, in: registries)
         guard !Task.isCancelled else { return }
 
         // The store's copy wins a tie: it is prebuilt, so installing it needs no toolchain.

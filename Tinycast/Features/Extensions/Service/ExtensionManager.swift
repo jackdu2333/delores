@@ -39,6 +39,9 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     private let commandMetadata = ExtensionCommandMetadataStore(
         fileURL: ExtensionCatalog.commandMetadataFile())
     @ObservationIgnored private let runtime: ExtensionRuntime
+    /// One for the session: its tree memo is what stops a second keystroke paying for a listing the
+    /// first one already walked.
+    @ObservationIgnored private let storeClient = ExtensionStoreClient()
     @ObservationIgnored private let bridge: ExtensionHostBridge
     @ObservationIgnored private let oauthSession = ExtensionOAuthSession()
     @ObservationIgnored private weak var appIndex: AppIndex?
@@ -210,9 +213,17 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         onProgress: @Sendable @escaping (ExtensionInstaller.Progress) -> Void
     ) async throws {
         let installer = ExtensionInstaller(
+            client: storeClient,
             packageManager: packageManager, additionalSearchPaths: additionalSearchPaths)
         try await installer.install(listing, onProgress: onProgress)
         await refresh()
+    }
+
+    /// The store sheet's entry point, so a search shares the session's client rather than making one.
+    func searchRegistries(
+        _ query: String, in registries: [ExtensionRegistry]
+    ) async -> [ExtensionStoreClient.RegistryResult] {
+        await storeClient.search(query, in: registries)
     }
 
     /// Refreshes once at the end, and returns what failed so the pane can name it.

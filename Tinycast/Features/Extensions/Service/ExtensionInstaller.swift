@@ -28,7 +28,7 @@ struct ExtensionInstaller: Sendable {
     let additionalSearchPaths: [String]
 
     init(
-        client: ExtensionStoreClient = ExtensionStoreClient(), packageManager: ExtensionPackageManager,
+        client: ExtensionStoreClient, packageManager: ExtensionPackageManager,
         additionalSearchPaths: [String] = []
     ) {
         self.client = client
@@ -46,6 +46,7 @@ struct ExtensionInstaller: Sendable {
         defer { try? FileManager.default.removeItem(at: workspace) }
 
         let prepared: URL
+        var provenance: ExtensionInstallProvenance?
         switch listing.source {
         case .prebuiltZip(let url):
             onProgress(.downloading)
@@ -53,14 +54,17 @@ struct ExtensionInstaller: Sendable {
         case .githubFolder(let owner, let repository, let path, let ref):
             onProgress(.downloading)
             let source = workspace.appendingPathComponent("source", isDirectory: true)
-            try await client.downloadFolder(
+            // The commit the source was read from is the only durable answer to what is installed.
+            let commit = try await client.downloadFolder(
                 owner: owner, repository: repository, path: path, ref: ref, to: source)
             prepared = try await build(
                 at: source, into: workspace.appendingPathComponent("build", isDirectory: true),
                 onProgress: onProgress)
+            provenance = ExtensionInstallProvenance(
+                owner: owner, repository: repository, path: path, requestedRef: ref, commit: commit)
         }
         onProgress(.installing)
-        return try ExtensionCatalog.install(from: prepared)
+        return try ExtensionCatalog.install(from: prepared, provenance: provenance)
     }
 
     // MARK: - Prebuilt
@@ -204,9 +208,10 @@ struct ExtensionInstaller: Sendable {
 
         return try await withCheckedThrowingContinuation { continuation in
             // One resume, whichever of termination and timeout arrives first.
-            let state = ResumeGuard()
+            let state = ProcessRace()
             process.terminationHandler = { finished in
                 let data = (try? pipe.fileHandleForReading.readToEnd()) ?? Data()
+                state.stopTimeout()
                 guard state.claim() else { return }
                 continuation.resume(
                     returning: CommandResult(
@@ -216,12 +221,18 @@ struct ExtensionInstaller: Sendable {
             do {
                 try process.run()
             } catch {
+                state.stopTimeout()
                 guard state.claim() else { return }
                 continuation.resume(throwing: error)
                 return
             }
-            Task {
-                try? await Task.sleep(for: .seconds(Self.commandTimeout))
+            state.startTimeout {
+                do {
+                    try await Task.sleep(for: .seconds(Self.commandTimeout))
+                } catch {
+                    // Cancelled: the process finished on its own, and it is not ours to kill.
+                    return
+                }
                 guard process.isRunning else { return }
                 process.terminate()
                 guard state.claim() else { return }
@@ -232,10 +243,12 @@ struct ExtensionInstaller: Sendable {
     }
 }
 
-/// Lets exactly one of two racing paths resume a continuation.
-private final class ResumeGuard: @unchecked Sendable {
+/// One process racing its own timeout: exactly one of the two paths resumes the continuation, and the
+/// loser is cancelled rather than left sleeping out the full five minutes.
+private final class ProcessRace: @unchecked Sendable {
     private let lock = NSLock()
     private var claimed = false
+    private var timeout: Task<Void, Never>?
 
     func claim() -> Bool {
         lock.lock()
@@ -243,5 +256,23 @@ private final class ResumeGuard: @unchecked Sendable {
         if claimed { return false }
         claimed = true
         return true
+    }
+
+    /// Either order works: when the race is already lost the task is cancelled instead of stored.
+    func startTimeout(_ body: @escaping @Sendable () async -> Void) {
+        let task = Task { await body() }
+        lock.lock()
+        let lost = claimed
+        if !lost { timeout = task }
+        lock.unlock()
+        if lost { task.cancel() }
+    }
+
+    func stopTimeout() {
+        lock.lock()
+        let task = timeout
+        timeout = nil
+        lock.unlock()
+        task?.cancel()
     }
 }
