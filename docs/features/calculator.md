@@ -27,7 +27,7 @@ in (see Currency below).
 - **A workday is 8 hours, and nothing consults a calendar.** Weekends and public holidays would make
   the same query answer differently on two Macs, and the only supported source for them is EventKit,
   whose Full Calendar Access grant a calculator must never provoke mid-keystroke. `workdays` is
-  therefore an ordinary time unit, and calculator evaluation never requests Calendar access.
+  therefore an ordinary time unit, and `calendarEnabled` stays the Calendar feature's own consent.
 - **`CurrencyData.generated.swift` is emitted by `node Scripts/gen-currencies.js`** and never hand-edited.
   Four currency tables are hand-maintained, all in `CalcCurrency`: `contested`, the nouns several
   currencies share (`dollars`, `pounds`); `isoNames`, the standard's own names where CLDR substitutes

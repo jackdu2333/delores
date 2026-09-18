@@ -62,8 +62,8 @@ Add a token rather than a magic number when introducing a new value.
 
 ### Interface Size (`InterfaceMetrics`)
 
-`AppSettings.interfaceSize` scales the palette and the surfaces that float with it — the ⌘K menu,
-Quick Actions, dialogs and HUDs. Settings, Onboarding,
+`AppSettings.interfaceSize` scales the palette and the surfaces that float with it — the ⌘K menu, the
+extension list panel, Quick Actions, dialogs and HUDs. Settings, Onboarding,
 Support, Update, About and Notes never scale.
 
 `DesignSystem/InterfaceMetrics.swift` stores **only a scale** and derives every value from the `Theme`
@@ -140,8 +140,8 @@ round every row to 18 for no reason.
 
 If a pair ever does need closing, **move the gap, not the curve** — but only once you have checked
 what else is anchored to that gap. A radius is shared by surfaces across several features, a
-placement constant is not: `Radius.menuPanel` alone dresses the ⌘K menu, the shortcut-recorder
-callout and the Notes switcher, and `menuRow` is deliberately equal to
+placement constant is not: `Radius.menuPanel` alone dresses the ⌘K menu, the extensions actions
+panel, the shortcut-recorder callout and the Notes switcher, and `menuRow` is deliberately equal to
 `row` so a row pill is one shape everywhere.
 
 ### Size (`Theme.Size`)
@@ -207,7 +207,9 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 Beyond these, `.secondary`/`.tertiary` foreground styles are fine for SF Symbols (they resolve against
 the environment's appearance). **Selection always beats hover** when a row is both.
 
-Feature-owned surfaces keep their own values; the `ramp` mechanism is shared, the values are not.
+An extension's own surfaces live in `ExtensionColors` (`Features/Extensions/UI/`), not here — the
+`ramp` mechanism is shared, the values are the feature's. See the Extensions non-negotiable in
+[`AGENTS.md`](../AGENTS.md).
 
 ---
 
@@ -452,7 +454,7 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   `HUDPresenter.extend()`, so the bar slides to its new value in place instead of replaying the
   entrance.
 - **`MessageHUDController`'s pill** is every _other_ transient
-  confirmation: every system action whose effect
+  confirmation: Custom Commands and Snippets confirming a run, and every system action whose effect
   is invisible (`Trash Emptied`, `Hidden Files Shown`, `Bluetooth Off`). One capsule shape, sized to
   its message (`hudMaxWidth 420` ceiling), clipped to a `Capsule()`, with the message first and a
   filled glyph trailing it: `checkmark.circle.fill` green for `.success`, `exclamationmark.circle.fill`
@@ -506,11 +508,24 @@ per-scroll-view shim: chasing that flip after the fact is what caused the flash.
 
 ---
 
+## The camera preview panel
+
+`CameraPreviewPanel` is the third borderless surface, beside the dialog and the notes panel. It takes
+the same recipe — `panelScrim`, then `VisualEffectView`, then the clip — and the same optical lift a
+dialog takes, but sits at `.floating` rather than `.modalPanel` so a failure report still lands on
+top of it.
+
+`AVCaptureVideoPreviewLayer` is hosted in one `NSViewRepresentable` and nothing else; the title,
+countdown and buttons around it are Tinycast's own. Its buttons are a **deliberate copy** of
+`DialogButton` rather than a share: the dialog owns its button, and a preview that had to move with
+it would couple two unrelated surfaces.
+
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
-rather than a convention — `.volume` for the Set Volume prompt. Text fields take
-`dialogTextField()` and choices are `DialogChip`s, never a menu `Picker`. Two things follow from the enum:
+rather than a convention — `.volume` for the Set Volume prompt, `.eventDraft` for New Event,
+`.snippetArguments` for a snippet's `{argument}` values. Text fields take `dialogTextField()` and
+choices are `DialogChip`s, never a menu `Picker`. Two things follow from the enum:
 
 - **Arrow keys belong to the accessory, not the panel.** `DialogPanel.handlesArrowKeys` is set from
   `DialogAccessory.claimsArrowKeys`, so the slider still steps on ←/→ while the New Event title field

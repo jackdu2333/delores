@@ -18,7 +18,7 @@ every shortcut without re-registering.
 - **`Model/` stays Foundation-only (plus SQLite3) and pure** for `quicklink-test` — the home directory is
   injected, never read. `Service/QuicklinkLauncher` owns every `NSWorkspace` call.
 - **Drawing an argument field reads nothing.** The header's chips come from
-  `QuicklinkTemplateEngine.declaredArguments(in:)`, a parse of the template alone, so moving the
+  `SnippetTemplateEngine.declaredArguments(in:)`, a parse of the template alone, so moving the
   selection never touches the clipboard or the frontmost app's selection. Only opening does.
 - **`Quicklink.precedes` is the one display order**, sorted through by both the store and the `AppIndex`
   slice.
@@ -26,8 +26,8 @@ every shortcut without re-registering.
   of Search Quicklinks, and `openQuicklink` refuses it, so no surface can offer or open it. Everything
   attached — name, link, alias, shortcut, favorite slot, ranking — stays exactly as it was. The
   **Settings → Quicklinks** row is the one place that turns it back on, through the checkbox launcher
-  items; the checkbox is last in the row and dims the alias field and shortcut recorder.
-- **There is one template engine.** Quicklinks expand through `QuicklinkTemplateEngine` rather than a
+  items and custom commands carry: last in the row, dimming the alias field and shortcut recorder.
+- **There is one template engine.** Quicklinks expand through `SnippetTemplateEngine` rather than a
   second parser, which is what makes `| raw` mean something — it opts a value out of the automatic
   percent-encoding a URL destination asks for. `{selectedText}` is accepted as an alias for
   `{selection}`, but nothing ever *writes* it.
@@ -58,8 +58,10 @@ before the placeholders are resolved.
 
 ## Placeholders
 
-Quicklinks use `QuicklinkTemplateEngine` directly, so every supported token and modifier has one
-implementation. `{cursor}` and snippet-reference tokens are not Quicklink features and remain literal.
+Quicklinks reuse Tinycast's one template engine — the same
+[`SnippetTemplateEngine`](snippets.md#template-tokens) snippets use, so every token and every modifier
+is available and there is no second parser to keep in sync. `{cursor}` and `{snippet:…}` are text
+concerns with nothing to resolve against in a destination, so they are left literal.
 
 ```text
 https://google.com/search?q={argument}
@@ -96,7 +98,7 @@ to the palette and are described in
 answer means.
 
 `promptedArguments(for:)` is the one place that decides: the `{argument}`s the link declares, read
-  straight off the template by `QuicklinkTemplateEngine.declaredArguments(in:)` — a pure parse, so nothing
+straight off the template by `SnippetTemplateEngine.declaredArguments(in:)` — a pure parse, so nothing
 is expanded and no clipboard is read to draw a chip — plus the synthetic **"Selected Text"** field when
 the setting says ask. An argument with a `default=` answers itself and is never asked for.
 `QuicklinkArgumentsAccessory` turns that list into the strip; a field declaring `options=` is chosen
@@ -155,7 +157,7 @@ Tinycast's own dialog and leaves no partial state.
 ## Search and pinning
 
 Quicklinks are their own `AppEntry.Kind`, their own `AppIndex` slice and their own launcher section,
-between System Settings and System Actions. Only the **name** is indexed; the destination is not searchable
+between System Settings and Snippets. Only the **name** is indexed; the destination is not searchable
 (a URL is a subsequence of almost any query) — beside the name, a quicklink answers to whatever
 [user alias](launcher.md#user-aliases) its Settings row carries, which is why a hidden one dims the
 field. Per-quicklink "Show in root search" filters the slice;
@@ -175,7 +177,7 @@ feature. The Search Quicklinks screen gives pins their own section, like the cli
 ## Search Quicklinks
 
 `PaletteMode.quicklinks` is a sub-screen reached from the `Search Quicklinks` command. It is shaped
-like the clipboard: the list on the left, a **detail pane** on the right showing
+like Search Snippets and the clipboard: the list on the left, a **detail pane** on the right showing
 the selected quicklink's glyph over an Information block (name, link, the app it opens with, its
 shortcut, when it was created). Like Calculator History it stays out of the Tab cycle and exits via the
 back chevron or a bare backspace.
@@ -215,7 +217,7 @@ Duplicating takes a **new** identity, so the copy can't inherit the original's s
 ## Hotkeys
 
 `HotKeyAction.quicklink(id:)` persists under `hotkey.quicklink.<uuid>` with a
-`boundQuicklinkIDs` index, a per-item index rather than a fixed catalog, so `start()` can re-register from
+`boundQuicklinkIDs` index, the same shape custom commands use — both are per-item rather than
 per-catalog-entry, so both need an index for `start()` to re-register from. The store therefore loads
 **even while the feature is off** and before `hotKeys.start`: the stale-binding prune reads that
 list, and an unloaded store would look like "every quicklink was deleted" and throw the shortcuts
@@ -232,8 +234,8 @@ takes a fresh identity for every entry, so it can never collide with a shortcut 
 owns.
 
 Quicklinks and their bindings also ride in native settings backups, and the settings flags with them.
-Unlike permission-backed features, `quicklinksEnabled` grants no permission class and enables no
-listening, so excluding it would be cargo-culting.
+Unlike `snippetsEnabled`, `quicklinksEnabled` grants no permission class and enables no listening, so
+excluding it would be cargo-culting.
 
 The encrypted `.rayconfig` flow in **Settings → Backup** can import Raycast's quicklinks as an
 independently selectable category. Tinycast reads `name`, `link`, `createdAt` and the optional

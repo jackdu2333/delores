@@ -9,8 +9,6 @@ enum EntryNaming {
         var strongNames: [String] = []
         /// Other ways to say the same name: localizations, Spotlight alternates, vendor aliases.
         var translations: [String] = []
-        /// An optional provider label; the active launcher currently supplies none.
-        var ownerName: String?
         var bundleID: String?
         var executableName: String?
 
@@ -31,7 +29,6 @@ enum EntryNaming {
         aliases.append(.name(sources.name))
         for text in strong { aliases.append(.name(text)) }
         for text in translations + romanized { aliases.append(.translation(text)) }
-        if let owner = sources.ownerName, !owner.isEmpty { aliases.append(.owner(owner)) }
         if let bundleID = sources.bundleID, !bundleID.isEmpty {
             aliases.append(.technical(identifyingPart(of: bundleID)))
             // The whole reverse-DNS id is exact-only: as a prefix, "com" would match every app.

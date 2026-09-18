@@ -30,8 +30,8 @@ key  = scrypt(passphrase, salt, N=16384, r=8, p=1, dkLen=32)
 
 The header carries `schemaVersion`, `iv` and `salt`, hex-encoded, 16 bytes each. `schemaVersion` is
 Raycast's own container number and is **3**; anything else is rejected. The payload is category-keyed
-JSON: `settings`, `clipboardHistory`, and a `quicklinks` object holding `quicklinks` plus
-`openWithPlatforms`.
+JSON: `settings`, `clipboardHistory`, a top-level `snippets` whose entries name themselves `title`,
+and a `quicklinks` object holding `quicklinks` plus `openWithPlatforms`.
 
 Raycast encrypts even when the user never chose a password — it generates one and stores it in the
 login keychain (service `Raycast`, account `export_passphrase`), viewable at Raycast → Settings →
@@ -52,6 +52,10 @@ hotkeys do. Raycast's ULID is discarded — each imported row gets a fresh UUID,
 import already does. Importing at least one quicklink turns `quicklinksEnabled` on: opening a link
 grants no permission class.
 
+Script commands are not in a `.rayconfig` — they are files in a folder Raycast points at — so they
+have their own importer, described in
+[custom-commands.md](custom-commands.md#importing-raycast-scripts).
+
 ## Layout
 
 `RaycastDecoder` unwraps the container and returns Raycast's own values; `RaycastImportReader` turns
@@ -59,6 +63,5 @@ those into Tinycast's domain types. That is the same pure-layer / platform-layer
 `Features/WindowManagement/` uses — the reader needs AppKit, so it lives in `Service/` and is covered by
 the app build rather than the harness.
 
-`RaycastImport` is only the data: `Result`, `selecting(_:)` and `RaycastImportOptions` for the
-settings, clipboard and quicklink slices the active app still accepts.
+`RaycastImport` is only the data: `Result`, `selecting(_:)` and `RaycastImportOptions`.
 `BackupActions.importRaycast` runs the reader off the main actor.

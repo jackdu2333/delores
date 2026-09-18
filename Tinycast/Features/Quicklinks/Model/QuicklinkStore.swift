@@ -44,7 +44,7 @@ final class QuicklinkStore {
         if !isAvailable { closeDatabase() }
     }
 
-    /// Under Application Support, each debug/release channel gets its own authored library.
+    /// Under Application Support, the same per-channel root snippets use.
     private static var defaultDirectory: URL {
         let bundleID = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
         return FileManager.default

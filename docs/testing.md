@@ -90,6 +90,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `scopes-test` | `Launcher/Model/SearchScopes.swift` |
 | `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
 | `calc-test` | all of `Calculator/Model/` |
+| `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |
 | `clipboard-search-test` | Ordinary and OCR result ordering, opt-in lifecycle, cancellation, pins and type filters |
 | `clipboard-text-test` | Apple Vision/PDF extraction, scheduling, retry backoff and recovery |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift`, `ClipboardFilter.swift`, `ClipboardFileKind.swift`, the colour trio |
@@ -98,7 +99,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `emoji-search-test` | `Emoji/Service/EmojiIndex.swift`, `FrequentEmojiStore.swift`, `Scripts/gen-emoji.js`'s keyword format |
 | `palette-navigation-test` | `Palette/PaletteState.swift`'s screen motions — `prepare`, `replace`, `push`, `pop` |
 | `palette-selection-test` | `Features/PaletteRowIndex.swift` |
-| `interface-size-test` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift` |
+| `interface-size-test` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift`, `Extensions/Model/ExtensionFormMetrics.swift` |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
@@ -107,12 +108,20 @@ If a change touches anything in the right column, the harness on the left is man
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
 | `window-command-test` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
 | `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` — the layout record, its geometry and its inverse, the plan and the store |
+| `custom-command-test` | `CustomCommands/Model/CustomCommand.swift`, `Service/ShellCommandRunner.swift` |
 | `uninstall-test` | all five pure files in `Uninstall/Model/` |
 | `quicklink-test` | all of `Quicklinks/Model/` |
 | `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
+| `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, plus the real fuzzy matcher and signposts |
 | `notes-editor-test` | the literal Notes editor with real TextKit 2 and AppKit editing objects |
 | `raycast-test` | `Backup/Service/RaycastDecoder.swift`, `Scrypt.swift`, `Platform/Compression/Zlib.swift` |
+| `symbols-test` | `Extensions/Service/SymbolCatalog.swift`, against this machine's CoreGlyphs |
+| `ext-store-test` | `Extensions/Model/` — the registry model and both registry APIs' parsers |
+| `ext-refresh-test` | `Extensions/Model/ExtensionRefreshPolicy.swift` — interval parsing, due dates, backoff, subtitle fallback, indicator state |
+| `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
+| `ext-test` | the extension runtime end to end — boots a real bundle in JavaScriptCore and renders it |
+| `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
 | `icon-cache-test` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, and that a row icon draws identically to the 96px one |
 | `entry-icon-test` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
 | `text-diff-test` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, Unicode, ties, token-cap boundaries and fast paths |
@@ -275,6 +284,7 @@ Measured at the end of the 2026 refactor, on `main`. Useful as orders of magnitu
 | Comment density | 1,653 of 27,289 source lines (6.1%) |
 | The harness suite | ~15 s wall clock, 11-way parallel (~98 s serial, ~140 s before either) |
 | `palette-selection-test` | 111,684 assertions — a tripwire: a change in this count means the row-order model moved |
+| `SnippetKeywordPolicy` match | 7 µs/keystroke at 50 keywords, 59 µs at 1,000 — the `lowercased()` is 0.09 µs of it |
 | `ClipboardStore.pinnedItems` | 27–127 µs per uncached search, 1,000-row window — no cache earns its invalidation yet |
 | `count items of trash` | 5,000 ms against a cold Finder on an *empty* Trash, 110 ms warm — why AppleScript is detached |
 
@@ -314,8 +324,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - ⌃N/⌃P move the highlight as ↓/↑ do; ⌃F/⌃B step the emoji grid's selection, and the caret elsewhere
 - The highlight always sits on the row the footer pill describes
 - With a calculation typed, the calculator card is first and is selected first
-- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks, System Actions,
-  Window Management and Commands
+- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks, Snippets,
+  System Actions, Window Management, Custom Commands, Commands
 - With a non-ASCII input source active, ⌘K opens Actions; ↑/↓ move it, ↵ activates, Escape closes it
 - While a menu is open, typing does **not** change the query and the caret is hidden
 - Tab toggles launcher ↔ clipboard; bare Backspace on an empty query backs out of a sub-screen
@@ -354,7 +364,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A double-tap binding fires; Hyper Key remaps and its status dot is green
 - Every binding survives quit and relaunch
 - `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
-  Clipboard, Emoji, File Search, Quicklinks, AI and the two layout commands
+  Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, AI and the two layout commands
 
 ### Uninstall
 
@@ -446,6 +456,14 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Over a light desktop, the corner matches the palette's, the shadow follows it, and no dark edge shows
   around the glass controls
 
+### Snippets
+
+- With snippets **off**: no launcher entries, no keyword expansion, and no permission prompt at launch
+- Enabling shows the consent dialog **before** the Accessibility prompt
+- Declining leaves the feature off and prompts for nothing
+- After enabling, a keyword expands in a text field; an argument-bearing snippet prompts then delivers
+- Editing a snippet file externally reloads it
+
 ### Calculator and currency
 
 - `2+2` shows a card; ↵ copies and records to history; unit and date conversions work
@@ -456,6 +474,48 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   System Settings ▸ General ▸ Language & Region without a relaunch — and nothing prompts for location
 - A crypto query (`1 btc`, `0.5 sol to eur`) answers, and `1 usd to btc` stays in plain notation
 
+### Calendar and meetings
+
+- With Calendar **off**: no launcher entries, no card, no permission prompt at launch
+- Enabling shows the consent dialog **before** the macOS prompt; declining prompts for nothing
+- After Calendar permission is reset, Settings ▸ Calendar offers `Allow Calendar Access…` and asks
+  again; after denial it offers System Settings instead
+- With a meeting four minutes out, an empty palette shows the card on top, provider glyph and all
+- The countdown steps on the minute boundary rather than on a keystroke
+- ↵ joins: a Zoom link opens the Zoom app, and the browser where no app claims the scheme
+- Typing a character swaps the card for the calculator's; ↑/↓ never lands on a phantom row
+- Unchecking a calendar drops its events from the launcher and My Schedule, and survives a relaunch
+- Adding or deleting an event in Calendar.app updates an open palette without a reopen
+- A meeting with no link is listed and searchable, and answers Open in Calendar rather than Join
+- Import a backup taken with Calendar on: it comes back **off**, and no calendar toggle travels
+- Calendar in Menu Bar on Disabled: the calendar item is gone and Tinycast's own item is unaffected;
+  turning `Show in menu bar` off leaves an enabled calendar item in place, and both off leaves neither
+- On Meeting Title with Show Upcoming Events at 5 minutes, the title and countdown appear at T-5 and
+  step on the minute boundary, not on a keystroke
+- `Only show events with meetings` hides a linkless event and shows it again when unchecked
+- Hide Current Event on Automatically clears the entry at the start and hands the space to the next
+  event inside its lead time; on 5 minutes it lingers counting up, then clears
+- Clicking the calendar item opens `Join <title>`, `Open in Calendar...`, `My Schedule` and
+  `Calendar Settings...` and nothing else; the second opens that event in Calendar.app, while a bare
+  click never joins
+- Camera Preview on: ↵ on the join card opens the panel **already showing live video** — no black
+  frame, no blank mid-preview; ↵ joins, Esc drops the join; the camera light goes out with the
+  panel, and the first run prompts once, before any panel appears
+- A meeting that ends leaves the launcher results and `My Schedule` on the same minute boundary it
+  leaves the menu bar, with the palette open or closed over the end
+- Auto Join on: the meeting opens itself at its start, **once** — dismiss it and it does not return.
+  With confirm on and camera preview off, the dialog asks first
+- Arming Auto Join during a meeting already under way joins nothing
+- Sleeping over a meeting's start and waking past it reloads the events; one still inside the window
+  joins, one long past does not
+- Create Event writes to the default calendar and shows up on the card, the schedule and the launcher
+  without a relaunch; a blank title leaves the dialog up on ↵ and on a click
+- Arrow keys move the caret in the New Event title field, and still step the Set Volume slider
+- Every command row of Settings ▸ Calendar has Add Alias, Record Hotkey and a checkbox, and none of
+  the five appears in Settings ▸ Commands
+- Export with auto join and camera preview on, import onto a clean profile: both come back **off**,
+  while the menu-bar settings carry over
+
 ### System actions and window management
 
 - A confirmation-gated action (Restart, Quit All) confirms, showing the subject's own glyph
@@ -463,6 +523,12 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Holding a bound hotkey does **not** stack dialogs
 - Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔
 - "Top Half" lands flush with the top of the visible frame, on a secondary display too
+
+### Extensions
+
+- Every command under Settings ▸ Extensions has Add Alias, and Record Hotkey when the mode is
+  supported; an alias set there finds the command from its start and shows the chip
+- Hiding the extension from the launcher, or turning off Show in launcher, dims its alias fields
 
 ### Settings and backup
 
@@ -474,9 +540,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - An image clip round-trips and still renders; the archive can then be deleted without breaking it
 - A file whose `manifest.json` `format` was hand-edited is refused **with a message naming it**
 - Cancelling the save panel leaves nothing in `~/Library/Caches/com.tinycast.app.dev/backup-staging/`
-- Capability-granting settings are not in the exported file, so importing cannot silently enable a
-  permission-backed feature
-- Nothing in the extracted tree names a Keychain item or an AI conversation
+- **`snippetsEnabled` is not in the exported file**, and importing does not enable snippets
+- Nothing in the extracted tree names a Keychain item, an extension, or an AI conversation
 
 ### Clean install
 
@@ -491,7 +556,7 @@ tccutil reset Accessibility com.tinycast.app.dev 2>/dev/null || true
 ```
 
 - Launches with every store directory absent — no crash, no hang; onboarding runs
-- Palette opens and lists apps; clipboard, quicklinks and calculator history are all empty
+- Palette opens and lists apps; clipboard, quicklinks, snippets and calculator history are all empty
   and all accept a first entry
 - Notes creates no directory until Show, Create, or Search is first used, then accepts its first edit
 - **Every setting shows its intended default.** Walk the panes: this is what catches a broken
