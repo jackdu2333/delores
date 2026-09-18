@@ -279,7 +279,8 @@ final class DeloresContextCoordinator {
         actionGeneration = generation
         Task { @MainActor [weak self] in
             guard let self else { return }
-            let route = await self.quickActions.translateRoute(for: selection)
+            let route = await self.quickActions.translateRoute(
+                for: selection, to: self.quickActions.targetLanguage)
             guard self.actionGeneration == generation else { return }
             switch route {
             case .languageModel: self.answer(action, selection: selection, path: .model)
@@ -341,16 +342,28 @@ final class DeloresContextCoordinator {
             do {
                 let text = try await TextTranslator.translate(selection, to: target)
                 guard let self, self.actionGeneration == generation else { return }
+                guard !Task.isCancelled else {
+                    self.abandon(action)
+                    return
+                }
                 self.conversation.noteAnswer(text)
                 self.island.showAnswer(.partial(action, text: text), animated: false)
             } catch is CancellationError {
-                // A reader who stopped the run asked for nothing, which is not a failure to read.
-                return
+                guard let self, self.actionGeneration == generation else { return }
+                self.abandon(action)
             } catch {
                 guard let self, self.actionGeneration == generation else { return }
                 self.island.showAnswer(.failed(action, reason: error.localizedDescription))
             }
         }
+    }
+
+    /// The card for a framework run that ended without an answer, because the reader stopped it. It is
+    /// a stopped card rather than a dismissal so the press can be repeated, and the generation check
+    /// above is what tells a Stop apart from the surface having been replaced under it.
+    private func abandon(_ action: DeloresContextAction) {
+        conversation.noteAnswer("")
+        island.showAnswer(.stopped(action, text: nil), animated: false)
     }
 
     private func show(_ outcome: DeloresActionSession.Outcome, for action: DeloresContextAction) {

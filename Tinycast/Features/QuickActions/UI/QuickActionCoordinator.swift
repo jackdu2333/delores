@@ -261,7 +261,7 @@ final class QuickActionCoordinator {
         _ state: QuickActionPanelState, streaming: Bool
     ) async throws -> String {
         if state.action.usesTranslationFramework,
-            await translateRoute(for: state.original) == .translationFramework
+            await translateRoute(for: state.original, to: state.targetLanguage) == .translationFramework
         {
             return try await TextTranslator.translate(state.original, to: state.targetLanguage)
         }
@@ -329,11 +329,21 @@ final class QuickActionCoordinator {
     /// One decision for both surfaces, because they share the id: the reader's own binding if they made
     /// one, and Apple's translator otherwise whenever it has the pair. A pair it merely supports still
     /// counts, so a language nobody downloaded waits to be downloaded rather than becoming an AI bill.
-    func translateRoute(for selection: String) async -> DeloresTranslationRoute {
-        let availability = await TextTranslator.availability(of: selection, to: targetLanguage)
+    ///
+    /// The target is an argument rather than `targetLanguage`, because a panel the reader already has
+    /// open can be retranslated into a language the setting does not name, and the backend has to be
+    /// the one that can serve the language actually asked for.
+    func translateRoute(
+        for selection: String, to target: Locale.Language
+    ) async -> DeloresTranslationRoute {
+        // A bound model answers without asking Apple anything: the reader's choice settles it, and
+        // neither the recognizer nor the framework round trip has anything to add to that.
+        guard store.modelOverride(forActionID: BuiltInQuickAction.translate.id) == nil else {
+            return .languageModel
+        }
         return DeloresActionDefinition.translationRoute(
-            hasModelBinding: store.modelOverride(forActionID: BuiltInQuickAction.translate.id) != nil,
-            availability: availability)
+            hasModelBinding: false,
+            availability: await TextTranslator.availability(of: selection, to: target))
     }
 
     /// The provider this action runs on: the model the reader bound to it, and the permissive

@@ -50,11 +50,13 @@ selection gesture
 
 The island owns its own catalogue. `DeloresContextAction` defines the four rows
 (translate/explain/summarize/search) with their prompts, and which of them rewrites the selection. It
-reads exactly four things from Quick Actions and nothing else: the rows the reader wrote in Settings, a
+reads exactly five things from Quick Actions and nothing else: the rows the reader wrote in Settings, a
 per-action prompt override they wrote there, the model route bound to an action id
-(`quickActions.provider(forActionID:)`), and the backend that route means for `translate`
-(`quickActions.translateRoute(for:)`, below). A model's answer is streamed into the island's own card
-by `DeloresContextCoordinator.answer`, which builds the `AIRequest` and consumes `provider.stream`.
+(`quickActions.provider(forActionID:)`), the backend that route means for `translate`
+(`quickActions.translateRoute(for:to:)`, below), and the one language both surfaces translate into
+(`quickActions.targetLanguage`). `DeloresContextCoordinator.answer` builds the `AIRequest` and hands
+the provider's stream to `DeloresActionSessionRunner`, which owns reading it: the accumulation cap, the
+stop and the empty-result rule belong to the session, and both surfaces get the same ones.
 
 **`translate` is one id with two backends**, and it is the one row whose press is routed before
 anything is drawn: `DeloresActionDefinition.translationRoute` answers with Apple's translator unless

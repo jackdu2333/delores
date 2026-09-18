@@ -48,7 +48,9 @@ provider protocol and the connections behind it.
   `QuickActionSettingsStore.model(for:)`. An absent entry follows `quickActionModel`, so nothing
   changes until the reader picks a model in the action's sheet. Translate takes one too: its own
   default is Apple's translator, and a binding on that id is what replaces the translator with a model
-  — on the bar and in the palette at once, because both catalogues ship the same id.
+  — on the bar and in the palette at once, because both catalogues ship the same id. An unbound
+  Translate is not off the route entirely either: a pair Apple's translator cannot do falls through to
+  `quickActionModel` like any other row.
 - **A dead override is dropped, never rerouted.** Repair walks every override beside the shared
   route: a vanished catalog model moves to its command's first model, like the shared route, but a
   removed connection or an unavailable command deletes the entry instead of borrowing chat's model.
@@ -155,7 +157,10 @@ translator does, whenever `TextTranslator.availability(of:to:)` says this Mac ha
 merely supports counts, because falling through to a provider there would bill for a language that
 downloads for nothing. Only an unsupported pair, or a text whose language `NLLanguageRecognizer`
 cannot identify, reaches a model unasked. Both catalogues ship the same id, so the bar and the palette
-reach one decision through the one call, `QuickActionCoordinator.translateRoute(for:)`.
+translate into one language — the one **Translate to** names — and reach one decision through
+`QuickActionCoordinator.translateRoute(for:to:)`. That call takes the language as an argument rather
+than reading the setting, so a panel the reader has already retranslated resolves the backend for the
+language it is actually asking for.
 
 `TextTranslator` uses Apple's translator rather than the language model: it runs on device, costs
 nothing on every route, and a 3B model is markedly worse at it. `NLLanguageRecognizer` supplies the

@@ -48,7 +48,8 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     var isEnabled: Bool = true
 
     var requiresChatHandoff: Bool { kind == .ask }
-    /// Whether a model answers this one at all, which is what the AI switch gates.
+    /// Whether the AI switch gates this one. 翻译 is still in that group only because deciding
+    /// otherwise is a product question: unbound, it runs on Apple's translator and needs no model.
     var needsModel: Bool { kind != .search }
 
     var definition: DeloresActionDefinition {
@@ -154,8 +155,8 @@ extension DeloresContextAction {
     ]
 
     /// The bar shows what the reader switched on, and what they wrote for themselves. With AI off only
-    /// 搜索 survives among ours, which is exactly the action that never needed a model to begin with;
-    /// a custom row is a prompt by definition, so it goes with them.
+    /// 搜索 survives among ours, and a custom row is a prompt by definition, so it goes with them. 翻译
+    /// could run without the switch when no model is bound to it; whether it should is not decided here.
     static func available(
         aiEnabled: Bool, customActions: [CustomQuickAction] = []
     ) -> [Self] {

@@ -172,7 +172,9 @@ struct QuickActionsSettingsView: View {
                 select: store.select,
                 modelLabel: {
                     SettingsRowTitle(.quickActionsModel, "Model")
-                    Text("Used by every action without a model of its own, except Translate.")
+                    Text(
+                        "Used by every action without a model of its own, 翻译 included for a pair "
+                            + "Apple's translator cannot do.")
                 },
                 effortLabel: {
                     SettingsRowTitle(.quickActionsModel, "Reasoning effort")
