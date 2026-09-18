@@ -46,7 +46,7 @@ enum DeloresCompanionWander {
     /// A trip holds one speed from end to end. Held, because a speed that jitters reads as a fault
     /// and a speed that never varies reads as a motor. Slow on purpose: the Companion ambles
     /// along its loop, it does not commute.
-    static let speedRange: ClosedRange<CGFloat> = 8...18
+    static let speedRange: ClosedRange<CGFloat> = 14...24
 
     /// How far a trip goes. Most are a few steps and a look around; the tail is the long way, which
     /// is what keeps the walking from reading as a metronome.
@@ -73,6 +73,7 @@ enum DeloresCompanionWander {
     /// caller run no timer at all in between.
     static func advance(
         _ state: State, elapsed: TimeInterval, now: TimeInterval, in loop: DeloresCompanionLoop,
+        stepFrame: Int = 0,
         using rng: inout some RandomNumberGenerator
     ) -> State {
         switch state.phase {
@@ -88,10 +89,17 @@ enum DeloresCompanionWander {
                     speed: CGFloat.random(in: speedRange, using: &rng)))
         case .strolling(let index, let destination, let speed):
             let run = loop.run(at: index)
-            let budget = speed * CGFloat(min(max(elapsed, 0), maximumStep))
+            let baseBudget = speed * CGFloat(min(max(elapsed, 0), maximumStep))
+            let budget = baseBudget * stepWeight(for: stepFrame)
             return travel(
                 state, run: index, to: destination, budget: budget, in: run, at: now, using: &rng)
         }
+    }
+
+    /// Foot-planting gait dynamics: push-off frames surge forward, contact frames plant firmly.
+    static func stepWeight(for frame: Int) -> CGFloat {
+        let cycle = frame % 4
+        return (cycle == 1 || cycle == 3) ? 1.5 : 0.5
     }
 
     /// When the caller has to think about the Companion again: the end of a rest, or nothing at all

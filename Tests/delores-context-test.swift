@@ -859,11 +859,15 @@ struct DeloresContextTest {
         require(rightIsland.frame.midY == rightPet.midY, "a vertical island is level with the body")
         assertOutside(rightIsland, "as an island, on the right edge")
 
-        // Too low for a vertical island, and the body rides up with it rather than being clipped.
+        // Too low for a vertical island: the island is clamped to the display and the body stays
+        // where the drag found it. An island never moves the body — the reader aimed at a body
+        // standing there, and one that walked off to make room is a drag that feels like it slipped.
         let lowIsland = DeloresCompanionShell.planIslandOpening(
             petCenter: CGPoint(x: visible.maxX - r, y: 60),
             edge: .right, islandSize: tall, visibleFrame: visible, bodyRadius: r)
-        require(lowIsland.petCenter.y > 60, "an island that would run off the bottom lifts the body")
+        require(lowIsland.petCenter.y == 60, "an island leaves the body it grew from standing")
+        require(lowIsland.frame.minY == visible.minY, "an island too low for the room is clamped up")
+        assertOutside(lowIsland, "as an island, low on the right edge")
 
         // What counts as "brought to the body" during a drag is generous, by design.
         let hit = DeloresCompanionShell.dragHitFrame(center: CGPoint(x: 700, y: 400))
@@ -871,6 +875,59 @@ struct DeloresContextTest {
         require(
             hit.contains(CGPoint(x: 675, y: 400)) && hit.contains(CGPoint(x: 725, y: 400)),
             "the drag hit frame is centred on the body")
+
+        // The body walks the display's whole frame while a shell is placed against the visible one,
+        // and on a display with a Dock the two differ by the Dock. Placing an island from a body
+        // snapped into the visible frame therefore puts it a Dock's height above the body it belongs
+        // to — 69pt of dead space on this machine — so the pointer left the target on the way up and
+        // the island was torn down under it. Measured with the real numbers: 1080pt display, 67pt
+        // Dock, a 48pt body.
+        let display = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let docked = CGRect(x: 0, y: 67, width: 1920, height: 983)
+        let onTheFloor = DeloresCompanionShell.planIslandOpening(
+            petCenter: CGPoint(x: 960, y: display.minY + r), edge: .bottom,
+            islandSize: wide, visibleFrame: docked, bodyRadius: r)
+        require(
+            onTheFloor.petCenter.y == display.minY + r,
+            "an island is placed off the body where it stands, not off the visible frame")
+        require(onTheFloor.frame.minY >= docked.minY, "and stays out of the Dock")
+        let hold = DeloresCompanionShell.dragHoldFrame(
+            bodyCenter: onTheFloor.petCenter, islandFrame: onTheFloor.frame)
+        let reachingUp = DeloresCompanionShell.dragHitFrame(center: onTheFloor.petCenter).maxY + 1
+        require(
+            hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: reachingUp)),
+            "the pointer climbs off the body onto the island without leaving the target")
+        require(
+            hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: onTheFloor.frame.maxY - 1)),
+            "and the island's far edge is inside that same target")
+
+        // A body on the menu bar sits outside `visibleFrame` on purpose. Fetching it into that
+        // frame — or to the visible-frame midpoint — is the jump a selection used to make.
+        require(
+            DeloresCompanionShell.isOnSameDisplay(
+                bodyScreenFrame: display, shellScreenFrame: display),
+            "a body on this display is on this display")
+        require(
+            !DeloresCompanionShell.isOnSameDisplay(
+                bodyScreenFrame: nil, shellScreenFrame: display),
+            "a body with no screen has to travel")
+        require(
+            !DeloresCompanionShell.isOnSameDisplay(
+                bodyScreenFrame: display.offsetBy(dx: 1920, dy: 0), shellScreenFrame: display),
+            "a body on another display has to travel")
+        let onTheBar = CGPoint(x: 720, y: display.maxY - r)
+        let fromBar = DeloresCompanionShell.planBarOpening(
+            petCenter: onTheBar, edge: .top, shellSize: bar, visibleFrame: docked, bodyRadius: r)
+        require(
+            fromBar.petCenter == onTheBar,
+            "a bar grown from the menu bar leaves the body on the menu bar")
+        let barPet = DeloresCompanionShell.circleFrame(center: fromBar.petCenter, bodyRadius: r)
+        require(
+            fromBar.frame.maxY == barPet.minY - gap,
+            "and hangs below it, into the visible area")
+        require(
+            fromBar.frame.minY >= docked.minY && fromBar.frame.maxY <= docked.maxY,
+            "the bar itself stays in the visible area")
     }
 
     private static func testCompanionAnimation() {
@@ -920,7 +977,7 @@ struct DeloresContextTest {
         require(last.minX == 0.4, "the frame index is the column")
 
         // Ruling 2: one timer drives the step and the frame together, so this is a trade, not a saving.
-        require(DeloresCompanionAnimation.walkFrame == 1.0 / 8.0, "walking is pinned at an ambling 8 fps")
+        require(DeloresCompanionAnimation.walkFrame == 1.0 / 6.0, "walking is pinned at an ambling 6 fps")
         require(DeloresCompanionAnimation.breathDuration == 2.0, "a breath is two seconds across two frames")
     }
 

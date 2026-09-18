@@ -21,7 +21,7 @@ enum DeloresCompanionAnimation {
     /// the walk's frame rate *and* its position-update rate. A trade, not a saving. An amble, not
     /// a march: the cadence is half of what a walk animation usually runs at, because the body
     /// strolls at a loafer's speed and quicker feet than that read as scurrying.
-    static let walkFrame: TimeInterval = 1.0 / 8.0
+    static let walkFrame: TimeInterval = 1.0 / 6.0
 
     /// One loop of a reaction. Played twice and then left, at a rate a pixel reads as deliberate.
     static let reactionDuration: TimeInterval = 0.24

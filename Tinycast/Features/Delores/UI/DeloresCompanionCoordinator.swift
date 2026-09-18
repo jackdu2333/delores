@@ -68,13 +68,12 @@ final class DeloresCompanionCoordinator {
         else { return nil }
         let loop = loop(on: screen)
         guard !loop.isEmpty else { return nil }
-        let bounds = visibleFrame.insetBy(dx: bodyRadius, dy: bodyRadius)
         var center = companion.center
-        // A body on its loop is on the boundary of its display, which `contains` excludes.
-        if !bounds.insetBy(dx: -1, dy: -1).contains(center) {
-            // Carried across at the new display's middle height and the old body's own horizontal
-            // preference, which `project` then lands on the run nearest where the body came from —
-            // the short way round, rather than a jump to a corner.
+        let standing = DeloresWindowGeometry.screenContaining(center)
+        // Same-display includes the menu bar; `visibleFrame.contains` does not.
+        if !DeloresCompanionShell.isOnSameDisplay(
+            bodyScreenFrame: standing?.frame, shellScreenFrame: screen.frame)
+        {
             center = DeloresCompanionWander.project(
                 CGPoint(x: center.x, y: visibleFrame.midY), into: loop)
             companion.move(to: center)
@@ -376,7 +375,7 @@ final class DeloresCompanionCoordinator {
         // points for the artwork's sake, and that rounding must not colour which way the body turns.
         let from = state.center
         let next = DeloresCompanionWander.advance(
-            state, elapsed: elapsed, now: tick, in: loop(on: screen), using: &rng)
+            state, elapsed: elapsed, now: tick, in: loop(on: screen), stepFrame: walkFrame, using: &rng)
         wander = next
         companion.move(to: next.center)
         syncWanderTimers()
