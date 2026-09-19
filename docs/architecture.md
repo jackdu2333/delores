@@ -10,38 +10,46 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 
 ```
 ┌─ PURE ─────────────────────────────────────────────────────────────────────┐
-│ Foundation only. No AppKit, no clock, no network, no filesystem. Every     │
-│ environment fact is an injected parameter.                                 │
-│ ⇒ Compiled verbatim by a harness, so it cannot drift.                      │
-│                                                                            │
 │ SearchRelevance · EntryNaming · ScriptRomanization · LauncherOrder ·       │
-│ SearchScopes · LauncherRankingStore · FileSearch{Query,Result,Scope} ·      │
-│ Calculator/* · EmojiCatalog · EmojiGridGeometry · SystemAction ·            │
-│ VolumeLevel ·                                                              │
-│ WindowCommand · WindowPlacementEngine · WindowActionMemory · WindowLayout/* ·      │
-│ PaletteRowIndex ·                                                          │
-│ Uninstall{Target,SearchRoot,Rules,Protection,Plan} ·                       │
-│ Quicklink{,Destination,Store,Archive} · AppleShortcut · Notes/Model/* ·    │
-│ DoubleTap{Modifier,Detector} · ClipboardStore · RaycastDecoder · Scrypt ·  │
-│ AppSettingsKey · SettingsBackupCoverage · SupportReminderSchedule ·        │
+│ SearchScopes · LauncherRankingStore · CommandCatalog · Fallback ·          │
+│ FavoriteSlots · FileSearch{Query,Result,Scope,Filter,Policy} ·             │
+│ Calculator/* · SystemAction · VolumeLevel · HotKey{Action,Binding} ·       │
+│ HyperKey · DoubleTap{Modifier,Detector} · Clipboard{Store,Filter} ·        │
+│ Color{Value,Format,Spaces} · WindowCommand · WindowCycle ·                 │
+│ WindowPlacementEngine · WindowActionMemory · WindowLayout/* ·              │
+│ SpaceGesture · PaletteRowIndex ·                                           │
+│ Uninstall{Target,SearchRoot,Rules,Protection,Plan} · AppleShortcut ·       │
+│ Quicklink{,Destination,Store,Archive,TemplateEngine} ·                     │
+│ Backup{Archive,Bundle,Category,ClipboardItem,Manifest} ·                   │
+│ SettingsBackup{,Coverage} · RaycastImport{,Error} ·                        │
 │ MenuSearch{Item,Shortcut,Query,TreeNode,SnapshotPolicy,Target} ·           │
-│ WindowSwitch{Entry,Order,Query}                                            │
+│ WindowSwitch{Entry,Order,Query} · MCP{Protocol,Server,Tool,TrustPolicy} ·  │
+│ AI{Connection,Request,Tool,StreamDecoder,AttachmentPolicy} ·               │
+│ Delores Action{Conversation,Definition,Session} ·                          │
+│ Context{Action,AnswerAccumulator,IslandPlacement} ·                        │
+│ Companion{Animation,Loop,Shell,Wander} · InvocationContext ·               │
+│ Selection{Context,Gesture}Policy · AppSettingsKey ·                        │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ consumed by
 ┌─ EFFECT ─────────────────────────▼─────────────────────────────────────────┐
-│ All platform I/O, one folder per feature.                                  │
-│ AppIndex · SpotlightNames · FileSearchService · SettingsPaneScanner ·      │
+│ AppIndex · SpotlightNames · AppLauncher · FileSearchService ·              │
+│ SettingsPaneScanner · AliasStore · VisibilityStore ·                       │
 │ AXWindowAccess · AXScreens · WindowInventory · WindowLayoutRunner ·        │
 │ IconCache · WindowMover · UninstallScanner · UninstallRunner ·             │
-│ SystemActionRunner · QuicklinkLauncher · TextInjector ·             │
-│ NotesRepository · CurrencyRateStore · Paster · HotKeyCenter · HyperKeyTap ·│
-│ DoubleTapMonitor · RunningAppsMonitor ·                                   │
-│ SupportReminderStore · AXMenuAccess · WindowZOrder · WindowSwitchSweep ·   │
-│ AppleShortcutRunner                                                        │
+│ SystemActionRunner · QuicklinkLauncher · TextInjector · Paster ·           │
+│ ClipboardManager · CurrencyRateStore · HotKeyCenter · KeyShortcut ·        │
+│ HyperKeyTap · DoubleTapMonitor · RunningAppsMonitor · AXMenuAccess ·       │
+│ WindowZOrder · WindowSwitchSweep · AppleShortcutRunner ·                   │
+│ Backup{Actions,Composer,Applier} · RaycastDecoder · Scrypt ·               │
+│ RaycastImportReader · MCP{Transport,StdioTransport,HTTPTransport} ·        │
+│ MCPServerManager · QuickActionRunner · TextTranslator ·                    │
+│ ActionSessionRunner · AIProvider · InstalledCLIProvider ·                  │
+│ CodexAppServerClient · ChatHistoryStore · CodexTurnRunner ·                │
+│ AppleIntelligenceProvider ·                                                │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ published through
 ┌─ OBSERVABLE STATE ───────────────▼─────────────────────────────────────────┐
-│ 39 @MainActor @Observable stores, sessions, indices and State types        │
+│ 42 @Observable types: stores, sessions, indices and State; 41 @MainActor   │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ rendered by
 ┌─ VIEW ───────────────────────────▼─────────────────────────────────────────┐
@@ -68,8 +76,9 @@ the signal that a decision leaked into the effect layer, or an effect into the d
 
 The boundary keeps effects out of decisions: `CalcEngine.evaluate` is handed a finished
 `CurrencyRates?` rather than reaching for one, which is what keeps it Foundation-only and testable.
-Confirmation gates live in the coordinator, never in the runner — which is why `ShellCommandRunner`
-and `SystemActionRunner` stay harness-compilable while the "are you sure?" step still cannot be bypassed.
+Confirmation gates live in the coordinator, never in the Service layer — which is why
+`ClipboardManager` and `Paster` stay harness-compilable while clearing the history still cannot be
+skipped.
 
 Two things sit deliberately outside a feature folder: `Features/PaletteRowIndex.swift`, because the
 palette rather than any one feature owns the flat selection index, and `DesignSystem/` + `Platform/`,
@@ -132,8 +141,8 @@ macOS by itself. Nothing else in the app sets an appearance.
 
 ## Observation
 
-39 types are `@MainActor @Observable`. Nothing uses `ObservableObject` or `@Published`, and views read
-state through `@Environment` rather than `@EnvironmentObject`.
+42 types are `@Observable`, 41 of them `@MainActor`. Nothing uses `ObservableObject` or `@Published`,
+and views read state through `@Environment` rather than `@EnvironmentObject`.
 
 Three things about this model are easy to get wrong:
 
@@ -155,7 +164,7 @@ are required; removing the `Task` reads the old value.
 
 The target builds in **Swift 6 language mode**, so data-race violations are hard errors. Almost
 everything is `@MainActor`; cross-actor model types are `Sendable`. Heavy and IO-bound work — the app
-scan, image decode, the settings-pane scan, shell execution, the FX rate fetch — is pushed off-main as
+scan, image decode, the settings-pane scan, the backup write, the FX rate fetch — is pushed off-main as
 `nonisolated static` functions driven by `Task.detached`. There is exactly one actor, deliberately.
 
 House idioms for the sharp edges:
@@ -179,9 +188,8 @@ Tinycast/
   DesignSystem/     Theme (the token source), KeyCapChip, Tooltip, SymbolImage,
                     VisualEffectView, PopoverMenu, SettingsComponents, Scrolling/, Interaction/
   Platform/         system shims: Permissions, LaunchAtLogin, InputSourceSwitcher, ScreenTarget,
-                    AppDisplayName,
-                    NotificationToken, AppPaths, Signposts, HealthTicker, Memo, ActivationPolicy,
-                    Images/, Compression/
+                    AppDisplayName, NotificationToken, AppPaths, Signposts, HealthTicker, Memo,
+                    ActivationPolicy, Images/, Compression/
   Resources/        Companion atlases and other active app resources
   Palette/          the palette shell: PalettePanel, PaletteWindowController, RootPaletteView,
                     the PaletteScreen protocol, PaletteCoordinator, PaletteState, PaletteMode
@@ -189,16 +197,20 @@ Tinycast/
   Assets.xcassets/  the app icon and the bundled image sets some catalog symbols resolve to
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
-    Launcher/ Clipboard/ Calculator/ Emoji/ FileSearch/ MenuSearch/ Notes/
-    Quicklinks/ Uninstall/ SystemActions/ HotKeys/ Backup/
-    WindowManagement/ Onboarding/ Updates/ Support/ AI/ Settings/
+    Launcher/ Clipboard/ Calculator/ FileSearch/ MenuSearch/ QuickActions/
+    Quicklinks/ Uninstall/ SystemActions/ HotKeys/ Backup/ AppleShortcuts/ MCP/
+    WindowManagement/ WindowSwitcher/ TextInjection/ Onboarding/ AI/
+    Delores/        the product surfaces: the context bar, the desktop companion, and the
+                    Action core both are built on
     Settings/       the Settings shell only: SettingsCoordinator, the sidebar/detail/toolbar and
                     navigation types, SettingsTab, AppSettings, AppSettingsKey, and Panes/ for the
                     two panes no feature owns
 Tests/              the standalone harnesses, one Swift file each
-Scripts/            run-tests.sh, the two data generators, packaging, formatting, editor setup
+Scripts/            run-tests.sh, the data and companion-atlas generators, packaging, signing,
+                    formatting, editor setup and the lint checks
 
-Packs/LegacyFeatures/  parked Extensions, Snippets, Calendar/Camera and Custom Commands
+Packs/LegacyFeatures/  parked Extensions, Snippets, Calendar/Camera, Custom Commands, Emoji,
+                      Clipboard OCR, Notes, Updates and Support reminders
 ```
 
 A larger feature splits into all four sub-folders; a small one stays flat, as `Onboarding/` does. `HotKeys/` has no `Settings/` because its Shortcuts pane is part of the Settings

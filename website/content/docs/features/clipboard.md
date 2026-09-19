@@ -17,7 +17,7 @@ Clipboard History command and its shortcut go away. What you already saved stays
 - The **Clipboard History** command, or its global shortcut in **Settings → Clipboard**.
 - **Clipboard History** in the Tinycast menu bar menu.
 
-The footer names where a paste will land, like "Paste to Notes", so you always know the target.
+The footer names where a paste will land, like "Paste to Safari", so you always know the target.
 
 ## Actions
 

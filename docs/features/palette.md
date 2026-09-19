@@ -94,9 +94,12 @@ answers through `perform(_:at:)`, so a new chord never adds a cast to the shell.
 | --- | --- | --- |
 | `.launcher` | `LauncherScreen` | `LauncherList` |
 | `.clipboard` | `ClipboardScreen` | `ClipboardList` + preview |
+| `.ai` | `AIScreen` | `ChatTranscriptView` |
+| `.aiHistory` | `ChatHistoryScreen` | `ChatHistoryList` |
 | `.calculatorHistory` | `CalculatorHistoryScreen` | `CalculatorHistoryList` |
-| `.emoji` | `EmojiScreen` | `EmojiGridView` |
 | `.fileSearch` | `FileSearchScreen` | `FileSearchList` (see [file-search.md](file-search.md)) |
+| `.menuSearch` | `MenuSearchScreen` | `MenuSearchList` |
+| `.switchWindows` | `WindowSwitchScreen` | `WindowSwitchList` |
 | `.uninstall` | `UninstallScreen` | `UninstallList` (see [uninstall.md](uninstall.md)) |
 | `.quicklinks` | `QuicklinkListScreen` | `QuicklinkList` + preview (see [quicklinks.md](quicklinks.md#search-quicklinks)) |
 
@@ -393,8 +396,8 @@ list under itself (Move Favorite Up/Down) is no exception, so no row ever runs a
 `PopoverMenuItem.startsSection` draws a separator with 6pt above and below it. That height joins the
 menu's exact sizing, but the separator takes no selection index, so navigation still walks only rows.
 Built-in action menus mark boundaries between opening or copying, managing the item, settings, and
-deletion. Menus offering one kind of action, such as calculator copies, color formats, or emoji
-transfers, keep their rows in one group.
+deletion. Menus offering one kind of action, such as calculator copies or color formats, keep their
+rows in one group.
 
 ### The menu's own window
 
@@ -467,9 +470,6 @@ handled in `PalettePanel.sendEvent` before `super` hands the event to the respon
   `onKeyPress(keys: ["."])` never fires. Pin (⌘.) therefore arrives through `onCommandShortcut`,
   which bumps `PaletteState.pinChordToken`; `RootPaletteView` observes that and resolves the row
   through the current screen, so **which** row gets pinned still comes from `screen.rows` alone.
-- **Emoji zoom chords.** `⌘0`, `⌘+` and `⌘-` take the same `onCommandShortcut` path on the emoji
-  screen, Shift allowed since `+` is a shifted `=`. They bump `PaletteState.emojiGridZoomToken`, and
-  `EmojiScreen.zoom` applies the same bounded change as its Actions rows.
 - **Chords the window server keeps for itself.** ⌘⎋ is the one that bites: macOS binds it before any
   app sees it, so unlike ⌘. there is no keystroke left for `sendEvent` to intercept — a handler in
   the responder chain compiles, runs never, and looks like a palette bug. `CommandEscapeTap` takes it
@@ -485,9 +485,9 @@ whether macOS has claimed the chord, before assuming the handler is wrong.
 
 ## Emacs navigation chords
 
-⌃N/⌃P and ⌃F/⌃B navigate exactly as ↓/↑ and →/← do — on the emoji grid all four step the selection,
-and everywhere else the horizontal pair falls through to the caret, which is what a native search field
-does.
+⌃N/⌃P and ⌃F/⌃B navigate exactly as ↓/↑ and →/← do — the vertical pair steps the list, and the
+horizontal pair falls through to the caret, which is what a native search field does. A screen that
+wanted sideways navigation would answer `move(_:axis:)`; none does today.
 
 None of them reach `onKeyPress` on their own: AppKit's key-binding table hands the field editor
 `moveDown:` / `moveUp:` / `moveForward:` / `moveBackward:` first, and in a one-line field the vertical
@@ -535,6 +535,6 @@ app:
 Both require the Accessibility permission (`Permissions.ensureAccessibility()`).
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
-name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
+name + bundle path), so a screen can name it — the footer pill reads "Paste to <app>" and
 the ⌘K paste rows carry the app's icon. Resolved once per summon, never per render, and deliberately
 not cleared by `prepare` (pop-to-root resets the screen, not the target).

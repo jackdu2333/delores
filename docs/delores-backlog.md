@@ -1,5 +1,26 @@
 # Delores backlog — designed but not yet built
 
+> **Archived snapshot.** Written 2026-09-18 against `39f5d13` and kept as the record of what was
+> designed-but-unbuilt at that baseline. It is **not** a task list, and every code claim below is frozen
+> there: read [delores-verification.md](delores-verification.md) and
+> [delores-action-core.md](delores-action-core.md) for the current state.
+>
+> **Landed since this snapshot**
+>
+> - **Pixel companion** (item 1) — `Model/CompanionAtlas.generated.swift`, `Model/CompanionAnimation.swift`
+>   and `Scripts/gen-companion-*.js` all exist, with six curated pets; `ecc3da4a`, `08802f78`.
+> - **Companion Shell** (section four) — committed, no longer a work-tree WIP; `4ddc2b74`.
+> - **Full-screen suppression** (item 6) — `39d99893` hides the pet while the frontmost window is full
+>   screen.
+> - **Translate resolves its backend by shared id** (Phase B) — `5ecb693c` moved the decision into
+>   `DeloresActionDefinition.translationRoute`; `QuickActionRunner` no longer branches on `.summarize`.
+> - **A reaction returns to idle** (item 8, half) — `react` writes the idle frame first, so a one-shot
+>   animation drops back to it with no timer; the `daze` and `acrobatics` rows exist too.
+>
+> Still open, re-checked at `b0270ede`: the card-header model selector, the collapsible thinking block,
+> the keyboard-idle wander pause, the Companion's accessibility label and menu-bar entry, and the public
+> release channel.
+
 > 快照时间：2026-09-18 00:02，基线 `39f5d13`（工作树含未提交的 Companion Shell WIP）。
 > 方法：设计文档（product / architecture / action-core / verification / companion-sprite / release /
 > legacy pack 文档）逐份与代码 grep 对照，每项都有证据链；只列「明确写过设计」的项，

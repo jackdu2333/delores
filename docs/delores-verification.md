@@ -9,7 +9,7 @@ that is silently assumed to pass is how a broken build reaches the default branc
 It is a record, not a task list. Update the results when a check runs again; do not delete the rows
 that say why something could not run, or the next person re-derives them.
 
-**Current status, read 2026-09-19 at `2addf5db`: Xcode is not installed.** `xcode-select -p` says
+**Current status, read 2026-09-19 on source baseline `b0270ede`: Xcode is not installed.** `xcode-select -p` says
 `/Library/Developer/CommandLineTools`, there is no `Xcode.app` under `/Applications`, and
 `xcodebuild -version` refuses with "requires Xcode". The build therefore cannot run here, and
 `./Scripts/run-tests.sh` is **49 of 53** — all four failures are the missing SwiftUI macros. The
@@ -34,7 +34,10 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
-### 2026-09-19, `2addf5db` — Command Line Tools only
+### 2026-09-19, source baseline `b0270ede` — Command Line Tools only
+
+First read at `2addf5db` and re-run at `b0270ede` after the localization, product-identity and
+documentation passes; every number below is identical in both readings.
 
 The suite shrank between this reading and the one below it. Notes, Emoji, Extensions, Snippets,
 Calendar, Camera, Updates, Support and Custom Commands moved out of `Tests/` with their packs to
@@ -174,10 +177,10 @@ The Companion's wander is a pure model, asserted from a fixed seed in
 | Watch it for about five minutes on a normal display | Long still stretches between trips; one constant speed per trip; it rides a screen edge and never cuts across the middle; more than one edge gets used; never still for longer than a minute |
 | Drag it somewhere and let go | It stays where it landed and stands there a beat before setting off, rather than resuming the trip it was on |
 | Rest the pointer on it, counting to one | The first 0.25s is still click-through, so a click there belongs to the app underneath; after that the click is the companion's, and the app you were typing in should not lose keyboard focus |
-| Rest the pointer on it again, then right-click | A menu beside the body: the creatures with `当前` on the one in use, then `关闭宠物` · `恢复顶部状态栏`. A press on a creature changes it at once; the last row takes the body away, and the Context bar's home goes back to the menu bar. A click anywhere else closes the menu, and it must never take the keyboard from the app you were in |
+| Rest the pointer on it again, then right-click | A menu beside the body: the creatures with `Current` beside the one in use, then `Turn off the companion` · `Bring the menu bar back`. A press on a creature changes it at once; the last row takes the body away, and the Context bar's home goes back to the menu bar. A click anywhere else closes the menu, and it must never take the keyboard from the app you were in |
 | Drag a window onto a pet standing on the bottom edge, with the Dock showing | The island appears immediately above the pet, and the pointer can climb onto it without the island vanishing on the way. Before this was fixed the island was placed a Dock's height above the body — 69pt of dead space on the 1920×1080 display here, and on a pet riding the Dock's own top the placement lifted it 24pt as well — so the drag left the target on the way up and the run was torn down under it |
 | Change the display arrangement while it is walking | It stays on screen. It must not jump to the right-hand edge at mid-height, which is what a screen change used to do |
-| Enter a full-screen space (video, slides) | Record what actually happens. Delores has no full-screen suppression yet, so the companion is expected to still be visible; that is an accepted gap, not a pass |
+| Enter a full-screen space (video, slides) | The body hides while the frontmost window is full screen and comes back when it leaves. `39d99893` added the suppression this row used to record as an accepted gap |
 | Idle cost, companion on and resting | No periodic work between trips; a rest schedules one wake rather than running a frame timer |
 
 ## Known gaps carried by the Companion
@@ -194,8 +197,9 @@ what the manual pass above has to cover.
   `CGEventSource.secondsSinceLastEventType`, needs no new permission.
 - The companion has no accessibility label and no menu-bar entry, so a keyboard-only reader cannot
   reach it. Double-clicking it to reopen the last selection is also gated on Accessibility permission.
-- Its expressions do not fall back to idle, the capture change is not signalled to the reader, and the
-  no-selection double-click shows no bubble.
+- Its reactions drop back to the idle pose on their own — `react` writes the idle frame first, so a
+  one-shot animation returns to it without a timer — but the capture change is not signalled to the
+  reader, and the no-selection double-click shows no bubble.
 - The menu on the body is pointer-only by construction: it takes no key, so it leaves on a click away
   rather than Escape and has no keyboard navigation. A keyboard-only reader cannot open it at all,
   which is the same gap the accessibility label above is waiting on.
