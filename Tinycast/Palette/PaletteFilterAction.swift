@@ -5,7 +5,6 @@ import Foundation
 enum PaletteFilterAction: Equatable {
     case clipboardFilter
     case fileSearchFilter
-    case emojiCategory
     /// No filter on the header, so the key stays with the search field.
     case ignored
 
@@ -17,7 +16,6 @@ enum PaletteFilterAction: Equatable {
         switch mode {
         case .clipboard: return .clipboardFilter
         case .fileSearch: return .fileSearchFilter
-        case .emoji: return .emojiCategory
         default: return .ignored
         }
     }

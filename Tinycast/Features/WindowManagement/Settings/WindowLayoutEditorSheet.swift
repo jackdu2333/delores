@@ -87,11 +87,11 @@ struct WindowLayoutEditorSheet: View {
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
-            Button("Cancel") { dismiss() }
+            Button(L10n.string("Cancel")) { dismiss() }
                 .keyboardShortcut(.cancelAction)
             Button(action: save) {
                 HStack(spacing: Theme.Spacing.sm) {
-                    Text("Save")
+                    Text(L10n.string("Save"))
                     HStack(spacing: Theme.Spacing.xxs) {
                         KeyCapChip(text: "⌘", scale: .compact)
                         KeyCapChip(text: "↵", scale: .compact)

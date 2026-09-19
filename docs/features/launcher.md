@@ -24,13 +24,13 @@ earliest scope wins).
 - **`Model/SearchRelevance.swift` is Foundation-only and pure**, so `fuzz-test` compiles the shipped
   scorer. It owns `FuzzyMatch`, `SearchAlias` and the cell table.
 - **`Model/EntryNaming.swift` is the only place a name is decided, for every kind alike.** Criteria
-  are endless — display name, folder rename, Spotlight alternate, localization, pinyin, owning
-  extension, bundle id — but *trust* levels are not, so ranking is keyed on the role and the match
+  are endless — display name, folder rename, Spotlight alternate, localization, pinyin, bundle id —
+  but *trust* levels are not, so ranking is keyed on the role and the match
   strength and never on which field supplied the text. A new criterion is a field on
   `EntryNaming.Sources` and a line in `aliases(for:)`; adding a `Role` case, or a row to
   `SearchRelevance.cell`, means the criterion was modelled wrong.
-- **`EntryNaming.aliases` runs over every kind, once per index change**, so a naming rule can never
-  apply to applications and quietly skip snippets — and nothing is built per keystroke. `AppIndex.scan`
+- **`EntryNaming.aliases` runs over every kind, once per index change**, so a naming rule cannot drift
+  between entry types and nothing is built per keystroke. `AppIndex.scan`
   names the app slice on its own, off-main: romanizing a CJK index costs ~50 ms per 1,500 entries, and
   `publishEntries` runs on the main actor whenever any unrelated slice changes.
 - **Aliases stay separate strings** — flattening them into one blob loses the role, which is half of
@@ -84,9 +84,9 @@ next naming demand is a new producer, not a new rung.
 | Role | What lands in it | Looseness |
 | --- | --- | --- |
 | `.userAlias` | the alias the user typed in Tinycast, for any entry kind | literal |
-| `.name` | display name, a snippet's keyword, an `.app` bundle the user renamed on disk | fuzzy |
+| `.name` | display name or an `.app` bundle the user renamed on disk | fuzzy |
 | `.translation` | localizations, Spotlight alternate names, romanizations | fuzzy |
-| `.owner` | the extension a command came from | literal |
+| `.owner` | an optional provider label, when a future catalog supplies one | literal |
 | `.technical` | bundle identifier, `CFBundleExecutable` | literal (full id: exact) |
 
 ## The score
@@ -131,16 +131,14 @@ P3 reachable   poolBottom + maximumUsage > poolTop + shapeSpan         3_599 > 3
 
 **P1** is the one absolute guarantee left: an exactly-typed display name or user alias, with nothing
 learned, outranks every weaker match at any usage. **P3** is the point of the redesign — anything the
-index is willing to show can be learned to the top of the unprotected pool. Before this, `.owner` sat
-two bands below `.name` (a 2,000,000 gap) against a 4,500 boost, so typing `zed` for a command owned
-by the Zed extension could never win however often it was chosen.
+index is willing to show can be learned to the top of the unprotected pool.
 
 `shape` orders candidates inside one cell: 60% how much of the name the query covered, 40% how early
 the hit sits (by absolute offset — a hit five characters in is equally deep in any name). For a
 subsequence it is the walk's contiguity score over what a run from index 0 would earn.
 
-What this deliberately gives up: **match-kind dominance below `exact` is gone.** Enough picks put an
-owner-only or subsequence hit above another entry's prefix hit. That impossibility was the bug. A
+What this deliberately gives up: **match-kind dominance below `exact` is gone.** Enough picks put a
+provider-only or subsequence hit above another entry's prefix hit. That impossibility was the bug. A
 `name · exact` collision stays unreachable forever — an installed `Zed.app` always takes `zed` — and
 the escape is a user alias, which is what P1 makes worth having.
 
@@ -209,26 +207,11 @@ on-disk basename is indexed as a `.name` alias — rename `Slack.app` to `Work C
 it. Duplicate copies dedupe by bundle id, and the losing copy lends its file name to the winner
 rather than being dropped whole.
 
-### Owner names
-
-An extension's title is a keyword for every command it ships: `lucide` finds Lucide's *Search Icons*
-without the user aliasing each command by hand. `AppEntry.ownerName` carries it — the same string the
-row already prints as its kind label — and `SearchRelevance` gives it the weakest literal band, for two
-reasons. It does not name the entry, so any hit on a command's own title, on another entry's title, or
-on a Spotlight alias outranks it; and every command of one extension carries the identical string, so a
-subsequence band there would surface a whole extension at once on letter soup. Literal-only keeps that
-bounded while a real prefix hit still beats an incidental subsequence elsewhere — the same trade the
-identifier fields make, for the same reason.
-
-Because the band is uniform across an extension, its commands score identically and cluster together,
-tie-broken alphabetically and then by the learned boost. Ranking a third-party string this low is
-deliberate: an extension titled `Safari` can never take that query from the real Safari.
-
 ### Category search
 
 A query that *equals* a category's own name lists that whole category under its section header, in the
 order the section shows when the field is empty. Both words a kind already carries work — the section
-title and the singular label, `Snippets`/`Snippet`, `Window Management`/`Window Command` — read straight
+title and the singular label, `Quicklinks`/`Quicklink`, `Window Management`/`Window Command` — read straight
 off `KindDescriptor` by `AppEntry.Kind.named(by:)`, so no category name is written a second time and a
 new `Kind` case gets its category word for free.
 
@@ -271,7 +254,7 @@ A **fallback** is the other half of the query-driven idea: a command the query i
 offered under a `Use “…” with…` header **below every result**, whatever the query says. A contextual
 row leads because it recognised the query; a fallback trails because nothing did.
 
-`Fallback` (`Launcher/Model/`) is the whole vocabulary — `.builtin(Builtin)` for the three shipped
+`Fallback` (`Launcher/Model/`) is the whole vocabulary — `.builtin(Builtin)` for the two shipped
 destinations and `.quicklink(UUID)` for a user's own. `Builtin` exists rather than a bare `CommandID`
 so `FallbackCoordinator.run` is **exhaustive**: a fourth built-in cannot compile without saying where
 its query goes. `Fallback.id` is deliberately the row's own `AppEntry.id`, which is what lets a stored
@@ -281,7 +264,6 @@ order name a live row across a rename or a reinstall.
 | --- | --- | --- |
 | AI Chat | a fresh chat, question already sent (`AIChatCoordinator.ask`) | `aiEnabled` |
 | Search Files | the file-search screen, already narrowed | `fileSearchEnabled` |
-| Run Shell Command | `/bin/zsh`, streamed into the Command Output window | always |
 | a quicklink | its first `{argument}` | `quicklinksEnabled`, and the link has a placeholder |
 
 **A quicklink earns a fallback row by declaring a placeholder**, nothing else —
@@ -291,17 +273,6 @@ sends the row to Search Quicklinks with its header fields pre-filled (see
 [quicklinks.md](quicklinks.md#arguments)). The seed never fills the **selection** field: that one is
 not an `{argument}` and is resolved by replacing the context, so seeding it through `userArguments`
 would silently do nothing.
-
-**Run Shell Command carries its own switch, not the custom-command library's.** Turning off Custom
-Commands hides a library of saved commands; it says nothing about a shell line someone types
-deliberately. The fallback's checkbox is the switch. The run is an ad-hoc `CustomCommand` that is
-never stored — same streaming window, same Stop button — so `CustomCommandCoordinator` keeps
-`lastShellCommand` for the window's Rerun, which has no library entry to look up. It sources the
-shell config (`ll` should mean the reader's own alias) and takes the runner's default home directory.
-
-**The order and the checkboxes are not in a settings backup.** The fallback list is where an import
-could arm shell execution from the launcher, which is the line `snippetsEnabled` already draws:
-a flag that grants a capability is never carried by a backup.
 
 `FallbackStore` is a thin persistence shell over `Fallback.ordered(_:by:)`, which is pure and covered
 by `fallback-test`: stored ids first, then anything the order has never seen, and a stored id with
@@ -320,7 +291,7 @@ revealed: `activate` routes to `FallbackCoordinator.run` instead of `LauncherCoo
 ### User aliases
 
 `AliasStore` (`Launcher/Service/`) keeps one user-chosen alias per entry, keyed by `preferenceKey`
-like favorites and learned ranking, so every entry kind — apps, commands, quicklinks, snippets —
+like favorites and learned ranking, so every active entry kind — apps, commands and quicklinks —
 can carry one. An alias is deliberate in a way no vendor field is, so a hit **from its start** —
 exact or prefix — occupies the top band and ranks its entry first. A hit *inside* the alias ranks
 with the Spotlight aliases instead (`term` inside `iterm` must not beat Terminal's own prefix),
@@ -338,14 +309,12 @@ on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `Sh
 beside it; edits store as typed and trim when the field loses focus, and a blank means none. That
 list filters by **membership only**, keeping the index's name order — re-ranking it per keystroke
 would move the row being edited out from under its own field editor. A pane with a hand-written row
-hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, Settings ▸
-Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extension:<name>/<command>`,
-and each dims the field when the entry is hidden from launcher search, whose entry the ranker never
+hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, and each dims the
+field when the entry is hidden from launcher search, whose entry the ranker never
 sees.
 
 Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
-uninstalling an app, deleting a quicklink or custom command, uninstalling an extension — removes it
-with the entry's other per-entry preferences.
+uninstalling an app or deleting a quicklink — removes it with the entry's other per-entry preferences.
 
 ### Alternate names
 
@@ -436,8 +405,8 @@ permission-aware failures. With the palette closed it targets the frontmost app,
 Quit All act on the same window a palette launch would have.
 
 System actions occupy their own launcher section and their own Settings pane. The empty-query publication
-order is applications, System Settings, quicklinks, snippets, system actions, window commands, custom
-commands, then built-in commands; the sectioned view filters in that same order so the visible rows remain
+order is applications, System Settings, quicklinks, system actions, window commands, then built-in
+commands; the sectioned view filters in that same order so the visible rows remain
 identical to the flat selection index.
 Search, favorites, visibility and learned ranking work through the normal `AppEntry` path, and every
 action is bindable to a global shortcut from Settings › System Actions
@@ -459,8 +428,8 @@ its own for real media keys. Volume Up/Down walk a 5% grid (`VolumeLevel.stepped
 `Tests/volume-test.swift`): an off-grid level snaps to the next line rather than past it, so from 37%
 up lands on 40% and down on 35%, and repeated presses stay on round numbers.
 
-An action whose effect is invisible reports back through a pill (`MessageHUDController`, the same one
-Custom Commands and Snippets confirm through) rather than finishing silently:
+An action whose effect is invisible reports back through a pill (`MessageHUDController`) rather than
+finishing silently:
 `SystemActionRunner.run` returns a `SystemActionFeedback` naming the state it landed in
 (`Trash Emptied`, `Hidden Files Shown`, `Dark Appearance`, `Bluetooth Off`, `3 Disks Ejected`), and
 `AppCore` shows it with a `DialogTone` derived from the feedback's `isNoOp` flag: `.success` when
@@ -491,13 +460,13 @@ dismissal matches Accessibility subroles rather than English labels.
 `AppIndex.setWindowCommandsVisible(_:)` and shown under a "Window Management" section. Like system
 actions they carry dedicated global hotkeys (`AppEntry.hotKeyAction` returns `.windowCommand(id:)`),
 so launcher rows render keycaps for them. Their per-command shortcut and visibility controls live in
-Settings › Window Management rather than a launcher-category pane of their own — the same call already
-made for snippets. The feature ships off. See
+Settings › Window Management rather than a launcher-category pane of their own — the same projection
+pattern used by other feature-owned controls. The feature ships off. See
 [window-management.md](window-management.md).
 
 ## Window layouts
 
-`WindowLayoutStore` supplies its slice the way custom commands do, sorted by name, published
+`WindowLayoutStore` supplies its slice sorted by name, published
 immediately **before** the window commands so the two read as one family. Their per-layout shortcut
 and launcher checkbox live in Settings › Window Management beside the commands', and
 `windowLayoutsShowInLauncher` takes the section and its two commands out together. See
@@ -505,7 +474,7 @@ and launcher checkbox live in Settings › Window Management beside the commands
 
 ## Quicklinks
 
-`QuicklinkStore` supplies its slice the same way custom commands do, sorted pinned-first then
+`QuicklinkStore` supplies its slice sorted pinned-first then
 alphabetically by `Quicklink.precedes`. Only the name is indexed — a URL is a subsequence of nearly
 any query — and a per-item "show in root search" flag filters the slice before it is published. The
 four Quicklinks commands are dropped from the built-in slice in the same publish while the feature is
@@ -518,17 +487,6 @@ off, so a toggle can't leave the section and its commands out of step. See
 it as its own slice right after Quicklinks, re-reading on every launcher open. Only the name is indexed,
 and the entry id is keyed on the shortcut's UUID, so an alias or binding survives a rename in
 Shortcuts. See [apple-shortcuts.md](apple-shortcuts.md).
-
-## Custom commands
-
-`CustomCommandStore` supplies user-authored entries to `AppIndex` without joining the off-main
-application scan. Custom commands are their own alphabetized section ahead of the built-in Commands
-section, and reuse fuzzy ranking, favorites, visibility, keycap rendering and the launcher's flat
-selection.
-
-Only the display name is indexed. Activation resolves the stable UUID through the store and dispatches
-to `ShellCommandRunner`; see [custom-commands.md](custom-commands.md) for persistence, hotkeys and
-execution semantics.
 
 ## Quick Actions
 
@@ -550,18 +508,6 @@ Activation hands the action to `QuickActionCoordinator.run(_:)` **without** hidi
 the coordinator reads the displaced app and then hides, because after the hide the frontmost app is
 Tinycast. See [quick-actions.md](quick-actions.md).
 
-## Notes commands
-
-`CommandID.showNotes`, `.createNote`, and `.searchNotes` publish the three Notes entry points while the
-feature is enabled. Activation hides the palette without restoring focus and calls the matching
-`NotesCoordinator` action; each `HotKeyAction` reaches that same boundary and rechecks enablement.
-
-`AppIndex` projects the three commands together from `notesEnabled`, independently of File Search and
-Quicklinks. They represent collection actions rather than individual notes, so Notes adds no
-`AppEntry.Kind` or launcher section — it owns them through `SettingsTab.ownedCommands` instead, which
-is what keeps them out of Settings › Commands while they stay in the launcher's Commands section. See
-[notes.md](notes.md).
-
 ## Pane-owned commands
 
 `SettingsTab.ownedCommands` names, per pane, the commands that pane lists itself. `CommandID.owner`
@@ -571,10 +517,9 @@ and three places read it: `FeatureCommandsSection` draws the pane's rows from it
 category gate for it in both `isVisible` and `allowsHotKey`. Stamping the entry rather than sniffing its
 id is what keeps "which pane owns this" out of the entry-ID namespace.
 
-Eleven panes own commands today — AI, Quick Actions, File Search, Notes, Snippets, Navigation,
-Window Management, Clipboard, Emoji, Calendar and Quicklinks. What is left in Settings › Commands is
-the set no feature switch governs: Calculator History, Open Camera, the three backup commands, Check
-for Updates, Settings, About, Support and Quit.
+Seven panes own commands today — AI, Quick Actions, File Search, Navigation, Window Management,
+Clipboard and Quicklinks. What is left in Settings › Commands is the set no feature switch
+governs: Calculator History, the three backup commands, Settings, About and Quit.
 
 A pane's list is also its display order, so `CommandID`'s declaration order is grouped by owner.
 Nothing keys on that order — `CommandCatalog.all` sorts by name and every preference keys on the raw
@@ -675,9 +620,9 @@ favorite, alias and learned ranking survive the round trip, and its shortcut kee
 
 The row is offered only where Settings can undo it, and `KindDescriptor.canHideFromSearch` is that
 rule — per kind, and a new `Kind` case has to answer it to compile. Applications, System Settings,
-Commands, Quick Actions, System Actions, Window Commands, Window Layouts and extension commands each
-draw a per-row checkbox in their pane, so they carry it. Custom commands, quicklinks and snippets do
-not: their panes list a record with its own switches, not a launcher checkbox — a hide nothing in
+Commands, Quick Actions, System Actions, Window Commands and Window Layouts each draw a per-row checkbox
+in their pane, so they carry it. Quicklinks do not: their pane lists a record with its own switches, not
+a launcher checkbox — a hide nothing in
 Settings can visibly undo is a trap, not a shortcut.
 `AppActionsMenu` adds the query-driven guard the favorites row already uses: a typed URL lives only
 for its query and has no preference to write.

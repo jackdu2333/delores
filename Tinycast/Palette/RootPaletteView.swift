@@ -10,8 +10,6 @@ struct RootPaletteView: View {
     @Environment(CalculatorHistoryStore.self) private var calcHistory
     /// Observed so the card re-evaluates when a snapshot lands or consent changes.
     @Environment(CurrencyRateStore.self) private var currencyRates
-    @Environment(EmojiIndex.self) private var emojiIndex
-    @Environment(FrequentEmojiStore.self) private var frequentEmoji
     @Environment(FileSearchSession.self) private var fileSearch
     @Environment(MenuSearchSession.self) private var menuSearch
     @Environment(WindowSwitchSession.self) private var windowSwitch
@@ -55,11 +53,6 @@ struct RootPaletteView: View {
             return QuicklinkListScreen(
                 store: quicklinks, core: core, vm: vm, openActions: openActions,
                 openArgumentOptions: openArgumentOptions)
-        case .emoji:
-            return EmojiScreen(
-                index: emojiIndex, frequent: frequentEmoji, pinned: core.pinnedEmoji, core: core, vm: vm,
-                tone: settings.emojiSkinTone, defaultColumns: settings.emojiGridColumns,
-                openActions: openActions)
         case .fileSearch:
             return FileSearchScreen(
                 session: fileSearch, core: core, vm: vm, openActions: openActions)
@@ -124,29 +117,13 @@ struct RootPaletteView: View {
             })
     }
 
-    /// All Categories stays above the divider; the remaining rows match their section order.
-    private var emojiCategoryContent: PopoverMenuContent {
-        PopoverMenuContent(
-            items: EmojiCategoryFilter.allCases.enumerated().map { index, filter in
-                PopoverMenuItem(
-                    title: filter.title, systemImage: filter.systemImage,
-                    startsSection: index == 1
-                ) {
-                    vm.emojiCategoryFilter = filter
-                }
-            })
-    }
-
-    /// The bottom-left app menu content (About / Support / Settings).
+    /// The bottom-left app menu content (About / Settings).
     private var appMenuContent: PopoverMenuContent {
         PopoverMenuContent(items: [
-            PopoverMenuItem(title: "About Tinycast", systemImage: "info.circle") {
+            PopoverMenuItem(title: L10n.string("About Tinycast"), systemImage: "info.circle") {
                 core.settingsCoordinator.showAbout()
             },
-            PopoverMenuItem(title: "Support Tinycast", systemImage: "heart") {
-                core.supportCoordinator.showSupport()
-            },
-            PopoverMenuItem(title: "Settings", systemImage: "gearshape", shortcut: "⌘,") {
+            PopoverMenuItem(title: L10n.string("Settings"), systemImage: "gearshape", shortcut: "⌘,") {
                 core.settingsCoordinator.showSettings()
             }
         ])
@@ -167,8 +144,6 @@ struct RootPaletteView: View {
             return headerMenu(clipboardFilterContent, width: metrics.size.clipboardFilterMenuWidth)
         case .fileSearchFilter:
             return headerMenu(fileSearchFilterContent, width: metrics.size.fileSearchFilterMenuWidth)
-        case .emojiCategory:
-            return headerMenu(emojiCategoryContent, width: metrics.size.emojiCategoryMenuWidth)
         case .aiModel:
             return headerMenu(
                 AIModelMenu.models(coordinator: core.aiChatCoordinator),
@@ -241,35 +216,10 @@ struct RootPaletteView: View {
             selection: sel)
     }
 
-    /// The emoji grid's observers, split out so `stateObservers` stays within type-checker reach.
-    @ViewBuilder
-    private func emojiObservers(_ content: some View) -> some View {
-        content
-            .onChange(of: vm.emojiCategoryFilter) {
-                vm.selection = 0
-                scroll = ScrollIntent(kind: .top)
-            }
-            .onChange(of: core.pinnedEmoji.revision) { emojiGridChanged() }
-            .onChange(of: vm.emojiGridColumnsOverride) { emojiGridChanged() }
-            .onChange(of: settings.emojiGridColumns) { emojiGridChanged() }
-            // ⌘0 / ⌘+ / ⌘- arrive as a token, like ⌘. does. See `PaletteState.emojiGridZoomToken`.
-            .onChange(of: vm.emojiGridZoomToken) {
-                guard let zoom = vm.emojiGridZoom else { return }
-                (screen as? EmojiScreen)?.zoom(zoom)
-            }
-    }
-
-    /// Pins and density move cells under the selection, and can change an open Actions menu's rows.
-    private func emojiGridChanged() {
-        guard vm.mode == .emoji else { return }
-        scroll = ScrollIntent(kind: .follow)
-        refreshActionsMenu()
-    }
-
     /// Split from `body` for the same reason `keyHandlers` is: one chain cannot carry them all.
     @ViewBuilder
     private func stateObservers(_ content: some View) -> some View {
-        emojiObservers(content)
+        content
             // Every show bumps focusToken so the search field refocuses.
             .onChange(of: vm.focusToken) {
                 searchFocused = !screen.hidesSearchField
@@ -301,8 +251,6 @@ struct RootPaletteView: View {
                 vm.selection = 0
                 vm.clipboardFilter = .all
                 vm.fileSearchFilter = .all
-                vm.emojiCategoryFilter = .all
-                vm.emojiGridColumnsOverride = nil
                 vm.fileSearchQuickLook = false
                 if menuOpen { closeMenus() }
                 scroll = ScrollIntent(kind: .top)
@@ -490,7 +438,6 @@ struct RootPaletteView: View {
                 {
                 case .clipboardFilter: toggleClipboardFilter()
                 case .fileSearchFilter: toggleFileSearchFilter()
-                case .emojiCategory: toggleEmojiCategory()
                 case .ignored: return .ignored
                 }
                 return .handled
@@ -558,15 +505,6 @@ struct RootPaletteView: View {
                     title: vm.fileSearchFilter.title, systemImage: vm.fileSearchFilter.systemImage,
                     isOpen: openMenu == .fileSearchFilter, help: "Filter by type  ⌘P",
                     action: toggleFileSearchFilter)
-            }
-            if !isCollapsed, vm.mode == .emoji {
-                headerGutter(width: metrics.spacing.md)
-                HeaderMenuButton(
-                    title: vm.emojiCategoryFilter.title,
-                    systemImage: vm.emojiCategoryFilter.systemImage,
-                    isOpen: openMenu == .emojiCategory,
-                    help: "Filter by category  ⌘P",
-                    action: toggleEmojiCategory)
             }
             if !isCollapsed, vm.mode == .ai {
                 headerGutter(width: metrics.spacing.md)
@@ -822,15 +760,6 @@ struct RootPaletteView: View {
         open(.fileSearchFilter, highlighting: active)
     }
 
-    private func toggleEmojiCategory() {
-        if openMenu == .emojiCategory {
-            closeMenus()
-            return
-        }
-        let active = EmojiCategoryFilter.allCases.firstIndex(of: vm.emojiCategoryFilter) ?? 0
-        open(.emojiCategory, highlighting: active)
-    }
-
     /// Opens on the selected model, mirroring the clipboard filter's active-row behavior.
     private func toggleAIModel() {
         if openMenu == .aiModel {
@@ -914,7 +843,7 @@ struct RootPaletteView: View {
         case .app: .bottomLeading
         case .actions: .bottomTrailing
         case .argumentOptions: .belowHeaderTrailing
-        case .clipboardFilter, .fileSearchFilter, .emojiCategory, .aiModel, .aiReasoning:
+        case .clipboardFilter, .fileSearchFilter, .aiModel, .aiReasoning:
             .belowHeaderTrailing
         case nil: nil
         }
@@ -956,7 +885,7 @@ struct RootPaletteView: View {
         return true
     }
 
-    /// Claimed whole on the launcher and emoji grid, so a press at an end cannot reach the caret.
+    /// Claimed whole on the launcher, so a press at an end cannot reach the caret.
     private func movePinnedOrFavorite(
         _ delta: Int, modifiers: EventModifiers
     ) -> KeyPress.Result? {
@@ -967,9 +896,7 @@ struct RootPaletteView: View {
             if launcher.moveFavorite(delta, at: selection(in: launcher)), menuOpen { closeMenus() }
             return .handled
         }
-        guard let emoji = screen as? EmojiScreen else { return nil }
-        emoji.movePin(delta, at: selection(in: emoji))
-        return .handled
+        return nil
     }
 
     /// Move the open menu's highlight past rows it cannot land on, stopping at the ends (no wrap).
@@ -1112,7 +1039,6 @@ private enum OpenMenu {
     case app
     case clipboardFilter
     case fileSearchFilter
-    case emojiCategory
     case aiModel
     case aiReasoning
 }

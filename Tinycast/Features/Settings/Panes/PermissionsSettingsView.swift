@@ -10,28 +10,28 @@ struct PermissionsSettingsView: View {
             Section {
                 LabeledContent {
                     Label(
-                        accessibilityTrusted ? "Granted" : "Not granted",
+                        accessibilityTrusted ? L10n.string("Granted") : L10n.string("Not granted"),
                         systemImage: accessibilityTrusted
                             ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
                     )
                     .foregroundStyle(accessibilityTrusted ? Color.green : Color.orange)
                 } label: {
                     SettingsRowTitle(.permissionsAccessibility, "Accessibility")
-                    Text("Lets Tinycast paste a clipboard item into the app you were using.")
+                    Text(L10n.string("Lets Tinycast paste a clipboard item into the app you were using."))
                 }
 
                 LabeledContent {
-                    Button(accessibilityTrusted ? "Open…" : "Grant Access…") {
+                    Button(accessibilityTrusted ? L10n.string("Open…") : L10n.string("Grant Access…")) {
                         Permissions.openAccessibilitySettings()
                     }
                 } label: {
-                    Text(accessibilityTrusted ? "Manage in System Settings" : "Grant access")
-                    Text("Opens Privacy & Security › Accessibility.")
+                    Text(accessibilityTrusted ? L10n.string("Manage in System Settings") : L10n.string("Grant access"))
+                    Text(L10n.string("Opens Privacy & Security › Accessibility."))
                 }
             } header: {
                 SettingsSectionHeader(.permissionsAccessibility)
             } footer: {
-                Text("Access Tinycast needs to work with other apps.")
+                Text(L10n.string("Access Tinycast needs to work with other apps."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

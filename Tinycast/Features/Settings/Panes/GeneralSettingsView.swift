@@ -17,11 +17,16 @@ struct GeneralSettingsView: View {
     private var hyperSubtitle: String {
         guard settings.hyperKey != .none else {
             return
-                "Select a physical key to remap to the \(hyperGlyphs) modifier keys simultaneously."
+                L10n.format(
+                    "Select a physical key to remap to the %@ modifier keys simultaneously.",
+                    hyperGlyphs)
         }
         return
-            "Pressing \(settings.hyperKey.title) will trigger the left \(hyperGlyphs) modifier keys."
-            + " Hyper Key shortcuts are shown in Tinycast with ✦."
+            L10n.format(
+                "Pressing %@ will trigger the left %@ modifier keys.",
+                L10n.text(settings.hyperKey.title), hyperGlyphs)
+            + " "
+            + L10n.string("Hyper Key shortcuts are shown in Tinycast with ✦.")
     }
 
     var body: some View {
@@ -34,14 +39,14 @@ struct GeneralSettingsView: View {
             } header: {
                 SettingsSectionHeader(.generalGlobalShortcuts)
             } footer: {
-                Text("Summon the fuzzy app launcher.")
+                Text(L10n.string("Summon the fuzzy app launcher."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Section {
                 LabeledContent {
-                    Button("Reset…", role: .destructive) {
+                    Button(L10n.string("Reset…"), role: .destructive) {
                         confirmingRankingReset = true
                     }
                     .disabled(launcherRanking.isEmpty)
@@ -52,7 +57,7 @@ struct GeneralSettingsView: View {
                 SettingsSectionHeader(.generalSearch)
             } footer: {
                 Text(
-                    "Tinycast privately learns which results you choose for each query. Reset all learned choices to restore the default order."
+                    L10n.string("Tinycast privately learns which results you choose for each query. Reset all learned choices to restore the default order.")
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -61,7 +66,7 @@ struct GeneralSettingsView: View {
             Section {
                 Picker(selection: $settings.hyperKey) {
                     ForEach(HyperKeyPhysicalKey.allCases) { key in
-                        Text(key.title).tag(key)
+                        Text(L10n.text(key.title)).tag(key)
                     }
                 } label: {
                     SettingsRowTitle(.generalHyperKey, "Hyper Key")
@@ -75,10 +80,10 @@ struct GeneralSettingsView: View {
 
                 if hyperTap.status == .needsAccessibility {
                     LabeledContent {
-                        Button("Grant Access…") { Permissions.openAccessibilitySettings() }
+                        Button(L10n.string("Grant Access…")) { Permissions.openAccessibilitySettings() }
                     } label: {
                         Label(
-                            "Tinycast needs Accessibility access to remap keys.",
+                            L10n.string("Tinycast needs Accessibility access to remap keys."),
                             systemImage: "exclamationmark.triangle"
                         )
                         .foregroundStyle(.orange)
@@ -87,22 +92,24 @@ struct GeneralSettingsView: View {
 
                 if settings.hyperKey.hasOriginalFunction {
                     Picker(selection: $settings.hyperKeyQuickPress) {
-                        Text("Does Nothing").tag(HyperKeyQuickPress.none)
+                        Text(L10n.string("Does Nothing")).tag(HyperKeyQuickPress.none)
                         if let original = settings.hyperKey.quickPressOriginalTitle {
-                            Text(original).tag(HyperKeyQuickPress.originalKey)
+                            Text(L10n.text(original)).tag(HyperKeyQuickPress.originalKey)
                         }
-                        Text("Trigger Escape").tag(HyperKeyQuickPress.escape)
+                        Text(L10n.string("Trigger Escape")).tag(HyperKeyQuickPress.escape)
                     } label: {
                         SettingsRowTitle(.generalHyperKey, "Quick Press")
                         Text(
-                            "Select an action to perform when \(settings.hyperKey.title) is pressed without any other keys."
+                            L10n.format(
+                                "Select an action to perform when %@ is pressed without any other keys.",
+                                L10n.text(settings.hyperKey.title))
                         )
                     }
                 }
 
                 Toggle(isOn: $settings.hyperKeyIncludesShift) {
                     SettingsRowTitle(.generalHyperKey, "Include Shift (⇧)")
-                    Text("Hyper Key will remap to the \(hyperGlyphs) modifier keys.")
+                    Text(L10n.format("Hyper Key will remap to the %@ modifier keys.", hyperGlyphs))
                 }
                 // Flipping it re-points recorded chords, so it needs a chord to mean.
                 .settingsEnabled(settings.hyperKey != .none)
@@ -113,35 +120,35 @@ struct GeneralSettingsView: View {
             Section {
                 Picker(selection: $settings.appearance) {
                     ForEach(AppAppearance.allCases) { appearance in
-                        Text(appearance.title).tag(appearance)
+                        Text(L10n.text(appearance.title)).tag(appearance)
                     }
                 } label: {
                     SettingsRowTitle(.generalAppearance, "Theme")
-                    Text("Match macOS, or pin Tinycast to Light or Dark.")
+                    Text(L10n.string("Match macOS, or pin Tinycast to Light or Dark."))
                 }
                 InterfaceSizeRow()
                 PaletteTransparencyRow()
                 Toggle(isOn: $settings.compactMode) {
                     SettingsRowTitle(.generalAppearance, "Compact mode")
                     Text(
-                        "Open the launcher as a slim search bar that expands into the full list as you type."
+                        L10n.string("Open the launcher as a slim search bar that expands into the full list as you type.")
                     )
                 }
                 Toggle(isOn: $settings.showFavoritesInCompactMode) {
                     SettingsRowTitle(.generalAppearance, "Show favorites in compact mode")
-                    Text("Pin favorite app icons to the right of the compact bar (⌘1–⌘5 to launch).")
+                    Text(L10n.string("Pin favorite app icons to the right of the compact bar (⌘1–⌘5 to launch)."))
                 }
                 .disabled(!settings.compactMode)
                 Toggle(isOn: $settings.openOnCursorScreen) {
                     SettingsRowTitle(.generalAppearance, "Follow the cursor across displays")
                     Text(
-                        "Open the launcher on whichever display the pointer is on, rather than the one with the menu bar."
+                        L10n.string("Open the launcher on whichever display the pointer is on, rather than the one with the menu bar.")
                     )
                 }
                 Toggle(isOn: $settings.paletteDraggable) {
                     SettingsRowTitle(.generalAppearance, "Drag to reposition")
                     Text(
-                        "Grab the thin strip just above the search field to move the launcher out of the way."
+                        L10n.string("Grab the thin strip just above the search field to move the launcher out of the way.")
                     )
                 }
             } header: {
@@ -151,38 +158,38 @@ struct GeneralSettingsView: View {
             Section {
                 Toggle(isOn: $settings.launchAtLogin) {
                     SettingsRowTitle(.generalGeneral, "Launch at login")
-                    Text("Start Tinycast automatically when you log in.")
+                    Text(L10n.string("Start Tinycast automatically when you log in."))
                 }
                 Toggle(isOn: $showInMenuBar) {
                     SettingsRowTitle(.generalGeneral, "Show in menu bar")
-                    Text("Keep the Tinycast icon in the menu bar. Shortcuts still work when hidden.")
+                    Text(L10n.string("Keep the Tinycast icon in the menu bar. Shortcuts still work when hidden."))
                 }
                 Picker(selection: $settings.popToRootTimeout) {
                     ForEach(PopToRootTimeout.allCases) { timeout in
-                        Text(timeout.title).tag(timeout)
+                        Text(L10n.text(timeout.title)).tag(timeout)
                     }
                 } label: {
                     SettingsRowTitle(.generalGeneral, "Pop to Root Search")
-                    Text("Reset to the launcher this long after the window closes.")
+                    Text(L10n.string("Reset to the launcher this long after the window closes."))
                 }
                 Picker(selection: $settings.escapeKeyBehavior) {
                     ForEach(EscapeKeyBehavior.allCases) { behavior in
-                        Text(behavior.title).tag(behavior)
+                        Text(L10n.text(behavior.title)).tag(behavior)
                     }
                 } label: {
                     SettingsRowTitle(.generalGeneral, "Escape Key Behavior")
-                    Text("What Escape does once the search field is already empty.")
+                    Text(L10n.string("What Escape does once the search field is already empty."))
                 }
                 // Empty only when TIS fails; one layout still lists, so the row stays put.
                 if !inputSources.isEmpty {
                     Picker(selection: $settings.autoSwitchInputSourceID) {
-                        Text("None").tag(nil as String?)
+                        Text(L10n.string("None")).tag(nil as String?)
                         ForEach(inputSources) { source in
                             Text(source.title).tag(Optional(source.id))
                         }
                     } label: {
                         SettingsRowTitle(.generalGeneral, "Auto-switch input source")
-                        Text("Switch the keyboard to this source while the launcher is open.")
+                        Text(L10n.string("Switch the keyboard to this source while the launcher is open."))
                     }
                 }
             } header: {
@@ -192,16 +199,16 @@ struct GeneralSettingsView: View {
         .formStyle(.grouped)
         .settingsScrollTarget(.general)
         .confirmationDialog(
-            "Reset learned launcher ranking?",
+            L10n.string("Reset learned launcher ranking?"),
             isPresented: $confirmingRankingReset,
             titleVisibility: .visible
         ) {
-            Button("Reset Ranking", role: .destructive) {
+            Button(L10n.string("Reset Ranking"), role: .destructive) {
                 launcherRanking.resetAll()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.string("Cancel"), role: .cancel) {}
         } message: {
-            Text("Tinycast will relearn your preferred results as you use the launcher.")
+            Text(L10n.string("Tinycast will relearn your preferred results as you use the launcher."))
         }
         .onAppear(perform: refreshInputSources)
         .onReceive(
@@ -255,9 +262,9 @@ private struct InterfaceSizeRow: View {
                 .background(shape.fill(selected ? Theme.Colors.controlSurface : Color.clear))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(size.title)
+        .accessibilityLabel(L10n.text(size.title))
         .accessibilityAddTraits(selected ? [.isSelected] : [])
-        .help(size.title)
+        .help(L10n.text(size.title))
     }
 }
 
@@ -288,8 +295,8 @@ private struct PaletteTransparencyRow: View {
             Slider(
                 value: value, in: -100...100, step: 50, neutralValue: 0,
                 label: { EmptyView() },
-                minimumValueLabel: { Text("Less") },
-                maximumValueLabel: { Text("More") },
+                minimumValueLabel: { Text(L10n.string("Less")) },
+                maximumValueLabel: { Text(L10n.string("More")) },
                 tick: { SliderTick($0) },
                 onEditingChanged: { editing in
                     isEditing = editing
@@ -300,13 +307,13 @@ private struct PaletteTransparencyRow: View {
                 }
             )
             .labelsHidden()
-            .accessibilityLabel("Background transparency")
+            .accessibilityLabel(L10n.string("Background transparency"))
             .frame(width: Theme.Size.paletteTransparencySlider)
-            Button("Reset") {
+            Button(L10n.string("Reset")) {
                 draft = nil
                 settings.paletteTransparency = 0
             }
-            .help("Restore the default background in Light and Dark.")
+            .help(L10n.string("Restore the default background in Light and Dark."))
         }
     }
 }

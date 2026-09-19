@@ -17,7 +17,7 @@ struct FeatureCommandsSection: View {
         } header: {
             SettingsSectionHeader(anchor)
         } footer: {
-            Text("A shortcut works even when its command is hidden from the launcher.")
+            Text(L10n.string("A shortcut works even when its command is hidden from the launcher."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

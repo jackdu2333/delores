@@ -11,7 +11,7 @@ struct NavigationSettingsView: View {
             Section {
                 Toggle(isOn: $settings.navigationEnabled) {
                     SettingsRowTitle(.navigationNavigation, "Enable navigation")
-                    Text("Jump to any open window, or press any menu bar item, from the launcher.")
+                    Text(L10n.string("Jump to any open window, or press any menu bar item, from the launcher."))
                 }
             } header: {
                 SettingsSectionHeader(.navigationNavigation)
@@ -32,7 +32,7 @@ struct NavigationSettingsView: View {
 
                 Toggle(isOn: $settings.menuSearchShowsAppleMenu) {
                     SettingsRowTitle(.navigationMenuSearch, "Show Apple menu items")
-                    Text("Include the Apple menu, which is the same under every application.")
+                    Text(L10n.string("Include the Apple menu, which is the same under every application."))
                 }
 
                 SettingsRow(

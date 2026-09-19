@@ -36,8 +36,8 @@ struct WindowManagementSettingsView: View {
         .alert(item: $pendingDeletion) { layout in
             Alert(
                 title: Text("Delete \u{201C}\(layout.name)\u{201D}?"),
-                message: Text("Its global shortcut and launcher references go with it."),
-                primaryButton: .destructive(Text("Delete")) {
+                message: Text(L10n.string("Its global shortcut and launcher references go with it.")),
+                primaryButton: .destructive(Text(L10n.string("Delete"))) {
                     core.windowLayoutCoordinator.deleteWindowLayout(id: layout.id)
                 },
                 secondaryButton: .cancel())
@@ -49,11 +49,11 @@ struct WindowManagementSettingsView: View {
         return Section {
             Picker(selection: $settings.windowCycle) {
                 ForEach(WindowCycle.allCases) { cycle in
-                    Text(cycle.title).tag(cycle)
+                    Text(L10n.text(cycle.title)).tag(cycle)
                 }
             } label: {
                 SettingsRowTitle(.windowManagementOptions, "Cycling")
-                Text(settings.windowCycle.detail)
+                Text(L10n.text(settings.windowCycle.detail))
             }
 
             LabeledContent {
@@ -66,7 +66,7 @@ struct WindowManagementSettingsView: View {
                 }
             } label: {
                 SettingsRowTitle(.windowManagementOptions, "Gap between windows")
-                Text("Points left between tiled windows and around the screen edge.")
+                Text(L10n.string("Points left between tiled windows and around the screen edge."))
             }
         } header: {
             SettingsSectionHeader(.windowManagementOptions)
@@ -81,7 +81,7 @@ struct WindowManagementSettingsView: View {
                     WindowCommandSettingsRow(command: command)
                 }
             } header: {
-                Text(section.group.title)
+                Text(L10n.text(section.group.title))
             }
         }
     }
@@ -101,7 +101,7 @@ private struct WindowCommandSettingsRow: View {
             Toggle("", isOn: visibilityBinding)
                 .labelsHidden()
                 .toggleStyle(.checkbox)
-                .help("Show in launcher")
+                .help(L10n.string("Show in launcher"))
                 .accessibilityLabel("Show \(command.name) in launcher")
         }
     }

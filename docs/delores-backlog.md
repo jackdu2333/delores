@@ -2,7 +2,7 @@
 
 > 快照时间：2026-09-18 00:02，基线 `39f5d13`（工作树含未提交的 Companion Shell WIP）。
 > 方法：设计文档（product / architecture / action-core / verification / companion-sprite / release /
-> extensions）逐份与代码 grep 对照，每项都有证据链；只列「明确写过设计」的项，
+> legacy pack 文档）逐份与代码 grep 对照，每项都有证据链；只列「明确写过设计」的项，
 > 泛化愿望与未决产品问题单独分层，不与确定欠账混淆。
 > 本文件是快照，不是任务清单——完成一项就划掉一项，并注明完成它的提交。
 
@@ -32,7 +32,7 @@
 
 ## 三、上游 Raycast 兼容明确不支持
 
-以下为 Tinycast 上游边界（`docs/features/extensions.md` §What isn't supported yet），不是 Delores 欠账，同步上游时留意：
+以下为已停用 Raycast Extensions pack 的历史边界（`Packs/LegacyFeatures/docs/extensions.md`），不是 Delores 欠账：
 
 - `menu-bar` commands（可识别、展示不支持原因，无 runtime）
 - Raycast PKCE proxy（`oauth.raycast.com`）——本地 PKCE 已有，代理转发无

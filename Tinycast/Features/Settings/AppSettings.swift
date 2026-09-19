@@ -40,10 +40,6 @@ final class AppSettings {
         didSet { defaults.set(clipboardEnabled, forKey: Key.clipboardEnabled.rawValue) }
     }
 
-    var clipboardTextSearchEnabled: Bool {
-        didSet { defaults.set(clipboardTextSearchEnabled, forKey: Key.clipboardTextSearchEnabled.rawValue) }
-    }
-
     var clipboardRetention: ClipboardRetention {
         didSet {
             defaults.set(clipboardRetention.rawValue, forKey: Key.clipboardRetention.rawValue)
@@ -81,16 +77,6 @@ final class AppSettings {
         didSet {
             defaults.set(hyperKeyQuickPress.rawValue, forKey: Key.hyperKeyQuickPress.rawValue)
         }
-    }
-
-    /// Preferred skin tone applied to modifier-capable emoji at render and copy time.
-    var emojiSkinTone: EmojiSkinTone {
-        didSet { defaults.set(emojiSkinTone.rawValue, forKey: Key.emojiSkinTone.rawValue) }
-    }
-
-    /// Grid density used when the emoji picker opens; in-session zoom remains temporary.
-    var emojiGridColumns: EmojiGridColumns {
-        didSet { defaults.set(emojiGridColumns.rawValue, forKey: Key.emojiGridColumns.rawValue) }
     }
 
     /// How long a closed palette keeps its state before popping back to the root launcher.
@@ -182,10 +168,6 @@ final class AppSettings {
         didSet {
             defaults.set(fileSearchIgnorePatterns, forKey: Key.fileSearchIgnorePatterns.rawValue)
         }
-    }
-
-    var notesEnabled: Bool {
-        didSet { defaults.set(notesEnabled, forKey: Key.notesEnabled.rawValue) }
     }
 
     /// Off by default: connecting a server is consent to run code Tinycast did not write.
@@ -311,18 +293,11 @@ final class AppSettings {
         }
     }
 
-    /// Whether the support window may reopen itself; off means never ask again.
-    var supportRemindersEnabled: Bool {
-        didSet { defaults.set(supportRemindersEnabled, forKey: Key.supportReminders.rawValue) }
-    }
-
     init() {
         // The only feature switch that defaults on, so absence has to outrank a stored `false`.
         clipboardEnabled =
             defaults.object(forKey: Key.clipboardEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.clipboardEnabled.rawValue)
-        // `integer(forKey:)` returns 0 when unset, which no case matches.
-        clipboardTextSearchEnabled = defaults.bool(forKey: Key.clipboardTextSearchEnabled.rawValue)
         clipboardRetention =
             ClipboardRetention(rawValue: defaults.integer(forKey: Key.clipboardRetention.rawValue))
             ?? .threeMonths
@@ -345,11 +320,6 @@ final class AppSettings {
             defaults.string(forKey: Key.hyperKeyQuickPress.rawValue)
             .flatMap(HyperKeyQuickPress.init)
             ?? .none
-        emojiSkinTone =
-            defaults.string(forKey: Key.emojiSkinTone.rawValue).flatMap(EmojiSkinTone.init) ?? .none
-        emojiGridColumns =
-            EmojiGridColumns(rawValue: defaults.integer(forKey: Key.emojiGridColumns.rawValue))
-            ?? .default
         popToRootTimeout =
             PopToRootTimeout(rawValue: defaults.integer(forKey: Key.popToRootTimeout.rawValue))
             ?? .immediately
@@ -385,7 +355,6 @@ final class AppSettings {
             ?? FileSearchScope.defaultScopes
         fileSearchIgnorePatterns =
             defaults.stringArray(forKey: Key.fileSearchIgnorePatterns.rawValue) ?? []
-        notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         aiEnabled = defaults.bool(forKey: Key.aiEnabled.rawValue)
         mcpEnabled = defaults.bool(forKey: Key.mcpEnabled.rawValue)
         quickActionsEnabled = defaults.bool(forKey: Key.quickActionsEnabled.rawValue)
@@ -425,8 +394,5 @@ final class AppSettings {
         quicklinkConfirmsBeforeDelete =
             defaults.object(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue)
-        supportRemindersEnabled =
-            defaults.object(forKey: Key.supportReminders.rawValue) == nil
-            || defaults.bool(forKey: Key.supportReminders.rawValue)
     }
 }

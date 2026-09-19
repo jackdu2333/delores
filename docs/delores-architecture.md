@@ -114,6 +114,10 @@ walked out from under the bar it opened leaves that bar over nothing. Without a 
 body off screen — the bar goes back to the menu bar, which is its ordinary home, and the reason every
 part of `DeloresContextCompanionHosting` is optional as a whole rather than piece by piece.
 
+Standing on this display's menu bar is still standing here. The body walks `screen.frame`, so a
+selection must not treat `visibleFrame.contains` as "on this display" and fetch the body to the
+visible-frame midpoint.
+
 The Companion's right-click menu is a shell of the same kind, placed by the same call: a body near a
 corner and a menu that does not fit are resolved once, for all three. Like the island it is ordered in
 without key and never takes one, so the way out of it is a click away rather than Escape.

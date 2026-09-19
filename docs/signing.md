@@ -86,10 +86,7 @@ Accessibility grant. Each entitlement in `Tinycast/Tinycast.entitlements` earns 
 
 | Entitlement | Without it |
 | --- | --- |
-| `com.apple.security.cs.allow-jit` | JavaScriptCore cannot JIT, and every extension command runs on the interpreter |
-| `com.apple.security.automation.apple-events` | Every Apple event is refused with `-1743` and no prompt — Get Info, the Finder selection an extension reads, and the System Events–driven system actions all die silently |
-| `com.apple.security.device.camera` | The camera prompt never appears and access resolves as denied |
-| `com.apple.security.personal-information.calendars` | `requestFullAccessToEvents()` returns `false` in milliseconds with no dialog, and Tinycast never appears under System Settings › Calendars |
+| `com.apple.security.automation.apple-events` | Every Apple event is refused with `-1743` and no prompt — Get Info and the System Events–driven system actions all die silently |
 
 **A usage string is not enough under the hardened runtime.** `tccd` checks the matching entitlement
 *before* it prompts, and without it logs "requires entitlement … but it is missing" and denies on the
@@ -107,13 +104,15 @@ Nothing else is needed: the only `dlopen` is Apple's own IOBluetooth, so library
 on, and `node`, `ray` and shell commands are separate processes it never reaches. Bluetooth has no
 hardened-runtime entitlement.
 
-`./Scripts/verify-signature.sh <path-to-.app>` asserts all of this — the runtime flag on the app *and*
-on `Contents/Helpers/ClipboardTextHelper`, an intact nested seal, no `get-task-allow`, and an
-entitlement for every usage string `Info.plist` declares. Both release jobs run it before packaging:
-a nested binary missing the runtime flag is the most common notarization rejection, and a usage string
-missing its entitlement ships a permission that can never be granted.
+`./Scripts/verify-signature.sh <path-to-.app>` asserts all of this — the runtime flag on the app,
+an intact nested seal, no `get-task-allow`, and an entitlement for every usage string `Info.plist`
+declares. Both release jobs run it before packaging: a usage string missing its entitlement ships a
+permission that can never be granted.
 
 ## The Developer ID migration
+
+The in-app updater that used this check is parked under `Packs/LegacyFeatures/Updates/`. The identity
+rules below still describe how a restored updater must verify a replacement binary.
 
 `BundleSignature` already accepts a bundle signed by the Tinycast team under Apple's Developer ID
 chain, even though releases are still signed with `Tinycast Self-Signed`. That is deliberate and

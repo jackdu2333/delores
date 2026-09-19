@@ -27,7 +27,7 @@ struct WindowLayoutEntryPicker: View {
                 .layoutFieldChrome()
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add an app to this layout")
+        .accessibilityLabel(L10n.string("Add an app to this layout"))
         .popover(isPresented: $showingAppPicker, arrowEdge: .bottom) {
             AppPickerPopover { bundleID in
                 showingAppPicker = false
@@ -50,7 +50,7 @@ struct WindowLayoutEntryPicker: View {
                         .frame(width: Theme.Size.settingsRowIcon, height: Theme.Size.settingsRowIcon)
                     Text(app.name).lineLimit(1)
                 } else {
-                    Text("No app yet").foregroundStyle(.secondary)
+                    Text(L10n.string("No app yet")).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.sm)
                 Image(systemName: "chevron.down")
@@ -61,7 +61,7 @@ struct WindowLayoutEntryPicker: View {
         }
         .buttonStyle(.plain)
         .disabled(draft.entries.isEmpty)
-        .accessibilityLabel("Entry being edited")
+        .accessibilityLabel(L10n.string("Entry being edited"))
         .popover(isPresented: $showingEntries, arrowEdge: .bottom) { entryList }
     }
 
@@ -81,7 +81,7 @@ struct WindowLayoutEntryPicker: View {
             }
             if draft.selectedEntry != nil {
                 Divider()
-                Button("Remove This Entry", role: .destructive) {
+                Button(L10n.string("Remove This Entry"), role: .destructive) {
                     showingEntries = false
                     draft.removeSelectedEntry()
                 }

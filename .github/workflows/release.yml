@@ -111,30 +111,27 @@ jobs:
             MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             build
 
-      # Apple silicon users pay for no Intel slice: assert the download stays thin. Both binaries —
-      # a bundled helper is shipped code too, and nothing else would catch a stray slice in it.
+      # Apple silicon users pay for no Intel slice: assert the download stays thin.
       - name: Assert the build is arm64-only
         env:
           DISPLAY_NAME: ${{ steps.meta.outputs.display_name }}
         run: |
           APP="$RUNNER_TEMP/DerivedData/Build/Products/Release/${DISPLAY_NAME}.app"
-          for BIN in "$APP/Contents/MacOS/${DISPLAY_NAME}" "$APP/Contents/Helpers/ClipboardTextHelper"; do
-            SLICES="$(lipo -archs "$BIN")"
-            if [ "$SLICES" != "arm64" ]; then
-              echo "::error::${BIN##*/}: expected arm64 alone, got '$SLICES'"
-              exit 1
-            fi
-          done
+          BIN="$APP/Contents/MacOS/${DISPLAY_NAME}"
+          SLICES="$(lipo -archs "$BIN")"
+          if [ "$SLICES" != "arm64" ]; then
+            echo "::error::${BIN##*/}: expected arm64 alone, got '$SLICES'"
+            exit 1
+          fi
 
-      # Notarization rejects a nested binary without the hardened runtime, and the helper is signed
-      # by a separate embed phase — so assert the flag reached it rather than trusting Xcode.
+      # Notarization rejects a binary without the hardened runtime.
       - name: Assert the signature is notarizable
         env:
           DISPLAY_NAME: ${{ steps.meta.outputs.display_name }}
         run: ./Scripts/verify-signature.sh "$RUNNER_TEMP/DerivedData/Build/Products/Release/${DISPLAY_NAME}.app"
 
-      # Two artifacts from one build: the DMG people download and the cask installs, and the zip
-      # the in-app updater installs — it expands with `ditto` instead of mounting a volume.
+      # Two artifacts from one build: the DMG people download and the cask installs, and a zip
+      # for GitHub Releases.
       - name: Package DMG and ZIP
         env:
           DISPLAY_NAME: ${{ steps.meta.outputs.display_name }}
@@ -297,15 +294,14 @@ jobs:
           echo "Using $XCODE_PATH"
           echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
 
-      # The SAME identity as the thin build, and a hard failure if it is missing: the in-app updater
-      # compares the staged bundle's leaf certificate against the running app's before installing.
+      # The SAME identity as the thin build, and a hard failure if it is missing.
       - name: Import signing certificate
         env:
           P12_BASE64: ${{ secrets.SIGNING_P12_BASE64 }}
           P12_PASSWORD: ${{ secrets.SIGNING_P12_PASSWORD }}
         run: |
           if [ -z "${P12_BASE64}" ]; then
-            echo "::error::SIGNING_P12_BASE64 not set — a differently-signed build cannot self-update."
+            echo "::error::SIGNING_P12_BASE64 not set — unsigned or differently-signed builds must not ship."
             exit 1
           fi
           KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
@@ -333,8 +329,7 @@ jobs:
             build
 
       # A silently-dropped ARCHS override would publish a thin build under the universal name, which
-      # is the one mistake this whole channel exists to prevent. A thin bundled helper is the quiet
-      # version of it: the app still boots on Intel and only its OCR stops working.
+      # is the one mistake this whole channel exists to prevent.
       - name: Assert both slices on the shipping binaries
         run: |
           APP="$RUNNER_TEMP/DerivedData/Build/Products/Release/${DISPLAY_NAME}.app"
@@ -344,20 +339,19 @@ jobs:
             echo "::error::expected LSMinimumSystemVersion 26.0, got $PLIST_MIN"
             exit 1
           fi
-          for BIN in "$APP/Contents/MacOS/${DISPLAY_NAME}" "$APP/Contents/Helpers/ClipboardTextHelper"; do
-            SLICES="$(lipo -archs "$BIN")"
-            echo "${BIN##*/}: arch=$SLICES"
-            for A in arm64 x86_64; do
-              case " $SLICES " in
-                *" $A "*) ;;
-                *) echo "::error::${BIN##*/}: no $A slice — this is not a universal build"; exit 1 ;;
-              esac
-              MINOS="$(xcrun vtool -arch "$A" -show-build-version "$BIN" | awk '/minos/{print $2}')"
-              if [ "$MINOS" != "26.0" ]; then
-                echo "::error::${BIN##*/} $A: expected a macOS 26.0 floor, got minos=$MINOS"
-                exit 1
-              fi
-            done
+          BIN="$APP/Contents/MacOS/${DISPLAY_NAME}"
+          SLICES="$(lipo -archs "$BIN")"
+          echo "${BIN##*/}: arch=$SLICES"
+          for A in arm64 x86_64; do
+            case " $SLICES " in
+              *" $A "*) ;;
+              *) echo "::error::${BIN##*/}: no $A slice — this is not a universal build"; exit 1 ;;
+            esac
+            MINOS="$(xcrun vtool -arch "$A" -show-build-version "$BIN" | awk '/minos/{print $2}')"
+            if [ "$MINOS" != "26.0" ]; then
+              echo "::error::${BIN##*/} $A: expected a macOS 26.0 floor, got minos=$MINOS"
+              exit 1
+            fi
           done
 
       - name: Assert the signature is notarizable

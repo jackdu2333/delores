@@ -62,9 +62,8 @@ Add a token rather than a magic number when introducing a new value.
 
 ### Interface Size (`InterfaceMetrics`)
 
-`AppSettings.interfaceSize` scales the palette and the surfaces that float with it — the ⌘K menu, the
-extension list panel, Quick Actions, dialogs and HUDs. Settings, Onboarding,
-Support, Update, About and Notes never scale.
+`AppSettings.interfaceSize` scales the palette and the surfaces that float with it — the ⌘K menu,
+Quick Actions, dialogs and HUDs. Settings, Onboarding and About never scale.
 
 `DesignSystem/InterfaceMetrics.swift` stores **only a scale** and derives every value from the `Theme`
 literal, so `Theme` stays the one place a number is written down. **In any view a scaled surface can
@@ -106,8 +105,6 @@ action, and the pill is the affordance saying so; squaring it off reads as a too
 also keeps the pair concentric for free — a capsule's radius is half its height, so the inner
 buttons land exactly `Spacing.xs` inside the wrapper without either radius being written down.
 
-Notes has no corner of its own: it clips to `panel`, so the two floating surfaces read as siblings.
-
 `dialog` sits between `menuPanel` and `panel` so a dialog reads as a smaller sibling of the palette, not a second palette.
 
 `menu` is the shared small-control corner (sidebar tiles, About link pills); `menuRow` is the slightly rounder hover highlight behind popover-menu rows.
@@ -140,24 +137,18 @@ round every row to 18 for no reason.
 
 If a pair ever does need closing, **move the gap, not the curve** — but only once you have checked
 what else is anchored to that gap. A radius is shared by surfaces across several features, a
-placement constant is not: `Radius.menuPanel` alone dresses the ⌘K menu, the extensions actions
-panel, the shortcut-recorder callout and the Notes switcher, and `menuRow` is deliberately equal to
+placement constant is not: `Radius.menuPanel` alone dresses the ⌘K menu, the shortcut-recorder
+callout, and `menuRow` is deliberately equal to
 `row` so a row pill is one shape everywhere.
 
 ### Size (`Theme.Size`)
 
 `panelWidth 750` · `panelHeight 475` · `headerHeight 44` · `bottomBarHeight 52` · `barButtonHeight 28` ·
 `rowIcon 24` · `keyCap 18` · `recorderKeyCap 16` · `menuButton 36` · `clipboardListWidth 290` ·
-`menuWidth 276` · `clipboardFilterMenuWidth 200` · `fileSearchFilterMenuWidth 200` ·
-`emojiCategoryMenuWidth 220` · `menuIcon 20` ·
-`emojiGridInset 16` ·
+`menuWidth 276` · `clipboardFilterMenuWidth 200` · `fileSearchFilterMenuWidth 200` · `menuIcon 20` ·
 `menuOverflowFade 30` ·
 `settingsSidebar 215` · `settingsRowIcon 20` · `dialogWidth 420` · `dialogIcon 32` · `hudWidth 200` ·
 `hudHeight 100` · `volumeTrackHeight 6` · `volumeKnob 16` · `volumeReadout 38`
-
-Notes adds `noteWindow 520×420` (opening size on a first run only), `noteWindowMinimum 320×220`,
-`noteTitlebar 44`, `noteTitleInset 120`, `noteEditorInset 16`, `noteSearchHeight 34`,
-`noteFooterHeight 28`, `noteGlyph 16`, and `noteEmptyGlyph 28`.
 
 `keyCap` sizes the palette's keycap chips; `recorderKeyCap` (both size and radius) is the intentionally-smaller Settings shortcut-recorder chip.
 
@@ -197,7 +188,6 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `cardFill`        | white 0.05     | black 0.04     | settings/calc card fill                          |
 | `cardStroke`      | white 0.10     | black 0.10     | settings/calc card border + inset dividers       |
 | `glassFrost`      | white 0.05     | white **0.25** | whitish tint layered into the floating glass     |
-| `noteText`        | white 0.90     | black 0.85     | Notes Markdown source                            |
 | `dropGuide`       | white 0.35     | black 0.35     | the palette's drop guides while dragging         |
 
 `glassFrost` is white in **both** — the frost brightens glass rather than inking it — so it is an
@@ -207,9 +197,7 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 Beyond these, `.secondary`/`.tertiary` foreground styles are fine for SF Symbols (they resolve against
 the environment's appearance). **Selection always beats hover** when a row is both.
 
-An extension's own surfaces live in `ExtensionColors` (`Features/Extensions/UI/`), not here — the
-`ramp` mechanism is shared, the values are the feature's. See the Extensions non-negotiable in
-[`AGENTS.md`](../AGENTS.md).
+Feature-owned surfaces keep their own values; the `ramp` mechanism is shared, the values are not.
 
 ---
 
@@ -226,50 +214,10 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 ---
 
-## Notes panel
+## Parked Notes panel
 
-Source: `Features/Notes/UI/`.
-
-Notes is a sibling surface, not a palette mode. `NotesPanel` is a **titled**, resizable,
-non-activating panel — AppKit draws the traffic lights, the drag and the resize — but it keeps the
-palette's transparent recipe and deliberately does not dismiss on resign-key. `NotesView`'s root
-applies `panelScrim` → `VisualEffectView()` → one continuous **`panel`** corner clip, so
-Notes and the palette round identically. The clip is larger than the theme frame's own corner, so it
-is what shows; `invalidateShadow()` on every show recuts the shadow to match.
-
-The title bar is a 44-point band, and both halves of it are deliberate. `titleVisibility` is
-`.hidden` and `NotesView` draws the title itself, centred on the **window**: a titlebar accessory
-drops `NSThemeFrame` off its centred-title layout, so the native title would sit beside the traffic
-lights. The drawn title is not hit-testable, so clicks fall through to the real title bar and drag
-the window. The three actions cannot do that, so they live in an `NSTitlebarAccessoryViewController`
-at `.trailing` — `NoteTitlebarActions`, the launcher's footer capsule (`BarButton` in a
-`frosted(in: Capsule())`) with glyphs in place of pills. Its 44-point height is what sizes the band.
-
-`NotesWindowController` no longer computes frames: the user owns the size, and AppKit autosaves both
-position and size under `"Notes Window"`. The window shows exactly one surface at a time — editor,
-switcher, or the "No Notes" empty state — and the character count is part of the editor surface, so
-it never appears without a note.
-
-The header keeps a fixed slot for status so Saving, Saved, failure, and conflict symbols cannot move
-the controls. Failure and conflict symbols can be clicked to reopen their recovery report after a
-dismissal. A title click opens the in-window note switcher; dragging the title, note icon, or otherwise
-empty header moves the panel after a three-point threshold. Create, Reveal, Hide, and actionable status
-remain click-only controls. Escape closes the switcher before hiding, while Command-W and the hide
-control order the panel out. Show Notes only shows or focuses; focus loss leaves the panel visible.
-
-The editor is one native TextKit 2 surface. Its string is the canonical Markdown source, using one
-system font and the `noteText` color. Markdown markers remain visible and receive no parsing, rendering,
-formatting controls, task overlays, or link behavior. AppKit owns editing, undo, selection, Find, and
-marked text.
-
-The switcher is its own glass panel over the editor, sized to its list up to a 240-point ceiling and
-never resizing the note window. Its plain search field and
-keyboard-navigable rows use the shared selection/hover ramp; rename and Trash remain row actions rather
-than adding another toolbar or window.
-
-The switcher exposes activation, Rename, and Move to Trash as VoiceOver actions with the actual note
-title. Its hover buttons are hidden from accessibility so those actions are announced once. See
-[features/notes.md](features/notes.md).
+The floating Notes editor is parked under `Packs/LegacyFeatures/Notes/` and is not part of the
+active Delores target. Its previous UI notes live with that pack.
 
 ---
 
@@ -454,7 +402,7 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   `HUDPresenter.extend()`, so the bar slides to its new value in place instead of replaying the
   entrance.
 - **`MessageHUDController`'s pill** is every _other_ transient
-  confirmation: Custom Commands and Snippets confirming a run, and every system action whose effect
+  confirmation: every system action whose effect
   is invisible (`Trash Emptied`, `Hidden Files Shown`, `Bluetooth Off`). One capsule shape, sized to
   its message (`hudMaxWidth 420` ceiling), clipped to a `Capsule()`, with the message first and a
   filled glyph trailing it: `checkmark.circle.fill` green for `.success`, `exclamationmark.circle.fill`
@@ -508,24 +456,11 @@ per-scroll-view shim: chasing that flip after the fact is what caused the flash.
 
 ---
 
-## The camera preview panel
-
-`CameraPreviewPanel` is the third borderless surface, beside the dialog and the notes panel. It takes
-the same recipe — `panelScrim`, then `VisualEffectView`, then the clip — and the same optical lift a
-dialog takes, but sits at `.floating` rather than `.modalPanel` so a failure report still lands on
-top of it.
-
-`AVCaptureVideoPreviewLayer` is hosted in one `NSViewRepresentable` and nothing else; the title,
-countdown and buttons around it are Tinycast's own. Its buttons are a **deliberate copy** of
-`DialogButton` rather than a share: the dialog owns its button, and a preview that had to move with
-it would couple two unrelated surfaces.
-
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
-rather than a convention — `.volume` for the Set Volume prompt, `.eventDraft` for New Event,
-`.snippetArguments` for a snippet's `{argument}` values. Text fields take `dialogTextField()` and
-choices are `DialogChip`s, never a menu `Picker`. Two things follow from the enum:
+rather than a convention — `.volume` for the Set Volume prompt. Text fields take
+`dialogTextField()` and choices are `DialogChip`s, never a menu `Picker`. Two things follow from the enum:
 
 - **Arrow keys belong to the accessory, not the panel.** `DialogPanel.handlesArrowKeys` is set from
   `DialogAccessory.claimsArrowKeys`, so the slider still steps on ←/→ while the New Event title field

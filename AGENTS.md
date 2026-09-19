@@ -1,9 +1,9 @@
 # Tinycast
 
 A native macOS menu-bar launcher: fuzzy app launcher, global and per-app hotkeys, a text/image
-clipboard history, an inline calculator, a floating note, quicklinks, window management, AI actions
-and an emoji picker. Retired feature packs are preserved under `Packs/LegacyFeatures/` and are not
-part of the Delores application target.
+clipboard history, an inline calculator, quicklinks, window management and AI actions. Retired
+feature packs are preserved under `Packs/LegacyFeatures/` and are not part of the Delores
+application target.
 SwiftUI + AppKit, running as an accessory with no Dock icon (`LSUIElement`). Zero third-party
 dependencies.
 
@@ -83,17 +83,20 @@ feature's doc, under its own `## Invariants`.
   carried by a backup: capability-backed settings stay excluded so an import cannot silently enable
   keystroke delivery or another permission-gated feature.
 - **Retired capabilities stay outside the active target.** Raycast Extensions, Snippets,
-  Calendar/Meeting/Camera and Custom Commands live under `Packs/LegacyFeatures/`; active code must not
-  import their types, resources or permissions. If a future standalone pack is restored, its views,
-  services and tests stay owned by that pack rather than being added back to `DesignSystem/` or the
-  Delores core.
+  Calendar/Meeting/Camera, Custom Commands, Updates, Notes, Support reminders, the Emoji picker
+  and Clipboard OCR live under `Packs/LegacyFeatures/`; active code must not import their types,
+  resources or permissions. If a future standalone pack is restored, its views, services and tests
+  stay owned by that pack rather than being added back to `DesignSystem/` or the Delores core.
+- **Menu bar and Settings copy goes through `L10n`.** English is the source key; zh-Hans lives in
+  `Tinycast/Resources/Localizable.xcstrings`. Do not hardcode a visible Settings or menu-bar string.
+  Keep the app name untranslated.
 - **`AppEntry.Kind` is the only thing that says what an entry is.** One case per launcher section and
   per `VisibilityStore` category — never re-derive a category by sniffing an entry ID. Which *pane*
   lists a command is a separate fact, and `SettingsTab.ownedCommands` is the only place that states it.
-- **Generated files are never hand-edited.** `EmojiData.generated.swift` comes from
-  `node Scripts/gen-emoji.js`, `CurrencyData.generated.swift` from `node Scripts/gen-currencies.js`, and
-  `CountryZoneData.generated.swift` from `node Scripts/gen-countries.js`. Retired pack generators, if
-  restored, belong under that pack and are not part of the active build.
+- **Generated files are never hand-edited.** `CurrencyData.generated.swift` comes from
+  `node Scripts/gen-currencies.js`, and `CountryZoneData.generated.swift` from
+  `node Scripts/gen-countries.js`. Retired pack generators, if restored, belong under that pack
+  and are not part of the active build.
 - **`DesignSystem/Scrolling/EdgeDissolve.swift` and `ThinScrollbar.swift` are off-limits.** Both are
   tuned by eye against the palette's floating bars, so any edit is a visual regression. Needing to touch
   one to fix a scroll bug means the real fix belongs elsewhere.

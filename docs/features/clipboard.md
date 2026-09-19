@@ -32,12 +32,6 @@
 - **A colour is parsed from the text on demand, never stored.** `ColorValue` is the single parser
   behind the clipboard's swatches and the launcher's colour card, so the two can never disagree
   about what counts as a colour or what it converts to.
-- **Recognized text is search metadata and nothing else.** It lives in its own `item_text` table,
-  never on `ClipboardItem` and never in the resident window, so no surface can paste it, copy it,
-  or classify an entry by it. What an entry *is* still comes from the content that was captured.
-- **No recognition ever runs in the app process.** `ClipboardTextWorker` spawns one bundled
-  `ClipboardTextHelper` per item and reaps it, which is the whole reason Vision's and PDFKit's
-  allocations do not accumulate in Tinycast. The helper is handed a path and answers with text.
 
 ## Poll-based capture
 
@@ -129,61 +123,8 @@ capture-time pruning from hitching.
 
 ## Image and PDF text search
 
-**Search text in images and PDFs is off by default.** The per-machine switch is excluded from
-settings backups. A cold disabled launch creates no OCR schema, indexer, search task or Vision request,
-and loads no extracted strings. Existing derived data stays on disk when disabled and is reused on
-reenabling; deletion and retention still remove it with its original item.
-
-When both clipboard history and text search are enabled, `AppCore` creates its
-`ClipboardTextIndexer`. It recognizes locally with Vision's `RecognizeTextRequest`, starting one
-background-priority job after two seconds without input, even while the palette is open. A 250 ms
-pause separates items; continued typing or mouse movement defers the next job. Existing and imported
-history is backfilled, including rows beyond the resident window. Nothing recognizes on the capture
-or search path. When only failed work is left the indexer sleeps until a retry is due — a new capture
-wakes that wait — and an empty queue exits rather than polling.
-
-Turning either switch off cancels the run in flight; the indexer is kept and reschedules itself once
-that run winds down, which is why `applyClipboardTextSearch` can be called again at any time.
-
-Recognition runs in a bundled `ClipboardTextHelper`, one item at a time, and Vision's and PDFKit's
-state leaves with it. The parent accepts at most 32 KB from the helper's output pipe, propagates
-cancellation, and terminates and reaps a helper that runs past 60 seconds. `ClipboardTextWorker`
-does its blocking read and wait on its own `DispatchQueue`, never the cooperative pool. No helper
-exists while text search is off or the queue is empty.
-
-Images include owned clipboard PNGs and referenced image files. Referenced PDFs use PDFKit's embedded
-text page by page, with Vision OCR for pages without text. Mixed text-and-scan documents therefore
-remain searchable; images embedded on a page that already has text are not separately OCR'd. All
-processing stays on this Mac. Extracted text is search metadata, never the value pasted or copied.
-
-The derived `item_text` table and its trigram FTS index persist metadata without adding extracted
-strings to `ClipboardItem` or loading them into the resident history. Original text/path search returns
-immediately. A cancellable off-main SQLite query adds OCR-only matches for All, Images and Files;
-Text, Links, Emails and Colors never consult OCR. Type classification always uses original content.
-There is no spinner or skeleton. Pins lead in pin order, ordinary unpinned matches keep theirs, and
-OCR-only unpinned matches of the active type fill what is left of the same `searchLimit` budget, in
-history recency rather than extraction order — a deliberate choice to let an ordinary match answer
-first. Queries under three characters consult only the resident window and pins.
-
-Each reader takes a 2 MiB SQLite cache budget and closes its connection when it finishes. A new
-query or filter, palette dismissal, disabling, and any history mutation cancel work that is now
-obsolete, and a request identity keeps a late answer from publishing. Publication follows the
-selected item by UUID; pinning and promoting keep the matches already on screen while it refreshes.
-Clearing or reloading rotates the extraction generation, and the insert selects its row rather than
-naming it, so it cannot recreate a deleted entry. Backups stream the original fields and never load
-OCR metadata.
-
-Work is bounded: files up to 32 MB, the first 64 PDF pages, a 4,194,304-pixel bitmap budget with a
-4096-pixel maximum edge, and 32 KB of UTF-8 text per item. An empty, unsupported or oversized input
-is a completed attempt. Failed recognition, a locked or unreadable input and a helper failure go to
-`item_text_failures` instead: up to three attempts 30 seconds apart, which never block another item.
-Success and deletion clear that state. Enabling text search resets failures and earlier empty
-attempts so they can be tried again, keeping recognized text that is not empty — so an empty input
-may be reprocessed on a later launch, but nothing retries forever inside one session. Long bitmaps
-are recognized in overlapping 2048-pixel tiles, with Vision's relative minimum text-height cutoff
-disabled so it cannot discard small text on a tall screenshot or page. A referenced file is read once
-when it is indexed; editing it later does not refresh the historical search text. Backups carry the
-original content and references, and a restored entry is recognized again.
+Clipboard OCR is parked under `Packs/LegacyFeatures/ClipboardOCR/` and is not part of the active
+Delores target. The clipboard store now searches original text and file paths only.
 
 ## Type filter
 

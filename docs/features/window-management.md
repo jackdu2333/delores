@@ -258,12 +258,12 @@ quantize to zero and the gesture would do nothing.
 ## Wiring
 
 - **`AppEntry.Kind.windowCommand`** — entries are `window-command:<id>`, published by
-  `AppIndex.setWindowCommandsVisible(_:)` between the system-action and custom-command slices.
+  `AppIndex.setWindowCommandsVisible(_:)` between the system-action and built-in command slices.
   `LauncherView.rows` mirrors that position with a "Window Management" section; the slice order is the
   flat-selection invariant, so the two must move together.
 - **`HotKeyAction.windowCommand(id:)`** — persisted under
-  `hotkey.windowCommand.<raw-id>`, matching the shared `HotKeyAction.defaultsKey` convention. Unlike
-  custom commands there is no bound-ID index to maintain: the catalog is fixed, so `HotKeyManager.start`
+  `hotkey.windowCommand.<raw-id>`, matching the shared `HotKeyAction.defaultsKey` convention. There is
+  no bound-ID index to maintain: the catalog is fixed, so `HotKeyManager.start`
   and `conflictOwner` iterate `WindowCommand.ID.allCases` and `register` no-ops on an unbound command.
 - **`WindowCommandCoordinator.runWindowCommand(id:)`** is the one funnel for both palette activation and the global
   hotkey, so the feature switch cannot be bypassed by either. A Space command branches out of it first
@@ -271,12 +271,12 @@ quantize to zero and the gesture would do nothing.
   app, and activating an app that lives on another Space pulls that Space forward — a race against the
   gesture that can land on the opposite Space from the one asked for.
 - **Settings** — `windowManagementEnabled` (off), `windowManagementShowInLauncher` (on), `windowGap`
-  (0) and `windowCycle` (`.off`). All four ride in settings backups: unlike `snippetsEnabled` they
-  grant no permission class of their own.
+  (0) and `windowCycle` (`.off`). All four ride in settings backups and grant no permission class of
+  their own.
 - **Per-command visibility** reuses `VisibilityStore` as-is; clearing a recorded shortcut is how a
   hotkey is disabled, so there is no separate per-command enabled flag. Window commands deliberately
   get **no** launcher-category pane of their own — they are managed inside Settings › Window
-  Management, the same call already made for snippets.
+  Management, the same call used by other feature-owned commands.
 
 ## Testing
 

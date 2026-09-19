@@ -18,16 +18,16 @@ struct SearchScopesSection: View {
             }
 
             HStack(spacing: Theme.Spacing.lg) {
-                Button("Add…", action: addScopes)
-                    .help("Add a folder or application to search.")
+                Button(L10n.string("Add…"), action: addScopes)
+                    .help(L10n.string("Add a folder or application to search."))
                 if !isDefault {
-                    Button("Restore Defaults") { settings.searchScopes = SearchScopes.defaults }
+                    Button(L10n.string("Restore Defaults")) { settings.searchScopes = SearchScopes.defaults }
                 }
             }
         } header: {
             SettingsSectionHeader(.applicationsSearchScopes)
         } footer: {
-            Text("Folders searched when indexing applications.")
+            Text(L10n.string("Folders searched when indexing applications."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -70,7 +70,7 @@ private struct ScopeRow: View {
                 if isMissing {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
-                        .help("This location no longer exists.")
+                        .help(L10n.string("This location no longer exists."))
                 }
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")

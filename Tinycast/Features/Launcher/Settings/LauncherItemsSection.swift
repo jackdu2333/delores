@@ -22,7 +22,7 @@ struct LauncherItemsSection: View {
         Section {
             Toggle(isOn: enabledBinding) {
                 SettingsRowTitle(anchor, "Enable \(anchor.title)")
-                Text("Off hides them all and stops their shortcuts. Uncheck one below to hide just that one.")
+                Text(L10n.string("Off hides them all and stops their shortcuts. Uncheck one below to hide just that one."))
             }
         } header: {
             SettingsSectionHeader(anchor)
@@ -57,7 +57,11 @@ struct LauncherItemsList: View {
 
     var body: some View {
         if entries.isEmpty {
-            Text(query.isEmpty ? "Nothing here yet." : "No matches for “\(query)”.")
+            Text(
+                query.isEmpty
+                    ? L10n.string("Nothing here yet.")
+                    : L10n.format("No matches for “%@”.", query)
+            )
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
         } else {

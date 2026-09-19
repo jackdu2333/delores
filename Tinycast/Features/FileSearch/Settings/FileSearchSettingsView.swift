@@ -9,7 +9,7 @@ struct FileSearchSettingsView: View {
             Section {
                 Toggle(isOn: $settings.fileSearchEnabled) {
                     SettingsRowTitle(.fileSearchFileSearch, "Enable File Search")
-                    Text("Find files and folders through the system Spotlight index, only on demand.")
+                    Text(L10n.string("Find files and folders through the system Spotlight index, only on demand."))
                 }
             } header: {
                 SettingsSectionHeader(.fileSearchFileSearch)
@@ -45,10 +45,10 @@ private struct FileSearchScopesSection: View {
             }
 
             HStack(spacing: Theme.Spacing.lg) {
-                Button("Add…", action: addScopes)
-                    .help("Add a folder to search.")
+                Button(L10n.string("Add…"), action: addScopes)
+                    .help(L10n.string("Add a folder to search."))
                 if !isDefault {
-                    Button("Restore Defaults") {
+                    Button(L10n.string("Restore Defaults")) {
                         settings.fileSearchScopes = FileSearchScope.defaultScopes
                     }
                 }
@@ -56,12 +56,7 @@ private struct FileSearchScopesSection: View {
         } header: {
             SettingsSectionHeader(.fileSearchSearchScopes)
         } footer: {
-            Text(
-                """
-                Your home folder expands to its visible folders and cloud drives, never to its Library. \
-                An empty list searches nothing.
-                """
-            )
+            Text(L10n.string("Your home folder expands to its visible folders and cloud drives, never to its Library.  An empty list searches nothing."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -103,7 +98,7 @@ private struct ScopeRow: View {
                 if isMissing {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
-                        .help("This location no longer exists.")
+                        .help(L10n.string("This location no longer exists."))
                 }
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")
@@ -140,18 +135,12 @@ private struct FileSearchIgnoreSection: View {
                 }
             }
 
-            TextField("Add pattern…", text: $draft)
+            TextField(L10n.string("Add pattern…"), text: $draft)
                 .onSubmit(addPattern)
         } header: {
             SettingsSectionHeader(.fileSearchIgnorePatterns)
         } footer: {
-            Text(
-                """
-                A pattern without a slash matches any file or folder name, like *.tmp or node_modules; \
-                one with a slash matches the whole path, like **/[Cc]ache/**. The built-in patterns \
-                always apply.
-                """
-            )
+            Text(L10n.string("A pattern without a slash matches any file or folder name, like *.tmp or node_modules;  one with a slash matches the whole path, like **/[Cc]ache/**. The built-in patterns  always apply."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }

@@ -11,7 +11,6 @@ final class AppCore {
     let quicklinks = QuicklinkStore()
     let windowLayouts = WindowLayoutStore()
     let clipboardStore = ClipboardStore()
-    @ObservationIgnored private var clipboardTextIndexer: ClipboardTextIndexer?
     let clipboardManager: ClipboardManager
     let textInjector: TextInjector
     let hotKeys = HotKeyManager()
@@ -28,11 +27,6 @@ final class AppCore {
     let fallbacks = FallbackStore()
     let calcHistory = CalculatorHistoryStore()
     let currencyRates = CurrencyRateStore()
-    let updateChecker = UpdateCheckStore()
-    let supportReminders: SupportReminderStore
-    let emojiIndex = EmojiIndex()
-    let frequentEmoji = FrequentEmojiStore()
-    let pinnedEmoji = PinnedEmojiStore()
     let runningApps = RunningAppsMonitor()
     let palette = PaletteState()
     let fileSearch = FileSearchSession()
@@ -40,7 +34,6 @@ final class AppCore {
     let windowSwitch = WindowSwitchSession()
     let activationPolicy = ActivationPolicy()
     let uninstall = UninstallSession()
-    let notesStore: NotesStore
     let chatHistory: ChatHistoryStore
     let aiChat: AIChatState
     let aiSettings = AISettingsStore(
@@ -92,12 +85,6 @@ final class AppCore {
         settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var notesCoordinator = NotesCoordinator(
-        store: notesStore,
-        settings: settings,
-        appIndex: appIndex,
-        core: self)
-
     @ObservationIgnored private(set) lazy var launcherCoordinator = LauncherCoordinator(
         ranking: launcherRanking, windowController: windowController,
         paletteCoordinator: paletteCoordinator,
@@ -109,7 +96,6 @@ final class AppCore {
         fileSearchCoordinator: fileSearchCoordinator,
         menuSearchCoordinator: menuSearchCoordinator,
         windowSwitchCoordinator: windowSwitchCoordinator,
-        notesCoordinator: notesCoordinator,
         core: self)
     @ObservationIgnored private(set) lazy var fallbackCoordinator = FallbackCoordinator(
         store: fallbacks, quicklinks: quicklinks, settings: settings, core: self)
@@ -117,9 +103,6 @@ final class AppCore {
         clipboardStore: clipboardStore, clipboardManager: clipboardManager, settings: settings,
         appIndex: appIndex, palette: palette, windowController: windowController,
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var emojiCoordinator = EmojiCoordinator(
-        frequentEmoji: frequentEmoji, settings: settings, windowController: windowController,
-        paletteCoordinator: paletteCoordinator)
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var fileSearchCoordinator = FileSearchCoordinator(
@@ -131,10 +114,6 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var windowSwitchCoordinator = WindowSwitchCoordinator(
         settings: settings, appIndex: appIndex, session: windowSwitch, palette: palette,
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var updateCoordinator = UpdateCoordinator(
-        store: updateChecker, core: self)
-    @ObservationIgnored private(set) lazy var supportCoordinator = SupportCoordinator(
-        store: supportReminders, core: self)
     @ObservationIgnored private(set) lazy var quickActionCoordinator = QuickActionCoordinator(
         settings: settings, store: quickActionSettings, customActions: customQuickActions,
         injector: textInjector, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
@@ -163,22 +142,11 @@ final class AppCore {
         self.launcherRanking = launcherRanking
         self.settings = settings
         self.chatHistory = chatHistory
-        supportReminders = SupportReminderStore(settings: settings)
         aiChat = AIChatState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
         self.clipboardManager = clipboardManager
-        textInjector = TextInjector(
-            clipboardManager: clipboardManager,
-            settings: settings)
-        let noteSelectionKey = "notesActiveFileName"
-        notesStore = NotesStore(
-            repository: NotesRepository(
-                applicationSupportDirectory: AppPaths.applicationSupport()),
-            loadSelection: {
-                UserDefaults.standard.string(forKey: noteSelectionKey).map(NoteID.init(rawValue:))
-            },
-            saveSelection: { UserDefaults.standard.set($0?.rawValue, forKey: noteSelectionKey) })
+        textInjector = TextInjector(clipboardManager: clipboardManager)
     }
 
     func start() {
@@ -188,9 +156,6 @@ final class AppCore {
             NSApp.setActivationPolicy(.accessory)
             applyAppearance()
             observeEffectiveAppearance()
-            pinnedEmoji.onPersistenceFailure = { [weak self] in
-                self?.showMessage("Couldn't save Emoji & Symbols pins", tone: .danger)
-            }
 
             appIndex.start(settings: settings)
             clipboardCoordinator.applyEnabled()
@@ -198,7 +163,6 @@ final class AppCore {
             windowSwitchCoordinator.applyEnabled()
             menuSearchCoordinator.applyEnabled()
             fileSearchCoordinator.applyPolicy()
-            notesCoordinator.applyEnabled()
             aiChatCoordinator.applyEnabled()
             mcpCoordinator.applyEnabled()
             customQuickActions.onChange = { [weak self] _ in
@@ -223,16 +187,8 @@ final class AppCore {
             paletteCoordinator.onLauncherShown = { [weak self] in
                 self?.appleShortcutCoordinator.refresh()
             }
-            updateCoordinator.applyEnabled()
             Task { await appIndex.refresh() }
-            Task { await emojiIndex.load() }
             currencyRates.start()
-            updateChecker.onUpdateAvailable = { [weak self] release in
-                self?.updateCoordinator.presentIfAvailable(release) ?? true
-            }
-            updateChecker.start()
-            supportReminders.onDue = { [weak self] in self?.supportCoordinator.presentIfDue() }
-            supportReminders.start()
 
             hyperKeyTap.healthTicker = healthTicker
             hotKeys.doubleTapMonitor.healthTicker = healthTicker
@@ -292,8 +248,6 @@ final class AppCore {
     func handleReopen() {
         if settingsCoordinator.focusExisting() { return }
         if onboardingCoordinator.focusExisting() { return }
-        if updateCoordinator.focusExisting() { return }
-        if supportCoordinator.focusExisting() { return }
         paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
     }
 
@@ -322,39 +276,8 @@ final class AppCore {
         }
     }
 
-    func flushNotesForTermination() async {
-        await notesCoordinator.prepareForTermination()
-    }
-
-    /// Idempotent: both switches are tracked, and either one flipping re-runs the whole decision.
-    func applyClipboardTextSearch() {
-        guard settings.clipboardEnabled, settings.clipboardTextSearchEnabled else {
-            clipboardStore.onItemsChanged = nil
-            clipboardStore.onSearchResultsChanged = nil
-            clipboardStore.setTextSearchEnabled(false)
-            clipboardTextIndexer?.stop()
-            return
-        }
-        guard clipboardStore.setTextSearchEnabled(true) else {
-            showMessage("Couldn't enable text recognition for clipboard history.", tone: .danger)
-            return
-        }
-        clipboardStore.setTextSearchActive(palette.isVisible)
-        // Kept across a disable: the indexer reschedules itself once a cancelled run winds down.
-        let indexer =
-            clipboardTextIndexer
-            ?? ClipboardTextIndexer(store: clipboardStore, canRun: { ClipboardTextIndexer.isSystemIdle })
-        clipboardTextIndexer = indexer
-        clipboardStore.onItemsChanged = { [weak indexer] in indexer?.schedule() }
-        clipboardStore.onSearchResultsChanged = { [weak self] query, previous, current in
-            self?.clipboardCoordinator.followSearchResults(query: query, previous: previous, current: current)
-        }
-        indexer.start()
-    }
-
     func prepareForTermination() {
         deloresCoordinator.prepareForTermination()
-        clipboardTextIndexer?.stop()
         // Caps Lock first: its remap is the one teardown that outlives the process.
         hyperKeyTap.prepareForTermination()
         windowLayoutCoordinator.prepareForTermination()
@@ -437,8 +360,6 @@ final class AppCore {
             reproject: { $0.appleShortcutCoordinator.applyPresence() })
         track(
             { _ = $0.clipboardEnabled }, reproject: { $0.clipboardCoordinator.applyEnabled() })
-        track(
-            { _ = $0.clipboardTextSearchEnabled }, reproject: { $0.applyClipboardTextSearch() })
         track({ _ = $0.fileSearchEnabled }, reproject: { $0.fileSearchCoordinator.applyEnabled() })
         // Two features, one switch: each coordinator gates only its own command and mode.
         track(
@@ -447,7 +368,6 @@ final class AppCore {
                 $0.windowSwitchCoordinator.applyEnabled()
                 $0.menuSearchCoordinator.applyEnabled()
             })
-        track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
         track({ _ = $0.aiEnabled }, reproject: { $0.aiChatCoordinator.applyEnabled() })
         track(
             {
@@ -523,21 +443,6 @@ final class AppCore {
         let visible = settings.windowManagementEnabled && settings.windowManagementShowInLauncher
         appIndex.setWindowCommandsVisible(visible)
     }
-
-    // MARK: - Interruption
-
-    /// What the app is in the middle of; the update prompt and the support reminder both ask first.
-    var currentActivity: UpdateActivity {
-        UpdateActivity(
-            isUninstalling: uninstall.isTrashing,
-            isRecordingHotKey: hotKeys.recordingAction != nil,
-            isPromptingForArguments: false,
-            isShowingDialog: isShowingDialog,
-            isPaletteVisible: paletteCoordinator.isVisible)
-    }
-
-    /// Whether a window may take focus without interrupting something the user started.
-    var canInterruptUser: Bool { UpdateReadiness.evaluate(currentActivity) == nil }
 
     // MARK: - Dialogs, routed here so `dialogs` stays the single owner
 

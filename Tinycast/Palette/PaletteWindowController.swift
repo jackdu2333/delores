@@ -74,7 +74,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             core.inputSourceSwitcher.beginSession(
                 preferredInputSourceID: core.settings.autoSwitchInputSourceID)
             core.palette.noteVisible(true)
-            core.clipboardStore.setTextSearchActive(true)
             // Only while we are on screen: a system-wide tap has no business outliving the window.
             commandEscapeTap.enable()
             // Non-activating, so summoning never raises our own aux windows behind it.
@@ -100,19 +99,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         else { return nil }
         return ASCIIKeyboardLayout.character(for: event)?.lowercased()
             ?? event.charactersIgnoringModifiers?.lowercased()
-    }
-
-    /// Shift is allowed, since ⌘+ is a shifted = on most layouts; the base key decides.
-    private static func emojiGridZoom(from event: NSEvent) -> EmojiGridZoom? {
-        guard !event.isARepeat, event.modifierFlags.isDisjoint(with: [.option, .control]) else {
-            return nil
-        }
-        switch ASCIIKeyboardLayout.character(for: event) {
-        case "0": return .actualSize
-        case "=", "+": return .zoomIn
-        case "-": return .zoomOut
-        default: return nil
-        }
     }
 
     /// A local monitor sees the key before menu dispatch; returning nil swallows it.
@@ -141,7 +127,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         commandEscapeTap.disable()
         core.inputSourceSwitcher.endSession()
         core.palette.noteVisible(false)
-        core.clipboardStore.setTextSearchActive(false)
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
         anchor = nil
         // The guides must never outlive the panel they point at.
@@ -345,10 +330,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         // Handled at the panel: the field editor or a missing main menu eats these first.
         panel.onCommandShortcut = { [weak self] event in
             guard let self else { return false }
-            if self.core.palette.mode == .emoji, let zoom = Self.emojiGridZoom(from: event) {
-                self.core.palette.noteEmojiGridZoom(zoom)
-                return true
-            }
             guard Self.commandCharacter(from: event) != nil else { return false }
             if self.core.palette.mode == .launcher || self.core.palette.mode == .clipboard,
                 let index = FavoriteSlots.index(forKeyCode: event.keyCode)
