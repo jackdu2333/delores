@@ -34,16 +34,16 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
-### 2026-09-19, Notes restored — `ebdaeaec`, plus the release-doc commit in the same push
+### 2026-09-19, Notes restored — `ebdaeaec` and `64078751`
 
 Read while bringing Notes back from upstream tag `v0.11.3-beta.98`. This is the other machine from the
 top of this file: `xcode-select -p` is `/Applications/Xcode.app/Contents/Developer`, `xcodebuild
 -version` answers Xcode 27.0, and the app target builds here.
 
-The restore was first read against the working tree, before it was committed; the numbers below were
-taken again on the committed tree at `ebdaeaec` and are identical. That commit's own reading is the
-first table. The second is the release-doc pass that followed it in the same push — the same event,
-since a restored feature is not shipped until the docs that describe it agree.
+Two commits, one event, because a restored feature is not shipped until the documents that describe it
+agree. `ebdaeaec` is the restore; `64078751` is the release-doc and version pass that followed it. The
+restore was first read against the working tree before it was committed, and the numbers are identical
+at the commit, so the first table below is `ebdaeaec`'s.
 
 `ebdaeaec`:
 
@@ -58,7 +58,7 @@ since a restored feature is not shipped until the docs that describe it agree.
 | `./Scripts/lint.sh` | **cannot run** — SwiftLint is not installed on this machine either |
 | Notes accepted by eye in the running app | **not done.** The editor, the switcher, the formatting bar and the Markdown rendering are UI-layer work with no harness, and this machine cannot screenshot its own screen, so nothing about their appearance is claimed here |
 
-The release-doc commit (`project.yml` 0.1.0/1 → **0.2.0/2**, the internal docs, and the website pages):
+`64078751` (`project.yml` 0.1.0/1 → **0.2.0/2**, the internal docs, and the website pages):
 
 | Command | Result |
 | --- | --- |
