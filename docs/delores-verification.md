@@ -34,6 +34,40 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
+### 2026-09-19, the subprocess helper hardened — `4ab90ece`
+
+Came out of a review of `597cad74`, the commit that adopted `ToolRunner` from the parked Updates pack
+for Apple Shortcuts. The review read the baseline as `run-tests.sh` **49 of 53** with four harnesses
+failing on missing SwiftUI macros — that is the Command Line Tools machine described at the top of this
+file, not this one. The four pass here, and this section is the live count.
+
+Both hangs it named were reproduced against the pre-fix helper before anything was changed, and one of
+them turned out not to be the review's:
+
+| Command | Result |
+| --- | --- |
+| The old helper, a tool that traps SIGTERM, `timeout: 1` | **✗ never returned.** Read 6 s later, still waiting — the timeout sent the signal and then waited on an exit that was never coming |
+| The old helper, `sh -c "sleep 30 & echo done"`, **no timeout at all** | **✗ never returned either.** The second path, and the review did not have it: the drain's `readToEnd()` waits for every writer to close, including a child the tool left behind |
+| `sh -c "sleep 2 & echo done"`, exit versus end of file | child exited at **0.076 s**, the pipe reached end of file at **2.088 s** — the gap a descendant holds open, and the measurement that explains the row above |
+| `xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED**, 0 errors, 0 Swift warnings |
+| `./Scripts/run-tests.sh` | **✓ 56 of 56** in 22s — the 55 of the sections above plus `tool-runner-test` |
+| `./Scripts/run-tests.sh tool-runner-test` | **✓ 33 assertions**, 11 s. Written against the fixed helper but exercised against the old one first: the two reproduction cases are permanent rows in it, so a regression re-hangs the suite rather than passing quietly |
+| `appearance-test`, `interface-size-test`, `palette-placement-test`, `callout-test` | **✓ all four pass here**, 0.3 s each. The review reported these as CLT/SwiftUI-macro environment failures; on this machine they are green, so nothing about them was inherited from `597cad74` |
+| `./Scripts/run-delores-tests.sh` | **✓ Delores context tests passed** |
+| `node Scripts/check-settings-search.js` | **✓ exit 0** |
+| `node Scripts/check-localization.js` | **✓ 357 keys, 538 entries, all translated, 31 unreachable** — untouched by this work |
+| `./Scripts/format.sh --check` | **✗ 43 files**, every one already dirty before this work. The new harness was flagged on first write and **was formatted**; the three files this work edits are not among the 43 |
+| `./Scripts/lint.sh` | **cannot run** — SwiftLint is not installed on this machine |
+| `./Scripts/check-upstream-drift.sh` | unchanged from the row above — nothing here edits an upstream-owned file's content. `Platform/ToolRunner.swift` is not an upstream path |
+| A genuinely wedged `/usr/bin/shortcuts` in the running app | **not done.** The hang is proven at the helper, with the coordinator's `refreshTask` as the read reason it mattered; producing a real wedged `shortcuts` tool is not something this machine can arrange |
+
+The review's fourth finding, two physical copies of `ToolRunner.swift`, is answered in
+`Packs/LegacyFeatures/README.md` and [delores-architecture.md](delores-architecture.md) rather than by
+the `diff` check it proposed. The two copies are **meant** to differ now — the pack keeps upstream's
+original byte for byte so it stays diffable, and the active file has moved on — so a check asserting
+they match would assert the wrong thing. The invariant worth protecting is the opposite one, and it is
+written where a restore would read it.
+
 ### 2026-09-19, the Build derived at build time — `e43b62e9`
 
 Added because a document described a rule the code did not implement. `delores-versioning.md` said the
