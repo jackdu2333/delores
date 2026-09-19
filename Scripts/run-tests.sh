@@ -229,6 +229,8 @@ run fallback-test          Tinycast/Features/Launcher/Model/Fallback.swift \
                            Tinycast/Features/QuickActions/Model/QuickAction.swift \
                            Tinycast/Features/QuickActions/Model/BuiltInQuickAction.swift \
                            Tinycast/Features/QuickActions/Model/CustomQuickAction.swift \
+                           Tinycast/Features/QuickActions/Model/QuickActionPrompt.swift \
+                           Tinycast/Features/Delores/Model/ActionDefinition.swift \
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/SystemActions/Model/SystemAction.swift \
@@ -242,6 +244,8 @@ run hotkey-test            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swi
                            Tinycast/Features/QuickActions/Model/QuickAction.swift \
                            Tinycast/Features/QuickActions/Model/BuiltInQuickAction.swift \
                            Tinycast/Features/QuickActions/Model/CustomQuickAction.swift \
+                           Tinycast/Features/QuickActions/Model/QuickActionPrompt.swift \
+                           Tinycast/Features/Delores/Model/ActionDefinition.swift \
                            Tinycast/Features/Launcher/Model/CommandID.swift \
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
@@ -333,6 +337,7 @@ run quick-action-test      Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/ChatGPTSubscription.swift \
                            Tinycast/Features/AI/Model/InstalledAI.swift \
                            Tinycast/Features/QuickActions/Model/*.swift \
+                           Tinycast/Features/Delores/Model/ActionDefinition.swift \
                            Tinycast/Features/QuickActions/Settings/QuickActionSettingsStore.swift
 run apple-intelligence-test Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/*.swift \

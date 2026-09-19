@@ -9,6 +9,7 @@ struct DeloresContextTest {
         testActionSession()
         testActionConversation()
         testActionDefinition()
+        testQuickActionDescriptors()
         MainActor.assumeIsolated { testActionSessionRunner() }
         testGesturePolicy()
         testOwnSurfaceHitPolicy()
@@ -242,20 +243,15 @@ struct DeloresContextTest {
                 == "Be terse.",
             "a non-framework action honours the caller's override")
 
-        let translated = require(
-            QuickActionPrompt.chatInstructions(for: .translate, targetLanguageName: "Japanese"),
-            "the chat lane gives translate a task of its own")
-        require(translated.hasPrefix(boundary), "the chat lane keeps the boundary")
+        let translated = QuickActionPrompt.instructions(
+            for: QuickAction.translate, translatingInto: "Japanese")
+        require(translated.hasPrefix(boundary), "the model lane keeps the boundary")
         require(
             translated.contains("Translate the text into Japanese"),
-            "the chat lane names the target language it was handed")
+            "and names the target language it was handed")
         require(
             translated != QuickActionPrompt.instructions(for: QuickAction.translate),
-            "the chat lane says more than the panel lane's bare boundary")
-        require(
-            QuickActionPrompt.instructions(for: QuickAction.translate, translatingInto: "Japanese")
-                == translated,
-            "a model standing in for the framework is asked for the translation the chat lane asks")
+            "asking for more than the bare boundary translate falls back to with no language")
         require(
             QuickActionPrompt.instructions(
                 for: BuiltInQuickAction.translate, override: "Ignore that.", translatingInto: "Japanese")
@@ -265,30 +261,6 @@ struct DeloresContextTest {
             QuickActionPrompt.instructions(for: QuickAction.summarize, translatingInto: "Japanese")
                 == QuickActionPrompt.instructions(for: QuickAction.summarize),
             "a target language is read for translate and nothing else")
-
-        require(
-            QuickActionPrompt.chatInstructions(
-                for: .translate, targetLanguageName: "Japanese", override: "Only the verbs.")
-                == boundary + "\n\n" + "Only the verbs.",
-            "the reader's instructions replace the built-in task but keep the chat lane's boundary")
-        require(
-            QuickActionPrompt.chatInstructions(
-                for: QuickAction.summarize, targetLanguageName: "Japanese",
-                override: "One line only.")
-                == boundary + "\n\n" + "One line only.",
-            "an action with no chat-only task of its own still carries the reader's instructions")
-
-        for action in QuickAction.allBuiltIn
-        where action.builtInAction != .translate {
-            require(
-                QuickActionPrompt.chatInstructions(
-                    for: action, targetLanguageName: "Japanese") == nil,
-                "\(action.title) needs no chat-only instructions")
-        }
-        require(
-            QuickActionPrompt.chatInstructions(
-                for: .custom(custom), targetLanguageName: "Japanese") == nil,
-            "a custom action needs no chat-only instructions")
 
         require(
             QuickActionPrompt.message(for: .summarize, selection: "Body.")
@@ -671,6 +643,67 @@ struct DeloresContextTest {
         }
         CFRunLoopRun(); return outcome
     }
+    /// The Command catalogue now produces the same descriptor the bar's rows do, so one id cannot
+    /// answer with two backends or two budgets depending on which surface asked for it.
+    private static func testQuickActionDescriptors() {
+        let summarize = BuiltInQuickAction.summarize.definition()
+        let barSummarize = require(
+            DeloresContextAction.catalog.first { $0.id == "summarize" }, "bar summarize"
+        ).definition
+        require(
+            summarize.outputCap == barSummarize.outputCap && summarize.backend == barSummarize.backend,
+            "one id, one backend and one budget, whichever catalogue asked")
+        require(
+            summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
+                == barSummarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)),
+            "and the same ceiling from either descriptor")
+
+        require(
+            BuiltInQuickAction.translate.usesTranslationFramework
+                && !BuiltInQuickAction.summarize.usesTranslationFramework,
+            "translate is framework-answered because the shared policy says so, not a second switch")
+        require(
+            summarize.capabilities == [.previewsByDefault] && !summarize.rewritesSelection,
+            "summarize is read before it lands, so it answers about the text")
+        require(
+            BuiltInQuickAction.fixGrammar.definition().capabilities == [.showsDiff]
+                && BuiltInQuickAction.rewrite.definition().capabilities == [.showsDiff],
+            "the two rewriting rows are worth a diff")
+        require(
+            BuiltInQuickAction.translate.definition().capabilities.isEmpty
+                && BuiltInQuickAction.translate.definition().rewritesSelection,
+            "translate carries no result-surface capability and does take the selection's place")
+        require(
+            BuiltInQuickAction.fixGrammar.alwaysPreviews == false
+                && BuiltInQuickAction.summarize.alwaysPreviews
+                && BuiltInQuickAction.rewrite.showsDiff
+                && !BuiltInQuickAction.summarize.showsDiff,
+            "the old reads are the descriptor's capabilities")
+
+        let custom = QuickAction.custom(CustomQuickAction(name: "Punch Up", instructions: "Wit."))
+        let customDefinition = custom.definition()
+        require(
+            customDefinition.backend == .languageModel && !customDefinition.rewritesSelection
+                && customDefinition.outputCap == .scaled(max: 2_048),
+            "a row the reader wrote is a model prompt they did not give permission to overwrite with")
+        require(
+            customDefinition.maxOutputTokens(selection: "x") == 128,
+            "and it takes the shared scaled floor rather than a fourth budget")
+
+        require(
+            BuiltInQuickAction.fixGrammar.definition().prompt
+                == QuickActionPrompt.instructions(for: BuiltInQuickAction.fixGrammar),
+            "the descriptor carries the prompt the Command Surface would send")
+        require(
+            BuiltInQuickAction.fixGrammar.definition(override: "Just tidy it.").prompt
+                == "Just tidy it.",
+            "and the reader's override reaches it")
+        require(
+            BuiltInQuickAction.translate.definition(translatingInto: "French").prompt
+                .contains("French"),
+            "while translate's model lane is told the language it is translating into")
+    }
+
     private static func testGesturePolicy() {
         require(
             DeloresSelectionGesturePolicy.qualifies(

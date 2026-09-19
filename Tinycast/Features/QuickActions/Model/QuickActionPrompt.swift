@@ -76,26 +76,6 @@ enum QuickActionPrompt {
         return lines.joined(separator: "\n")
     }
 
-    /// The chat path runs no translation framework, so translate carries its own task there — the
-    /// same sentence the panel now asks for when the reader has given the id a model instead.
-    /// Nil for every other action: its own instructions already carry the whole task.
-    ///
-    /// The language arrives already named — `TextTranslator.displayName(of:)` owns that spelling,
-    /// so this stays a pure builder with no locale of its own to consult.
-    ///
-    /// An `override` is the instructions the reader replaced the built-in prompt with, and it wins
-    /// over every case below. It keeps the boundary, which the panel path lets it drop: there the
-    /// reader is editing text they can see, while here the selection arrives from anywhere and the
-    /// model must still treat it as material. That is the same treatment a custom action's own
-    /// instructions already get.
-    static func chatInstructions(
-        for action: QuickAction, targetLanguageName name: String, override: String? = nil
-    ) -> String? {
-        if let override { return boundary + "\n\n" + override }
-        guard action.builtInAction == .translate else { return nil }
-        return boundary + "\n\n" + translateTask(into: name)
-    }
-
     /// The one sentence a model needs to do the job Apple's translator would otherwise do. Shared, so
     /// the panel lane and the chat lane cannot come to ask for different translations.
     private static func translateTask(into name: String) -> String {

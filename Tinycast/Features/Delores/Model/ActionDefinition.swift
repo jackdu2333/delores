@@ -13,8 +13,18 @@ struct DeloresActionDefinition: Equatable, Hashable, Sendable, Identifiable {
             }
         }
     }
+    /// What the surface does with the reply once it arrives. The island ignores these; Tinycast's
+    /// result surface reads them, so they belong to the definition rather than to one catalogue.
+    enum Capability: Hashable, Sendable {
+        /// Shown for reading before it can be applied, because the reader asked a question about the
+        /// text rather than for a replacement.
+        case previewsByDefault
+        /// Worth a diff before it lands, since it rewrites prose the reader wrote.
+        case showsDiff
+    }
     let id: String; var title: String; var symbol: String; var backend: Backend
     var prompt: String; var rewritesSelection: Bool; var outputCap: OutputCap
+    var capabilities: Set<Capability> = []
     func maxOutputTokens(selection: String) -> Int { outputCap.tokens(selection: selection) }
 
     /// The reply budget, decided once because both catalogues ask for it and the reader cannot tell

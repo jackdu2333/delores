@@ -35,11 +35,44 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         }
     }
 
-    var alwaysPreviews: Bool { self == .summarize }
+    /// The row's own result-surface facts, stated once so the surface reads them off the descriptor
+    /// both catalogues speak rather than off branches of its own.
+    private var capabilities: Set<DeloresActionDefinition.Capability> {
+        var found: Set<DeloresActionDefinition.Capability> = []
+        if self == .summarize { found.insert(.previewsByDefault) }
+        if self == .fixGrammar || self == .rewrite { found.insert(.showsDiff) }
+        return found
+    }
+
+    var alwaysPreviews: Bool { capabilities.contains(.previewsByDefault) }
 
     var replacesDirectlyByDefault: Bool { self == .fixGrammar }
 
-    var showsDiff: Bool { self == .fixGrammar || self == .rewrite }
+    var showsDiff: Bool { capabilities.contains(.showsDiff) }
 
-    var usesTranslationFramework: Bool { self == .translate }
+    /// Apple's translator answers this id unless the reader bound a model to it. Read off the shared
+    /// policy rather than restated, so the two catalogues cannot disagree about the default.
+    var usesTranslationFramework: Bool {
+        DeloresActionDefinition.defaultBackend(for: id) == .translationFramework
+    }
+
+    /// The same descriptor the Context catalogue's rows produce: one id, one backend, one budget,
+    /// whichever surface asked.
+    ///
+    /// The prompt is an argument, because the Command Surface may be holding a reader's override or a
+    /// target language the Context Surface never has. Everything else is the shared policy, which is
+    /// the point of producing a descriptor rather than reading the same flags per surface.
+    func definition(
+        override: String? = nil, translatingInto targetLanguageName: String? = nil
+    ) -> DeloresActionDefinition {
+        DeloresActionDefinition(
+            id: id, title: title, symbol: symbol,
+            backend: DeloresActionDefinition.defaultBackend(for: id),
+            prompt: QuickActionPrompt.instructions(
+                for: self, override: override, translatingInto: targetLanguageName),
+            // A reply that is not shown for reading first is one that takes the selection's place.
+            rewritesSelection: !capabilities.contains(.previewsByDefault),
+            outputCap: DeloresActionDefinition.outputCap(for: id),
+            capabilities: capabilities)
+    }
 }

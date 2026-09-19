@@ -54,4 +54,25 @@ enum QuickAction: Hashable, Identifiable, Sendable {
     var showsDiff: Bool { builtInAction?.showsDiff ?? false }
 
     var usesTranslationFramework: Bool { builtInAction?.usesTranslationFramework ?? false }
+
+    /// The descriptor for either kind, so a caller learns an action's backend, budget and result
+    /// facts from one type instead of branching on which catalogue the row came from.
+    func definition(
+        override: String? = nil, translatingInto targetLanguageName: String? = nil
+    ) -> DeloresActionDefinition {
+        switch self {
+        case .builtIn(let action):
+            return action.definition(override: override, translatingInto: targetLanguageName)
+        case .custom(let action):
+            return DeloresActionDefinition(
+                id: action.entryID, title: action.name, symbol: action.symbol,
+                backend: DeloresActionDefinition.defaultBackend(for: action.entryID),
+                prompt: QuickActionPrompt.instructions(
+                    for: self, override: override, translatingInto: targetLanguageName),
+                // The reader wrote instructions, not permission to overwrite their document. Same
+                // answer the Context catalogue gives a row they wrote.
+                rewritesSelection: false,
+                outputCap: DeloresActionDefinition.outputCap(for: action.entryID))
+        }
+    }
 }

@@ -42,17 +42,18 @@ final class QuickActionRunner {
         instructionOverride: String?,
         onDelta: @MainActor (String) -> Void = { _ in }
     ) async throws -> String {
+        // The descriptor is where the prompt and the budget come from, so this path cannot spell a
+        // ceiling the Context Surface does not share.
+        let definition = action.definition(
+            override: instructionOverride, translatingInto: targetLanguageName)
         let request = AIRequest(
-            instructions: QuickActionPrompt.instructions(
-                for: action, override: instructionOverride,
-                translatingInto: targetLanguageName),
+            instructions: definition.prompt,
             messages: [
                 AIMessage(
                     role: .user,
                     text: QuickActionPrompt.message(for: action, selection: selection))
             ],
-            maxOutputTokens: DeloresActionDefinition.outputCap(for: action.id)
-                .tokens(selection: selection))
+            maxOutputTokens: definition.maxOutputTokens(selection: selection))
         // One session for every provider-backed action, so the cap, the stop and the empty-result
         // rule cannot differ by which id was pressed. The boundary to the transport is Delores'.
         var published = ""
