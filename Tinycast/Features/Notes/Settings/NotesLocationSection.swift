@@ -4,6 +4,10 @@ import SwiftUI
 /// Where the notes live. The folder is a setting, and switching it moves the pointer rather than the
 /// files — what was already in the old folder stays there — so the footer says that out loud instead
 /// of leaving someone to discover it by looking for notes that never arrived.
+///
+/// One `SettingsRow`, not a `LabeledContent` with a trailing `HStack`: the row carries three controls
+/// of its own, which is what `SettingsRow` is for, and the path it shows is the row's subtitle, so it
+/// gets the shared middle truncation and its own tooltip for free.
 struct NotesLocationSection: View {
     @Environment(AppCore.self) private var core
     /// Recomputed on appear and on change: a `fileExists` per body render is too much for one row.
@@ -15,31 +19,30 @@ struct NotesLocationSection: View {
 
     var body: some View {
         Section {
-            LabeledContent {
-                HStack(spacing: Theme.Spacing.sm) {
-                    if isMissing {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                            .help(L10n.string("This location no longer exists."))
-                    }
-                    Text(displayPath)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+            SettingsRow(
+                title: "Notes Folder",
+                subtitle: displayPath,
+                anchor: .notesLocation
+            ) {
+                if isMissing {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .help(L10n.string("This location no longer exists."))
+                } else {
+                    Image(systemName: "folder")
                         .foregroundStyle(.secondary)
                 }
-            } label: {
-                SettingsRowTitle(.notesLocation, "Notes Folder")
-            }
-
-            HStack(spacing: Theme.Spacing.lg) {
-                Button(L10n.string("Choose…"), action: core.notesCoordinator.chooseNotesDirectory)
-                Button(
-                    L10n.string("Reveal in Finder"),
-                    action: core.notesCoordinator.revealNotesDirectory)
-                if !isDefault {
+            } trailing: {
+                HStack(spacing: Theme.Spacing.lg) {
+                    Button(L10n.string("Choose…"), action: core.notesCoordinator.chooseNotesDirectory)
                     Button(
-                        L10n.string("Restore Default"),
-                        action: core.notesCoordinator.restoreDefaultNotesDirectory)
+                        L10n.string("Reveal in Finder"),
+                        action: core.notesCoordinator.revealNotesDirectory)
+                    if !isDefault {
+                        Button(
+                            L10n.string("Restore Default"),
+                            action: core.notesCoordinator.restoreDefaultNotesDirectory)
+                    }
                 }
             }
         } header: {
