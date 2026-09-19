@@ -9,7 +9,7 @@ that is silently assumed to pass is how a broken build reaches the default branc
 It is a record, not a task list. Update the results when a check runs again; do not delete the rows
 that say why something could not run, or the next person re-derives them.
 
-**Current status, read 2026-09-19 on source baseline `b0270ede`: Xcode is not installed.** `xcode-select -p` says
+**Current status, read 2026-09-19 on source baseline `0fa06c93`: Xcode is not installed.** `xcode-select -p` says
 `/Library/Developer/CommandLineTools`, there is no `Xcode.app` under `/Applications`, and
 `xcodebuild -version` refuses with "requires Xcode". The build therefore cannot run here, and
 `./Scripts/run-tests.sh` is **49 of 53** — all four failures are the missing SwiftUI macros. The
@@ -34,10 +34,11 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
-### 2026-09-19, source baseline `b0270ede` — Command Line Tools only
+### 2026-09-19, source baseline `0fa06c93` — Command Line Tools only
 
-First read at `2addf5db` and re-run at `b0270ede` after the localization, product-identity and
-documentation passes; every number below is identical in both readings.
+First read at `2addf5db`, re-run at `b0270ede` and again at `0fa06c93` after the localization,
+product-identity, documentation, action-descriptor and website fixes; every number below is identical
+in all three readings.
 
 The suite shrank between this reading and the one below it. Notes, Emoji, Extensions, Snippets,
 Calendar, Camera, Updates, Support and Custom Commands moved out of `Tests/` with their packs to
@@ -52,6 +53,7 @@ than 73.
 | purity grep over `Tinycast/Features/*/Model/` | no output — the pure-layer boundary holds |
 | `TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh` | **✓ lint-clean** (warnings do not fail the job) |
 | the app target build | **cannot run here** — no Xcode; this is the check CI exists to cover |
+| `cd website && npm ci && npm run build` | **✓ 37 prerendered doc paths.** A new check here, and it had been failing: two preview components in `website/src/components/feature-previews.tsx` lost the `FeaturePreview` case that rendered them when the parked features left the site's navigation, and `noUnusedLocals` stopped the build at the type check. `0fa06c93` removed them |
 
 `ext-icon-test`, `notes-editor-test` and `ext-test` are no longer among the failures because they
 are no longer in this suite; their rows below belong to the pack they moved with.
