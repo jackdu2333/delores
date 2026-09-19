@@ -298,6 +298,14 @@ top/bottom pet and a vertical one beside a left/right pet. The top-center trigge
 the no-pet fallback: with the pet off, or its body off that screen, the island opens at the top of
 the display as it always did.
 
+Two rules keep that reachable, and both are asserted in `testCompanionShell` rather than watched.
+An island is placed off the body where it actually stands and only then clamped to the display — the
+body is never moved to make room for one, because a drag chose a body standing there. And the body
+plus the island it grew are one target for the whole climb: the seam between them is `shellGap` of
+dead space otherwise, and a drag crossing it in a single frame would take the island down mid-drag.
+The body walks the display's *whole* frame while a shell is placed against the visible one, so those
+two differ by the Dock and the menu bar, which is exactly the gap the first rule closes.
+
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
 automated test. They are the Spatial half of the story; the full designed-but-unbuilt inventory,
 including items outside this document's scope, is kept in [delores-backlog.md](delores-backlog.md):

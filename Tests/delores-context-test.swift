@@ -900,6 +900,14 @@ struct DeloresContextTest {
         require(
             hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: onTheFloor.frame.maxY - 1)),
             "and the island's far edge is inside that same target")
+        // A bridge is not a blanket: past the island the drag is off the target again, and a point
+        // beside it is not a hold either — the target is the body and the island, and nothing else.
+        require(
+            !hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: onTheFloor.frame.maxY + 1)),
+            "past the island is off the target")
+        require(
+            !hold.contains(CGPoint(x: onTheFloor.frame.minX - 1, y: onTheFloor.frame.midY)),
+            "beside the island, and off the body, is off the target")
 
         // A body on the menu bar sits outside `visibleFrame` on purpose. Fetching it into that
         // frame — or to the visible-frame midpoint — is the jump a selection used to make.
