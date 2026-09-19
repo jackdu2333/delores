@@ -40,7 +40,7 @@ integration source. It is not compiled into the Tinycast application target yet;
 will go through an explicit Delores adapter so Huaci does not create a second AppDelegate, LLM or
 selection pipeline. See [ADR 0002](docs/adr/0002-vendor-huaci-latest-project.md).
 
-The local branch is `integration/delores`, with the official Tinycast repository registered as
+The local branch is `main`, with the official Tinycast repository registered as
 `upstream`. See [CONTEXT.md](CONTEXT.md) and
 [docs/adr/0001-keep-tinycast-as-upstream-overlay.md](docs/adr/0001-keep-tinycast-as-upstream-overlay.md)
 for the vocabulary and the non-obvious integration decision.

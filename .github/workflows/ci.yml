@@ -14,14 +14,14 @@ name: CI
 #
 # It used to be PRs only, on the reasoning that `pull_request` builds the *merge result* and that a
 # direct push would be covered the next time a PR opened. That does not hold for this repository:
-# `integration/delores` is the default branch and is developed by pushing straight to it, so the ref
-# CI exists to protect was the one ref it never saw. A push to it now runs the same job — the evidence
-# per HEAD the branch was missing. A PR targeting it runs both, which costs one duplicated minute and
-# is cheaper than a condition that has to stay correct.
+# `main` is the default branch and is developed by pushing straight to it, so the ref CI exists to
+# protect was the one ref it never saw. A push to it now runs the same job — the evidence per HEAD the
+# branch was missing. A PR targeting it runs both, which costs one duplicated minute and is cheaper
+# than a condition that has to stay correct.
 on:
   pull_request:
   push:
-    branches: [integration/delores]
+    branches: [main]
   workflow_dispatch:
 
 # A new push supersedes the previous run for the same ref.

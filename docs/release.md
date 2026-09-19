@@ -54,7 +54,7 @@ Without an updater, Homebrew should be allowed to replace the app. This tree doe
 
 `.github/workflows/ci.yml` is the merge gate, on a `macos-26` runner with Xcode 26 (the same selection
 step as the release workflow). One job; a new push cancels the in-flight run for the same ref. It runs
-on pull requests, on pushes to `integration/delores` — the default branch, which is developed by
+on pull requests, on pushes to `main` — the default branch, which is developed by
 pushing straight to it — and on demand, so the ref CI exists to protect is one it actually sees. The
 checks go through the scripts below rather than naming rules or harnesses in the workflow, so none of
 them can drift:

@@ -9,15 +9,15 @@ that is silently assumed to pass is how a broken build reaches the default branc
 It is a record, not a task list. Update the results when a check runs again; do not delete the rows
 that say why something could not run, or the next person re-derives them.
 
-**Current status, read 2026-09-18 at `245dfd9`: Xcode is not installed.** `xcode-select -p` says
+**Current status, read 2026-09-19 at `2addf5db`: Xcode is not installed.** `xcode-select -p` says
 `/Library/Developer/CommandLineTools`, there is no `Xcode.app` under `/Applications`, and
 `xcodebuild -version` refuses with "requires Xcode". The build therefore cannot run here, and
-`./Scripts/run-tests.sh` is **66 of 73** — all seven failures are the missing SwiftUI macros.
-SwiftLint 0.65.1 *is* installed, and `./Scripts/lint.sh` is lint-clean, but only with the
-`TOOLCHAIN_DIR` override below; the bare form still aborts. Everything below that describes Xcode 27
-as installed and selected is a historical reading, kept because it is what the `BUILD SUCCEEDED` and
-73/73 rows were recorded against — not a fact about this machine now. Check `xcode-select -p` before
-trusting any row.
+`./Scripts/run-tests.sh` is **49 of 53** — all four failures are the missing SwiftUI macros. The
+Delores harness, the upstream-drift regression and the purity grep all pass. SwiftLint 0.65.1 *is*
+installed, and `./Scripts/lint.sh` is lint-clean, but only with the `TOOLCHAIN_DIR` override below;
+the bare form still aborts. Everything below that describes Xcode 27 as installed and selected is a
+historical reading, kept because it is what the `BUILD SUCCEEDED` and 73/73 rows were recorded
+against — not a fact about this machine now. Check `xcode-select -p` before trusting any row.
 
 ## The machine this was recorded on
 
@@ -34,7 +34,26 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
-2026-09-18, `f45beac`, with the sprite work in the working tree.
+### 2026-09-19, `2addf5db` — Command Line Tools only
+
+The suite shrank between this reading and the one below it. Notes, Emoji, Extensions, Snippets,
+Calendar, Camera, Updates, Support and Custom Commands moved out of `Tests/` with their packs to
+`Packs/LegacyFeatures/Tests/`, which this suite does not run, so it now queues 53 harnesses rather
+than 73.
+
+| Command | Result |
+| --- | --- |
+| `./Scripts/run-tests.sh` | **✓ 49 of 53.** 4 fail — `appearance-test`, `interface-size-test`, `palette-placement-test`, `callout-test` — every one "did not compile", all from the same missing `SwiftUIMacros.EntryMacro` |
+| `./Scripts/run-delores-tests.sh` | **✓ passed** |
+| `./Tests/upstream-drift-test.sh` | **✓ passed** |
+| purity grep over `Tinycast/Features/*/Model/` | no output — the pure-layer boundary holds |
+| `TOOLCHAIN_DIR=/Library/Developer/CommandLineTools ./Scripts/lint.sh` | **✓ lint-clean** (warnings do not fail the job) |
+| the app target build | **cannot run here** — no Xcode; this is the check CI exists to cover |
+
+`ext-icon-test`, `notes-editor-test` and `ext-test` are no longer among the failures because they
+are no longer in this suite; their rows below belong to the pack they moved with.
+
+### 2026-09-18, `f45beac`, with the sprite work in the working tree
 
 | Command | Result |
 | --- | --- |
@@ -57,6 +76,10 @@ report are both at `ClipboardView.swift:284` (`IsolatedConformances`, on `Conten
 — upstream code that no Delores change has touched.
 
 ### `ext-test` can fail on load alone
+
+`ext-test` has since moved to `Packs/LegacyFeatures/Tests/` with the Extensions pack and this suite no
+longer runs it. The note is kept because the same load-sensitivity appears in any harness that waits
+on a timer.
 
 `ext-test` asserts that timer callbacks scheduled by a second extension run still fire. It has failed
 inside the full parallel run (`count=0`) and passed every time it was run on its own — three for three,

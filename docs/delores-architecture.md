@@ -357,7 +357,7 @@ upstream update.
 ## Upstream workflow
 
 `upstream` points to the official Tinycast repository, `https://github.com/abue-ammar/tinycast`.
-`integration/delores` is the product branch. The repository currently starts from Tinycast commit
+`main` is the product branch. The repository currently starts from Tinycast commit
 `79d380aa96072ad54e1259448a316d9e34d2a73b`.
 
 Before syncing:
@@ -371,7 +371,7 @@ The working tree must be clean. Then use an isolated sync branch so conflict res
 
 ```sh
 git fetch upstream
-git switch integration/delores
+git switch main
 git switch -c codex/upstream-sync-YYYYMMDD
 git merge --no-ff upstream/main
 ```
@@ -385,7 +385,7 @@ Resolve conflicts in this order:
 3. Never copy a Delores file over an upstream file to resolve a conflict.
 4. Regenerate the Xcode project with XcodeGen after `project.yml` is settled.
 5. Run the upstream harnesses, the Delores model harness and the available Debug build checks.
-6. Merge the verified sync branch back into `integration/delores`.
+6. Merge the verified sync branch back into `main`.
 
 If an upstream change makes a seam unnecessary, delete the seam and update this document in the same
 change. If an upstream feature overlaps a Delores feature, stop and record the ownership decision
