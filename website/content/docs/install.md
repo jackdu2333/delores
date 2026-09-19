@@ -77,12 +77,15 @@ You do **not** need this if you installed with Homebrew.
 
 ## Updating
 
-**Tinycast updates itself.** Once a day it checks for a new release on its own channel. When one is
-out, a window shows what changed, and one click downloads it, installs it and relaunches. You can
-also check any time with **Check for Updates** in the launcher, the menu bar or **Settings → About**.
+There is no in-app updater and no **Check for Updates** command. Install a newer build from the
+[Releases page](https://github.com/abue-ammar/tinycast/releases), or with Homebrew:
 
-Because the app manages its own version, `brew upgrade` skips Tinycast on purpose. That is expected,
-not a bug. See [Updates](/docs/reference/updates) for the details.
+```bash
+brew update && brew upgrade --cask abue-ammar/tinycast/tinycast
+```
+
+A cask for this app must not set `auto_updates true`. That flag told Homebrew the app replaced itself;
+without an in-app updater, `brew upgrade` should be allowed to replace it.
 
 Every release is signed with the same certificate, which is what keeps your Accessibility grant
 working across updates.
@@ -100,11 +103,11 @@ rm -rf ~/Library/Application\ Support/com.tinycast.app
 rm -rf ~/Library/Caches/com.tinycast.app
 ```
 
-That Application Support folder holds your snippets, notes, quicklinks, clipboard history and AI
-chats, so copy out anything you want to keep first. The beta uses `com.tinycast.app.beta` instead.
+That Application Support folder holds your quicklinks, clipboard history and AI chats, so copy out
+anything you want to keep first. The beta uses `com.tinycast.app.beta` instead.
 
-API keys you saved for AI or MCP servers, and extension sign-ins, live in your login Keychain. Remove
-them in Keychain Access if you want them gone too.
+API keys you saved for AI or MCP servers live in your login Keychain. Remove them in Keychain Access
+if you want them gone too.
 
 To remove a _different_ app and everything it left behind, Tinycast has a
 [built-in uninstaller](/docs/launcher/uninstall).

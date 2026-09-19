@@ -274,13 +274,11 @@ function SnippetsPreview() {
 
 const previews: Record<FeaturePreview, () => ReactNode> = {
   launcher: LauncherPreview,
-  extensions: ExtensionsPreview,
   clipboard: ClipboardPreview,
   calculator: CalculatorPreview,
   aiChat: AiChatPreview,
   quickActions: QuickActionsPreview,
   windows: WindowsPreview,
-  snippets: SnippetsPreview,
 };
 
 export function FeaturePreviewArt({ preview }: { preview: FeaturePreview }) {

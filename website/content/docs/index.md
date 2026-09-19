@@ -29,33 +29,28 @@ The same step has a **Launch at login** switch, so Tinycast is ready after a res
 
 ### 2. Allow pasting (optional)
 
-Tinycast asks for Accessibility so it can paste a clip or an emoji back into the app you came from.
+Tinycast asks for Accessibility so it can paste a clip back into the app you came from.
 The launcher itself needs no permission. See [Permissions](/docs/permissions).
 
 ### 3. Bring your Raycast setup (optional)
 
 If you used Raycast, pick its `.rayconfig` export. Tinycast brings your shortcuts, favorites,
-snippets, quicklinks and clipboard history across. See
+quicklinks and clipboard history across. See
 [Import from Raycast](/docs/reference/import-from-raycast).
 
 ## Turn on what you want
 
 Most features ship **off**. A feature that is off does nothing at all: nothing is scanned, nothing is
-indexed and nothing sits in memory. That is how the app stays small while the feature list is long.
+indexed and nothing sits in memory.
 
 | Feature                                               | Where to turn it on          |
 | ----------------------------------------------------- | ---------------------------- |
 | [AI Chat](/docs/ai)                                   | Settings → AI                |
 | [Quick Actions](/docs/ai/quick-actions)               | Settings → Quick Actions     |
 | [File Search](/docs/features/file-search)             | Settings → File Search       |
-| [Notes](/docs/features/notes)                         | Settings → Notes             |
-| [Snippets](/docs/features/snippets)                   | Settings → Snippets          |
 | [Navigation](/docs/features/navigation)               | Settings → Navigation        |
 | [Window Management](/docs/features/window-management) | Settings → Window Management |
-| [Calendar](/docs/features/calendar)                   | Settings → Calendar          |
 | [Quicklinks](/docs/launcher/quicklinks)               | Settings → Quicklinks        |
-| [Custom commands](/docs/launcher/commands)            | Settings → Commands          |
-| [Extensions](/docs/extensions)                        | Settings → Extensions        |
 
 [Clipboard history](/docs/features/clipboard) is the one feature that ships on. You can turn it off
 in **Settings → Clipboard**.

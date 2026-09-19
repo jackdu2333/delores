@@ -78,15 +78,6 @@ Shortcuts follow key positions, so they work the same on any keyboard layout or 
 
 With **Default action** set to Copy to Clipboard, <kbd>return</kbd> and <kbd>⌘</kbd><kbd>return</kbd> swap.
 
-## Emoji
-
-| Key                           | Does                                          |
-| ----------------------------- | --------------------------------------------- |
-| <kbd>return</kbd>             | Paste                                         |
-| <kbd>⌘</kbd><kbd>return</kbd> | Copy to Clipboard                             |
-| <kbd>⌥</kbd><kbd>return</kbd> | Paste and Keep Window Open                    |
-| Arrow keys                    | Move through the grid, in all four directions |
-
 ## Calculator History
 
 | Key                                  | Does               |
@@ -120,13 +111,6 @@ With **Default action** set to Copy to Clipboard, <kbd>return</kbd> and <kbd>⌘
 | <kbd>⌘</kbd><kbd>F</kbd>      | Show in Finder        |
 | <kbd>⌘</kbd><kbd>delete</kbd> | Delete Quicklink      |
 
-## Meeting card
-
-| Key                           | Does              |
-| ----------------------------- | ----------------- |
-| <kbd>return</kbd>             | Join Meeting      |
-| <kbd>⌘</kbd><kbd>return</kbd> | Copy Meeting Link |
-
 ## Uninstall
 
 | Key                                  | Does                   |
@@ -136,17 +120,6 @@ With **Default action** set to Copy to Clipboard, <kbd>return</kbd> and <kbd>⌘
 | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd> | Copy Path              |
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>O</kbd> | Show in Finder         |
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>I</kbd> | Show Info in Finder    |
-
-## Notes window
-
-| Key                           | Does                            |
-| ----------------------------- | ------------------------------- |
-| <kbd>⌘</kbd><kbd>N</kbd>      | Create a note                   |
-| <kbd>⌘</kbd><kbd>P</kbd>      | Open the switcher               |
-| <kbd>⌘</kbd><kbd>O</kbd>      | Open the Notes folder           |
-| <kbd>⌘</kbd><kbd>W</kbd>      | Hide the window                 |
-| <kbd>esc</kbd>                | Close the switcher, then hide   |
-| <kbd>⌘</kbd><kbd>delete</kbd> | Move the selected note to Trash |
 
 ## Window layout editor
 

@@ -1,6 +1,6 @@
 ---
 title: Import from Raycast
-description: Read a Raycast export and bring your shortcuts, favorites, snippets, quicklinks and history across.
+description: Read a Raycast export and bring your shortcuts, favorites, quicklinks and history across.
 ---
 
 Tinycast reads Raycast's own export file directly, in **Settings → Backup → Raycast Export**, or in
@@ -48,9 +48,7 @@ under the service `Raycast` and account `export_passphrase`.
 | Favorites           | From Raycast's pinned items                                |
 | Aliases             | App aliases                                                |
 | Clipboard history   | Text, and images whose files still exist                   |
-| Snippets            | Name, text and keyword                                     |
 | Quicklinks          | Name, link and the app it opens with                       |
-| Emoji skin tone     | Raycast's default becomes Tinycast's Default               |
 | Compact mode        | From Raycast's window mode                                 |
 | Pop to root         | Only when the timing matches one Tinycast offers           |
 | Launch at login     |                                                            |
@@ -66,20 +64,6 @@ something slightly different from what you had.
 Images come across only if their files still exist on this Mac. The summary tells you how many were
 missing, rather than dropping them silently.
 
-## Snippets
-
-Snippets are added **in their original order, without overwriting anything you already have**. Ones
-that cannot be read are skipped. A name you already use gets a number added, and repeated keywords are
-kept as they are.
-
-Imported snippets arrive **switched on and visible in the launcher, with confirmation off**.
-
-**Importing never turns on keyword expansion.** That switch is yours alone; see
-[Backup](/docs/reference/backup#a-backup-can-never-grant-a-capability). The summary says so, so a
-keyword that does nothing yet does not look broken.
-
-If the snippet files cannot be written, the summary says so, and the other categories still import.
-
 ## Quicklinks
 
 Quicklinks are added to your library, never replacing it, and duplicates are skipped just like a
@@ -88,18 +72,8 @@ Quicklinks are added to your library, never replacing it, and duplicates are ski
 
 Importing at least one quicklink turns the Quicklinks feature on.
 
-## What else you can bring
-
-Two things are not in a `.rayconfig`, so they have their own importers:
-
-- **Extensions.** **Settings → Extensions → Import from Raycast** copies the extensions you have
-  installed. See [Installing extensions](/docs/extensions/installing#import-from-raycast).
-- **Script commands.** **Settings → Commands → Import Raycast Scripts** turns a folder of scripts into
-  custom commands. See [Commands](/docs/launcher/commands#importing-raycast-script-commands).
-
 ## Afterwards
 
 There is a **Quit Raycast** button in the pane, for when you are ready.
 
-Nothing in Tinycast needs Raycast to be installed, except importing extensions from it, which by
-definition reads its folder.
+Nothing in Tinycast needs Raycast to be installed once the import is done.

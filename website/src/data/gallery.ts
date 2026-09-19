@@ -54,14 +54,6 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     type: "image",
-    src: "emoji.png",
-    title: "Emoji & symbols",
-    caption: "Search the whole set; your most-used float to the top.",
-    width: 2106,
-    height: 1244,
-  },
-  {
-    type: "image",
     src: "per-app-hotkey.png",
     title: "Per-app hotkeys",
     caption: "Bind a key to an app: press to focus, again to hide.",

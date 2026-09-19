@@ -11,7 +11,7 @@ description: Recording global shortcuts, double-tap modifiers, and the Hyper key
 - Every built-in command, except Open in Browser, Run Shell Command and Quit Tinycast. See
   [Commands](/docs/launcher/commands).
 - Every app, and every System Settings pane
-- Every quicklink, custom command, custom Quick Action and extension command
+- Every quicklink and custom Quick Action
 - All 31 [system actions](/docs/launcher/system-actions)
 - All 35 [window commands](/docs/features/window-management), and every
   [window layout](/docs/features/window-layouts)
@@ -111,9 +111,9 @@ switch to another user, it pauses until you are back.
 **A section's switch does turn off its shortcuts.** **Enable Applications**, **Enable System
 Settings**, **Enable System Actions** and **Enable Commands** each stop every shortcut in their pane.
 
-**Turning a feature off turns off its shortcuts.** File Search, Notes, AI, Quick Actions, Navigation,
-Calendar, window commands, quicklinks, custom commands and extensions all check their switch before
-doing anything. Turn the feature back on and your shortcuts work again.
+**Turning a feature off turns off its shortcuts.** File Search, AI, Quick Actions, Navigation,
+window commands and quicklinks all check their switch before doing anything. Turn the feature back
+on and your shortcuts work again.
 
 A [system action's confirmation](/docs/launcher/system-actions#confirmation) comes up for its shortcut
 exactly as it does in the palette.

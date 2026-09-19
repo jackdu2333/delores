@@ -5,7 +5,6 @@
     "hotkeys",
     "settings",
     "backup",
-    "import-from-raycast",
-    "updates"
+    "import-from-raycast"
   ]
 }

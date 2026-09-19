@@ -23,7 +23,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 const description =
-  "Tinycast is a tiny, fully native macOS launcher: fuzzy app search, an inline calculator, clipboard history, snippets, notes, window management and global hotkeys, with no Electron, no account and no telemetry.";
+  "Tinycast is a tiny, fully native macOS launcher: fuzzy app search, an inline calculator, clipboard history, window management and global hotkeys, with no Electron, no account and no telemetry.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),

@@ -51,7 +51,7 @@ Two shapes are read the way you almost certainly meant them: a single letter bef
 
 ## Placeholders
 
-Quicklinks use the same placeholders as [snippets](/docs/features/snippets#placeholders):
+Quicklinks accept these placeholders:
 
 ```
 https://google.com/search?q={argument}

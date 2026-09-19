@@ -4,8 +4,7 @@ description: One search across everything Tinycast knows about, and how it decid
 ---
 
 The launcher is the root screen. One search covers your apps, System Settings panes, commands,
-quicklinks, snippets, system actions, window commands and layouts, custom commands, Quick Actions,
-extension commands and upcoming meetings.
+quicklinks, system actions, window commands and layouts, and Quick Actions.
 
 <kbd>return</kbd> opens what is selected. <kbd>⌘</kbd><kbd>K</kbd> shows everything else you can do with it.
 
@@ -13,14 +12,11 @@ extension commands and upcoming meetings.
 
 [Favorites](/docs/launcher/favorites) come first, then each section in this order:
 
-Meetings → Applications → System Settings → Extensions → Quicklinks → Snippets → System Actions →
-Window Layouts → Window Management → Custom Commands → Quick Actions → Commands
+Applications → System Settings → Quicklinks → System Actions →
+Window Layouts → Window Management → Quick Actions → Commands
 
 Each section is in alphabetical order, and stays that way. A list that reorders itself as you use it
 is hard to scan.
-
-When a meeting is about to start, a [join card](/docs/features/calendar#the-join-card) sits above
-everything.
 
 ## When you type
 
@@ -36,7 +32,7 @@ appear around it:
 
 ### Listing a whole category
 
-Type a section's exact name, like `Snippets`, `Snippet` or `Window Management`, and you get that
+Type a section's exact name, like `Quicklinks` or `Window Management`, and you get that
 whole category under its own heading.
 
 It has to be the exact name. An app whose name is exactly your text still shows too, which is why

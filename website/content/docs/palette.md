@@ -42,7 +42,6 @@ If your fingers know them, these work anywhere in the palette:
 | <kbd>⌃</kbd><kbd>F</kbd> | <kbd>→</kbd> |
 | <kbd>⌃</kbd><kbd>B</kbd> | <kbd>←</kbd> |
 
-On the [emoji grid](/docs/features/emoji), all four move the selection. Everywhere else,
 <kbd>⌃</kbd><kbd>F</kbd> and <kbd>⌃</kbd><kbd>B</kbd> move the text cursor, because that is what you
 usually want in a search field. A chord with an extra modifier, like <kbd>⌃</kbd><kbd>⇧</kbd><kbd>Q</kbd>,
 is left alone.
@@ -68,8 +67,7 @@ Everything else, like Calculator History or Search Quicklinks, stays out of the 
 places you chose to go, not places to land in by accident.
 
 The one exception: when the selected row takes arguments, like a
-[quicklink](/docs/launcher/quicklinks) or an [extension command](/docs/extensions),
-<kbd>tab</kbd> walks through its fields first.
+[quicklink](/docs/launcher/quicklinks), <kbd>tab</kbd> walks through its fields first.
 
 ## How screens stack
 
@@ -151,7 +149,7 @@ AI Chat has its own rule for whether a conversation reopens; see [AI Chat](/docs
 
 ## The menu bar
 
-The Tinycast menu bar icon has **Open Tinycast**, **Clipboard History**, **Settings…**,
-**Check for Updates…**, **Support Tinycast…** and **Quit Tinycast**.
+The Tinycast menu bar icon has **Open Tinycast**, **Clipboard History**, **Settings…** and
+**Quit Tinycast**.
 
 **Settings → General → Show in menu bar** hides the icon. Your shortcuts keep working without it.

@@ -2,13 +2,11 @@ import type { IconName } from "../components/ui/feature-icons";
 
 export type FeaturePreview =
   | "launcher"
-  | "extensions"
   | "clipboard"
   | "calculator"
   | "aiChat"
   | "quickActions"
-  | "windows"
-  | "snippets";
+  | "windows";
 
 export type Feature = {
   icon: IconName;
@@ -76,36 +74,14 @@ export const coreFeatures: Feature[] = [
     preview: "windows",
     isWide: true,
   },
-  {
-    icon: "extensions",
-    title: "Raycast extensions",
-    body: "Run in JavaScriptCore and drawn in SwiftUI. Install from the store with no toolchain.",
-    href: "/docs/extensions",
-    preview: "extensions",
-    isWide: true,
-  },
-  {
-    icon: "snippets",
-    title: "Snippets",
-    body: "Markdown templates with placeholders. Type a keyword in any app and it expands.",
-    href: "/docs/features/snippets",
-    preview: "snippets",
-    isWide: true,
-  },
 ];
 
-// The long tail: named, linked, and kept out of the way of the eight above.
+// The long tail: named, linked, and kept out of the way of the six above.
 export const moreFeatures: MinorFeature[] = [
-  { icon: "notes", title: "Floating notes", href: "/docs/features/notes" },
   {
     icon: "fileSearch",
     title: "File search",
     href: "/docs/features/file-search",
-  },
-  {
-    icon: "calendar",
-    title: "Calendar & meetings",
-    href: "/docs/features/calendar",
   },
   {
     icon: "navigation",
@@ -118,16 +94,10 @@ export const moreFeatures: MinorFeature[] = [
     href: "/docs/launcher/quicklinks",
   },
   {
-    icon: "keyboard",
-    title: "Custom commands",
-    href: "/docs/launcher/commands",
-  },
-  {
     icon: "bolt",
     title: "31 system actions",
     href: "/docs/launcher/system-actions",
   },
-  { icon: "emoji", title: "Emoji & symbols", href: "/docs/features/emoji" },
   { icon: "globe", title: "Per-app hotkeys", href: "/docs/reference/hotkeys" },
   { icon: "hyper", title: "Hyper key", href: "/docs/reference/hotkeys" },
   { icon: "alias", title: "Aliases", href: "/docs/launcher/aliases" },

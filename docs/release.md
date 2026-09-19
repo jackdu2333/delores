@@ -25,20 +25,18 @@ Apple Developer ID — so macOS quarantines a directly-downloaded DMG. The Homeb
 automatically; direct downloaders run `xattr -dr com.apple.quarantine "…/Tinycast.app"` once. Full
 details in [signing.md](signing.md).
 
-## How the in-app updater consumes a release
+## What a release publishes
 
 Every release publishes two assets from one build: `Tinycast-<version>.dmg`, which people download by
-hand and which the cask installs, and `Tinycast-<version>.zip`, which the in-app updater installs. The
-zip is produced with `ditto -c -k --keepParent --sequesterRsrc` — the only zip that leaves the code
-signature verifiable, which matters because the updater refuses any bundle whose signature does not
-prove it is ours.
+hand and which a cask can install, and `Tinycast-<version>.zip` for GitHub Releases. The
+zip is produced with `ditto -c -k --keepParent --sequesterRsrc` so the code signature stays verifiable.
 
 A stable release publishes two more from the `universal` job, `Tinycast-Universal-<version>.dmg` and
 `.zip`, built from the same commit at the same version and bundle id but with both slices. They are
 uploaded *after* the thin pair, which keeps the thin zip first in the asset list so builds predating
 architecture-aware selection keep choosing it.
 
-Three things a release must keep true, or the updater skips it:
+Three things a release must keep true:
 
 - **It carries a `.zip` asset this Mac can run.** A DMG-only release is not installable and is not
   offered, and an Intel build is offered nothing rather than a thin arm64 zip.
@@ -47,8 +45,10 @@ Three things a release must keep true, or the updater skips it:
   installs off the macOS 15 build.
 - **It is not a draft.**
 
-The in-app updater now lives under `Packs/LegacyFeatures/`. The tap still declaring
-`auto_updates true` is leftover from that design and should be revisited in the tap, not here.
+There is no in-app updater in the current app. A Homebrew cask for Delores must not set
+`auto_updates true`: that flag told Homebrew the app replaced itself, so `brew upgrade` skipped it.
+Without an updater, Homebrew should be allowed to replace the app. This tree does not own the
+`abue-ammar/homebrew-tinycast` tap, and must not flip that flag on Tinycast's casks.
 
 ## Continuous integration
 

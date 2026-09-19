@@ -22,8 +22,7 @@ Your text runs in `/bin/zsh` from your home folder, with your shell configuratio
 aliases like `ll` work. A window shows the output as it prints, with **Stop** and **Run Again**
 buttons.
 
-This is separate from [custom commands](/docs/launcher/commands#custom-commands). Turning custom
-commands off does not hide it; its own checkbox in Settings does.
+This fallback has its own checkbox in Settings. It is not a saved command with a name and shortcut.
 
 ### Quicklinks as fallbacks
 
