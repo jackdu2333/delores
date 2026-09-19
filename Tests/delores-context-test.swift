@@ -115,7 +115,7 @@ struct DeloresContextTest {
         require(
             withRow.last?.rewritesSelection == false,
             "a row the reader wrote does not take their document unasked")
-        require(withRow.last?.maxOutputTokens(selection: "x") == 128,
+        require(withRow.last?.definition.maxOutputTokens(selection: "x") == 128,
                 "a custom row answers at the same floor as any other model action")
 
         require(
@@ -176,10 +176,11 @@ struct DeloresContextTest {
         require(search.instructions == "", "a search action sends no instructions")
 
         require(
-            translate.maxOutputTokens(selection: "short") == 128,
+            translate.definition.maxOutputTokens(selection: "short") == 128,
             "a tiny selection still gets room for a reply")
         require(
-            translate.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 2_048,
+            translate.definition.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
+                == 2_048,
             "a long selection cannot lift the ceiling past the route's window")
     }
 
@@ -590,14 +591,17 @@ struct DeloresContextTest {
         require(DeloresActionDefinition.outputCap(for: "summarize") == .compact(max: 512), "the shared policy caps a digest")
         require(DeloresActionDefinition.outputCap(for: "explain") == .scaled(max: 2_048), "and lets an answer take its room")
         require(DeloresActionDefinition.outputCap(for: "custom-row") == .scaled(max: 2_048), "an id it does not know")
-        require(summarize.maxOutputTokens(selection: "x") == 64, "compact floor")
-        require(summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)) == 512, "512 ceiling")
+        require(summarize.definition.maxOutputTokens(selection: "x") == 64, "compact floor")
+        require(
+            summarize.definition.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
+                == 512, "512 ceiling")
         let translate = require(DeloresContextAction.catalog.first { $0.id == "translate" }, "translate")
-        require(translate.maxOutputTokens(selection: "short") == 128, "scaled")
+        require(translate.definition.maxOutputTokens(selection: "short") == 128, "scaled")
         require(summarize.definition.id == "summarize", "summarize identity")
         require(
             summarize.definition.outputCap == .compact(max: 512)
-                && summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
+                && summarize.definition.maxOutputTokens(
+                    selection: String(repeating: "a", count: 9_000))
                 == DeloresActionDefinition.OutputCap.compact(max: 512)
                     .tokens(selection: String(repeating: "a", count: 9_000)),
             "Context summarize and Quick Action summarize share the compact 512 cap")
@@ -643,65 +647,92 @@ struct DeloresContextTest {
         }
         CFRunLoopRun(); return outcome
     }
-    /// The Command catalogue now produces the same descriptor the bar's rows do, so one id cannot
-    /// answer with two backends or two budgets depending on which surface asked for it.
+    /// The Command catalogue produces the same descriptor the bar's rows do, so the fields they
+    /// genuinely share cannot disagree by which surface asked. What each surface does with the reply
+    /// afterwards is not one of those fields, and is asserted where it lives instead.
     private static func testQuickActionDescriptors() {
         let summarize = BuiltInQuickAction.summarize.definition()
         let barSummarize = require(
             DeloresContextAction.catalog.first { $0.id == "summarize" }, "bar summarize"
-        ).definition
+        )
         require(
-            summarize.outputCap == barSummarize.outputCap && summarize.backend == barSummarize.backend,
+            summarize.outputCap == barSummarize.definition.outputCap
+                && summarize.backend == barSummarize.definition.backend,
             "one id, one backend and one budget, whichever catalogue asked")
         require(
             summarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000))
-                == barSummarize.maxOutputTokens(selection: String(repeating: "a", count: 9_000)),
+                == barSummarize.definition.maxOutputTokens(
+                    selection: String(repeating: "a", count: 9_000)),
             "and the same ceiling from either descriptor")
+
+        // The prompt is the whole of what is sent on both sides. A Context descriptor holding only
+        // the task sentence would let a consumer send a selection without the rules that keep it
+        // from being read as instructions.
+        require(
+            barSummarize.definition.prompt == barSummarize.instructions,
+            "a Context descriptor carries exactly what that surface sends")
+        require(
+            barSummarize.definition.prompt.contains(DeloresContextAction.materialRule),
+            "which includes the material-not-instructions rule")
+        require(
+            BuiltInQuickAction.fixGrammar.definition().prompt
+                == QuickActionPrompt.instructions(for: BuiltInQuickAction.fixGrammar),
+            "and a Command descriptor carries exactly what that surface sends")
+        require(
+            BuiltInQuickAction.fixGrammar.definition(override: "Just tidy it.").prompt
+                == "Just tidy it.",
+            "the reader's override reaches it")
+        require(
+            BuiltInQuickAction.translate.definition(translatingInto: "French").prompt
+                .contains("French"),
+            "while translate's model lane is told the language it is translating into")
 
         require(
             BuiltInQuickAction.translate.usesTranslationFramework
                 && !BuiltInQuickAction.summarize.usesTranslationFramework,
             "translate is framework-answered because the shared policy says so, not a second switch")
+
+        // Presentation hints: what the result surface reads, and all of them facts a setting cannot
+        // move. The Context Surface sets none of them.
         require(
-            summarize.capabilities == [.previewsByDefault] && !summarize.rewritesSelection,
-            "summarize is read before it lands, so it answers about the text")
+            summarize.presentation == [.alwaysPreviews]
+                && BuiltInQuickAction.rewrite.definition().presentation == [.showsDiff]
+                && BuiltInQuickAction.translate.definition().presentation.isEmpty,
+            "presentation is a hint the result surface reads, not what an action is")
         require(
-            BuiltInQuickAction.fixGrammar.definition().capabilities == [.showsDiff]
-                && BuiltInQuickAction.rewrite.definition().capabilities == [.showsDiff],
-            "the two rewriting rows are worth a diff")
-        require(
-            BuiltInQuickAction.translate.definition().capabilities.isEmpty
-                && BuiltInQuickAction.translate.definition().rewritesSelection,
-            "translate carries no result-surface capability and does take the selection's place")
-        require(
-            BuiltInQuickAction.fixGrammar.alwaysPreviews == false
-                && BuiltInQuickAction.summarize.alwaysPreviews
+            BuiltInQuickAction.summarize.alwaysPreviews
+                && !BuiltInQuickAction.summarize.showsDiff
                 && BuiltInQuickAction.rewrite.showsDiff
-                && !BuiltInQuickAction.summarize.showsDiff,
-            "the old reads are the descriptor's capabilities")
+                && !BuiltInQuickAction.fixGrammar.alwaysPreviews,
+            "the rows' own reads are those hints")
+        require(
+            BuiltInQuickAction.fixGrammar.replacesDirectlyByDefault
+                && !BuiltInQuickAction.fixGrammar.definition().presentation.contains(.alwaysPreviews),
+            "a starting point the reader can move is not one of the hints")
+
+        // The right to replace the selection belongs to the catalogue that replaces it, and a
+        // descriptor is never asked to carry it for the other one.
+        require(
+            DeloresContextAction.catalog.filter(\.rewritesSelection).map(\.id)
+                == ["translate", "summarize"],
+            "the bar's own rows carry the write-back permission")
+        let search = require(DeloresContextAction.catalog.first { $0.id == "search" }, "search")
+        require(
+            search.definition.prompt.isEmpty && search.definition.backend != .languageModel,
+            "the one row that asks no model for anything carries no prompt to send it")
 
         let custom = QuickAction.custom(CustomQuickAction(name: "Punch Up", instructions: "Wit."))
         let customDefinition = custom.definition()
         require(
-            customDefinition.backend == .languageModel && !customDefinition.rewritesSelection
+            customDefinition.backend == .languageModel
                 && customDefinition.outputCap == .scaled(max: 2_048),
-            "a row the reader wrote is a model prompt they did not give permission to overwrite with")
+            "a row the reader wrote is a model prompt")
         require(
             customDefinition.maxOutputTokens(selection: "x") == 128,
             "and it takes the shared scaled floor rather than a fourth budget")
-
         require(
-            BuiltInQuickAction.fixGrammar.definition().prompt
-                == QuickActionPrompt.instructions(for: BuiltInQuickAction.fixGrammar),
-            "the descriptor carries the prompt the Command Surface would send")
-        require(
-            BuiltInQuickAction.fixGrammar.definition(override: "Just tidy it.").prompt
-                == "Just tidy it.",
-            "and the reader's override reaches it")
-        require(
-            BuiltInQuickAction.translate.definition(translatingInto: "French").prompt
-                .contains("French"),
-            "while translate's model lane is told the language it is translating into")
+            customDefinition.prompt.hasSuffix("Wit."),
+            "with the reader's own instructions in it")
     }
 
     private static func testGesturePolicy() {

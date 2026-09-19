@@ -69,9 +69,6 @@ enum QuickAction: Hashable, Identifiable, Sendable {
                 backend: DeloresActionDefinition.defaultBackend(for: action.entryID),
                 prompt: QuickActionPrompt.instructions(
                     for: self, override: override, translatingInto: targetLanguageName),
-                // The reader wrote instructions, not permission to overwrite their document. Same
-                // answer the Context catalogue gives a row they wrote.
-                rewritesSelection: false,
                 outputCap: DeloresActionDefinition.outputCap(for: action.entryID))
         }
     }

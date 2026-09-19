@@ -42,19 +42,30 @@ Tinycast's runner*, not in inventing something new.
 | Prompt override | `instructionOverride(for:)` | `instructionOverride(forActionID:)` | Already one seam |
 | Chat path | `QuickActionPrompt.chatInstructions(for:targetLanguageName:override:)` | `kind == .ask` hands off to `AIChatCoordinator` | One seam, unexercised by any shipped row. The helper went on 2026-09-19 — nothing called it — while the `.ask` kind stays wired; see the open decisions below |
 
+**Landed (2026-09-19).** Both catalogues produce `DeloresActionDefinition`, and the two rows that
+were still "unsettled" above are settled the only way that does not decide a product question in
+passing: the shared type stopped claiming to know either answer.
+
+- **Prompt.** `prompt` now means the whole of what is sent, on both sides. The bar fills it with
+  `DeloresContextAction.instructions` and sends that same value, so a consumer cannot pick the
+  descriptor up and send less than the surface would have.
+- **Bare output.** Which rows carry the bare-output rule is the bar's own business and stays on
+  `DeloresContextAction.rewritesSelection`; whether a Command row previews first is the reader's
+  `previewsResult` setting, read where it runs. Neither crosses over, and neither is on the shared
+  type.
+
 ## The one shape that carries both
 
 ```text
 ActionDefinition                      // Model/. Pure data, testable.
 ├── id: String                        // "translate", "explain", "summarize", "search", "fixGrammar",
 │                                     // "rewrite", "custom-…"
-├── title, symbol, progressTitle
+├── title, symbol
 ├── backend: Backend                  // .languageModel | .translationFramework | .urlTemplate(String)
-├── prompt: String                    // the action's own wording, in whatever language it was written
-├── rewritesSelection: Bool           // ⇒ appends the bare-output rule; ⇒ the surface may write back
+├── prompt: String                    // the whole of what is sent, the rules that cannot be dropped included
 ├── outputCap: OutputCap              // .scaled(max:) — summarize's 512 becomes data, not a branch
-└── capabilities: Set<Capability>     // .previewsByDefault, .showsDiff — Tinycast's result surface reads
-                                      // these; the island ignores them
+└── presentation: Set<Presentation>   // .alwaysPreviews, .showsDiff — hints the Command result surface
+                                      // reads; the island sets none and reads none
 
 ActionSession                         // Model/. One run of one definition over one selection.
 ├── result: AsyncStream<Event>        // .delta(String) | .finished(String) | .failed(reason) | .stopped(kept)
@@ -65,6 +76,23 @@ ActionSessionRunner                   // Service/. Provider stream → ActionSes
                                       // Context always uses it, and so does every provider-backed
                                       // Quick Action — Apple's framework is not a provider.
 ```
+
+**What is deliberately not in that shape.** Only fields both catalogues can mean the same thing by
+belong on the type, and two nearly got in on the strength of a name alone.
+
+- **A row's right to replace the selection stays with the catalogue that replaces it.** The bar keeps
+  `DeloresContextAction.rewritesSelection`: it is what adds the bare-output rule and what the island's
+  write-back button reads. The Command Surface answers the same question later, from the reader's own
+  `previewsResult` setting, at the moment it runs. One shared field would have meant "this reply is a
+  rewrite" on one side and "this row previews by default" on the other — and a reader's setting would
+  have been able to flip an Action's meaning.
+- **`presentation` is a hint, not Action meaning.** The Context Surface sets none of it and reads none
+  of it, and everything in it is a fact a setting cannot move. `replacesDirectlyByDefault`, which the
+  reader *can* move, is deliberately not there.
+- **`prompt` is the whole of what is sent**, on both sides — the material-not-instructions rule
+  included. It is not the row's task sentence. A descriptor holding only the task sentence would let a
+  consumer send a selection to a model without the rule that keeps it from being read as instructions,
+  which is exactly what the two surfaces must not be able to do to each other.
 
 `DeloresActionSession` now holds that session, and it is the reason Delores could not simply call
 `QuickActionRunner.run`: the island needs to show the answer while it arrives, keep what it has when the
@@ -144,6 +172,17 @@ shape turns on:
    while the bar reads `CustomQuickAction`, so the two Model folders reach each other — three
    harness source lists carry the pair, and moving the definition somewhere neutral is what would
    undo it if that ever matters.
+
+   The first cut of this step got one thing wrong, and the correction is the reason the shape above
+   lists what it lists. Sharing the *name* of a field is not sharing its *meaning*: `rewritesSelection`
+   was carried over so both descriptors could fill it, but on the bar it means "this reply is a rewrite
+   of the selection" while the only Command-side fact with a similar ring was "this row previews by
+   default" — a setting the reader owns. The same id then answered `true` from one catalogue and
+   `false` from the other, and a reader turning preview off for a custom row would have flipped what
+   the shared contract said about it. The field is gone from the type. `prompt` had the mirror-image
+   problem, in the quiet direction: the bar's descriptor held its task sentence while its execution sent
+   the task sentence plus the rules, so a consumer taking the descriptor at its word would have dropped
+   the material-not-instructions rule. It now holds what is sent.
 
 Until step 3, nothing in steps 1–2 can break the Command Surface, and step 3 is where the two catalogues
 actually meet.

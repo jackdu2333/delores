@@ -305,7 +305,10 @@ final class DeloresContextCoordinator {
         lastRun = (action, selection, path)
         conversation.begin(question: asked)
         island.showAnswer(.running(action))
-        let request = AIRequest(instructions: action.instructions, messages: Self.messages(from: conversation.settled) + [AIMessage(role: .user, text: asked)], maxOutputTokens: action.maxOutputTokens(selection: selection))
+        // Both read off the one descriptor, so a rule the catalog carries cannot be sent by one of
+        // these two lines and dropped by the other.
+        let definition = action.definition
+        let request = AIRequest(instructions: definition.prompt, messages: Self.messages(from: conversation.settled) + [AIMessage(role: .user, text: asked)], maxOutputTokens: definition.maxOutputTokens(selection: selection))
         actionTask = Task { @MainActor [weak self] in
             var published = ContinuousClock.now
             let outcome = await DeloresActionSessionRunner.run(

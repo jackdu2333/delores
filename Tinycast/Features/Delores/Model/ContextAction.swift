@@ -66,8 +66,11 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
         let backend: DeloresActionDefinition.Backend =
             kind == .search ? .urlTemplate(searchTemplate) : DeloresActionDefinition.defaultBackend(for: id)
         return DeloresActionDefinition(
-            id: id, title: title, symbol: symbol, backend: backend, prompt: prompt,
-            rewritesSelection: rewritesSelection,
+            id: id, title: title, symbol: symbol, backend: backend,
+            // The rules included, which is what this surface sends. Whether the reply may take the
+            // selection's place stays this row's own business: it decides the bare-output rule below,
+            // and it is the island that offers the write-back.
+            prompt: instructions,
             // The budget is the catalogues' shared policy rather than this row's: the same id asked
             // for from the Command Surface must not come back a different length.
             outputCap: DeloresActionDefinition.outputCap(for: id))
@@ -260,12 +263,6 @@ extension DeloresContextAction {
     /// Without the `Text:` delimiter a two-word selection reads as part of the instruction above it.
     func message(selection: String) -> String {
         "Text:\n" + selection
-    }
-
-    /// The on-device window counts the prompt and the reply against one budget, so the reply needs a
-    /// cap of its own. Summarize is compact (512); every other row is scaled (2048).
-    func maxOutputTokens(selection: String) -> Int {
-        definition.maxOutputTokens(selection: selection)
     }
 
     /// The browser address for a search action, or nil for an action that is not one.
