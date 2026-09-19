@@ -13,22 +13,12 @@ struct DeloresActionDefinition: Equatable, Hashable, Sendable, Identifiable {
             }
         }
     }
-    /// A hint about presenting the reply, and nothing more: the Context Surface ignores every one of
-    /// them, and none says what an action *is*. They sit here only so the Command catalogue has one
-    /// place to state them, and they are all facts a setting cannot move.
-    enum Presentation: Hashable, Sendable {
-        /// Shown for reading before it can be applied, and the reader cannot turn that off.
-        case alwaysPreviews
-        /// Worth a diff before it lands, since it rewrites prose the reader wrote.
-        case showsDiff
-    }
     let id: String; var title: String; var symbol: String; var backend: Backend
     /// The whole of what is sent, the rules that cannot be dropped included — not just the task
     /// sentence. Both catalogues fill it with what their own execution would send, so taking a
     /// descriptor and sending it cannot quietly leave the safety rules behind.
     var prompt: String
     var outputCap: OutputCap
-    var presentation: Set<Presentation> = []
     func maxOutputTokens(selection: String) -> Int { outputCap.tokens(selection: selection) }
 
     /// The reply budget, decided once because both catalogues ask for it and the reader cannot tell

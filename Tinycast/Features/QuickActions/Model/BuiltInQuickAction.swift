@@ -35,21 +35,12 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         }
     }
 
-    /// The presentation hints that are facts about the row rather than preferences. `replacesDirectly
-    /// ByDefault` is deliberately not one: it is a starting point the reader can move, which is why
-    /// it stays a read of its own.
-    private var presentation: Set<DeloresActionDefinition.Presentation> {
-        var found: Set<DeloresActionDefinition.Presentation> = []
-        if self == .summarize { found.insert(.alwaysPreviews) }
-        if self == .fixGrammar || self == .rewrite { found.insert(.showsDiff) }
-        return found
-    }
-
-    var alwaysPreviews: Bool { presentation.contains(.alwaysPreviews) }
+    /// Facts about the row no setting can move; `replacesDirectlyByDefault` is deliberately not one.
+    var alwaysPreviews: Bool { self == .summarize }
 
     var replacesDirectlyByDefault: Bool { self == .fixGrammar }
 
-    var showsDiff: Bool { presentation.contains(.showsDiff) }
+    var showsDiff: Bool { self == .fixGrammar || self == .rewrite }
 
     /// Apple's translator answers this id unless the reader bound a model to it. Read off the shared
     /// policy rather than restated, so the two catalogues cannot disagree about the default.
@@ -71,7 +62,6 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
             backend: DeloresActionDefinition.defaultBackend(for: id),
             prompt: QuickActionPrompt.instructions(
                 for: self, override: override, translatingInto: targetLanguageName),
-            outputCap: DeloresActionDefinition.outputCap(for: id),
-            presentation: presentation)
+            outputCap: DeloresActionDefinition.outputCap(for: id))
     }
 }

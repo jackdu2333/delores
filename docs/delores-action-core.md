@@ -63,9 +63,7 @@ ActionDefinition                      // Model/. Pure data, testable.
 ├── title, symbol
 ├── backend: Backend                  // .languageModel | .translationFramework | .urlTemplate(String)
 ├── prompt: String                    // the whole of what is sent, the rules that cannot be dropped included
-├── outputCap: OutputCap              // .scaled(max:) — summarize's 512 becomes data, not a branch
-└── presentation: Set<Presentation>   // .alwaysPreviews, .showsDiff — hints the Command result surface
-                                      // reads; the island sets none and reads none
+└── outputCap: OutputCap              // .scaled(max:) — summarize's 512 becomes data, not a branch
 
 ActionSession                         // Model/. One run of one definition over one selection.
 ├── result: AsyncStream<Event>        // .delta(String) | .finished(String) | .failed(reason) | .stopped(kept)
@@ -78,7 +76,7 @@ ActionSessionRunner                   // Service/. Provider stream → ActionSes
 ```
 
 **What is deliberately not in that shape.** Only fields both catalogues can mean the same thing by
-belong on the type, and two nearly got in on the strength of a name alone.
+belong on the type, and three were worth settling one at a time.
 
 - **A row's right to replace the selection stays with the catalogue that replaces it.** The bar keeps
   `DeloresContextAction.rewritesSelection`: it is what adds the bare-output rule and what the island's
@@ -86,9 +84,10 @@ belong on the type, and two nearly got in on the strength of a name alone.
   `previewsResult` setting, at the moment it runs. One shared field would have meant "this reply is a
   rewrite" on one side and "this row previews by default" on the other — and a reader's setting would
   have been able to flip an Action's meaning.
-- **`presentation` is a hint, not Action meaning.** The Context Surface sets none of it and reads none
-  of it, and everything in it is a fact a setting cannot move. `replacesDirectlyByDefault`, which the
-  reader *can* move, is deliberately not there.
+- **The presentation hints stayed with the catalogue that reads them.** `alwaysPreviews` and
+  `showsDiff` are Quick Action facts: its settings and its result surface read them off
+  `BuiltInQuickAction`, and the copy the shared type used to carry had no production reader at all.
+  Neither is on the shape, and neither is `replacesDirectlyByDefault`, which the reader *can* move.
 - **`prompt` is the whole of what is sent**, on both sides — the material-not-instructions rule
   included. It is not the row's task sentence. A descriptor holding only the task sentence would let a
   consumer send a selection to a model without the rule that keeps it from being read as instructions,

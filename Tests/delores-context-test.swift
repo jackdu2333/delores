@@ -692,23 +692,17 @@ struct DeloresContextTest {
                 && !BuiltInQuickAction.summarize.usesTranslationFramework,
             "translate is framework-answered because the shared policy says so, not a second switch")
 
-        // Presentation hints: what the result surface reads, and all of them facts a setting cannot
-        // move. The Context Surface sets none of them.
-        require(
-            summarize.presentation == [.alwaysPreviews]
-                && BuiltInQuickAction.rewrite.definition().presentation == [.showsDiff]
-                && BuiltInQuickAction.translate.definition().presentation.isEmpty,
-            "presentation is a hint the result surface reads, not what an action is")
+        // Presentation is the Command catalogue's own business: its settings and its result surface
+        // read these off the row, and no descriptor carries them for the other catalogue.
         require(
             BuiltInQuickAction.summarize.alwaysPreviews
                 && !BuiltInQuickAction.summarize.showsDiff
                 && BuiltInQuickAction.rewrite.showsDiff
                 && !BuiltInQuickAction.fixGrammar.alwaysPreviews,
-            "the rows' own reads are those hints")
+            "a row's presentation facts are read where they are used")
         require(
-            BuiltInQuickAction.fixGrammar.replacesDirectlyByDefault
-                && !BuiltInQuickAction.fixGrammar.definition().presentation.contains(.alwaysPreviews),
-            "a starting point the reader can move is not one of the hints")
+            BuiltInQuickAction.fixGrammar.replacesDirectlyByDefault,
+            "and a starting point the reader can move is a read of its own")
 
         // The right to replace the selection belongs to the catalogue that replaces it, and a
         // descriptor is never asked to carry it for the other one.
