@@ -86,11 +86,13 @@ Pushed, built and put where the Release channel lives.
 The Debug readings in the section above are unaffected: this lane builds Release, and the two share
 every source file. **The installed build number was 685 while `git rev-list --count HEAD` was one
 higher** at the moment this was written, because recording it pushed the count — the property working
-rather than drifting, and why `delores-versioning.md` refuses to write a count down. It is a reading,
-not a rule: `/Applications/Delores.app` now reports **0.2.0 / 688** and `git rev-list --count HEAD` is
-688 as well, because a later install was made at `c6988efa`. Committing moves the count and installing
-moves the app, so the two agree exactly when the install is current and differ by however many commits
-landed since.
+rather than drifting, and why `delores-versioning.md` refuses to write a count down. That is also why
+this paragraph gives no current count, having been burned once: `/Applications/Delores.app` reports
+**0.2.0 / 688**, which is `git rev-list --count HEAD` at `c6988efa`, the commit it was built from —
+while the count itself has moved on with every commit since, including the ones that wrote this
+sentence. Committing moves the count and installing moves the app, so the two agree only in the
+instant after an install and drift by however many commits land after it, which makes "one behind" a
+coincidence rather than a rule.
 
 **The CI failure needs a cutoff, not a row per push.** The last run that executed anything is
 `d18d143d` at `07:26Z`; every push after it got no runner at all — this one, and `d189a441` and
