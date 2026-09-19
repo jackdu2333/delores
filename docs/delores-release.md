@@ -1,8 +1,12 @@
 # Delores packaging and release boundary
 
-Delores currently has a local signed packaging path, but no public release channel. This separation
-is intentional: a Delores build must never consume Tinycast's release feed, GitHub releases, Homebrew
-casks or signing identity by accident.
+Delores has a local signed packaging path, and since 2026-09-19 a release feed of its own on
+`jackdu2333/delores`: one release, `v0.2.0`, cut by hand. What it still does not have is an
+*automatic* release channel, and that separation is intentional: a Delores build must never consume
+Tinycast's release feed, GitHub releases, Homebrew casks or signing identity by accident. The two
+feeds are separate because the repositories are — Tinycast's releases live on `abue-ammar/tinycast`,
+and `gh release list` in this checkout answers from there unless `--repo` says otherwise, which is
+how a release can look like it already exists here when it does not.
 
 ## Local DMG
 
@@ -28,6 +32,33 @@ The script also asserts what it just built: the app's `CFBundleVersion` has to e
 injected. The injection is a command-line argument, so a build that silently stopped applying it
 would otherwise produce a DMG carrying `project.yml`'s unmaintained fallback instead — the same Build
 for every commit, which is the one thing the number exists not to be.
+
+## Cutting a release by hand
+
+`release.yml` stays off ([Release gate](#release-gate)), so a release is cut from this Mac:
+
+```sh
+./Scripts/build-delores-dmg.sh                       # writes build/Delores-<version>.dmg
+gh release create v0.2.0 --repo jackdu2333/delores \
+  --target "$(git rev-parse HEAD)" --title "Delores 0.2.0" \
+  --notes-file build/RELEASE-NOTES-0.2.0.md build/Delores-0.2.0.dmg
+```
+
+Three details in that command are not incidental, and two of them fail quietly:
+
+- The Tag is Delores' own number and never a Tinycast one
+  ([delores-versioning.md](delores-versioning.md#tags-anchor-a-release)).
+- `--target` takes a **full** commit SHA; a short one is rejected. It must name the commit the DMG was
+  built from, so the Tag and the artifact's Build describe the same tree.
+- The asset name stays ASCII. A non-ASCII prefix is dropped by `gh release create` while the exit
+  status stays 0, so the only way to know what was uploaded is to read it back.
+
+```sh
+gh api repos/jackdu2333/delores/releases/tags/<tag> --jq '.assets[] | {name, size, state}'
+```
+
+The size there has to equal the local file's byte count. Keeping `release.yml` disabled is what keeps
+this a download and an archive rather than an update channel — **nothing in the app reads it.**
 
 ## CI artifact
 

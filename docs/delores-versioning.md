@@ -92,8 +92,15 @@ The Tag is the only thing that names a release. The app's own `CFBundleShortVers
 Tag is built from, so the two can never disagree — which is also why
 `Scripts/build-delores-dmg.sh` names its DMG from the built app rather than from its argument.
 
-This repository currently carries only Tinycast's inherited tags (`v0.9.7`, `v0.9.9-beta.57`, …).
-**Delores has no tag of its own yet, and a Delores tag must never be cut on a Tinycast number.**
+Everything beside Delores' own tags here is inherited from Tinycast (`v0.9.7`, `v0.9.9-beta.57`,
+`v0.2.0-alpha.8`, …), and the two sets are told apart by the line they came from rather than by their
+shape: this one is at `0.2.x` while upstream is at `0.11.x`. **A Delores tag must never be cut on a
+Tinycast number** — `v0.2.0` is Delores', `v0.2.0-alpha.8` is not, and no rule can read that off the
+string alone.
+
+`v0.2.0` is the first Delores tag (2026-09-19). It points at the commit whose count is 691, the commit
+the released DMG was built from, so the Tag and that artifact's Build name the same tree — which is
+the point of writing one down by hand and deriving the other.
 
 ## Channels are not version suffixes
 
@@ -145,7 +152,9 @@ five more times, in five places, none of which agree.
 
 Not yet present, and each will read this document rather than invent its own rule:
 
-- a release feed and GitHub Releases;
+- a release feed and GitHub Releases — **started**: `v0.2.0` was cut by hand on 2026-09-19
+  ([delores-release.md](delores-release.md#cutting-a-release-by-hand)). Nothing in the app reads it,
+  so it is a download and an archive today rather than an update channel;
 - a stable/beta/development bundle ID set (the table above is a start, not a decision);
 - a signing and notarization identity;
 - a Homebrew cask and install URL;
