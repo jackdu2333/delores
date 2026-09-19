@@ -164,7 +164,7 @@ final class AppCore {
         let noteSelectionKey = "notesActiveFileName"
         notesStore = NotesStore(
             repository: NotesRepository(
-                applicationSupportDirectory: AppPaths.applicationSupport()),
+                notesDirectory: AppPaths.notesDirectory(chosenPath: settings.notesDirectoryPath)),
             loadSelection: {
                 UserDefaults.standard.string(forKey: noteSelectionKey).map(NoteID.init(rawValue:))
             },

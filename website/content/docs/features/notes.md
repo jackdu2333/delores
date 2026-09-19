@@ -36,11 +36,14 @@ accident.
 
 ## Files
 
-Notes live in Tinycast's Application Support folder:
+Notes live in a folder Tinycast owns inside Application Support. **Settings → Notes** shows the exact
+path, and **Reveal in Finder** opens it.
 
-```
-~/Library/Application Support/com.tinycast.app/Notes/
-```
+**The folder is yours to choose.** **Choose…** points the collection at any folder — an Obsidian
+vault, iCloud Drive, a folder of your own — and **Restore Default** puts it back. Switching changes
+where notes are read and written; **it does not move any files**, so what was in the old folder stays
+there until you move it yourself in Finder. Point the setting at a folder that already holds `.md`
+files and those files become your notes.
 
 **One `.md` file is one note, and its file name is its title.** There is no frontmatter, no hidden
 ID, no database and no sidecar file. What you see is the file.

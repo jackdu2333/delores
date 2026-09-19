@@ -24,6 +24,8 @@ struct NotesSettingsView: View {
                 SettingsSectionHeader(.notesNotes)
             }
 
+            NotesLocationSection()
+
             FeatureCommandsSection(owner: .notes, anchor: .notesCommands)
                 .settingsEnabled(settings.notesEnabled)
         }

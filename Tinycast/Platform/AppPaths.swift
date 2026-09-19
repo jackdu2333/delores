@@ -14,6 +14,20 @@ enum AppPaths {
         root(.applicationSupportDirectory, bundleID: bundleID)
     }
 
+    /// Where Notes lives until a folder of the person's own is chosen. The default stays inside the
+    /// per-channel support root, so it is still a Dev build's own folder and not a stable's.
+    static func defaultNotesDirectory(
+        bundleID: String = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
+    ) -> URL {
+        applicationSupport(bundleID: bundleID).appendingPathComponent("Notes", isDirectory: true)
+    }
+
+    /// Where Notes lives: the folder the setting names, or the per-channel default when it names none.
+    static func notesDirectory(chosenPath: String) -> URL {
+        chosenPath.isEmpty
+            ? defaultNotesDirectory() : URL(fileURLWithPath: chosenPath, isDirectory: true)
+    }
+
     private static func root(
         _ directory: FileManager.SearchPathDirectory, bundleID: String
     ) -> URL {

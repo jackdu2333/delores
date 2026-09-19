@@ -55,6 +55,7 @@ extension SettingsAnchor {
     static let fileSearchIgnorePatterns = Self(tab: .fileSearch, title: "Ignore Patterns")
 
     static let notesNotes = Self(tab: .notes, title: "Notes")
+    static let notesLocation = Self(tab: .notes, title: "Location")
     static let notesCommands = Self(tab: .notes, title: "Commands")
 
     static let navigationNavigation = Self(tab: .navigation, title: "Navigation")

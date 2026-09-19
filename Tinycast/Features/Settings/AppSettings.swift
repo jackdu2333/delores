@@ -182,6 +182,12 @@ final class AppSettings {
         didSet { defaults.set(notesShowsFormattingBar, forKey: Key.notesShowsFormattingBar.rawValue) }
     }
 
+    /// The folder the notes are written to; empty means the default one. A plain path is enough
+    /// because the app is not sandboxed, so there is no bookmark to re-authorize on the next launch.
+    var notesDirectoryPath: String {
+        didSet { defaults.set(notesDirectoryPath, forKey: Key.notesDirectoryPath.rawValue) }
+    }
+
     /// Off by default: connecting a server is consent to run code Tinycast did not write.
     var mcpEnabled: Bool {
         didSet { defaults.set(mcpEnabled, forKey: Key.mcpEnabled.rawValue) }
@@ -375,6 +381,8 @@ final class AppSettings {
         notesShowsFormattingBar =
             defaults.object(forKey: Key.notesShowsFormattingBar.rawValue) == nil
             || defaults.bool(forKey: Key.notesShowsFormattingBar.rawValue)
+        // Unset is the default folder; only a chosen folder is ever written here.
+        notesDirectoryPath = defaults.string(forKey: Key.notesDirectoryPath.rawValue) ?? ""
         aiEnabled = defaults.bool(forKey: Key.aiEnabled.rawValue)
         mcpEnabled = defaults.bool(forKey: Key.mcpEnabled.rawValue)
         quickActionsEnabled = defaults.bool(forKey: Key.quickActionsEnabled.rawValue)

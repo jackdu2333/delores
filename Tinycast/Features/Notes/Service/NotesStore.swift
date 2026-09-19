@@ -28,10 +28,11 @@ final class NotesStore {
         return NoteTitle.firstLine(of: source) ?? title
     }
     var activeFileURL: URL? { activeID.map(repository.fileURL(for:)) }
-    let notesDirectory: URL
+    /// Read through the repository, so a folder change is visible without rebuilding the store.
+    var notesDirectory: URL { repository.notesDirectory }
     var onIssue: ((Issue) -> Void)?
 
-    private let repository: NotesRepository
+    private var repository: NotesRepository
     private let loadSelection: @Sendable () -> NoteID?
     private let saveSelection: @Sendable (NoteID?) -> Void
     @ObservationIgnored private var saveDebounce: Task<Void, Never>?
@@ -49,7 +50,6 @@ final class NotesStore {
         self.repository = repository
         self.loadSelection = loadSelection
         self.saveSelection = saveSelection
-        notesDirectory = repository.notesDirectory
     }
 
     isolated deinit {
@@ -69,6 +69,24 @@ final class NotesStore {
 
     func reload() async -> Bool {
         await reload(preferredID: activeID ?? loadSelection())
+    }
+
+    /// Points the store at another folder. A switch moves the pointer and never the files — what was
+    /// in the old folder stays there — so the draft has to land before the folder it belongs to moves
+    /// on. A folder that cannot be read leaves the store where it was, so the caller that writes the
+    /// setting afterwards is never told a move happened that did not.
+    @discardableResult
+    func useDirectory(_ directory: URL) async -> Bool {
+        let previous = repository.notesDirectory
+        guard directory.standardizedFileURL != previous.standardizedFileURL else { return true }
+        guard await flush() else { return false }
+        cancelSearch()
+        repository.notesDirectory = directory
+        guard await reload(preferredID: nil) else {
+            repository.notesDirectory = previous
+            return false
+        }
+        return true
     }
 
     func updateSource(_ updated: String) {

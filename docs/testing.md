@@ -404,6 +404,23 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔
 - "Top Half" lands flush with the top of the visible frame, on a secondary display too
 
+### Notes
+
+- Each of **Show Notes**, **Create Note**, **Search Notes** does what its name says, from the launcher
+  and from a global shortcut recorded for it (none ships bound)
+- Render Markdown off is the literal editor; with it on, the caret's line shows its Markdown and the
+  rest of the note stays rendered
+- Turn **Enable Notes** off while the window is open: it hides and its commands leave the launcher;
+  turning it back on still has the draft that was open
+- **Notes Folder** → **Choose…** points at another folder: the switcher then lists *that* folder's
+  notes, one of them opens without a relaunch, and the folder left behind still holds every file it had
+- The path in the row is tilde-abbreviated and is what **Reveal in Finder** opens
+- **Restore Default** appears only while a folder has been chosen, and putting it back lands on the
+  folder `Notes` had before
+- Delete the chosen folder, then reopen the pane: the row warns; the notes come back empty there,
+  because the folder is created again the next time it is used
+- **⌘O** and **Open Folder** open whichever folder is in force, not the default one
+
 ### Settings and backup
 
 - Every pane renders and the sidebar switches without flicker

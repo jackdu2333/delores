@@ -26,6 +26,11 @@ commands and global shortcuts can show, search, or extend the collection.
 - **Tinycast is the only writer.** There is no watcher and no revision check: a save replaces the file
   with what is in the editor. Every show re-lists the folder, so a note added outside appears, but the
   active draft is never re-read from disk.
+- **The folder is a setting, and switching it moves the pointer rather than the files.** Every path the
+  repository builds and every path it validates is derived from the directory it holds at that moment,
+  so the notes already written stay where they were and the new folder's own `.md` files become the
+  collection. A switch flushes the draft first and is undone when the new folder cannot be listed, so
+  the setting is only ever written for a folder the store is actually using.
 - **Search is on demand and unindexed.** An empty switcher query reads metadata plus the head of every
   unnamed note; a nonempty query reads bodies sequentially off-main and retains no collection-sized
   source cache.
@@ -42,11 +47,19 @@ commands and global shortcuts can show, search, or extend the collection.
 
 ## Storage and identity
 
-The per-channel directory is:
+The default per-channel directory is:
 
 ```text
 ~/Library/Application Support/<bundle-id>/Notes/
 ```
+
+Settings > Notes > **Notes Folder** can point the collection anywhere else. It is
+`AppSettings.notesDirectoryPath`, empty meaning the default above, and it is deliberately kept out of
+settings backups: it names a folder on one machine, and an import must not point Notes at a path
+another Mac may not have. It is a plain path rather than a security-scoped bookmark because the app is
+not sandboxed. Switching runs through `NotesStore.useDirectory`, which flushes the draft, re-points
+the repository, and re-lists; a folder that cannot be listed is refused, and the coordinator only
+writes the setting once the store has actually read the new folder. A switch never moves a file.
 
 `NoteID` is the relative filename. A rename therefore returns a new identity; there are no per-note
 launcher items, hotkeys, favorites, or visibility settings that could retain the old one. Immediate
@@ -270,6 +283,15 @@ Settings > Notes > **Show Formatting Bar** is `AppSettings.notesShowsFormattingB
 carried by settings backups. It only takes effect while Render Markdown is on, and its row is disabled
 otherwise.
 
+Settings > Notes > **Notes Folder** is `AppSettings.notesDirectoryPath` — the only one of the three
+that is not a flag. `NotesLocationSection` renders it as a `LabeledContent` whose value is the path,
+tilde-abbreviated, plus a warning glyph when a *chosen* folder has gone; under it sit Choose…, Reveal
+in Finder and — only while a folder has been chosen — Restore Default. The default folder is stored as
+"nothing chosen" rather than as its own path, so Restore Default is always reachable, and a later
+change to where the default lives cannot leave a stale copy of the old one in UserDefaults. The row is
+never disabled by Enable Notes: where the notes should live is worth deciding before anything is
+written. Unlike the two above it, this key travels in no settings backup.
+
 An empty note shows a `Start writing…` placeholder aligned to the 16-point text container inset. The
 character count comes straight off `NSTextStorage.length` and sits in a footer under the editor, or at
 the leading end of the formatting bar's band while the bar shows. Both belong to the editor surface,
@@ -295,6 +317,12 @@ matcher. It covers repository safety, unique-name claiming, derived titles, sear
 autosave, empty collections, switcher interaction, and cancellation, plus the Markdown parser, every
 edit plan, the formatting each selection reports and the reveal policy.
 
+Moving the folder is covered there too: that the draft is written to the folder it belonged to before
+the switch, that the new folder's notes become the collection and one of them becomes active, that the
+folder left behind still holds every file it had, that a switch to the folder already in use leaves a
+live draft alone, that a folder that cannot be listed is refused with the store left where it was, and
+that a folder that does not exist yet is created by the switch.
+
 `Tests/notes-editor-test.swift` uses real TextKit 2 and AppKit undo objects. It runs the native
 Cut/Copy/Paste, Unicode and marked-text cases with rendering off and on, and covers undo isolation, an
 exact source after styling, hidden and revealed markers, restyling after edits and after undo, block
@@ -303,4 +331,4 @@ pasting a URL, and the formatting reports and `format(_:)` the formatting bar us
 `Tests/notes-editor-performance.swift` times install, typing and caret moves on a
 100,000-character note; its budget is in `docs/testing.md`. Window chrome is not automated:
 the Notes manual sweep in `docs/testing.md` covers commands, shortcuts, switcher, focus restoration,
-Finder, Trash recovery, and accessibility.
+Finder, Trash recovery, accessibility, and the folder switch.

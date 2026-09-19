@@ -16,6 +16,7 @@ struct NotesTests {
         testSwitcherInteraction()
         try await testStoreCollectionAndAutosave()
         try await testCollectionMutationsFlushTheDraft()
+        try await testNotesDirectoryIsSwitchable()
         try await testStoreRecoversFromFailures()
 
         print(failures == 0 ? "Notes tests passed" : "\(failures) tests failed")
@@ -366,6 +367,77 @@ struct NotesTests {
             "renaming the active note carries its draft into the new file",
             try String(contentsOf: repository.fileURL(for: selfRenamedID), encoding: .utf8)
                 == "draft before self-rename")
+        store.stop()
+    }
+
+    /// The notes folder is a setting, so the store has to survive being pointed somewhere else — and
+    /// getting there has to leave the notes it left behind exactly where they were.
+    private static func testNotesDirectoryIsSwitchable() async throws {
+        let root = temporaryRoot("directory")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let repository = try repository(in: root)
+        let selection = SelectionBox()
+        let store = NotesStore(
+            repository: repository,
+            loadSelection: { selection.id },
+            saveSelection: { selection.id = $0 })
+
+        _ = await store.create()
+        let originalURL = repository.fileURL(for: try require(store.activeID))
+        check(
+            "the store starts in the folder it was handed",
+            store.notesDirectory.standardizedFileURL == repository.notesDirectory.standardizedFileURL)
+
+        store.updateSource("draft that lands before the folder moves")
+        let elsewhere = root.appendingPathComponent("Elsewhere", isDirectory: true)
+        try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: true)
+        try "already here".write(
+            to: elsewhere.appendingPathComponent("Settled.md"), atomically: true, encoding: .utf8)
+
+        let switched = await store.useDirectory(elsewhere)
+        check("switching reads the folder it was handed", switched)
+        check(
+            "the store's folder follows the repository's",
+            store.notesDirectory.standardizedFileURL == elsewhere.standardizedFileURL)
+        check(
+            "the new folder's notes are the ones listed",
+            store.summaries.map(\.id.rawValue) == ["Settled.md"])
+        check("the new folder's note becomes active", store.activeID?.rawValue == "Settled.md")
+        check(
+            "the draft was written to the folder it belonged to",
+            try String(contentsOf: originalURL, encoding: .utf8)
+                == "draft that lands before the folder moves")
+        check(
+            "the note left behind is still where it was",
+            FileManager.default.fileExists(atPath: originalURL.path))
+        check(
+            "switching persists the note the new folder opened",
+            selection.id?.rawValue == "Settled.md")
+
+        store.updateSource("still typing")
+        let sameFolder = await store.useDirectory(elsewhere)
+        check(
+            "a switch to the folder already in use leaves the live draft alone",
+            sameFolder && store.source == "still typing")
+
+        let notAFolder = root.appendingPathComponent("NotAFolder")
+        try "plain file".write(to: notAFolder, atomically: true, encoding: .utf8)
+        let refused = await store.useDirectory(notAFolder)
+        check("a folder that cannot be listed is refused", !refused)
+        check(
+            "a refused switch leaves the store in the folder it was using",
+            store.notesDirectory.standardizedFileURL == elsewhere.standardizedFileURL)
+        check(
+            "a refused switch leaves the open note alone",
+            store.activeID?.rawValue == "Settled.md")
+
+        let onDemand = root.appendingPathComponent("Made/On/Demand", isDirectory: true)
+        let created = await store.useDirectory(onDemand)
+        check(
+            "a folder that does not exist yet is created by the switch",
+            created && store.summaries.isEmpty && store.activeID == nil)
+        check(
+            "the created folder is on disk", FileManager.default.fileExists(atPath: onDemand.path))
         store.stop()
     }
 
@@ -970,7 +1042,7 @@ struct NotesTests {
         let trash = trashDirectory(in: root)
         try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
         return NotesRepository(
-            applicationSupportDirectory: support ?? root,
+            notesDirectory: (support ?? root).appendingPathComponent("Notes", isDirectory: true),
             trashOperation: { url in
                 try FileManager.default.moveItem(
                     at: url, to: trash.appendingPathComponent(url.lastPathComponent))

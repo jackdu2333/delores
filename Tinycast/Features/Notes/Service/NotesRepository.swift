@@ -23,17 +23,19 @@ struct NotesRepository: Sendable {
         }
     }
 
-    let notesDirectory: URL
+    /// The folder the notes live in — a setting, so it can move. Every path this type builds and
+    /// every path it validates is derived from the value held right now, which is what keeps
+    /// `validatedFileURL` honest across a switch instead of trusting a folder it no longer owns.
+    var notesDirectory: URL
     private let trashOperation: TrashOperation
 
     init(
-        applicationSupportDirectory: URL,
+        notesDirectory: URL,
         trashOperation: @escaping TrashOperation = { url in
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
         }
     ) {
-        notesDirectory = applicationSupportDirectory.appendingPathComponent(
-            "Notes", isDirectory: true)
+        self.notesDirectory = notesDirectory
         self.trashOperation = trashOperation
     }
 

@@ -309,6 +309,50 @@ final class NotesCoordinator {
         NSWorkspace.shared.activateFileViewerSelecting([fileURL])
     }
 
+    // MARK: - Where the notes live
+
+    var notesDirectory: URL { store.notesDirectory }
+
+    var isUsingDefaultNotesDirectory: Bool {
+        store.notesDirectory.standardizedFileURL
+            == AppPaths.defaultNotesDirectory().standardizedFileURL
+    }
+
+    /// Picking a folder is one transaction. The draft is written first, and the setting only moves
+    /// once the store has actually read the new folder — so the pane can never name a folder the
+    /// notes are not in, and the folder left behind keeps every file it already had.
+    func chooseNotesDirectory() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = store.notesDirectory
+        panel.message = L10n.string("Choose a folder for your notes.")
+        // An accessory app opens the panel behind the frontmost app without this.
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let chosen = panel.url else { return }
+        useNotesDirectory(chosen)
+    }
+
+    func restoreDefaultNotesDirectory() {
+        useNotesDirectory(AppPaths.defaultNotesDirectory())
+    }
+
+    func revealNotesDirectory() {
+        NSWorkspace.shared.activateFileViewerSelecting([store.notesDirectory])
+    }
+
+    private func useNotesDirectory(_ directory: URL) {
+        Task { [weak self] in
+            guard let self else { return }
+            // A folder that could not be read leaves the store where it was, so the setting stays too.
+            guard await store.useDirectory(directory) else { return }
+            // The default is stored as "nothing chosen", so Restore Default stays reachable.
+            settings.notesDirectoryPath = isUsingDefaultNotesDirectory ? "" : directory.path
+        }
+    }
+
     func updateSource(_ source: String) {
         closeHeadingMenu()
         store.updateSource(source)

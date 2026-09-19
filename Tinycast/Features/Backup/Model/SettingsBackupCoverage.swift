@@ -55,6 +55,9 @@ enum SettingsBackupCoverage {
     static let deliberatelyExcluded: [String: String] = [
         AppSettingsKey.palettePosition.rawValue:
             "Machine-local geometry: every entry names a display this Mac has, and no other one.",
+        AppSettingsKey.notesDirectoryPath.rawValue:
+            "Names a folder on this Mac. Another one may not have it, and an import would point "
+            + "Notes at a path that is not there.",
         AppSettingsKey.autoSwitchInputSource.rawValue:
             "Names a keyboard input source installed on this Mac; another Mac may not have it.",
         AppSettingsKey.aiEnabled.rawValue:

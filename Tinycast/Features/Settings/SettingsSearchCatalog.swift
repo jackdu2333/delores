@@ -342,6 +342,12 @@ enum SettingsSearchCatalog {
             .notesNotes, "Show Formatting Bar",
             keywords: ["toolbar", "format bar", "buttons", "bold", "heading", "markdown", "格式栏"]),
         .init(
+            .notesLocation, "Notes Folder",
+            keywords: [
+                "folder", "directory", "where", "storage", "path", "vault", "icloud", "保存位置",
+                "文件夹", "目录", "存放位置"
+            ]),
+        .init(
             group: .notesCommands, "Notes commands",
             keywords: ["shortcut", "new note", "search notes", "新建笔记", "搜索笔记"])
     ]
@@ -365,7 +371,9 @@ enum SettingsSearchCatalog {
     ]
 
     private static let delores: [SettingsSearchEntry] = [
-        .init(pane: .delores, keywords: ["companion", "pet", "spatial", "snap", "split", "divider", "桌宠", "吸附", "分屏"]),
+        .init(
+            pane: .delores,
+            keywords: ["companion", "pet", "spatial", "snap", "split", "divider", "桌宠", "吸附", "分屏"]),
         .init(.deloresCompanion, "Enable desktop companion", keywords: ["pet", "presence", "companion"]),
         .init(.deloresSpatial, "Enable window snapping", keywords: ["snap", "drag", "window"]),
         .init(.deloresSpatial, "Enable split divider", keywords: ["seam", "resize", "tiled"])
