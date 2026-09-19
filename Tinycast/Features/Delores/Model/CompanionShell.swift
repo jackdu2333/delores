@@ -40,19 +40,22 @@ enum DeloresCompanionShell {
             }
         }
 
+        /// English source, and itself the catalog key — the creature's name is chrome, so a surface
+        /// shows it through `L10n.text`. The proper noun stays put in both languages; what the
+        /// parentheses carry is the description, and that is what gets translated.
         var displayName: String {
             switch self {
-            case .standard: return "Delores (默认小精灵)"
-            case .dog: return "July (赤柴犬)"
-            case .nezuko: return "Nezuko (祢豆子码农)"
-            case .ddoZvzo: return "ddo-zvzo (呆萌小黄鸡)"
-            case .whaledou: return "Whaledou (鲸鱼豆豆)"
-            case .xiaoHei: return "Xiao Hei (罗小黑/黑猫)"
-            case .gugugaga: return "咕咕嘎嘎 (呆呆鸭)"
-            case .lillia: return "Lillia (雪梅莉莉娅)"
-            case .cat: return "Cat (小猫)"
-            case .duck: return "Duck (黄鸭)"
-            case .redPanda: return "Red Panda (小熊猫)"
+            case .standard: return "Delores (default sprite)"
+            case .dog: return "July (red shiba)"
+            case .nezuko: return "Nezuko (coding demon)"
+            case .ddoZvzo: return "ddo-zvzo (little yellow chick)"
+            case .whaledou: return "Whaledou (whale bean)"
+            case .xiaoHei: return "Xiao Hei (black cat)"
+            case .gugugaga: return "Gugugaga (silly duck)"
+            case .lillia: return "Lillia (snow plum)"
+            case .cat: return "Cat (kitten)"
+            case .duck: return "Duck (yellow duck)"
+            case .redPanda: return "Red Panda (red panda cub)"
             }
         }
     }

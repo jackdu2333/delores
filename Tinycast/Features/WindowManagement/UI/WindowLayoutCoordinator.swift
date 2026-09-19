@@ -116,7 +116,7 @@ final class WindowLayoutCoordinator {
     func captureWindowLayout() {
         let (entries, frontmostEntryID) = WindowLayoutRunner.captureCurrentWindows()
         guard !entries.isEmpty else {
-            core.showMessage("No windows to capture", tone: .neutral)
+            core.showChrome("No windows to capture", tone: .neutral)
             return
         }
         // Gapless by construction, so a later change to `windowGap` can't move every window.

@@ -168,7 +168,9 @@ struct QuickActionsSettingsView: View {
                 modelLabel: {
                     SettingsRowTitle(.quickActionsModel, "Model")
                     Text(
-                    L10n.string("Used by every action without a model of its own, 翻译 included for a pair Apple's translator cannot do."))
+                    L10n.format(
+                        "Used by every action without a model of its own, %@ included for a pair Apple's translator cannot do.",
+                        DeloresContextAction.translateTitle))
                 },
                 effortLabel: {
                     SettingsRowTitle(.quickActionsModel, "Reasoning effort")
@@ -179,7 +181,9 @@ struct QuickActionsSettingsView: View {
             SettingsSectionHeader(.quickActionsModel)
         } footer: {
             Text(
-                    L10n.string("Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. 翻译 keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do."))
+                    L10n.format(
+                        "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.",
+                        DeloresContextAction.translateTitle))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -200,7 +204,9 @@ struct QuickActionsSettingsView: View {
             SettingsSectionHeader(.quickActionsTranslate)
         } footer: {
             Text(
-                    L10n.string("Apple's own translator runs on this Mac, so it costs nothing and reaches no provider; a language downloads the first time you use it. Binding a model to 翻译 replaces the translator, and that route bills like any other."))
+                    L10n.format(
+                        "Apple's own translator runs on this Mac, so it costs nothing and reaches no provider; a language downloads the first time you use it. Binding a model to %@ replaces the translator, and that route bills like any other.",
+                        DeloresContextAction.translateTitle))
             .font(.caption)
             .foregroundStyle(.secondary)
         }

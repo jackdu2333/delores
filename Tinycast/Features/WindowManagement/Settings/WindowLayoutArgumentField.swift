@@ -16,7 +16,7 @@ struct WindowLayoutArgumentField: View {
                 .font(.callout.weight(.medium))
             menu
             if isEditingURL {
-                TextField(L10n.string("https://example.com"), text: $urlText)
+                TextField(L10n.text("https://example.com"), text: $urlText)
                     .textFieldStyle(.plain)
                     .focused($isURLFocused)
                     .focusEffectDisabled()

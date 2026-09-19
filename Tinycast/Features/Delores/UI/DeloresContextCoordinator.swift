@@ -368,10 +368,15 @@ final class DeloresContextCoordinator {
 
     private func show(_ outcome: DeloresActionSession.Outcome, for action: DeloresContextAction) {
         switch outcome {
-        case .finished(let text):
-            conversation.noteAnswer(text)
-            island.showAnswer(.partial(action, text: text), animated: false)
-        case .failed(let reason):
+        // The ceiling's sentence is chrome, so it is added where the card is built rather than
+        // carried inside the answer the model returned.
+        case .finished(let text, let capped):
+            let body = capped ? text + DeloresActionOutcomeCopy.truncated : text
+            conversation.noteAnswer(body)
+            island.showAnswer(.partial(action, text: body), animated: false)
+        case .failed(.emptyResult):
+            island.showAnswer(.failed(action, reason: DeloresActionOutcomeCopy.emptyResult))
+        case .failed(.reason(let reason)):
             island.showAnswer(.failed(action, reason: reason))
         case .stopped(let text):
             conversation.noteAnswer(text ?? "")
@@ -422,10 +427,12 @@ final class DeloresContextCoordinator {
         guard let targetApplication else { return }
         injector.replaceSelection(
             with: text, in: targetApplication,
-            onDelivered: { [weak self] in self?.island.note("已写回原文。") },
+            onDelivered: { [weak self] in
+                self?.island.note(L10n.string("Written back into the selection."))
+            },
             onFailed: { [weak self] in
                 Paster.copyPlainText(text)
-                self?.island.note("写回失败，答案已复制到剪贴板。")
+                self?.island.note(L10n.string("Couldn't write back — the answer is on the clipboard instead."))
             })
     }
 
@@ -476,12 +483,29 @@ final class DeloresContextCoordinator {
     }
 }
 
+extension DeloresContextAction {
+    /// The row's name as the reader sees it.
+    ///
+    /// A shipped row's title is chrome and goes through the catalog, so it reads Translate or 翻译
+    /// depending on the Mac. A row the reader wrote is their own wording and is shown to the letter:
+    /// running it through the catalog could rename their action if it happened to match a key.
+    var displayTitle: String { origin == .shipped ? L10n.text(title) : title }
+
+    /// What the bar calls the translate row, for the settings copy that has to name it.
+    ///
+    /// Spelled out rather than `catalog[0]`: the order of the bar is a product decision the reader can
+    /// change in Settings, and copy that named the wrong row would be worse than copy that names none.
+    static var translateTitle: String {
+        catalog.first { $0.id == "translate" }?.displayTitle ?? "Translate"
+    }
+}
+
 extension DeloresContextIslandAnswer {
     /// The card while the answer is still on its way. A card rather than a bare bar, so the growth
     /// happens once, at the press, instead of once more whenever the first token arrives.
     fileprivate static func running(_ action: DeloresContextAction) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
+            actionTitle: action.displayTitle, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection)
     }
 
@@ -489,7 +513,7 @@ extension DeloresContextIslandAnswer {
     /// because every one of these is a new value handed to a view that has already been built once.
     fileprivate static func partial(_ action: DeloresContextAction, text: String) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
+            actionTitle: action.displayTitle, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection,
             text: text.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -500,7 +524,7 @@ extension DeloresContextIslandAnswer {
         _ action: DeloresContextAction, text: String?
     ) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
+            actionTitle: action.displayTitle, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection,
             text: text, isStopped: true)
     }
@@ -511,7 +535,7 @@ extension DeloresContextIslandAnswer {
     /// with nothing to read, nothing to retry on, and no way to tell the press from a misclick.
     fileprivate static func failed(_ action: DeloresContextAction, reason: String) -> Self {
         DeloresContextIslandAnswer(
-            actionTitle: action.title, actionID: action.id, symbol: action.symbol,
+            actionTitle: action.displayTitle, actionID: action.id, symbol: action.symbol,
             rewritesSelection: action.rewritesSelection, failure: reason)
     }
 }

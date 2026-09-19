@@ -96,8 +96,11 @@ struct DeloresContextTest {
         require(handOff.requiresChatHandoff, "the chat hand-off kind still declares itself")
         require(handOff.needsModel, "a hand-off action still needs a model to answer it")
         require(
-            handOff.progressTitle == "正在打开 AI 对话",
+            handOff.progress == .openingChat,
             "the hand-off card says what it is doing rather than naming the action")
+        require(
+            DeloresContextAction.catalog.allSatisfy { $0.progress == .running },
+            "a row answered in the card reports itself rather than the hand-off")
     }
 
     private static func testCustomRowsOnTheBar() {
@@ -551,17 +554,14 @@ struct DeloresContextTest {
         require(!capped.isCapped, "room to spare leaves the answer open")
 
         // The delta that crosses the line is cut at the line rather than dropped, so the reader
-        // keeps what there was room for and the notice is what marks it partial.
+        // keeps what there was room for. `isCapped` is what marks it partial; the sentence that
+        // says so is chrome and belongs to the surface, so the kept text is body only.
         capped.append("乙丙丁")
         require(capped.isCapped, "a delta past the ceiling caps the answer")
-        require(
-            capped.text.hasSuffix(DeloresAnswerAccumulator.truncationNotice),
-            "a capped answer says it stopped")
-        // Everything before the notice is kept body: the head plus as much of the crossing delta
-        // as there was room for, which together come to exactly the ceiling.
-        let body = capped.text.dropLast(DeloresAnswerAccumulator.truncationNotice.count)
-        require(body.count == limit, "the kept body stops exactly at the ceiling")
-        require(body.starts(with: "甲"), "the kept body starts with what arrived first")
+        // The kept body is the head plus as much of the crossing delta as there was room for, which
+        // together come to exactly the ceiling.
+        require(capped.text.count == limit, "the kept body stops exactly at the ceiling")
+        require(capped.text.starts(with: "甲"), "the kept body starts with what arrived first")
 
         let settled = capped.text
         capped.append(String(repeating: "戊", count: 512))
@@ -572,14 +572,16 @@ struct DeloresContextTest {
     private static func testActionSession() {
         var session = DeloresActionSession()
         require(session.ingest("你好") == .streaming("你好"), "deltas accumulate")
-        require(session.complete() == .finished("你好"), "finished is trimmed")
-        var empty = DeloresActionSession(); require(empty.complete() == .failed(DeloresActionSession.emptyResult), "empty fails")
+        require(session.complete() == .finished("你好", capped: false), "finished is trimmed")
+        var empty = DeloresActionSession(); require(empty.complete() == .failed(.emptyResult), "empty fails")
         var stopped = DeloresActionSession(); require(stopped.stop() == .stopped(nil), "stop before token")
         var cap = DeloresActionSession(); let limit = DeloresAnswerAccumulator.maxCharacters
         _ = cap.ingest(String(repeating: "甲", count: limit - 1))
         require(cap.ingest("乙丙") == .capped, "cap stops transport")
-        guard case .finished(let text) = cap.complete() else { fatalError("FAIL capped") }
-        require(text.hasSuffix(DeloresAnswerAccumulator.truncationNotice), "capped notice")
+        guard case .finished(let text, let capped) = cap.complete() else { fatalError("FAIL capped") }
+        require(
+            capped && text.count == limit,
+            "a capped run reports the ceiling instead of wording it into the answer")
     }
     private static func testActionConversation() {
         var c = DeloresActionConversation()
@@ -649,8 +651,9 @@ struct DeloresContextTest {
             "a pair Apple cannot do, or a text whose language it cannot tell, falls to a model")
     }
     private static func testActionSessionRunner() {
-        require(runSession { $0.yield(.text("你好")); $0.yield(.text("世界")); $0.finish() } == .finished("你好世界"), "runner short stream")
-        require(runSession { $0.finish() } == .failed(DeloresActionSession.emptyResult), "empty stream")
+        let streamed = runSession { $0.yield(.text("你好")); $0.yield(.text("世界")); $0.finish() }
+        require(streamed == .finished("你好世界", capped: false), "runner short stream")
+        require(runSession { $0.finish() } == .failed(.emptyResult), "empty stream")
         require(runSession(isCurrent: { false }) { $0.yield(.text("ghost")); $0.finish() } == nil, "stale generation")
         require(
             runSession { continuation in

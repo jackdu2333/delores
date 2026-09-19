@@ -47,6 +47,16 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     /// Off hides the row from the bar without forgetting its prompt.
     var isEnabled: Bool = true
 
+    /// Which catalogue the row came from.
+    ///
+    /// Only a shipped row's title is chrome the catalog can translate. A row the reader wrote is
+    /// their own wording, and running one that happens to match a key through the catalog would
+    /// rename their action behind their back — so the surface has to be able to tell the two apart.
+    enum Origin: Hashable, Sendable { case shipped, custom }
+    /// Shipped by default: the catalogue below is the only place a row is built without a reader
+    /// having written it.
+    var origin: Origin = .shipped
+
     var requiresChatHandoff: Bool { kind == .ask }
     /// Whether the AI switch gates this one. 翻译 is still in that group only because deciding
     /// otherwise is a product question: unbound, it runs on Apple's translator and needs no model.
@@ -64,12 +74,17 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     }
 
     /// What the opened card says while the answer is still on its way.
-    var progressTitle: String {
-        switch kind {
-        case .ask: return "正在打开 AI 对话"
-        case .ai, .search: return title + "中…"
-        }
+    ///
+    /// A kind rather than a sentence: the pure layer carries no language, so each surface says this
+    /// in the reader's own — and `.ask` and the in-card rows do not say the same thing.
+    enum Progress: Hashable, Sendable {
+        /// The selection is being handed to Chat rather than answered here.
+        case openingChat
+        /// The row is running, in the card that will hold its answer.
+        case running
     }
+
+    var progress: Progress { kind == .ask ? .openingChat : .running }
 }
 
 // MARK: - The catalog
@@ -82,13 +97,18 @@ extension DeloresContextAction {
     /// that argues with whoever reads it, and its treatment of code identifiers as words to decompose
     /// is what makes a bare `LLMService` come back as 大语言模型服务 instead of staying English.
     ///
+    /// A `title` here is chrome, not data: it is an English source string the catalog translates, so
+    /// a reader on an English Mac sees English and one on a zh-Hans Mac sees 翻译. The `prompt` below
+    /// is the opposite — it is what the model is told, it is written in the language the answers come
+    /// back in, and the catalog must never touch it.
+    ///
     /// Four, not the toolbar's five. 润色 was dropped as unused, and 问 AI with it: the reader reads
     /// 解释 as the same request, and keeping a second row that answers it through Chat made the bar
     /// wider than the answers it offered were different.
     static let catalog: [DeloresContextAction] = [
         DeloresContextAction(
             id: "translate",
-            title: "翻译",
+            title: "Translate",
             symbol: "globe",
             kind: .ai,
             prompt: """
@@ -107,7 +127,7 @@ extension DeloresContextAction {
             rewritesSelection: true),
         DeloresContextAction(
             id: "explain",
-            title: "解释",
+            title: "Explain",
             symbol: "questionmark.circle",
             kind: .ai,
             prompt: """
@@ -125,7 +145,7 @@ extension DeloresContextAction {
             rewritesSelection: false),
         DeloresContextAction(
             id: "summarize",
-            title: "总结",
+            title: "Summarize",
             symbol: "doc.text.magnifyingglass",
             kind: .ai,
             prompt: """
@@ -144,7 +164,7 @@ extension DeloresContextAction {
             rewritesSelection: true),
         DeloresContextAction(
             id: "search",
-            title: "搜索",
+            title: "Search",
             symbol: "magnifyingglass",
             kind: .search,
             prompt: "",
@@ -191,7 +211,8 @@ extension DeloresContextAction {
             // Not a rewrite by default. The reader wrote instructions, not permission to overwrite
             // the document they selected text in; asking them to press 替换原文 for a row they
             // invented would be guessing what it does with their text.
-            rewritesSelection: false)
+            rewritesSelection: false,
+            origin: .custom)
     }
 
     /// The reader's own wording, when they replaced this action's prompt in Settings. Nil, or empty,

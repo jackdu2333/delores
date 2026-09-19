@@ -2,6 +2,10 @@ import AppKit
 import SwiftUI
 
 /// Tinycast's own dialogs; `NSAlert`'s nested run loop would let hotkeys stack them.
+///
+/// Its own copy — the dismissal button, the volume prompt — is chrome and goes through the catalog.
+/// What a caller hands in is left alone: a feature passing a file name or a quicklink's own name would
+/// have it renamed if this layer translated every string that arrived.
 @MainActor
 final class DialogController: NSObject, NSWindowDelegate {
     private let settings: AppSettings
@@ -17,7 +21,7 @@ final class DialogController: NSObject, NSWindowDelegate {
 
     func confirm(
         title: String, message: String?, symbol: String?, tone: DialogTone, confirmTitle: String,
-        confirmRole: DialogAction.Role, dismissTitle: String = "Cancel"
+        confirmRole: DialogAction.Role, dismissTitle: String = L10n.string("Cancel")
     ) async -> Bool {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
@@ -43,7 +47,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     func notice(title: String, message: String, symbol: String, tone: DialogTone) async {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
-            actions: [DialogAction(title: "OK", role: .cancel)], defaultIndex: 0, cancelIndex: 0)
+            actions: [DialogAction.chrome("OK", role: .cancel)], defaultIndex: 0, cancelIndex: 0)
         _ = await present(request)
     }
 
@@ -53,7 +57,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     ) async
         -> Bool
     {
-        var actions = [DialogAction(title: "OK", role: .cancel)]
+        var actions = [DialogAction.chrome("OK", role: .cancel)]
         if let recovery { actions.append(DialogAction(title: recovery)) }
         // ↵ lands on the recovery action when there is one to take, not on the OK dismissal.
         let recoveryIndex = recovery == nil ? nil : actions.count - 1
@@ -66,11 +70,12 @@ final class DialogController: NSObject, NSWindowDelegate {
     func pickVolume(current: Float32) async -> Float32? {
         let volume = VolumeState(level: Double(current))
         let request = DialogRequest(
-            title: "Set Volume", message: "Choose the output volume.", symbol: "speaker.wave.2",
+            title: L10n.string("Set Volume"), message: L10n.string("Choose the output volume."),
+            symbol: "speaker.wave.2",
             tone: .neutral,
             actions: [
-                DialogAction(title: "Set Volume"),
-                DialogAction(title: "Cancel", role: .cancel)
+                DialogAction.chrome("Set Volume"),
+                DialogAction.chrome("Cancel", role: .cancel)
             ],
             defaultIndex: 0, cancelIndex: 1, accessory: .volume(volume))
         guard await present(request) == 0 else { return nil }

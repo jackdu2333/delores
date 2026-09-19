@@ -87,7 +87,7 @@ final class UninstallCoordinator {
     /// Stays on the screen: losing a whole scan to copy one path is a poor trade.
     func copyUninstallPath(_ candidate: UninstallCandidate) {
         Paster.copyPlainText(candidate.path)
-        core.showMessage("Copied path")
+        core.showChrome("Copied path")
     }
 
     func showUninstallItemInFinder(_ candidate: UninstallCandidate) {

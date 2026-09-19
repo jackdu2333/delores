@@ -309,15 +309,15 @@ final class DeloresCompanionCoordinator {
 
     private func companionMenuItems() -> [PopoverMenuItem] {
         let creatures = DeloresCompanionShell.Kind.allCases.map { kind in
-            PopoverMenuItem(
+            PopoverMenuItem.chrome(
                 title: kind.displayName, icon: .blank,
-                detail: kind == settings.deloresCompanionKind ? "当前" : nil,
+                detail: kind == settings.deloresCompanionKind ? "Current" : nil,
                 action: { [weak self] in self?.settings.deloresCompanionKind = kind })
         }
         return creatures + [
-            PopoverMenuItem(
-                title: "关闭宠物", icon: .symbol("eye.slash"), startsSection: true,
-                detail: "恢复顶部状态栏",
+            PopoverMenuItem.chrome(
+                title: "Turn off the companion", icon: .symbol("eye.slash"), startsSection: true,
+                detail: "Bring the menu bar back",
                 action: { [weak self] in self?.settings.deloresCompanionEnabled = false }),
         ]
     }

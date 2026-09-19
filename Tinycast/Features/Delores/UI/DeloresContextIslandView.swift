@@ -28,7 +28,7 @@ struct DeloresContextIslandAnswer: Equatable {
     var note: String?
 
     /// Stopped is not running: a reply the reader cut short waits for them the way a finished one
-    /// does, and a spinner beside 重试 would be asking them to wait for something that has stopped.
+    /// does, and a spinner beside Retry would be asking them to wait for something that has stopped.
     var isRunning: Bool { text == nil && failure == nil && !isStopped }
 
     /// Whether asking again would get another answer. Anything that ended without one can be tried
@@ -328,7 +328,7 @@ struct DeloresContextIslandView: View {
         HStack(spacing: metrics.spacing.sm) {
             ProgressView()
                 .controlSize(.small)
-            Text("✦ 正在\(answer.actionTitle)…")
+            Text(L10n.format("✦ %@ in progress…", answer.actionTitle))
                 .font(.system(size: metrics.scaled(12), weight: .medium))
                 .foregroundStyle(Theme.Colors.textSecondary)
             Spacer(minLength: 0)
@@ -342,8 +342,8 @@ struct DeloresContextIslandView: View {
                     .background(Circle().fill(Color.primary.opacity(colorScheme == .dark ? 0.08 : 0.05)))
             }
             .buttonStyle(DeloresIslandPressStyle())
-            .help("停止生成")
-            .accessibilityLabel("停止生成")
+            .help(L10n.string("Stop generating"))
+            .accessibilityLabel(L10n.string("Stop generating"))
         }
         .padding(.horizontal, metrics.scaled(12))
         .padding(.vertical, metrics.scaled(8))
@@ -436,7 +436,7 @@ struct DeloresContextIslandView: View {
                 symbol: isPinned ? "pin.fill" : "pin",
                 isOn: isPinned,
                 iconSize: 11,
-                help: isPinned ? "松开这份选区" : "钉住这份选区"
+                help: L10n.text(isPinned ? "Release this selection" : "Pin this selection")
             ) {
                 isPinned.toggle()
                 onTogglePin(isPinned)
@@ -446,13 +446,14 @@ struct DeloresContextIslandView: View {
             if mode.opensCard {
                 controlButton(
                     .collapse, symbol: "chevron.up", iconSize: 10.5, weight: .semibold,
-                    help: "收起结果"
+                    help: L10n.string("Collapse the answer")
                 ) {
                     onCollapseAnswer()
                 }
             }
             controlButton(
-                .close, symbol: "xmark", iconSize: 10, weight: .bold, help: "关闭（Esc）"
+                .close, symbol: "xmark", iconSize: 10, weight: .bold,
+                help: L10n.string("Close (Esc)")
             ) {
                 onDismiss()
             }
@@ -529,11 +530,11 @@ struct DeloresContextIslandView: View {
             // still arriving has nothing to retry, and stopping belongs with the field the reader is
             // watching fill rather than with the answer's own controls.
             if answer.canRetry {
-                answerButton("重试", symbol: "arrow.clockwise") { onRetryAnswer() }
+                answerButton(L10n.string("Retry"), symbol: "arrow.clockwise") { onRetryAnswer() }
             }
             if answer.text != nil {
                 answerButton(
-                    didCopyAnswer ? "已复制" : "复制",
+                    L10n.text(didCopyAnswer ? "Copied" : "Copy"),
                     symbol: didCopyAnswer ? "checkmark" : "doc.on.doc",
                     confirmed: didCopyAnswer
                 ) {
@@ -544,7 +545,9 @@ struct DeloresContextIslandView: View {
                 // can do, so it is a button the reader presses and never something that happens
                 // on its own the moment the answer lands — and never while it is still arriving.
                 if answer.rewritesSelection, !answer.isRunning {
-                    answerButton("替换原文", symbol: "text.insert") { onReplaceAnswer() }
+                    answerButton(
+                        L10n.string("Replace the selection"), symbol: "text.insert"
+                    ) { onReplaceAnswer() }
                 }
             }
         }
@@ -573,14 +576,14 @@ struct DeloresContextIslandView: View {
         } else if answer.isStopped, answer.text == nil {
             // Stopped before the first token, so there is nothing to show but the fact of it.
             answerParagraph {
-                Text("已停止生成。")
+                Text(L10n.string("Generation stopped."))
                     .foregroundStyle(Theme.Colors.textSecondary)
             }
         } else {
             answerParagraph {
                 HStack(spacing: metrics.spacing.md) {
                     ProgressView().controlSize(.small)
-                    Text("正在生成结果…")
+                    Text(L10n.string("Generating…"))
                         .foregroundStyle(Theme.Colors.textSecondary)
                 }
             }
@@ -616,7 +619,7 @@ struct DeloresContextIslandView: View {
             Image(systemName: "sparkle")
                 .font(.system(size: metrics.scaled(11), weight: .medium))
                 .foregroundStyle(Theme.Colors.textSecondary.opacity(0.6))
-            TextField("对此内容继续追问…", text: $followUpInput)
+            TextField(L10n.string("Ask a follow-up about this…"), text: $followUpInput)
                 .textFieldStyle(.plain)
                 .font(.system(size: metrics.scaled(12)))
                 .onSubmit(submitFollowUp)
@@ -629,8 +632,8 @@ struct DeloresContextIslandView: View {
                         .foregroundStyle(Theme.Colors.destructive.opacity(0.9))
                 }
                 .buttonStyle(DeloresIslandPressStyle())
-                .help("停止生成")
-                .accessibilityLabel("停止生成")
+                .help(L10n.string("Stop generating"))
+                .accessibilityLabel(L10n.string("Stop generating"))
             } else {
                 Button(action: submitFollowUp) {
                     Image(systemName: "arrow.up.circle.fill")
@@ -642,8 +645,8 @@ struct DeloresContextIslandView: View {
                 }
                 .buttonStyle(DeloresIslandPressStyle())
                 .disabled(!canSend)
-                .help("追问（Enter）")
-                .accessibilityLabel("追问")
+                .help(L10n.string("Follow up (Return)"))
+                .accessibilityLabel(L10n.string("Follow up"))
             }
         }
         .padding(.horizontal, metrics.scaled(12))
@@ -714,7 +717,7 @@ struct DeloresContextIslandView: View {
                     VStack(spacing: metrics.scaled(1)) {
                         Image(systemName: action.symbol)
                             .font(.system(size: metrics.scaled(13), weight: weight))
-                        Text(action.title)
+                        Text(action.displayTitle)
                             .font(.system(size: metrics.scaled(10), weight: weight))
                             .lineLimit(1)
                     }
@@ -723,7 +726,7 @@ struct DeloresContextIslandView: View {
                     HStack(spacing: metrics.spacing.xs) {
                         Image(systemName: action.symbol)
                             .font(.system(size: metrics.scaled(12), weight: weight))
-                        Text(action.title)
+                        Text(action.displayTitle)
                             .font(.system(size: metrics.scaled(12), weight: weight))
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
@@ -761,7 +764,7 @@ struct DeloresContextIslandView: View {
         .onHover { inside in
             hoveredActionID = Self.resolvedHover(inside, current: hoveredActionID, id: action.id)
         }
-        .accessibilityLabel(action.title)
+        .accessibilityLabel(action.displayTitle)
     }
 
     private var copyButton: some View {
@@ -769,7 +772,7 @@ struct DeloresContextIslandView: View {
             .copy,
             symbol: didCopy ? "checkmark" : "doc.on.doc",
             tint: didCopy ? Theme.Colors.success : nil,
-            help: didCopy ? "已复制" : "复制选区"
+            help: L10n.text(didCopy ? "Copied" : "Copy selection")
         ) {
             onCopy()
             didCopy = true

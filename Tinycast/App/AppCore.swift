@@ -460,7 +460,7 @@ final class AppCore {
     func confirm(
         title: String, message: String?, symbol: String?, confirmTitle: String,
         tone: DialogTone = .danger, confirmRole: DialogAction.Role = .destructive,
-        dismissTitle: String = "Cancel"
+        dismissTitle: String = L10n.string("Cancel")
     ) async -> Bool {
         await dialogs.confirm(
             title: title, message: message, symbol: symbol, tone: tone, confirmTitle: confirmTitle,
@@ -490,6 +490,13 @@ final class AppCore {
     /// The transient success/info pill, so `messageHUD` stays single-owned alongside `dialogs`.
     func showMessage(_ message: String, tone: DialogTone = .success) {
         messageHUD.show(message: message, tone: tone)
+    }
+
+    /// The same pill for copy the catalog owns. The entry point above is the verbatim one, and it
+    /// stays that: a feature reporting a file name, a model's own error or a wording the reader wrote
+    /// hands it there, so nothing renames itself behind their back.
+    func showChrome(_ message: String, tone: DialogTone = .success) {
+        messageHUD.show(message: L10n.text(message), tone: tone)
     }
 
     /// The same pill with a spinner, for work the reader started and cannot otherwise see running.

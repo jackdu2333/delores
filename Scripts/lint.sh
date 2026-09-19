@@ -22,5 +22,10 @@ fi
 if ! node Scripts/check-settings-search.js; then
     exit 1
 fi
+# A key with no zh-Hans value, or one a call site names and the catalog does not hold, compiles and
+# then renders English on a Chinese Mac. Nothing else reads the catalogs.
+if ! node Scripts/check-localization.js; then
+    exit 1
+fi
 
 echo "✓ lint-clean"

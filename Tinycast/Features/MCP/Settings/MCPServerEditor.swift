@@ -93,7 +93,7 @@ struct MCPServerEditor: View {
                     }
                     if kind == .http {
                         field("URL") {
-                            TextField(L10n.string("URL"), text: $url, prompt: Text(L10n.string("https://example.com/mcp")))
+                            TextField(L10n.string("URL"), text: $url, prompt: Text(L10n.text("https://example.com/mcp")))
                         }
                         field("Header") {
                             TextField(L10n.string("Header"), text: $headerName, prompt: Text(L10n.string("Authorization")))
@@ -103,17 +103,17 @@ struct MCPServerEditor: View {
                         }
                     } else {
                         field("Command") {
-                            TextField(L10n.string("Command"), text: $command, prompt: Text(L10n.string("npx")))
+                            TextField(L10n.string("Command"), text: $command, prompt: Text(L10n.text("npx")))
                         }
                         field("Arguments") {
                             TextField(
                                 "Arguments", text: $argumentText,
-                                prompt: Text(L10n.string("-y @modelcontextprotocol/server-filesystem ~/Desktop")))
+                                prompt: Text(L10n.text("-y @modelcontextprotocol/server-filesystem ~/Desktop")))
                         }
                         field("Environment") {
                             TextField(
                                 "Environment", text: $environmentText,
-                                prompt: Text(L10n.string("GITHUB_TOKEN=…")), axis: .vertical
+                                prompt: Text(L10n.text("GITHUB_TOKEN=…")), axis: .vertical
                             )
                             .lineLimit(2...5)
                         }

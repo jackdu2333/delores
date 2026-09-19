@@ -62,6 +62,26 @@ struct PopoverMenuItem {
     }
 }
 
+extension PopoverMenuItem {
+    /// A row whose title, section header and detail are chrome, so the catalog translates them.
+    ///
+    /// The plain initializers stay the verbatim path: a row naming a file, a reader's own quicklink or
+    /// a provider's error has to render as written even when it happens to match a key. Which of the
+    /// two a row is has to be said where it is built, because nothing downstream can tell a label
+    /// from a filename.
+    static func chrome(
+        title: String, icon: PopoverMenuIcon, isLoading: Bool = false, isEnabled: Bool = true,
+        sectionTitle: String? = nil, startsSection: Bool = false, shortcut: String? = nil,
+        detail: String? = nil, isDestructive: Bool = false, action: @escaping () -> Void
+    ) -> PopoverMenuItem {
+        PopoverMenuItem(
+            title: L10n.text(title), icon: icon, isLoading: isLoading, isEnabled: isEnabled,
+            sectionTitle: sectionTitle.map(L10n.text), startsSection: startsSection,
+            shortcut: shortcut, detail: detail.map(L10n.text), isDestructive: isDestructive,
+            action: action)
+    }
+}
+
 /// A menu's header and rows, built once and consumed by render and keyboard alike.
 struct PopoverMenuContent {
     var header: String?

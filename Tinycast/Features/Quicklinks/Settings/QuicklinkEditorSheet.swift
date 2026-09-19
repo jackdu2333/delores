@@ -53,7 +53,7 @@ struct QuicklinkEditorSheet: View {
                     Spacer()
                     insertMenu
                 }
-                TextField(L10n.string("https://github.com/search?q={argument}"), text: $link)
+                TextField(L10n.text("https://github.com/search?q={argument}"), text: $link)
                     .textFieldStyle(.roundedBorder)
                     .font(.body.monospaced())
                 destinationPreview

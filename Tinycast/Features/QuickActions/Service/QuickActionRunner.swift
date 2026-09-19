@@ -65,10 +65,11 @@ final class QuickActionRunner {
                 if !delta.isEmpty { onDelta(delta) }
             })
         switch outcome {
-        case .finished(let text): return text
-        case .failed(let reason) where reason == DeloresActionSession.emptyResult:
-            throw AIProviderError.responseFailed("The model returned nothing.")
-        case .failed(let reason):
+        case .finished(let text, let capped):
+            return capped ? text + DeloresActionOutcomeCopy.truncated : text
+        case .failed(.emptyResult):
+            throw AIProviderError.responseFailed(DeloresActionOutcomeCopy.emptyResult)
+        case .failed(.reason(let reason)):
             throw AIProviderError.responseFailed(reason)
         case .stopped, .none:
             throw CancellationError()

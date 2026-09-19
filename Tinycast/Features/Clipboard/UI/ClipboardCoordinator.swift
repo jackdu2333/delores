@@ -86,7 +86,7 @@ final class ClipboardCoordinator {
     /// A write only fails on a vanished file, and a palette that just closes explains nothing.
     private func reportUnavailable(_ item: ClipboardItem) {
         guard item.kind == .file else { return }
-        core.showMessage("That file has moved or been deleted.", tone: .danger)
+        core.showChrome("That file has moved or been deleted.", tone: .danger)
     }
 
     /// Both the ⌃⇧X chord and the menu row land here, so neither can skip the confirmation.
@@ -151,7 +151,7 @@ final class ClipboardCoordinator {
         guard let path = item.filePath else { return }
         paletteCoordinator.hidePalette(restoreFocus: false)
         Paster.copyPlainText(path)
-        core.showMessage("Copied path")
+        core.showChrome("Copied path")
     }
 
     /// Nil once the file is gone, so every action reports rather than silently no-opping.

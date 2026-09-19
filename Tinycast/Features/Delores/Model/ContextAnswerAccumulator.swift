@@ -9,15 +9,16 @@ import Foundation
 /// so when it was reached. That protection did not survive the move — the coordinator appended every
 /// delta straight onto a local string — so it lives here instead.
 ///
+/// Reaching the ceiling is *reported* rather than written into the answer: `isCapped` is a fact, and
+/// the sentence that states it is chrome, so it belongs to the surface that draws the card rather
+/// than to the text the reader may copy out of it.
+///
 /// `Sendable`, and importing nothing beyond `Foundation`, because deciding how much of a reply
 /// survives is a policy rather than a view concern — and this is the layer the harness compiles.
 struct DeloresAnswerAccumulator: Equatable, Sendable {
     /// How much of a reply the card keeps. A well-behaved model never gets here: the widest reply
     /// this catalog asks for is 2,048 tokens, which is well under a fifth of this even in Chinese.
     static let maxCharacters = 32_768
-
-    /// Appended once, so a capped answer says it stopped rather than quietly losing its tail.
-    static let truncationNotice = "\n…（内容过长，已停止累积）"
 
     private(set) var text = ""
     private(set) var isCapped = false
@@ -34,14 +35,12 @@ struct DeloresAnswerAccumulator: Equatable, Sendable {
             return
         }
         // The delta that crosses the line is cut at the line rather than dropped: the reader keeps
-        // what there is room for, and the notice is what marks it as partial.
+        // what there is room for, and `isCapped` is what marks it as partial.
         text += String(delta.prefix(room))
         capOff()
     }
 
     private mutating func capOff() {
-        guard !isCapped else { return }
         isCapped = true
-        text += Self.truncationNotice
     }
 }

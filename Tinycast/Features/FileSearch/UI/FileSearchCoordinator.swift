@@ -64,18 +64,18 @@ final class FileSearchCoordinator {
 
     func copyPath(_ result: FileSearchResult) {
         Paster.copyPlainText(result.id)
-        core.showMessage("Copied path")
+        core.showChrome("Copied path")
     }
 
     func copyName(_ result: FileSearchResult) {
         Paster.copyPlainText(result.name)
-        core.showMessage("Copied name")
+        core.showChrome("Copied name")
     }
 
     /// The file itself rather than its path, so Finder and Mail paste a copy of it.
     func copyFile(_ result: FileSearchResult) {
         PasteboardFiles.write(result.url, to: .general)
-        core.showMessage("Copied file")
+        core.showChrome("Copied file")
     }
 
     /// Into whichever app the palette was summoned over, which is what the row's title names.
@@ -92,7 +92,7 @@ final class FileSearchCoordinator {
                     try FileManager.default.trashItem(at: result.url, resultingItemURL: nil)
                 }.value
                 session.remove(result)
-                core.showMessage("Moved to Trash")
+                core.showChrome("Moved to Trash")
             } catch {
                 await core.showNotice(
                     title: "Couldn’t Move \(result.name) to Trash",

@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "\n… truncated — the answer stopped here": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…（内容过长，已停止累积）"
+          }
+        }
+      }
+    },
     "%@ check failed": {
       "localizations": {
         "zh-Hans": {
@@ -57,6 +67,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ — Raycast 导出文件"
+          }
+        }
+      }
+    },
+    "%@…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@中…"
           }
         }
       }
@@ -631,12 +651,12 @@
         }
       }
     },
-    "Apple's own translator runs on this Mac, so it costs nothing and reaches no provider; a language downloads the first time you use it. Binding a model to 翻译 replaces the translator, and that route bills like any other.": {
+    "Apple's own translator runs on this Mac, so it costs nothing and reaches no provider; a language downloads the first time you use it. Binding a model to %@ replaces the translator, and that route bills like any other.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "苹果自带翻译在本机运行，不产生费用、也不会发往任何提供方；某种语言会在首次使用时下载。给「翻译」绑定模型后会替换该翻译器，并按普通模型计费。"
+            "value": "苹果自带翻译在本机运行，不产生费用、也不会发往任何提供方；某种语言会在首次使用时下载。给「%@」绑定模型后会替换该翻译器，并按普通模型计费。"
           }
         }
       }
@@ -687,6 +707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "参数"
+          }
+        }
+      }
+    },
+    "Ask a follow-up about this…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对此内容继续追问…"
           }
         }
       }
@@ -821,6 +851,16 @@
         }
       }
     },
+    "Bring the menu bar back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复顶部状态栏"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "zh-Hans": {
@@ -837,6 +877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "大写锁定 (⇪)"
+          }
+        }
+      }
+    },
+    "Cat (kitten)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat (小猫)"
           }
         }
       }
@@ -957,6 +1007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "为%@选择模型"
+          }
+        }
+      }
+    },
+    "Choose the output volume.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择输出音量。"
           }
         }
       }
@@ -1121,6 +1181,16 @@
         }
       }
     },
+    "Close (Esc)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭（Esc）"
+          }
+        }
+      }
+    },
     "Close Settings": {
       "localizations": {
         "zh-Hans": {
@@ -1177,6 +1247,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Codex · 需要登录"
+          }
+        }
+      }
+    },
+    "Collapse the answer": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起结果"
           }
         }
       }
@@ -1261,6 +1341,66 @@
         }
       }
     },
+    "Copied": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
+          }
+        }
+      }
+    },
+    "Copied file": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制文件"
+          }
+        }
+      }
+    },
+    "Copied name": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制名称"
+          }
+        }
+      }
+    },
+    "Copied path": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制路径"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制"
+          }
+        }
+      }
+    },
+    "Copy selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制选区"
+          }
+        }
+      }
+    },
     "Copy Sign-In Command": {
       "localizations": {
         "zh-Hans": {
@@ -1281,6 +1421,16 @@
         }
       }
     },
+    "Couldn't write back — the answer is on the clipboard instead.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写回失败，答案已复制到剪贴板。"
+          }
+        }
+      }
+    },
     "Create and edit shortcuts in the Shortcuts app. A shortcut works even when it is hidden from the launcher.": {
       "localizations": {
         "zh-Hans": {
@@ -1297,6 +1447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "从当前窗口创建布局"
+          }
+        }
+      }
+    },
+    "Current": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前"
           }
         }
       }
@@ -1367,6 +1527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "日期和时间"
+          }
+        }
+      }
+    },
+    "ddo-zvzo (little yellow chick)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ddo-zvzo (呆萌小黄鸡)"
           }
         }
       }
@@ -1447,6 +1617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delores"
+          }
+        }
+      }
+    },
+    "Delores (default sprite)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores (默认小精灵)"
           }
         }
       }
@@ -1537,6 +1717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "拖移以调整位置"
+          }
+        }
+      }
+    },
+    "Duck (yellow duck)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duck (黄鸭)"
           }
         }
       }
@@ -1831,6 +2021,16 @@
         }
       }
     },
+    "Explain": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解释"
+          }
+        }
+      }
+    },
     "Export": {
       "localizations": {
         "zh-Hans": {
@@ -1991,6 +2191,26 @@
         }
       }
     },
+    "Follow up": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追问"
+          }
+        }
+      }
+    },
+    "Follow up (Return)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追问（Enter）"
+          }
+        }
+      }
+    },
     "Forever": {
       "localizations": {
         "zh-Hans": {
@@ -2051,6 +2271,26 @@
         }
       }
     },
+    "Generating…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在生成结果…"
+          }
+        }
+      }
+    },
+    "Generation stopped.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已停止生成。"
+          }
+        }
+      }
+    },
     "GitHub": {
       "localizations": {
         "zh-Hans": {
@@ -2107,6 +2347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "已授予"
+          }
+        }
+      }
+    },
+    "Gugugaga (silly duck)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "咕咕嘎嘎 (呆呆鸭)"
           }
         }
       }
@@ -2411,6 +2661,16 @@
         }
       }
     },
+    "July (red shiba)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "July (赤柴犬)"
+          }
+        }
+      }
+    },
     "Jump to any open window, or press any menu bar item, from the launcher.": {
       "localizations": {
         "zh-Hans": {
@@ -2567,6 +2827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "浅色"
+          }
+        }
+      }
+    },
+    "Lillia (snow plum)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lillia (雪梅莉莉娅)"
           }
         }
       }
@@ -2741,6 +3011,16 @@
         }
       }
     },
+    "Moved to Trash": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已移到废纸篓"
+          }
+        }
+      }
+    },
     "Moves the window you were last in, using the Accessibility permission Tinycast already uses to paste.": {
       "localizations": {
         "zh-Hans": {
@@ -2841,6 +3121,16 @@
         }
       }
     },
+    "Nezuko (coding demon)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nezuko (祢豆子码农)"
+          }
+        }
+      }
+    },
     "No AI provider configured": {
       "localizations": {
         "zh-Hans": {
@@ -2907,6 +3197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有 MCP 服务器。"
+          }
+        }
+      }
+    },
+    "No windows to capture": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可捕获的窗口"
           }
         }
       }
@@ -3021,6 +3321,16 @@
         }
       }
     },
+    "OK": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好"
+          }
+        }
+      }
+    },
     "Older conversations are deleted permanently.": {
       "localizations": {
         "zh-Hans": {
@@ -3131,6 +3441,16 @@
         }
       }
     },
+    "Opening AI chat": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在打开 AI 对话"
+          }
+        }
+      }
+    },
     "Opens Privacy & Security › Accessibility.": {
       "localizations": {
         "zh-Hans": {
@@ -3237,6 +3557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "把常用应用图标钉在紧凑条右侧（⌘1–⌘5 启动）。"
+          }
+        }
+      }
+    },
+    "Pin this selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "钉住这份选区"
           }
         }
       }
@@ -3441,6 +3771,16 @@
         }
       }
     },
+    "Red Panda (red panda cub)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red Panda (小熊猫)"
+          }
+        }
+      }
+    },
     "Refresh": {
       "localizations": {
         "zh-Hans": {
@@ -3457,6 +3797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "常规"
+          }
+        }
+      }
+    },
+    "Release this selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "松开这份选区"
           }
         }
       }
@@ -3527,6 +3877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "「替换」会把结果直接写入文档——在原应用中撤销即可恢复。「预览」会先显示在面板中。复选框决定是否出现在启动器里；快捷键两种模式都可用。"
+          }
+        }
+      }
+    },
+    "Replace the selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "替换原文"
           }
         }
       }
@@ -3617,6 +3977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "结果"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重试"
           }
         }
       }
@@ -3951,12 +4321,22 @@
         }
       }
     },
-    "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. 翻译 keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.": {
+    "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "有意与聊天模型分开：整天按的快捷键不该每次都走 API 计费。Apple Intelligence 在本机运行，不产生费用。它也会回答上下文栏的行，除非某行指定了自己的模型——那些在 Delores 窗格里、就在对应行旁边设置。「翻译」会继续使用苹果翻译，除非给它绑定了模型，或遇到苹果无法处理的语言对。"
+            "value": "有意与聊天模型分开：整天按的快捷键不该每次都走 API 计费。Apple Intelligence 在本机运行，不产生费用。它也会回答上下文栏的行，除非某行指定了自己的模型——那些在 Delores 窗格里、就在对应行旁边设置。「%@」会继续使用苹果翻译，除非给它绑定了模型，或遇到苹果无法处理的语言对。"
+          }
+        }
+      }
+    },
+    "Set Volume": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设定音量"
           }
         }
       }
@@ -4131,6 +4511,26 @@
         }
       }
     },
+    "Stop generating": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止生成"
+          }
+        }
+      }
+    },
+    "Summarize": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "总结"
+          }
+        }
+      }
+    },
     "Summon the fuzzy app launcher.": {
       "localizations": {
         "zh-Hans": {
@@ -4201,6 +4601,16 @@
         }
       }
     },
+    "That file has moved or been deleted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该文件已被移动或删除。"
+          }
+        }
+      }
+    },
     "The companion is a Surface, not a second chat client: it has no actions, history or model of its own. It hands you to the Context or Command Surface, which own those.": {
       "localizations": {
         "zh-Hans": {
@@ -4251,6 +4661,16 @@
         }
       }
     },
+    "The model returned nothing.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型没有返回任何内容。"
+          }
+        }
+      }
+    },
     "The panel can still translate into another language once it is open.": {
       "localizations": {
         "zh-Hans": {
@@ -4281,12 +4701,12 @@
         }
       }
     },
-    "These are the buttons on the bar that appears when you select text. A row without its own model follows the one chosen in the Quick Actions pane. 翻译 keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.": {
+    "These are the buttons on the bar that appears when you select text. A row without its own model follows the one chosen in the Quick Actions pane. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这些是划词后出现在栏上的按钮。没有单独模型的行会跟随快捷操作窗格中的选择。「翻译」在绑定模型前使用苹果翻译；遇到苹果没有的语言时，回退到共享模型。"
+            "value": "这些是划词后出现在栏上的按钮。没有单独模型的行会跟随快捷操作窗格中的选择。「%@」在绑定模型前使用苹果翻译；遇到苹果没有的语言时，回退到共享模型。"
           }
         }
       }
@@ -4541,6 +4961,16 @@
         }
       }
     },
+    "Turn off the companion": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭宠物"
+          }
+        }
+      }
+    },
     "Turn on Enable Quick Actions to show it when you select text.": {
       "localizations": {
         "zh-Hans": {
@@ -4601,12 +5031,12 @@
         }
       }
     },
-    "Used by every action without a model of its own, 翻译 included for a pair Apple's translator cannot do.": {
+    "Used by every action without a model of its own, %@ included for a pair Apple's translator cannot do.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "供所有没有单独模型的操作使用；「翻译」在苹果翻译无法处理的语言对时也会用到。"
+            "value": "供所有没有单独模型的操作使用；「%@」在苹果翻译无法处理的语言对时也会用到。"
           }
         }
       }
@@ -4687,6 +5117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "网站"
+          }
+        }
+      }
+    },
+    "Whaledou (whale bean)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whaledou (鲸鱼豆豆)"
           }
         }
       }
@@ -4791,6 +5231,26 @@
         }
       }
     },
+    "Written back into the selection.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已写回原文。"
+          }
+        }
+      }
+    },
+    "Xiao Hei (black cat)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xiao Hei (罗小黑/黑猫)"
+          }
+        }
+      }
+    },
     "Your home folder expands to its visible folders and cloud drives, never to its Library.  An empty list searches nothing.": {
       "localizations": {
         "zh-Hans": {
@@ -4827,6 +5287,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "未绑定时此行继续使用苹果翻译；遇到它没有的语言对时，回退到共享模型。"
+          }
+        }
+      }
+    },
+    "✦ %@ in progress…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✦ 正在%@…"
           }
         }
       }

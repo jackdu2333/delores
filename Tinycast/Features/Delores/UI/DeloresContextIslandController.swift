@@ -191,7 +191,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // collapse control. A hand-off card's own width is its label's, which is narrower than the
         // bar, so what comes back is the bar's.
         let withExits = measuredBar(
-            root: makeRoot(.handoff(progressTitle: "正在打开 AI 对话"), pinned: true),
+            root: makeRoot(.handoff(progressTitle: L10n.string("Opening AI chat")), pinned: true),
             metrics: metrics, wish: wish, in: context.screen)
         barWidth = closed.thickness
         barWidthWithExits = withExits.thickness
@@ -647,6 +647,18 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onCompanionRelocated?(placement.petCenter, placement.edge)
     }
 
+    /// The card's headline while an answer is on its way.
+    ///
+    /// A hand-off says where the selection went rather than naming the row; a row answered in the card
+    /// names itself. Composed here because the sentence is chrome, and the catalogue that supplies the
+    /// rows carries no language of its own.
+    private static func progressTitle(for action: DeloresContextAction) -> String {
+        switch action.progress {
+        case .openingChat: return L10n.string("Opening AI chat")
+        case .running: return L10n.format("%@…", action.displayTitle)
+        }
+    }
+
     /// The card's opening for an answer that lands elsewhere. Its own buttons are inert: one press is
     /// the whole gesture.
     private func handOff(_ action: DeloresContextAction) {
@@ -658,7 +670,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             return
         }
         let generation = panelGeneration
-        render(.handoff(progressTitle: action.progressTitle), animated: true)
+        render(.handoff(progressTitle: Self.progressTitle(for: action)), animated: true)
         // Waited out rather than run from the animation's own completion handler: that handler is not
         // main-actor typed, and handing it a callback from here is the data race the compiler is
         // right to refuse. The growth still gets to finish before the bar is taken away, which is the

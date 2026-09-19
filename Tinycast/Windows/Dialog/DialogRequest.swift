@@ -19,6 +19,18 @@ enum DialogTone: Sendable {
     case danger
 }
 
+extension DialogAction {
+    /// A button whose title is chrome: an English source string that is also its catalog key.
+    ///
+    /// The plain initializer stays the verbatim path, so a title the reader supplied — a file name, a
+    /// quicklink they named, a provider's own error — renders as written even when it happens to match
+    /// a key. Which of the two a title is has to be said where it is written, because nothing
+    /// downstream can tell a filename from a sentence.
+    static func chrome(_ title: String, role: Role = .standard) -> DialogAction {
+        DialogAction(title: L10n.text(title), role: role)
+    }
+}
+
 struct DialogRequest {
     let title: String
     var message: String?

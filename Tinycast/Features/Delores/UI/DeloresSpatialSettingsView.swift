@@ -46,7 +46,7 @@ struct DeloresSpatialSettingsView: View {
                 }
             }
             ForEach(DeloresContextAction.catalog) { action in
-                SettingsRow(title: action.title, subtitle: answerRoute(action)) {
+                SettingsRow(title: action.displayTitle, subtitle: answerRoute(action)) {
                     SymbolImage(name: action.symbol, size: Theme.Size.settingsRowIcon)
                         .frame(width: Theme.Size.settingsRowIcon)
                 } trailing: {
@@ -57,8 +57,8 @@ struct DeloresSpatialSettingsView: View {
                             SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
                         }
                         .buttonStyle(.plain)
-                        .help(L10n.format("Choose the model for %@", action.title))
-                        .accessibilityLabel(L10n.format("Choose the model for %@", action.title))
+                        .help(L10n.format("Choose the model for %@", action.displayTitle))
+                        .accessibilityLabel(L10n.format("Choose the model for %@", action.displayTitle))
                     }
                 }
             }
@@ -66,7 +66,9 @@ struct DeloresSpatialSettingsView: View {
             SettingsSectionHeader(.deloresContextBar)
         } footer: {
             Text(
-                    L10n.string("These are the buttons on the bar that appears when you select text. A row without its own model follows the one chosen in the Quick Actions pane. 翻译 keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have."))
+                    L10n.format(
+                        "These are the buttons on the bar that appears when you select text. A row without its own model follows the one chosen in the Quick Actions pane. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.",
+                        DeloresContextAction.translateTitle))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -217,9 +219,9 @@ private struct ContextActionModelSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text(L10n.format("Model for %@", action.title))
+            Text(L10n.format("Model for %@", action.displayTitle))
                 .font(.title2.weight(.bold))
-            Text(L10n.format("Used every time %@ runs from the bar on the text you have selected.", action.title))
+            Text(L10n.format("Used every time %@ runs from the bar on the text you have selected.", action.displayTitle))
                 .foregroundStyle(.secondary)
 
             QuickActionModelPicker(
