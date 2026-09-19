@@ -34,6 +34,25 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
+### 2026-09-19, the Build derived at build time — `e43b62e9`
+
+Added because a document described a rule the code did not implement. `delores-versioning.md` said the
+Build was `git rev-list --count HEAD`; neither lane that produces an installable build passed
+`CURRENT_PROJECT_VERSION` at all, so both shipped `project.yml`'s hand-written `2` — one number for
+every commit, which is the thing the number exists not to be. Read on the Xcode machine the section
+below describes, not the Command Line Tools one at the top of this file.
+
+| Command | Result |
+| --- | --- |
+| `./Scripts/build-delores-dmg.sh` | **✓ BUILD SUCCEEDED**, `verify-signature.sh` green, `build/Delores-0.2.0.dmg` (9.6 MB) written |
+| `PlistBuddy` on the `Delores.app` from that DMG | `CFBundleShortVersionString` **0.2.0**, `CFBundleVersion` **681** — equal to `git rev-list --count HEAD` at `d18d143d`, the tree it was built from. `e43b62e9` itself moved the count to 682, which is the property working rather than drifting: the number names source, so committing changes it. The script's own assertion passed for that reason and not by never being reached |
+| `codesign -dv --verbose=2` on the same app | `Identifier=com.jackdu.delores`, `flags=0x10000(runtime)`, `Authority=HuaciGongju CodeSign` — the Release channel's bundle ID and the local identity, which is what `verify-signature.sh` asserts |
+| `xcodebuild -showBuildSettings … CURRENT_PROJECT_VERSION=9999` | resolves to `CURRENT_PROJECT_VERSION = 9999` while `MARKETING_VERSION` stays `0.2.0` — the override reaches the setting, which is the mechanism both lanes now depend on |
+| `bash -n Scripts/build-delores-dmg.sh` | **✓** parses |
+| `build-app.yml` parsed as YAML | **✓ 8 steps**; the checkout carries `fetch-depth: 0`, and the build step carries both the shallow-history guard and the post-build assertion |
+| `build-app.yml` executed | **not done.** The workflow is `workflow_dispatch` only, so that half of the change is read rather than run. It asserts the same property the local script does, which is why running it is not load-bearing for the claim above |
+| A Debug build | **unchanged, and deliberately not fixed.** A build that skips both lanes — Xcode's Run button, or a hand-run `xcodebuild` — still reports `project.yml`'s `2`. That value is now documented as a fallback rather than a version, which is what the `64078751` row below observed without yet having the vocabulary for it |
+
 ### 2026-09-19, Notes restored — `ebdaeaec` and `64078751`
 
 Read while bringing Notes back from upstream tag `v0.11.3-beta.98`. This is the other machine from the
