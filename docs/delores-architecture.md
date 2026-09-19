@@ -334,6 +334,7 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Palette, AI providers, Keychain, TextInjector, window engine | Tinycast | Inherit upstream |
 | Notes editor, switcher and search | `Tinycast/Features/Notes/`, `Tests/notes-*.swift`, `docs/features/notes.md`, `website/content/docs/features/notes.md` | **Restored 2026-09-19 from tag `v0.11.3-beta.98`**, verbatim, after the pack move parked it. Upstream-owned on purpose: a later upstream Notes change is diffable against these files rather than against a fork. Bringing it back also restored the wiring below |
 | Notes wiring — settings, commands, backup, lifecycle | `AppSettingsKey`/`AppSettings` (`notesEnabled`, `notesRendersMarkdown`, `notesShowsFormattingBar`), `SettingsTab`/`SettingsAnchor`/`SettingsDetailView`/`SettingsSearchCatalog`, `CommandID`/`CommandCatalog`/`LauncherCoordinator`, `BackupCategory`/`BackupBundle`/`BackupComposer`/`BackupApplier`/`BackupActions`/`SettingsBackup`/`SettingsBackupCoverage`, `AppCore` (`notesStore`, `notesCoordinator`, `flushNotesForTermination`), `AppDelegate`, `DesignSystem/Theme.swift`, `website/content/docs/features/meta.json`, `website/src/data/features.ts` | One seam each, sourced from the tag rather than from the reverse of the pack move, so the wiring matches the restored code. `SettingsTab.title` and the pane's copy go through `L10n` because Delores localizes chrome where upstream does not; the six new `Localizable.xcstrings` keys are the only copy Delores authored. The two website files put the page back in the sidebar and on the long-tail card list — the park had removed all three, and the `notes` icon in `feature-icons.ts` was left behind, so nothing new was drawn |
+| Drained subprocess helper | `Tinycast/Platform/ToolRunner.swift`, `Tests/tool-runner-test.swift` | **Adopted out of the parked Updates pack** by `597cad74`, because Apple Shortcuts needed the same helper and upstream keeps its copy inside the feature this fork parked. Delores-owned from there, so the pack keeps upstream's original and a restore takes this file — see "The subprocess helper two features share" |
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
 | Quick Action entry with a captured selection | `QuickActionCoordinator` | **Withdrawn**: the selection-aware `run` overload and its `begin(selectionOverride:)` were removed when the Context Surface stopped executing native Quick Actions — its catalog is its own, and the whole overload had no remaining caller |
@@ -396,6 +397,30 @@ upstream's file whole once someone wants the redesign.
 Do not rename the upstream `Tinycast/` directory, upstream source files, or the generated project
 structure merely to make the product name look uniform. That creates avoidable conflicts on every
 upstream update.
+
+### The subprocess helper two features share
+
+`Tinycast/Platform/ToolRunner.swift` is not an upstream path. Upstream keeps the same helper under
+`Tinycast/Features/Updates/Service/ToolRunner.swift`, inside the feature this fork parked, and `597cad74`
+copied it to `Platform/` so Apple Shortcuts could use it without un-parking the updater. From that point
+on it belongs to no pack, which is a seam worth stating twice:
+
+- **The pack keeps upstream's original, byte for byte.** `Packs/LegacyFeatures/Updates/Service/ToolRunner.swift`
+  is still identical to what tag `v0.11.3-beta.98` holds at upstream's path, so it stays diffable. A
+  restore of the Updates pack therefore takes the active file and drops that copy rather than reviving
+  it, and the pack README says so. The two are deliberately not identical, and a drift check asserting
+  that they are would be asserting the wrong thing.
+- **The active file is Delores-owned and has moved on.** It is the one utility the app's other
+  subprocess calls are built on, and it had two waits that could never end. Its timeout only sent
+  `SIGTERM` and still waited on an exit that a tool ignoring the signal would never produce; and its
+  drain ended with a `readToEnd` that blocks until *every* writer closes the pipe, including a child the
+  tool left behind. Either one could hold `AppleShortcutCoordinator.refreshTask` open for the life of
+  the process, after which its own guard drops every later refresh. Both were reproduced before being
+  fixed: the old file, unchanged, failed to return from `run` after six seconds in each case. The pipe
+  now has exactly one reader, the exit and the end of the file are joined before the answer is read, and
+  the budget escalates `SIGTERM` → `SIGKILL` → a bounded wait that ends even when nothing else does.
+  `Tests/tool-runner-test.swift` pins all of it, including that a tool which writes before its own child
+  outlives it still yields both its output and a truthful status.
 
 ## Upstream workflow
 

@@ -10,7 +10,11 @@ Parked here:
 - `Snippets/` — keyword listening, Markdown snippets, and snippet-specific UI.
 - `Calendar/` and `Camera/` — calendar/meeting flows and camera preview surfaces.
 - `CustomCommands/` — shell commands, script import, argument forms, and output UI.
-- `Updates/` — in-app updater, release feed, installer, and relaunch.
+- `Updates/` — in-app updater, release feed, installer, and relaunch. Its `Service/ToolRunner.swift` is
+  upstream's original, byte for byte; the active target adopted the same helper at
+  `Tinycast/Platform/ToolRunner.swift`, where it has since moved on. A restore therefore takes the
+  active file and drops this one rather than reviving this one — the two are deliberately no longer
+  identical, and copying this version over that one would put the bugs back.
 - `Notes/` — **restored to the active target on 2026-09-19** (`Tinycast/Features/Notes/`, from upstream
   tag `v0.11.3-beta.98`). This copy is the superseded snapshot the pack move parked, kept only until
   someone decides it can go: it is an older, smaller Notes than the one the app now builds.

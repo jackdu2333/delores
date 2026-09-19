@@ -141,6 +141,7 @@ run app-name-test          Tinycast/Platform/AppDisplayName.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/FavoriteSlots.swift
 run apple-shortcut-test    Tinycast/Features/AppleShortcuts/Model/*.swift
+run tool-runner-test       Tinycast/Platform/ToolRunner.swift
 run calc-test              Tinycast/Features/Calculator/Model/*.swift
 run index calc-performance Tinycast/Features/Calculator/Model/*.swift
 run clipboard-test         Tinycast/Features/Clipboard/Model/ClipboardStore.swift \

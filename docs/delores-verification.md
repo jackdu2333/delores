@@ -103,8 +103,9 @@ in all three readings.
 The suite shrank between this reading and the one below it. Notes, Emoji, Extensions, Snippets,
 Calendar, Camera, Updates, Support and Custom Commands moved out of `Tests/` with their packs to
 `Packs/LegacyFeatures/Tests/`, which this suite does not run, so it now queues 53 harnesses rather
-than 73. **Notes has since been restored, so the live count is 55** — this paragraph describes the
-suite as it stood at `0fa06c93`, and the section above carries the current number.
+than 73. **Notes has since been restored, and the subprocess helper has gained a harness of its own,
+so the live count is 56** — this paragraph describes the suite as it stood at `0fa06c93`, and the
+sections above it carry the current number.
 
 | Command | Result |
 | --- | --- |

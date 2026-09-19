@@ -27,7 +27,14 @@ enum AppleShortcutRunner {
         } catch {
             throw Failure(errorDescription: error.localizedDescription)
         }
-        guard result.succeeded else { throw Failure(errorDescription: result.tail) }
+        guard result.succeeded else {
+            // A tool that was stopped has nothing to say for itself, so the reason has to come from
+            // here; reporting "no output" for a timeout would read like a tool that failed quietly.
+            if result.timedOut, let timeout {
+                throw Failure(errorDescription: "Did not finish within \(Int(timeout)) s.")
+            }
+            throw Failure(errorDescription: result.tail)
+        }
         return result
     }
 }

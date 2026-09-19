@@ -42,6 +42,11 @@ The list is re-read whenever the launcher opens, the Settings pane appears, or t
 The tool answers in ~10 ms, so an overlapping request is simply dropped rather than queued. An
 unchanged list publishes nothing.
 
+A read gets 10 seconds. One that has not answered by then is signalled, and if it will not go, killed
+— so a wedged `shortcuts` tool delays at most one refresh rather than holding the slot open forever.
+It counts as a failed read, which is what keeps the last good library in place and lets the next
+launcher open try again. `ToolRunner` is where both of those waits live.
+
 ## Sweeping deleted shortcuts
 
 A read that differs from the last one — and the first read after launch, so a shortcut deleted while
