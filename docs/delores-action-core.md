@@ -80,10 +80,11 @@ belong on the type, and three were worth settling one at a time.
 
 - **A row's right to replace the selection stays with the catalogue that replaces it.** The bar keeps
   `DeloresContextAction.rewritesSelection`: it is what adds the bare-output rule and what the island's
-  write-back button reads. The Command Surface answers the same question later, from the reader's own
-  `previewsResult` setting, at the moment it runs. One shared field would have meant "this reply is a
-  rewrite" on one side and "this row previews by default" on the other — and a reader's setting would
-  have been able to flip an Action's meaning.
+  write-back button reads. The Command Surface encodes no equivalent permission at all: its
+  `previewsResult` setting only chooses immediate replacement over preview-first, and a previewed
+  result still offers an explicit Replace once it finishes. One shared field would have meant "this
+  reply is a rewrite" on one side and "this row previews by default" on the other — and a reader's
+  setting would have been able to flip an Action's meaning.
 - **The presentation hints stayed with the catalogue that reads them.** `alwaysPreviews` and
   `showsDiff` are Quick Action facts: its settings and its result surface read them off
   `BuiltInQuickAction`, and the copy the shared type used to carry had no production reader at all.
