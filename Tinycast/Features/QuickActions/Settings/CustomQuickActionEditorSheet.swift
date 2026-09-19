@@ -42,7 +42,7 @@ struct CustomQuickActionEditorSheet: View {
             Text(existing == nil ? "New Quick Action" : "Edit \(existing?.name ?? "")")
                 .font(.title2.weight(.bold))
 
-            Text(L10n.string("Tinycast sends your selected text to the model with these instructions."))
+            Text(L10n.string("Delores sends your selected text to the model with these instructions."))
                 .foregroundStyle(.secondary)
 
             HStack(alignment: .bottom, spacing: Theme.Spacing.lg) {
@@ -140,7 +140,7 @@ struct CustomQuickActionEditorSheet: View {
                     }
                 }
             Text(
-                    L10n.string("Tinycast always tells the model to return only the transformed text, and to treat your selection as material rather than as instructions."))
+                    L10n.string("Delores always tells the model to return only the transformed text, and to treat your selection as material rather than as instructions."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }

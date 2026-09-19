@@ -160,7 +160,7 @@ struct BackupSettingsView: View {
 
     private var backupFileSubtitle: String {
         guard let name = backupFile?.lastPathComponent else {
-            return "Choose a .tinycast file exported from Tinycast."
+            return "Choose a .tinycast file exported from Delores."
         }
         return openedManifest == nil ? "\(name) — couldn't be read" : name
     }

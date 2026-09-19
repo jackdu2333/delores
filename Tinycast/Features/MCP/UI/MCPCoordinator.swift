@@ -104,7 +104,7 @@ final class MCPCoordinator {
         let choices: [MCPTrustChoice] = [.always, .thisChat, .refuse]
         let index = await core.choose(
             title: "Let \(server.title) run its tools?",
-            message: "The model wants to call \u{201C}\(tool)\u{201D}. Tinycast did not write this "
+            message: "The model wants to call \u{201C}\(tool)\u{201D}. Delores did not write this "
                 + "server and cannot vouch for what it does.",
             symbol: "wrench.and.screwdriver",
             options: [

@@ -139,7 +139,7 @@ final class CodexAppServerClient {
                 params: [
                     "clientInfo": [
                         "name": "tinycast",
-                        "title": "Tinycast",
+                        "title": "Delores",
                         "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
                             ?? "0"
                     ],
@@ -248,7 +248,7 @@ final class CodexAppServerClient {
         default:
             try? send(
                 CodexAppServerProtocol.errorResponse(
-                    id: id, message: "Tinycast does not expose Codex tools."))
+                    id: id, message: "Delores does not expose Codex tools."))
             return
         }
         try? send(CodexAppServerProtocol.response(id: id, result: result))

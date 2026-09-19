@@ -28,7 +28,7 @@ struct QuickActionsSettingsView: View {
                     // Every shortcut fails without it; better said here than found one press later.
                     SettingsRow(
                         title: L10n.string("Accessibility permission required"),
-                        subtitle: "Tinycast can't read your selection until it is granted."
+                        subtitle: "Delores can't read your selection until it is granted."
                     ) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(Theme.Colors.destructive)
@@ -318,7 +318,7 @@ struct QuickActionsSettingsView: View {
                 Text("Customize \(action.title)")
                     .font(.title2.weight(.bold))
 
-                Text("Tell Tinycast how you want \(action.title) to handle your selected text.")
+                Text("Tell Delores how you want \(action.title) to handle your selected text.")
                     .foregroundStyle(.secondary)
 
                 TextEditor(text: $instructions)

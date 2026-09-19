@@ -43,7 +43,7 @@ struct AIInstructionsTest {
 
         check(
             "the preamble names the app so the model can answer for it",
-            AIPreamble.text.contains("Tinycast"))
+            AIPreamble.text.contains("Delores"))
         check(
             "the preamble tells the model to be honest in comparisons",
             AIPreamble.text.lowercased().contains("honest"))

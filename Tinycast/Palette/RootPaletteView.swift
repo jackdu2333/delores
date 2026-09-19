@@ -120,7 +120,7 @@ struct RootPaletteView: View {
     /// The bottom-left app menu content (About / Settings).
     private var appMenuContent: PopoverMenuContent {
         PopoverMenuContent(items: [
-            PopoverMenuItem(title: L10n.string("About Tinycast"), systemImage: "info.circle") {
+            PopoverMenuItem(title: L10n.string("About Delores"), systemImage: "info.circle") {
                 core.settingsCoordinator.showAbout()
             },
             PopoverMenuItem(title: L10n.string("Settings"), systemImage: "gearshape", shortcut: "⌘,") {

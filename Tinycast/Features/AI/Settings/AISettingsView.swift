@@ -77,7 +77,7 @@ struct AISettingsView: View {
                 select: { $0.map(settings.select) },
                 modelLabel: {
                     SettingsRowTitle(.aiDefault, "Default model")
-                    Text(L10n.string("Used by Tinycast features unless they ask you to choose another model."))
+                    Text(L10n.string("Used by Delores features unless they ask you to choose another model."))
                 },
                 effortLabel: {
                     SettingsRowTitle(.aiDefault, "Reasoning effort")
@@ -99,7 +99,7 @@ struct AISettingsView: View {
         }
         return settings.defaultModel == nil
             ? "Turn on Apple Intelligence, or add a provider above."
-            : "Tinycast contacts only the selected provider when an AI feature runs."
+            : "Delores contacts only the selected provider when an AI feature runs."
     }
 
     /// Why the on-device route is missing from the picker, or `nil` when it is there.
@@ -177,7 +177,7 @@ struct AISettingsView: View {
         return Section {
             Toggle(isOn: $settings.systemPromptEnabled) {
                     SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
-                Text(L10n.string("Off sends nothing ahead of your message, not even what Tinycast says about itself."))
+                Text(L10n.string("Off sends nothing ahead of your message, not even what Delores says about itself."))
             }
             SystemPromptEditor(text: $settings.systemPrompt)
                 .settingsEnabled(settings.systemPromptEnabled)
@@ -185,7 +185,7 @@ struct AISettingsView: View {
             SettingsSectionHeader(.aiSystemPrompt)
         } footer: {
             Text(
-                    L10n.string("Your text is sent ahead of every message in every chat, after what Tinycast already tells the model about itself. Both are billed again on each turn."))
+                    L10n.string("Your text is sent ahead of every message in every chat, after what Delores already tells the model about itself. Both are billed again on each turn."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -258,7 +258,7 @@ struct AISettingsView: View {
             SettingsSectionHeader(.aiInstalledAI)
         } footer: {
             Text(
-                    L10n.string("Tinycast uses the Codex, Claude and OpenCode commands already installed and signed in on this Mac. Tinycast never stores or asks for their API keys."))
+                    L10n.string("Delores uses the Codex, Claude and OpenCode commands already installed and signed in on this Mac. Delores never stores or asks for their API keys."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -392,7 +392,7 @@ struct AISettingsView: View {
                     }
                 } label: {
                     Text("\(kind.title) · Not installed")
-                    Text("Tinycast could not find the \(kind.command) command.")
+                    Text("Delores could not find the \(kind.command) command.")
                 }
             case .failed(let message):
                 LabeledContent {

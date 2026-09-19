@@ -17,7 +17,7 @@ struct PermissionsSettingsView: View {
                     .foregroundStyle(accessibilityTrusted ? Color.green : Color.orange)
                 } label: {
                     SettingsRowTitle(.permissionsAccessibility, "Accessibility")
-                    Text(L10n.string("Lets Tinycast paste a clipboard item into the app you were using."))
+                    Text(L10n.string("Lets Delores paste a clipboard item into the app you were using."))
                 }
 
                 LabeledContent {
@@ -31,7 +31,7 @@ struct PermissionsSettingsView: View {
             } header: {
                 SettingsSectionHeader(.permissionsAccessibility)
             } footer: {
-                Text(L10n.string("Access Tinycast needs to work with other apps."))
+                Text(L10n.string("Access Delores needs to work with other apps."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

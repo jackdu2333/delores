@@ -291,7 +291,7 @@
         }
       }
     },
-    "About Tinycast": {
+    "About Delores": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -301,7 +301,7 @@
         }
       }
     },
-    "Access Tinycast needs to work with other apps.": {
+    "Access Delores needs to work with other apps.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -841,7 +841,7 @@
         }
       }
     },
-    "Both read and move other apps' windows through the same Accessibility permission Tinycast uses to paste. Neither is enabled by default, and neither is restored from a settings backup.": {
+    "Both read and move other apps' windows through the same Accessibility permission Delores uses to paste. Neither is enabled by default, and neither is restored from a settings backup.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -961,7 +961,7 @@
         }
       }
     },
-    "Choose a .tinycast file exported from Tinycast.": {
+    "Choose a .tinycast file exported from Delores.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -1627,6 +1627,96 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delores (默认小精灵)"
+          }
+        }
+      }
+    },
+    "Delores always tells the model to return only the transformed text, and to treat your selection as material rather than as instructions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 总会要求模型只返回转换后的文本，并把你的选区当作材料而不是指令。"
+          }
+        }
+      }
+    },
+    "Delores can't read or move other apps' windows until it is granted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在授予权限前，Delores 无法读取或移动其他应用的窗口。"
+          }
+        }
+      }
+    },
+    "Delores can't read your selection until it is granted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在授予权限前，Delores 无法读取选区。"
+          }
+        }
+      }
+    },
+    "Delores could not find the %@ command.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 找不到 %@ 命令。"
+          }
+        }
+      }
+    },
+    "Delores needs Accessibility access to remap keys.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 需要辅助功能权限才能重映射按键。"
+          }
+        }
+      }
+    },
+    "Delores privately learns which results you choose for each query. Reset all learned choices to restore the default order.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 会在本机私下学习你每次查询选择的结果。重置全部学习记录即可恢复默认顺序。"
+          }
+        }
+      }
+    },
+    "Delores sends your selected text to the model with these instructions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 会把所选文本连同这些指令发给模型。"
+          }
+        }
+      }
+    },
+    "Delores uses the Codex, Claude and OpenCode commands already installed and signed in on this Mac. Delores never stores or asks for their API keys.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 使用这台 Mac 上已经安装并登录的 Codex、Claude 和 OpenCode 命令。Delores 不会存储或索要它们的 API 密钥。"
+          }
+        }
+      }
+    },
+    "Delores will relearn your preferred results as you use the launcher.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你继续使用启动器时，Delores 会重新学习你偏好的结果。"
           }
         }
       }
@@ -2421,7 +2511,7 @@
         }
       }
     },
-    "Hyper Key shortcuts are shown in Tinycast with ✦.": {
+    "Hyper Key shortcuts are shown in Delores with ✦.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -2651,7 +2741,7 @@
         }
       }
     },
-    "Join the Tinycast community": {
+    "Join the Delores community": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -2701,7 +2791,7 @@
         }
       }
     },
-    "Keep the Tinycast icon in the menu bar. Shortcuts still work when hidden.": {
+    "Keep the Delores icon in the menu bar. Shortcuts still work when hidden.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -2811,7 +2901,7 @@
         }
       }
     },
-    "Lets Tinycast paste a clipboard item into the app you were using.": {
+    "Lets Delores paste a clipboard item into the app you were using.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -2901,7 +2991,7 @@
         }
       }
     },
-    "Match macOS, or pin Tinycast to Light or Dark.": {
+    "Match macOS, or pin Delores to Light or Dark.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -3021,7 +3111,7 @@
         }
       }
     },
-    "Moves the window you were last in, using the Accessibility permission Tinycast already uses to paste.": {
+    "Moves the window you were last in, using the Accessibility permission Delores already uses to paste.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -3271,7 +3361,7 @@
         }
       }
     },
-    "Off sends nothing ahead of your message, not even what Tinycast says about itself.": {
+    "Off sends nothing ahead of your message, not even what Delores says about itself.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -4501,7 +4591,7 @@
         }
       }
     },
-    "Start Tinycast automatically when you log in.": {
+    "Start Delores automatically when you log in.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -4781,96 +4871,6 @@
         }
       }
     },
-    "Tinycast always tells the model to return only the transformed text, and to treat your selection as material rather than as instructions.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 总会要求模型只返回转换后的文本，并把你的选区当作材料而不是指令。"
-          }
-        }
-      }
-    },
-    "Tinycast can't read or move other apps' windows until it is granted.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在授予权限前，Delores 无法读取或移动其他应用的窗口。"
-          }
-        }
-      }
-    },
-    "Tinycast can't read your selection until it is granted.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在授予权限前，Delores 无法读取选区。"
-          }
-        }
-      }
-    },
-    "Tinycast could not find the %@ command.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 找不到 %@ 命令。"
-          }
-        }
-      }
-    },
-    "Tinycast needs Accessibility access to remap keys.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 需要辅助功能权限才能重映射按键。"
-          }
-        }
-      }
-    },
-    "Tinycast privately learns which results you choose for each query. Reset all learned choices to restore the default order.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 会在本机私下学习你每次查询选择的结果。重置全部学习记录即可恢复默认顺序。"
-          }
-        }
-      }
-    },
-    "Tinycast sends your selected text to the model with these instructions.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 会把所选文本连同这些指令发给模型。"
-          }
-        }
-      }
-    },
-    "Tinycast uses the Codex, Claude and OpenCode commands already installed and signed in on this Mac. Tinycast never stores or asks for their API keys.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delores 使用这台 Mac 上已经安装并登录的 Codex、Claude 和 OpenCode 命令。Delores 不会存储或索要它们的 API 密钥。"
-          }
-        }
-      }
-    },
-    "Tinycast will relearn your preferred results as you use the launcher.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你继续使用启动器时，Delores 会重新学习你偏好的结果。"
-          }
-        }
-      }
-    },
     "Tools from every enabled server are offered to the model; type @slug to address one directly. The first call of a chat asks before it runs. Credentials stay in your login Keychain.": {
       "localizations": {
         "zh-Hans": {
@@ -5031,22 +5031,22 @@
         }
       }
     },
+    "Used by Delores features unless they ask you to choose another model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "供 Delores 各功能使用，除非它们让你另选模型。"
+          }
+        }
+      }
+    },
     "Used by every action without a model of its own, %@ included for a pair Apple's translator cannot do.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "供所有没有单独模型的操作使用；「%@」在苹果翻译无法处理的语言对时也会用到。"
-          }
-        }
-      }
-    },
-    "Used by Tinycast features unless they ask you to choose another model.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "供 Delores 各功能使用，除非它们让你另选模型。"
           }
         }
       }
@@ -5221,6 +5221,16 @@
         }
       }
     },
+    "With nothing bound this row keeps Apple's translator; a pair it does not have falls back to the shared model.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未绑定时此行继续使用苹果翻译；遇到它没有的语言对时，回退到共享模型。"
+          }
+        }
+      }
+    },
     "Write your whole library to a JSON file.": {
       "localizations": {
         "zh-Hans": {
@@ -5261,7 +5271,7 @@
         }
       }
     },
-    "Your text is sent ahead of every message in every chat, after what Tinycast already tells the model about itself. Both are billed again on each turn.": {
+    "Your text is sent ahead of every message in every chat, after what Delores already tells the model about itself. Both are billed again on each turn.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -5277,16 +5287,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "© 2026 Abue Ammar · 以 AGPL-3.0 发布"
-          }
-        }
-      }
-    },
-    "With nothing bound this row keeps Apple's translator; a pair it does not have falls back to the shared model.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未绑定时此行继续使用苹果翻译；遇到它没有的语言对时，回退到共享模型。"
           }
         }
       }

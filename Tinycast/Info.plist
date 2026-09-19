@@ -34,7 +34,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.tinycast.backup</string>
 			<key>UTTypeDescription</key>
-			<string>Tinycast Backup</string>
+			<string>Delores Backup</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>

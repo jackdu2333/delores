@@ -20,7 +20,7 @@ struct InstalledCLIProvider: AIProvider {
 @MainActor
 private final class InstalledCLITurnRunner {
     private static let safetyInstructions = """
-        You are generating text inside Tinycast. Do not invoke tools, read files, inspect the \
+        You are generating text inside Delores. Do not invoke tools, read files, inspect the \
         environment, access external resources, or modify anything. Use only the conversation and \
         instructions in this request.
         """
@@ -104,7 +104,7 @@ private final class InstalledCLITurnRunner {
         } catch {
             continuation.finish(
                 throwing: AIProviderError.unavailable(
-                    "Tinycast could not prepare its private AI workspace."))
+                    "Delores could not prepare its private AI workspace."))
             return
         }
 
@@ -183,7 +183,7 @@ private final class InstalledCLITurnRunner {
         case .openCode:
             var result = [
                 "run", "--pure", "--format", "json", "--model", model,
-                "--dir", workspace.path, "--title", "Tinycast"
+                "--dir", workspace.path, "--title", "Delores"
             ]
             if let effort { result += ["--variant", effort] }
             return result

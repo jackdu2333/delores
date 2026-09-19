@@ -155,7 +155,7 @@ struct DeloresSpatialSettingsView: View {
             SettingsSectionHeader(.deloresSpatial)
         } footer: {
             Text(
-                    L10n.string("Both read and move other apps' windows through the same Accessibility permission Tinycast uses to paste. Neither is enabled by default, and neither is restored from a settings backup."))
+                    L10n.string("Both read and move other apps' windows through the same Accessibility permission Delores uses to paste. Neither is enabled by default, and neither is restored from a settings backup."))
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -196,7 +196,7 @@ struct DeloresSpatialSettingsView: View {
     private var needsAccessibilitySubtitle: String {
         isTrusted
             ? ""
-            : "Tinycast can't read or move other apps' windows until it is granted."
+            : "Delores can't read or move other apps' windows until it is granted."
     }
 }
 

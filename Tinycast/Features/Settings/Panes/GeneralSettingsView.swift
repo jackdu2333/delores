@@ -26,7 +26,7 @@ struct GeneralSettingsView: View {
                 "Pressing %@ will trigger the left %@ modifier keys.",
                 L10n.text(settings.hyperKey.title), hyperGlyphs)
             + " "
-            + L10n.string("Hyper Key shortcuts are shown in Tinycast with ✦.")
+            + L10n.string("Hyper Key shortcuts are shown in Delores with ✦.")
     }
 
     var body: some View {
@@ -57,7 +57,7 @@ struct GeneralSettingsView: View {
                 SettingsSectionHeader(.generalSearch)
             } footer: {
                 Text(
-                    L10n.string("Tinycast privately learns which results you choose for each query. Reset all learned choices to restore the default order.")
+                    L10n.string("Delores privately learns which results you choose for each query. Reset all learned choices to restore the default order.")
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -83,7 +83,7 @@ struct GeneralSettingsView: View {
                         Button(L10n.string("Grant Access…")) { Permissions.openAccessibilitySettings() }
                     } label: {
                         Label(
-                            L10n.string("Tinycast needs Accessibility access to remap keys."),
+                            L10n.string("Delores needs Accessibility access to remap keys."),
                             systemImage: "exclamationmark.triangle"
                         )
                         .foregroundStyle(.orange)
@@ -124,7 +124,7 @@ struct GeneralSettingsView: View {
                     }
                 } label: {
                     SettingsRowTitle(.generalAppearance, "Theme")
-                    Text(L10n.string("Match macOS, or pin Tinycast to Light or Dark."))
+                    Text(L10n.string("Match macOS, or pin Delores to Light or Dark."))
                 }
                 InterfaceSizeRow()
                 PaletteTransparencyRow()
@@ -158,11 +158,11 @@ struct GeneralSettingsView: View {
             Section {
                 Toggle(isOn: $settings.launchAtLogin) {
                     SettingsRowTitle(.generalGeneral, "Launch at login")
-                    Text(L10n.string("Start Tinycast automatically when you log in."))
+                    Text(L10n.string("Start Delores automatically when you log in."))
                 }
                 Toggle(isOn: $showInMenuBar) {
                     SettingsRowTitle(.generalGeneral, "Show in menu bar")
-                    Text(L10n.string("Keep the Tinycast icon in the menu bar. Shortcuts still work when hidden."))
+                    Text(L10n.string("Keep the Delores icon in the menu bar. Shortcuts still work when hidden."))
                 }
                 Picker(selection: $settings.popToRootTimeout) {
                     ForEach(PopToRootTimeout.allCases) { timeout in
@@ -208,7 +208,7 @@ struct GeneralSettingsView: View {
             }
             Button(L10n.string("Cancel"), role: .cancel) {}
         } message: {
-            Text(L10n.string("Tinycast will relearn your preferred results as you use the launcher."))
+            Text(L10n.string("Delores will relearn your preferred results as you use the launcher."))
         }
         .onAppear(perform: refreshInputSources)
         .onReceive(

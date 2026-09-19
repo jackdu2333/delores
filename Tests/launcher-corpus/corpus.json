@@ -1863,7 +1863,7 @@
     {
       "key": "command:about",
       "kind": "command",
-      "name": "About Tinycast",
+      "name": "About Delores",
       "strongNames": [],
       "translations": [],
       "ownerName": null,
@@ -1873,7 +1873,7 @@
     {
       "key": "command:quit",
       "kind": "command",
-      "name": "Quit Tinycast",
+      "name": "Quit Delores",
       "strongNames": [],
       "translations": [],
       "ownerName": null,
@@ -3030,8 +3030,8 @@
     },
     {
       "query": "qui",
-      "expect": "system-action:quit-all-apps",
-      "criterion": "a system action against 'Quit Tinycast'"
+      "expect": "command:quit",
+      "criterion": "the quit command against 'Quit all apps' - its shorter name wins the same prefix"
     },
     {
       "query": "almo",
