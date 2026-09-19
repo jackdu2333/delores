@@ -1,11 +1,7 @@
 import {
-  ArrowRight,
-  Cpu,
-  FileCode2,
   FileText,
   Ghost,
   Image as ImageIcon,
-  LayoutGrid,
   Link2,
   Paperclip,
   Search,
@@ -205,70 +201,6 @@ function WindowsPreview() {
         </li>
       ))}
     </ul>
-  );
-}
-
-function ExtensionsPreview() {
-  const stages = [
-    { label: "Extension code", icon: FileCode2 },
-    { label: "JavaScriptCore", icon: Cpu },
-    { label: "SwiftUI", icon: LayoutGrid },
-  ];
-  return (
-    <ol className="flex h-full items-center justify-center gap-1.5 sm:gap-3">
-      {stages.map((stage, i) => (
-        <li key={stage.label} className="flex items-center gap-1.5 sm:gap-3">
-          {i > 0 && (
-            <ArrowRight
-              size={14}
-              className="shrink-0 text-fg-subtle"
-              aria-hidden="true"
-            />
-          )}
-          <span
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-xl px-2 py-3 sm:px-4",
-              i === stages.length - 1 ? "bg-violet/15" : "bg-tint/8",
-            )}
-          >
-            <stage.icon
-              size={18}
-              aria-hidden="true"
-              className={
-                i === stages.length - 1 ? "text-violet-bright" : "text-fg-muted"
-              }
-            />
-            <span className="text-center text-caption text-fg">
-              {stage.label}
-            </span>
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function SnippetsPreview() {
-  return (
-    <div className="flex h-full items-center justify-center gap-3">
-      <span className="rounded-lg bg-tint/8 px-3 py-2 font-mono text-small text-fg">
-        !notes
-        <Caret />
-      </span>
-      <ArrowRight
-        size={14}
-        className="shrink-0 text-fg-subtle"
-        aria-hidden="true"
-      />
-      <span className="flex min-w-0 flex-col gap-1 rounded-lg bg-tint/8 px-3 py-2">
-        <span className="truncate text-small font-semibold text-fg">
-          Sunday, 13 September
-        </span>
-        <span className="truncate text-caption text-fg-muted">
-          Attendees: <Caret />
-        </span>
-      </span>
-    </div>
   );
 }
 
