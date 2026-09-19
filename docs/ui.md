@@ -214,10 +214,83 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 ---
 
-## Parked Notes panel
+## Notes panel
 
-The floating Notes editor is parked under `Packs/LegacyFeatures/Notes/` and is not part of the
-active Delores target. Its previous UI notes live with that pack.
+Source: `Features/Notes/UI/`.
+
+Notes is the Notes capability, not a fourth Delores surface — but it is the only capability that owns a
+titled window of its own, so its chrome is documented here rather than repeated in the palette's terms.
+It is not a palette mode either. `NotesPanel` is a **titled**, resizable, non-activating panel — AppKit
+draws the traffic lights, the drag and the resize — but it keeps the palette's transparent recipe and
+deliberately does not dismiss on resign-key. `NotesView`'s root applies `panelScrim` →
+`VisualEffectView()` → one continuous **`panel`** corner clip, so Notes and the palette round
+identically. The clip is larger than the theme frame's own corner, so it is what shows;
+`invalidateShadow()` on every show recuts the shadow to match.
+
+The title bar is a 44-point band, and both halves of it are deliberate. `titleVisibility` is `.hidden`
+and `NotesView` draws the title itself, centred on the **window**: a titlebar accessory drops
+`NSThemeFrame` off its centred-title layout, so the native title would sit beside the traffic lights.
+The drawn title is not hit-testable, so clicks fall through to the real title bar and drag the window.
+The three actions cannot do that, so they live in an `NSTitlebarAccessoryViewController` at `.trailing`
+— `NoteTitlebarActions`, the launcher's footer capsule (`BarButton` in `frosted(in: Capsule())`) with
+glyphs in place of pills. Its 44-point height is what sizes the band.
+
+`NotesWindowController` no longer computes frames: the user owns the size, and AppKit autosaves both
+position and size under `"Notes Window"`. The window shows exactly one surface at a time — editor,
+switcher, or the "No Notes" empty state — and the character count is part of the editor surface, so it
+never appears without a note.
+
+The header keeps a fixed slot for status so Saving, Saved, failure, and conflict symbols cannot move the
+controls. Failure and conflict symbols can be clicked to reopen their recovery report after a dismissal.
+A title click opens the in-window note switcher; dragging the title, note icon, or otherwise empty
+header moves the panel after a three-point threshold. Create, Reveal, Hide, and actionable status remain
+click-only controls. Escape closes the switcher before hiding, while Command-W and the hide control
+order the panel out. Show Notes only shows or focuses; focus loss leaves the panel visible.
+
+The editor is one native TextKit 2 surface. Its string is the canonical Markdown source, and Render
+Markdown styles it in place with no new tokens. Notes type sits one system text style above the rest of
+the app, because a note is for reading: body text is the title3 size in `noteText`, and headings 1 to 3
+use the largeTitle, title1 and title2 sizes (bold, bold, semibold). Interface Size does not scale it.
+Inline code is monospaced on `controlSurface`, and links use the system link colour. Quotes and checked
+tasks dim to `textSecondary`, and a checked task is struck through. Markers on the caret's line show in
+`textTertiary`; everywhere else they are hidden. A revealed list or quote marker hangs left of its text,
+so the text does not move when the caret arrives, unless the marker is wider than the slot.
+
+A layout fragment draws the block chrome. A code band fills `cardFill` with `menu` corners at its ends
+and a `textTertiary` language label, inset by `lg`. A quote bar is `markdownQuoteBar` wide in `border`,
+stepping `markdownQuoteBar + lg` per depth. A rule is a `hairline` of `separator`. List markers sit in a
+slot per level, `markdownListMarker` grown in proportion to the body size. Bullets, numbers and
+checkboxes are `textSecondary`; a done box is filled with the check cut out. Headings 1 and 2 get `xl`
+space above, the rest `md`, and `xs` below; every list item gets `md` below. A table stays literal
+source in the code-block font, and a wrapped row hangs `lg` under its first line. AppKit owns editing,
+undo, selection, Find, and marked text.
+
+Under the editor, the formatting bar takes a `bottomBarHeight` band while Render Markdown and Show
+Formatting Bar are on, in place of the 28-point count footer. It is one row, not a capsule hugging the
+window: the count is plain text at the leading edge and the buttons sit in glass at the trailing edge,
+the same split as the palette's own bottom bar. The capsule is the title bar's recipe (`BarButton`s in
+`frosted(in: Capsule())`), inset `md` from the trailing edge as the title capsule is, with `xxs` between
+buttons and `sm` between groups. Each button is a compact 28-point square around a `noteGlyph` frame, so
+the capsule is 36 points wide collapsed and 397 expanded, and the count gives way from 524 points down.
+Collapsing and expanding grows the buttons out of the round button on `MenuMotion.chevronAnimation`,
+wrapped in an explicit `withAnimation` in the coordinator because the chord changes that state outside
+any view's transaction, and skips the animation under Reduce Motion. The band takes only the width it is
+offered, so the bar can never widen the note; past that, only the capsule's leading end clips. Lit
+buttons use `BarButton.isSelected`; hovering shows a `Tooltip` with the name and shortcut, because an
+AppKit tooltip does not appear while the app is inactive behind this non-activating panel. The glass is
+a `background`, never a wrapper, and nothing clips the row, because either one swallows that tooltip. The
+round button aligns its tooltip trailing and the heading button leading, so neither runs past the window
+edge. The heading menu is a borderless child window like the switcher, `noteHeadingMenu` in size, hung
+off the heading button's own reported frame and `xs` above it, drawn with `PopoverMenuRow`'s metrics on
+`menuPanel` glass.
+
+The switcher is its own glass panel over the editor, sized to its list up to a 240-point ceiling and
+never resizing the note window. Its plain search field and keyboard-navigable rows use the shared
+selection/hover ramp; rename and Trash remain row actions rather than adding another toolbar or window.
+
+The switcher exposes activation, Rename, and Move to Trash as VoiceOver actions with the actual note
+title. Its hover buttons are hidden from accessibility so those actions are announced once. See
+[features/notes.md](features/notes.md).
 
 ---
 

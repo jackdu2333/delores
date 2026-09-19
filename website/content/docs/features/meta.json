@@ -3,6 +3,7 @@
   "pages": [
     "clipboard",
     "calculator",
+    "notes",
     "file-search",
     "navigation",
     "window-management",

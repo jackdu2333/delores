@@ -111,7 +111,7 @@ switch to another user, it pauses until you are back.
 **A section's switch does turn off its shortcuts.** **Enable Applications**, **Enable System
 Settings**, **Enable System Actions** and **Enable Commands** each stop every shortcut in their pane.
 
-**Turning a feature off turns off its shortcuts.** File Search, AI, Quick Actions, Navigation,
+**Turning a feature off turns off its shortcuts.** File Search, Notes, AI, Quick Actions, Navigation,
 window commands and quicklinks all check their switch before doing anything. Turn the feature back
 on and your shortcuts work again.
 

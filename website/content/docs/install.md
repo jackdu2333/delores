@@ -103,8 +103,8 @@ rm -rf ~/Library/Application\ Support/com.tinycast.app
 rm -rf ~/Library/Caches/com.tinycast.app
 ```
 
-That Application Support folder holds your quicklinks, clipboard history and AI chats, so copy out
-anything you want to keep first. The beta uses `com.tinycast.app.beta` instead.
+That Application Support folder holds your notes, quicklinks, clipboard history and AI chats, so copy
+out anything you want to keep first. The beta uses `com.tinycast.app.beta` instead.
 
 API keys you saved for AI or MCP servers live in your login Keychain. Remove them in Keychain Access
 if you want them gone too.

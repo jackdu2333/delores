@@ -3,8 +3,8 @@
 Export and import of Tinycast's own data as a single `.tinycast` file, plus the entry point for
 importing a Raycast export. The feature lives in `Features/Backup/`.
 
-A backup carries three independently selectable categories, ticked on export and again on import:
-**Settings & Shortcuts**, **Clipboard History** and **Launcher Learning**.
+A backup carries four independently selectable categories, ticked on export and again on import:
+**Settings & Shortcuts**, **Clipboard History**, **Launcher Learning** and **Notes**.
 
 ## Invariants
 

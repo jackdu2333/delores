@@ -14,6 +14,7 @@ your clipboard history.
 | Settings & Shortcuts | Shortcuts, quicklinks, window layouts, favorites, aliases, preferences |
 | Clipboard History    | Text and image clips with their images, and references to copied files |
 | Launcher Learning    | What the launcher learned you reach for, plus calculator history       |
+| Notes                | Every note, as the plain Markdown file it already is                   |
 
 The launcher has **Export Backup** and **Import Backup** commands too. They take everything, since
 there is no room for checkboxes there.
@@ -31,7 +32,8 @@ after a reinstall. It is not a long-term archive.
 
 An import always shows a summary of what it did, category by category.
 
-Imports add rather than overwrite. Importing the same file twice does not give you two of everything.
+Imports add rather than overwrite. A note whose name is taken gets a number added, never replaces
+yours. Importing the same file twice does not give you two of everything.
 
 Launcher Learning is the exception. It replaces what is there, because mixing two Macs' habits
 describes neither.
@@ -76,4 +78,8 @@ Everything a backup carries is also an ordinary file, in `~/Library/Application 
 | --------------------------------------------- | ---------------------------------------------- |
 | [Quicklinks](/docs/launcher/quicklinks)       | `quicklinks.sqlite3`, with its own JSON export |
 | [Clipboard history](/docs/features/clipboard) | `clipboard.sqlite3`, with images beside it     |
+| [Notes](/docs/features/notes)                 | `Notes/`, one `.md` file per note              |
 | [AI chats](/docs/ai)                          | `ai-chats.sqlite3`, never in a backup          |
+
+Notes are plain Markdown. Copying that folder is a perfectly good backup, and you can read the files
+without Tinycast. That is the point of keeping them that way.

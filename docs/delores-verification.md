@@ -34,23 +34,43 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
-### 2026-09-19, `597cad74` + Notes restored in the working tree — Xcode 27 machine
+### 2026-09-19, Notes restored — `ebdaeaec`, plus the release-doc commit in the same push
 
 Read while bringing Notes back from upstream tag `v0.11.3-beta.98`. This is the other machine from the
 top of this file: `xcode-select -p` is `/Applications/Xcode.app/Contents/Developer`, `xcodebuild
--version` answers Xcode 27.0, and the app target builds here. The reading is of the working tree, not
-of a commit — the restore had not been committed when these numbers were taken.
+-version` answers Xcode 27.0, and the app target builds here.
+
+The restore was first read against the working tree, before it was committed; the numbers below were
+taken again on the committed tree at `ebdaeaec` and are identical. That commit's own reading is the
+first table. The second is the release-doc pass that followed it in the same push — the same event,
+since a restored feature is not shipped until the docs that describe it agree.
+
+`ebdaeaec`:
 
 | Command | Result |
 | --- | --- |
-| `xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED**, 0 errors. One warning, and it is not from Swift: `appintentsmetadataprocessor` reports "Metadata extraction skipped, no AppIntents.framework dependency found" |
-| `./Scripts/run-tests.sh` | **✓ 55 of 55** in 21s — the 53 this suite queued before, plus `notes-test` and `notes-editor-test` |
+| `xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED**, 0 errors, 0 Swift warnings. The only line the grep keeps is the toolchain's own `appintentsmetadataprocessor` notice, "Metadata extraction skipped, no AppIntents.framework dependency found" |
+| `./Scripts/run-tests.sh` | **✓ 55 of 55** in 21s — the 53 this suite queued before, plus `notes-test` and `notes-editor-test`. `notes-editor-performance` is registered `index`-only and is not in the set |
 | `./Scripts/run-delores-tests.sh` | **✓ Delores context tests passed** |
 | `./Scripts/check-upstream-drift.sh` | runs; merge-base `4735cab9`, **666 ahead / 608 not merged** — the pre-existing divergence, unchanged by this work |
 | `node Scripts/check-settings-search.js` | **✓ passes** — the restored pane's rows are all in `SettingsSearchCatalog` |
 | `./Scripts/format.sh --check` | **✗ 43 files need formatting.** All 43 were already dirty at `597cad74`, including the three this work edited (`AppSettings.swift`, `SettingsAnchor.swift`, `SettingsSearchCatalog.swift`); the added lines are themselves format-clean |
 | `./Scripts/lint.sh` | **cannot run** — SwiftLint is not installed on this machine either |
 | Notes accepted by eye in the running app | **not done.** The editor, the switcher, the formatting bar and the Markdown rendering are UI-layer work with no harness, and this machine cannot screenshot its own screen, so nothing about their appearance is claimed here |
+
+The release-doc commit (`project.yml` 0.1.0/1 → **0.2.0/2**, the internal docs, and the website pages):
+
+| Command | Result |
+| --- | --- |
+| `xcodegen generate` | **✓ 4 lines change in `project.pbxproj`** — `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, in both configurations and nothing else, so the regeneration is still deterministic |
+| `xcodebuild … -configuration Debug build` | **✓ BUILD SUCCEEDED**, 0 errors, 0 Swift warnings |
+| `PlistBuddy` on the built `Delores Dev.app` | `CFBundleShortVersionString` **0.2.0**, `CFBundleVersion` **2** — the version reaches the product, not just the project file |
+| `./Scripts/run-tests.sh` | **✓ 55 of 55** |
+| `cd website && npm ci && npm run build` | **✓ 79 static pages, 37 prerendered doc paths.** The doc count is **unchanged**, not incremented: the Notes page file already existed as a parked stub, so putting it back into `features/meta.json` returns it to the sidebar without adding a route. `noUnusedLocals` passes, so the `notes` icon reference in `features.ts` type-checks against `feature-icons.ts` |
+| The restored page in the exported HTML, not just in the build | **✓ `out/docs/features/notes/index.html` exists**, the sidebar on that page links to `/tinycast/docs/features/notes/`, the site home carries the "Floating notes" card, and `out/docs/reference/settings/index.html` contains "Enable Notes" |
+| Website copy read against the tag | `website/content/docs/features/notes.md` is byte-identical to `v0.11.3-beta.98`'s page except the removed Snippets sentence, verified by `diff` |
+| `npx prettier --check` on the ten edited website files | **✗ 3 fail — `launcher/commands.md`, `reference/backup.md`, `reference/settings.md`.** All three fail on their **`HEAD` version too**, so the style was already there and this work neither caused nor fixed it; the website workflow builds but never runs `prettier`, which is why it survives. Not reformatted: `prettier --write` on those files would re-pad rows this task never touched |
+| Anything about how the site *looks* | **not done.** The export proves the page prerenders and the nav entry resolves; nobody has looked at the rendered page |
 
 ### 2026-09-19, source baseline `0fa06c93` — Command Line Tools only
 
@@ -61,7 +81,8 @@ in all three readings.
 The suite shrank between this reading and the one below it. Notes, Emoji, Extensions, Snippets,
 Calendar, Camera, Updates, Support and Custom Commands moved out of `Tests/` with their packs to
 `Packs/LegacyFeatures/Tests/`, which this suite does not run, so it now queues 53 harnesses rather
-than 73.
+than 73. **Notes has since been restored, so the live count is 55** — this paragraph describes the
+suite as it stood at `0fa06c93`, and the section above carries the current number.
 
 | Command | Result |
 | --- | --- |

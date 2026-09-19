@@ -48,6 +48,7 @@ indexed and nothing sits in memory.
 | [AI Chat](/docs/ai)                                   | Settings → AI                |
 | [Quick Actions](/docs/ai/quick-actions)               | Settings → Quick Actions     |
 | [File Search](/docs/features/file-search)             | Settings → File Search       |
+| [Notes](/docs/features/notes)                         | Settings → Notes             |
 | [Navigation](/docs/features/navigation)               | Settings → Navigation        |
 | [Window Management](/docs/features/window-management) | Settings → Window Management |
 | [Quicklinks](/docs/launcher/quicklinks)               | Settings → Quicklinks        |

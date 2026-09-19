@@ -224,6 +224,7 @@ Examples include:
 * Search;
 * AI generation;
 * Clipboard;
+* Notes;
 * Text Injection;
 * Window Snapping;
 * Split Divider;

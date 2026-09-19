@@ -56,10 +56,11 @@ assertion, and it is the more important one.
 A harness also runs in your own login session against the real system, with no sandbox and no fixture
 world, so it must never mutate state the machine shares with the apps you use. `NSPasteboard.general`
 is the trap: a running Tinycast records every write to it as a genuine copy, so a fixture left there
-lands in clipboard history looking like something the user copied. The parked `notes-editor-test` seeded
-one on every run by calling the native `copy:`/`cut:`/`paste:` actions, which is what drove the Notes
-primitives to take the board as a parameter; the harnesses left in `Tests/` never touch the shared board
-at all. `pasteboard-test` is the case that proves it, and it is why
+lands in clipboard history looking like something the user copied. `notes-editor-test` seeded one on
+every run by calling the native `copy:`/`cut:`/`paste:` actions, which is what drove the Notes
+primitives to take the board as a parameter; now that the harness is back in `Tests/`, it passes
+`NSPasteboard.withUniqueName()` and releases it in a `defer`, so no harness in `Tests/` touches the
+shared board at all. `pasteboard-test` is the case that proves it, and it is why
 `ClipboardManager.fileURLs(on:volatileRoots:)` and `Paster.write(_:store:to:)`
 each take the thing they act on as a parameter: a seam that exists so the harness never has to reach
 for the shared board. Its scratch tree lives under `temporaryDirectory`, which is itself a volatile

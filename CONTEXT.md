@@ -22,7 +22,7 @@ _Avoid_: 划词工具栏、快捷菜单
 _Avoid_: 桌宠聊天框、第二个 AI 客户端
 
 **Capability**：真正做事的能力，属于 Core 而不属于任何 Surface。例如 AI Actions、Search、
-Clipboard、Text Injection、Window Placement（含窗口吸附与分屏中缝）。
+Clipboard、Notes、Text Injection、Window Placement（含窗口吸附与分屏中缝）。
 Surface 呈现任务和结果，不拥有产生它的能力。
 _Avoid_: 把 Capability 当成第四个 Surface
 

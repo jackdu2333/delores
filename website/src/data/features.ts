@@ -78,6 +78,7 @@ export const coreFeatures: Feature[] = [
 
 // The long tail: named, linked, and kept out of the way of the six above.
 export const moreFeatures: MinorFeature[] = [
+  { icon: "notes", title: "Floating notes", href: "/docs/features/notes" },
   {
     icon: "fileSearch",
     title: "File search",

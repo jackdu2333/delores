@@ -17,6 +17,7 @@ feature's own pane, and only appear while the feature is on. The rest live in **
 | [Clipboard](/docs/features/clipboard)              | Clipboard History                                                                                         |
 | [File Search](/docs/features/file-search)          | Search Files                                                                                              |
 | [Navigation](/docs/features/navigation)            | Switch Windows · Search Menu Bar Items                                                                    |
+| [Notes](/docs/features/notes)                      | Show Notes · Create Note · Search Notes                                                                    |
 | [Window Management](/docs/features/window-layouts) | Create Window Layout · Create Layout from Current Windows                                                 |
 | [Quicklinks](/docs/launcher/quicklinks)            | Create Quicklink · Search Quicklinks · Import Quicklinks · Export Quicklinks                              |
 | Commands                                           | Calculator History · Export Backup · Import Backup · Import from Raycast · Settings · About Tinycast · Quit Tinycast |

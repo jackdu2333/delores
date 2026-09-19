@@ -10,12 +10,17 @@ On a machine with Xcode 26 and the local signing identity configured:
 
 ```sh
 ./Scripts/build-delores-dmg.sh
-./Scripts/build-delores-dmg.sh 0.1.0
+./Scripts/build-delores-dmg.sh 0.2.0
 ```
 
 The script uses the `Delores` scheme from `Tinycast.xcodeproj`, produces `Delores.app`, and writes
 `build/Delores-<version>.dmg`. The default local identity is `HuaciGongju CodeSign`; override it for
 another machine with `DELORES_CODE_SIGN_IDENTITY`.
+
+Run it with no argument and the version is whatever `project.yml` carries — `MARKETING_VERSION` and
+`CURRENT_PROJECT_VERSION` are the one source of truth, currently **0.2.0 / 2**. The argument overrides
+`MARKETING_VERSION` for that one build, and the DMG is named from the built app's own
+`CFBundleShortVersionString`, so the two can never disagree.
 
 ## CI artifact
 

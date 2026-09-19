@@ -9,7 +9,7 @@ icon. It is a normal, resizable window.
 **The search field finds any setting by name**, and also by words that are not in its title:
 `caps lock` finds **Hyper Key**. Picking a result jumps straight to that row.
 
-There are 18 panes in four groups.
+There are 19 panes in four groups.
 
 ## General
 
@@ -73,6 +73,7 @@ Everything here ships **off**, except Clipboard.
 | [AI](/docs/ai)                                        | Enable AI                         | Providers, Default model, Reasoning effort, Web search, Opens to, Start a new conversation after, Keep conversations, System prompt, [MCP servers](/docs/ai/mcp), AI commands                                                                 |
 | [Quick Actions](/docs/ai/quick-actions)               | Enable Quick Actions              | Actions (Replace or Preview, shortcut, prompt, model), Add Quick Action, Model, Translate to                                                                                                                                                  |
 | [File Search](/docs/features/file-search)             | Enable File Search                | Commands, Search Scopes, Ignore Patterns                                                                                              |
+| [Notes](/docs/features/notes)                         | Enable Notes                      | Render Markdown (**On**), Show Formatting Bar (**On**), Commands                                                                            |
 | [Navigation](/docs/features/navigation)               | Enable navigation                 | Commands, Show Apple menu items (**Off**), Disabled Applications                                                                      |
 | [Window Management](/docs/features/window-management) | Enable window management          | Show in launcher, Cycling (**None**), Gap between windows (**0**), window commands, [Window Layouts](/docs/features/window-layouts) |
 | Delores                                              | Enable desktop companion          | Context bar actions, companion size and creature, window snapping                                                                     |

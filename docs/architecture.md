@@ -200,6 +200,8 @@ Tinycast/
     Launcher/ Clipboard/ Calculator/ FileSearch/ MenuSearch/ QuickActions/
     Quicklinks/ Uninstall/ SystemActions/ HotKeys/ Backup/ AppleShortcuts/ MCP/
     WindowManagement/ WindowSwitcher/ TextInjection/ Onboarding/ AI/
+    Notes/          plain Markdown in one floating editor, with its own switcher; upstream-owned
+                    and taken verbatim from tag v0.11.3-beta.98 (see delores-architecture.md)
     Delores/        the product surfaces: the context bar, the desktop companion, and the
                     Action core both are built on
     Settings/       the Settings shell only: SettingsCoordinator, the sidebar/detail/toolbar and
