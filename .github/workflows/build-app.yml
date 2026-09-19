@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # Full history, because the Build is `git rev-list --count HEAD` (docs/delores-versioning.md).
+          # The default shallow checkout counts 1, which would ship that as the artifact's Build.
+          fetch-depth: 0
 
       - name: Select Xcode 26
         run: |
@@ -58,12 +62,23 @@ jobs:
       # No signing, entitlement or hardened-runtime overrides: the project's own Release settings are
       # what ships, and verify-signature.sh exists to assert them. Overriding them is how this lane
       # came to hand back an unsigned build at all.
+      #
+      # The Build is the one setting overridden on purpose, and deriving it is the only reason the
+      # checkout above asks for full history — see docs/delores-versioning.md. A lane that skips it
+      # hands back the same Build for every commit, which is what the number must not be.
       - name: Build Application
         run: |
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            echo "::error::shallow checkout — CURRENT_PROJECT_VERSION would be 1, not the commit count"
+            exit 1
+          fi
+          BUILD_NUMBER="$(git rev-list --count HEAD)"
+          echo "▸ Build number $BUILD_NUMBER"
           xcodebuild -project Tinycast.xcodeproj \
             -scheme Delores \
             -configuration ${{ github.event.inputs.configuration }} \
             -derivedDataPath build/DerivedData \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
@@ -76,6 +91,11 @@ jobs:
             exit 1
           fi
           echo "Found app at $APP_PATH"
+          BUILT_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Contents/Info.plist")"
+          if [ "$BUILT_BUILD" != "$BUILD_NUMBER" ]; then
+            echo "::error::built CFBundleVersion is $BUILT_BUILD, injected $BUILD_NUMBER — the Build did not reach the product"
+            exit 1
+          fi
           echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
 
       # The one property this artifact exists to keep. What macOS records has to name the certificate,

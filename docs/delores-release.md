@@ -17,10 +17,17 @@ The script uses the `Delores` scheme from `Tinycast.xcodeproj`, produces `Delore
 `build/Delores-<version>.dmg`. The default local identity is `HuaciGongju CodeSign`; override it for
 another machine with `DELORES_CODE_SIGN_IDENTITY`.
 
-Run it with no argument and the version is whatever `project.yml` carries — `MARKETING_VERSION` and
-`CURRENT_PROJECT_VERSION` are the one source of truth, currently **0.2.0 / 2**. The argument overrides
+Run it with no argument and the version is whatever `project.yml` carries — `MARKETING_VERSION` is a
+real source of truth and is currently **0.2.0**. The Build is not read from there: the script derives
+it as `git rev-list --count HEAD` and passes it as `CURRENT_PROJECT_VERSION`, so the DMG names the
+commit it was built from ([delores-versioning.md](delores-versioning.md)). The argument overrides
 `MARKETING_VERSION` for that one build, and the DMG is named from the built app's own
 `CFBundleShortVersionString`, so the two can never disagree.
+
+The script also asserts what it just built: the app's `CFBundleVersion` has to equal the count it
+injected. The injection is a command-line argument, so a build that silently stopped applying it
+would otherwise produce a DMG carrying `project.yml`'s unmaintained fallback instead — the same Build
+for every commit, which is the one thing the number exists not to be.
 
 ## CI artifact
 
@@ -46,6 +53,12 @@ Not overriding the project's own Release settings also means the artifact carrie
 and `Tinycast.entitlements`, and `./Scripts/verify-signature.sh` gates it — the same assertion the
 release lane runs. **The first identity-signed build still asks for Accessibility once**, because the
 copy it replaces was ad-hoc; every update after that keeps the grant.
+
+The lane does override one setting, and it is the same one the local script does: it derives
+`CURRENT_PROJECT_VERSION` from `git rev-list --count HEAD`, which is why its checkout fetches full
+history. Both channels have to agree here — they install over each other, so a machine updated from a
+DMG and then from this artifact must not see the Build move backwards or repeat. The step asserts
+afterwards that the count reached the built app, for the reason the local script does.
 
 ## Release gate
 

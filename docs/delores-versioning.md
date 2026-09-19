@@ -49,27 +49,38 @@ Four properties, and each of them is doing work:
   defect: **the same Build means the same code**, so a bug report that repeats a Build is a bug report
   about something already known.
 
-At `ebdaeaec` this is **678**. It is a count of Delores' own history — this repository's first commit is
-`1509d158` (2026-09-16) — so the number is three digits and stays legible rather than inheriting
-Tinycast's.
+It is a count of Delores' own history — this repository's first commit is `1509d158` (2026-09-16) —
+so the number stays in the hundreds and legible rather than inheriting Tinycast's four-digit history.
+**The count is deliberately not recorded here**: it climbs with every commit, so any number written
+down is wrong by the next one, and a document that quotes a stale Build teaches the reader to distrust
+the number rather than to look it up.
 
-The value is **injected at build time, never hand-written**:
+Two places derive it, and they are the only two that produce an installable build:
 
 ```sh
-xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Release \
-  MARKETING_VERSION="$(...)" \
-  CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)"
+Scripts/build-delores-dmg.sh    # local signed DMG
+.github/workflows/build-app.yml # the artifact for a machine with no Xcode
 ```
 
-`project.yml` therefore carries `MARKETING_VERSION` as a real source of truth and
-`CURRENT_PROJECT_VERSION` only as a fallback for a build that skipped the injection. **Reading the
-fallback is a mistake to avoid**, not a value to keep current — it is a number nothing asserts.
-[delores-release.md](delores-release.md) says both keys live in `project.yml`; that was true while the
-Build was hand-bumped and is now half true. Update it when that file is next touched rather than
-leaving two documents disagreeing.
+Both pass `CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)"` to `xcodebuild` and both assert
+afterwards that the count reached the built `Info.plist` — the injection is a command-line argument, so
+nothing else in the build would notice it going missing, and a lane that lost it would hand back the
+same Build for every commit.
+
+Both also reject a **shallow clone**, and for the same reason: `git rev-list --count HEAD` in a
+depth-1 checkout is `1`, which is a plausible-looking number rather than an error. That is why the CI
+lane checks out with `fetch-depth: 0`. The guard is the difference between a wrong Build and no
+artifact.
+
+What a build that skips both paths gets is `project.yml`'s value — Xcode's own Run button, or a
+hand-run `xcodebuild`. That value is a **fallback, not a version**: nothing asserts it and nothing
+maintains it, so it must not be read as a build identity. Reading it is how two documents came to
+disagree about what Build `0.2.0` was, which is the failure this section exists to close.
 
 Version is written by a person at release time; Build is derived. **Changing Version is the only edit a
-release makes to `project.yml`.**
+release makes to `project.yml`**, and the About panel reads both keys back, so the fallback is
+user-visible — a Build that looks like a small round number rather than a count came from a build that
+skipped the injection.
 
 ## Tags anchor a release
 
