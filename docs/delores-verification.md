@@ -84,9 +84,26 @@ Pushed, built and put where the Release channel lives.
 | `.github/workflows/ci.yml` on the pushed commit | **✗ failure, and no step ran.** Run `35431737378` failed in **7 s** with an empty step list — `test: failure` and nothing under it. `--log-failed` answers `log not found`. The check-run annotation is the only place the reason appears: *"The job was not started because recent account payments have failed or your spending limit needs to be increased."* The repo is **private**, so Actions minutes are metered. **This commit is therefore not independently verified by CI**, which is the fact worth keeping — the run at `07:26Z` was green in 1m53s and this one at `08:20Z` never started, so what changed is the account, not the code |
 
 The Debug readings in the section above are unaffected: this lane builds Release, and the two share
-every source file. **The installed build number is now 685 while `git rev-list --count HEAD` is one
-higher**, because recording this pushed the count — that is the property working rather than drifting,
-and it is why `delores-versioning.md` refuses to write a count down.
+every source file. **The installed build number was 685 while `git rev-list --count HEAD` was one
+higher** at the moment this was written, because recording it pushed the count — the property working
+rather than drifting, and why `delores-versioning.md` refuses to write a count down. It is a reading,
+not a rule: `/Applications/Delores.app` now reports **0.2.0 / 688** and `git rev-list --count HEAD` is
+688 as well, because a later install was made at `c6988efa`. Committing moves the count and installing
+moves the app, so the two agree exactly when the install is current and differ by however many commits
+landed since.
+
+**The CI failure needs a cutoff, not a row per push.** The last run that executed anything is
+`d18d143d` at `07:26Z`; every push after it got no runner at all — this one, and `d189a441` and
+`c6988efa` at `11:43Z`. So on those commits the CI column reads *unverified*, which is neither red for
+a reason nor green, and enumerating more pushes would not add information: the annotation names the
+account's billing, so nothing in this repository changes it. There is nothing to re-run and nothing to
+fix in the code.
+
+What must not be lost in that: **CI is the second executor of this file's gates, not the packaging
+channel.** The DMG above was built, signed, and installed while CI was down, so a red CI cell does not
+mean a blocked release. It means the commit has one fewer independent reader than a green one, which is
+the thing worth writing down — `delores-versioning.md` calls the Build the shortest path from a user's
+sentence to source, and a Build with no CI behind it is a path with a gap in the middle.
 
 ### 2026-09-19, the Build derived at build time — `e43b62e9`
 
