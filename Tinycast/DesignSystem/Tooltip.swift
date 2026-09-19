@@ -3,13 +3,16 @@ import SwiftUI
 /// A hover label in Tinycast's own vocabulary, replacing a system `.help()` tooltip.
 private struct TooltipModifier: ViewModifier {
     let text: String?
+    /// Delores seam: upstream v0.11.3 rewrote this tile and gave it an alignment; Notes needs the
+    /// alignment for a control against a window edge, and the rest of Delores keeps its own chrome.
+    var alignment: HorizontalAlignment = .center
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
 
     func body(content: Content) -> some View {
         content
             .onHover { hovered = text != nil && $0 }
-            .overlay(alignment: .top) {
+            .overlay(alignment: Alignment(horizontal: alignment, vertical: .top)) {
                 if let text, hovered {
                     Text(text)
                         .font(metrics.typography.keyCap)
@@ -30,7 +33,8 @@ private struct TooltipModifier: ViewModifier {
 
 extension View {
     /// Hover label styled like the palette's keycap chips, for our own chrome.
-    func tooltip(_ text: String?) -> some View {
-        modifier(TooltipModifier(text: text))
+    /// Align it leading or trailing when the control sits against a window edge.
+    func tooltip(_ text: String?, alignment: HorizontalAlignment = .center) -> some View {
+        modifier(TooltipModifier(text: text, alignment: alignment))
     }
 }

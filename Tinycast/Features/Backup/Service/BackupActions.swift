@@ -196,6 +196,7 @@ enum BackupActions {
         }
         var imported: [String] = []
         if summary.clipboard > 0 { imported.append("\(summary.clipboard) clips") }
+        if summary.notes > 0 { imported.append("\(summary.notes) notes") }
         if summary.learning > 0 { imported.append("\(summary.learning) learning records") }
         if !imported.isEmpty {
             parts.append("Imported " + imported.joined(separator: ", ") + ".")

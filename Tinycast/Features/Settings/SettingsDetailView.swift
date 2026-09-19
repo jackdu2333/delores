@@ -19,6 +19,7 @@ struct SettingsDetailView: View {
             case .ai: AISettingsView()
             case .quickActions: QuickActionsSettingsView()
             case .fileSearch: FileSearchSettingsView()
+            case .notes: NotesSettingsView()
             case .navigation: NavigationSettingsView()
             case .windowManagement: WindowManagementSettingsView()
             case .delores: DeloresSpatialSettingsView()

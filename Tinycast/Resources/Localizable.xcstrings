@@ -5300,6 +5300,66 @@
           }
         }
       }
+    },
+    "Notes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "笔记"
+          }
+        }
+      }
+    },
+    "Enable Notes": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用笔记"
+          }
+        }
+      }
+    },
+    "Render Markdown": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "渲染 Markdown"
+          }
+        }
+      }
+    },
+    "Show Formatting Bar": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示格式栏"
+          }
+        }
+      }
+    },
+    "Plain Markdown in a floating editor.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在浮动编辑器中书写纯 Markdown。"
+          }
+        }
+      }
+    },
+    "Formats as you type.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "边输入边格式化。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

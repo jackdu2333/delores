@@ -365,6 +365,61 @@ run installed-ai-test     Tinycast/Features/AI/Model/*.swift \
                           Tinycast/Features/AI/Service/AIProvider.swift \
                           Tinycast/Platform/ExecutableLocator.swift \
                           Tinycast/Features/AI/Service/InstalledCLIProvider.swift
+run notes-test             Tinycast/Platform/Signposts.swift \
+                           $L/SearchRelevance.swift \
+                           Tinycast/Features/Notes/Model/*.swift \
+                           Tinycast/Features/Notes/Service/*.swift
+run notes-editor-test      Tinycast/Platform/Signposts.swift \
+                           Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/DesignSystem/InterfaceMetrics.swift \
+                           Tinycast/Platform/NotificationToken.swift \
+                           Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
+                           Tinycast/Features/Notes/Model/NoteDocument.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdown.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdownParser.swift \
+                           Tinycast/Features/Notes/Model/NoteInlineScanner.swift \
+                           Tinycast/Features/Notes/Model/NoteEditPlan.swift \
+                           Tinycast/Features/Notes/Model/NoteEditAction.swift \
+                           Tinycast/Features/Notes/Model/NoteFormatting.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdownEditing.swift \
+                           Tinycast/Features/Notes/Model/NoteRevealPolicy.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownTypography.swift \
+                           Tinycast/Features/Notes/UI/NoteBlockDecoration.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownStyler.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownRenderer.swift \
+                           Tinycast/Features/Notes/UI/NoteCheckboxGeometry.swift \
+                           Tinycast/Features/Notes/UI/NoteBlockLayoutFragment.swift \
+                           Tinycast/Features/Notes/UI/NoteLayoutFragmentProvider.swift \
+                           Tinycast/Features/Notes/UI/NoteTextViewEditing.swift \
+                           Tinycast/Features/Notes/UI/NoteTextView.swift \
+                           Tinycast/Features/Notes/UI/NoteEditorView.swift
+run -O index notes-editor-performance \
+                           Tinycast/Platform/Signposts.swift \
+                           Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/DesignSystem/InterfaceMetrics.swift \
+                           Tinycast/Platform/NotificationToken.swift \
+                           Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
+                           Tinycast/Features/Notes/Model/NoteDocument.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdown.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdownParser.swift \
+                           Tinycast/Features/Notes/Model/NoteInlineScanner.swift \
+                           Tinycast/Features/Notes/Model/NoteEditPlan.swift \
+                           Tinycast/Features/Notes/Model/NoteEditAction.swift \
+                           Tinycast/Features/Notes/Model/NoteFormatting.swift \
+                           Tinycast/Features/Notes/Model/NoteMarkdownEditing.swift \
+                           Tinycast/Features/Notes/Model/NoteRevealPolicy.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownTypography.swift \
+                           Tinycast/Features/Notes/UI/NoteBlockDecoration.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownStyler.swift \
+                           Tinycast/Features/Notes/UI/NoteMarkdownRenderer.swift \
+                           Tinycast/Features/Notes/UI/NoteCheckboxGeometry.swift \
+                           Tinycast/Features/Notes/UI/NoteBlockLayoutFragment.swift \
+                           Tinycast/Features/Notes/UI/NoteLayoutFragmentProvider.swift \
+                           Tinycast/Features/Notes/UI/NoteTextViewEditing.swift \
+                           Tinycast/Features/Notes/UI/NoteTextView.swift \
+                           Tinycast/Features/Notes/UI/NoteEditorView.swift
 
 if [ "$emit_db" -eq 1 ]; then
     printf ']\n' >> "$DB"

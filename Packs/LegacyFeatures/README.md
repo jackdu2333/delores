@@ -11,7 +11,9 @@ Parked here:
 - `Calendar/` and `Camera/` — calendar/meeting flows and camera preview surfaces.
 - `CustomCommands/` — shell commands, script import, argument forms, and output UI.
 - `Updates/` — in-app updater, release feed, installer, and relaunch.
-- `Notes/` — floating Markdown notes, switcher, and TextKit editor.
+- `Notes/` — **restored to the active target on 2026-09-19** (`Tinycast/Features/Notes/`, from upstream
+  tag `v0.11.3-beta.98`). This copy is the superseded snapshot the pack move parked, kept only until
+  someone decides it can go: it is an older, smaller Notes than the one the app now builds.
 - `Support/` — support window and automatic reminder schedule.
 - `Emoji/` — emoji picker, generated catalog, pins, and search index.
 - `ClipboardOCR/` — image/PDF text recognition helper, indexer, and worker.

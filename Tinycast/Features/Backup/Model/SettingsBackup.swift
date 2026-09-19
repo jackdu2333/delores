@@ -39,6 +39,9 @@ struct SettingsBackup: Codable {
         var fileSearchEnabled: Bool?
         var fileSearchScopes: [String]?
         var fileSearchIgnorePatterns: [String]?
+        var notesEnabled: Bool?
+        var notesRendersMarkdown: Bool?
+        var notesShowsFormattingBar: Bool?
         // Safe to carry: it grants no permission class paste doesn't already prompt for.
         var navigationEnabled: Bool?
         var menuSearchDisabledApps: [String]?
@@ -117,6 +120,9 @@ extension SettingsBackup {
             fileSearchEnabled: s.fileSearchEnabled,
             fileSearchScopes: s.fileSearchScopes,
             fileSearchIgnorePatterns: s.fileSearchIgnorePatterns,
+            notesEnabled: s.notesEnabled,
+            notesRendersMarkdown: s.notesRendersMarkdown,
+            notesShowsFormattingBar: s.notesShowsFormattingBar,
             navigationEnabled: s.navigationEnabled,
             menuSearchDisabledApps: s.menuSearchDisabledApps,
             menuSearchShowsAppleMenu: s.menuSearchShowsAppleMenu,
@@ -291,6 +297,18 @@ extension SettingsBackup {
         // Writing through AppSettings is enough; AppCore's sinks re-project the rest.
         if let flag = s.fileSearchEnabled {
             settings.fileSearchEnabled = flag
+            count += 1
+        }
+        if let flag = s.notesEnabled {
+            settings.notesEnabled = flag
+            count += 1
+        }
+        if let flag = s.notesRendersMarkdown {
+            settings.notesRendersMarkdown = flag
+            count += 1
+        }
+        if let flag = s.notesShowsFormattingBar {
+            settings.notesShowsFormattingBar = flag
             count += 1
         }
         if let scopes = s.fileSearchScopes {

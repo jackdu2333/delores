@@ -29,6 +29,7 @@ open with an `## Invariants` section; read it before changing anything in that a
 [clipboard](features/clipboard.md) ·
 [calculator](features/calculator.md) ·
 [file search](features/file-search.md) ·
+[notes](features/notes.md) ·
 [menu search](features/menu-search.md) ·
 [quicklinks](features/quicklinks.md) ·
 [Apple Shortcuts](features/apple-shortcuts.md) ·
@@ -40,10 +41,11 @@ open with an `## Invariants` section; read it before changing anything in that a
 [backup](features/backup.md) ·
 [Raycast import](features/raycast-import.md) ·
 
-Raycast Extensions, Snippets, Calendar/Meeting/Camera, Custom Commands, Updates, Notes, Support
+Raycast Extensions, Snippets, Calendar/Meeting/Camera, Custom Commands, Updates, Support
 reminders, the Emoji picker and Clipboard OCR are preserved as parked feature packs under
 [`Packs/LegacyFeatures/`](../Packs/LegacyFeatures/README.md), but are not part of the active Delores
-target.
+target. Notes was parked with them and has since been brought back — see
+[features/notes.md](features/notes.md).
 
 Menu bar and Settings chrome are localized. English is the source string; Simplified Chinese lives in
 `Tinycast/Resources/Localizable.xcstrings`. Launcher command names stay English until a later pass.

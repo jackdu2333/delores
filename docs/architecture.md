@@ -210,7 +210,7 @@ Scripts/            run-tests.sh, the data and companion-atlas generators, packa
                     formatting, editor setup and the lint checks
 
 Packs/LegacyFeatures/  parked Extensions, Snippets, Calendar/Camera, Custom Commands, Emoji,
-                      Clipboard OCR, Notes, Updates and Support reminders
+                      Clipboard OCR, Updates and Support reminders
 ```
 
 A larger feature splits into all four sub-folders; a small one stays flat, as `Onboarding/` does. `HotKeys/` has no `Settings/` because its Shortcuts pane is part of the Settings

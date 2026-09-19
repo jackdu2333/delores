@@ -113,6 +113,7 @@ enum SettingsSearchCatalog {
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings
         + systemActions + commands + quicklinks + appleShortcuts + fallbacks + ai + quickActions + fileSearch
+        + notes
         + navigation + windowManagement + delores + clipboard
         + permissions + backup + about
 
@@ -327,6 +328,22 @@ enum SettingsSearchCatalog {
         .init(
             group: .fileSearchIgnorePatterns, "Ignore Patterns",
             keywords: ["exclude", "glob", "node_modules", "skip"])
+    ]
+
+    private static let notes: [SettingsSearchEntry] = [
+        .init(pane: .notes, keywords: ["markdown", "scratchpad", "floating", "笔记", "便签"]),
+        .init(
+            .notesNotes, "Enable Notes",
+            keywords: ["markdown", "scratchpad", "笔记"]),
+        .init(
+            .notesNotes, "Render Markdown",
+            keywords: ["markdown", "formatting", "preview", "raw", "source", "渲染"]),
+        .init(
+            .notesNotes, "Show Formatting Bar",
+            keywords: ["toolbar", "format bar", "buttons", "bold", "heading", "markdown", "格式栏"]),
+        .init(
+            group: .notesCommands, "Notes commands",
+            keywords: ["shortcut", "new note", "search notes", "新建笔记", "搜索笔记"])
     ]
 
     private static let navigation: [SettingsSearchEntry] = [

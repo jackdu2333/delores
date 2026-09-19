@@ -34,6 +34,24 @@ Recorded 2026-09-18 on the Delores development machine, at `f45beac`.
 
 ## Recorded results
 
+### 2026-09-19, `597cad74` + Notes restored in the working tree — Xcode 27 machine
+
+Read while bringing Notes back from upstream tag `v0.11.3-beta.98`. This is the other machine from the
+top of this file: `xcode-select -p` is `/Applications/Xcode.app/Contents/Developer`, `xcodebuild
+-version` answers Xcode 27.0, and the app target builds here. The reading is of the working tree, not
+of a commit — the restore had not been committed when these numbers were taken.
+
+| Command | Result |
+| --- | --- |
+| `xcodebuild -project Tinycast.xcodeproj -scheme Delores -configuration Debug build` | **✓ BUILD SUCCEEDED**, 0 errors. One warning, and it is not from Swift: `appintentsmetadataprocessor` reports "Metadata extraction skipped, no AppIntents.framework dependency found" |
+| `./Scripts/run-tests.sh` | **✓ 55 of 55** in 21s — the 53 this suite queued before, plus `notes-test` and `notes-editor-test` |
+| `./Scripts/run-delores-tests.sh` | **✓ Delores context tests passed** |
+| `./Scripts/check-upstream-drift.sh` | runs; merge-base `4735cab9`, **666 ahead / 608 not merged** — the pre-existing divergence, unchanged by this work |
+| `node Scripts/check-settings-search.js` | **✓ passes** — the restored pane's rows are all in `SettingsSearchCatalog` |
+| `./Scripts/format.sh --check` | **✗ 43 files need formatting.** All 43 were already dirty at `597cad74`, including the three this work edited (`AppSettings.swift`, `SettingsAnchor.swift`, `SettingsSearchCatalog.swift`); the added lines are themselves format-clean |
+| `./Scripts/lint.sh` | **cannot run** — SwiftLint is not installed on this machine either |
+| Notes accepted by eye in the running app | **not done.** The editor, the switcher, the formatting bar and the Markdown rendering are UI-layer work with no harness, and this machine cannot screenshot its own screen, so nothing about their appearance is claimed here |
+
 ### 2026-09-19, source baseline `0fa06c93` — Command Line Tools only
 
 First read at `2addf5db`, re-run at `b0270ede` and again at `0fa06c93` after the localization,

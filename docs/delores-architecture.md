@@ -332,6 +332,8 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Area | Owner | Sync posture |
 | --- | --- | --- |
 | Palette, AI providers, Keychain, TextInjector, window engine | Tinycast | Inherit upstream |
+| Notes editor, switcher and search | `Tinycast/Features/Notes/`, `Tests/notes-*.swift`, `docs/features/notes.md` | **Restored 2026-09-19 from tag `v0.11.3-beta.98`**, verbatim, after the pack move parked it. Upstream-owned on purpose: a later upstream Notes change is diffable against these files rather than against a fork. Bringing it back also restored the wiring below |
+| Notes wiring — settings, commands, backup, lifecycle | `AppSettingsKey`/`AppSettings` (`notesEnabled`, `notesRendersMarkdown`, `notesShowsFormattingBar`), `SettingsTab`/`SettingsAnchor`/`SettingsDetailView`/`SettingsSearchCatalog`, `CommandID`/`CommandCatalog`/`LauncherCoordinator`, `BackupCategory`/`BackupBundle`/`BackupComposer`/`BackupApplier`/`BackupActions`/`SettingsBackup`/`SettingsBackupCoverage`, `AppCore` (`notesStore`, `notesCoordinator`, `flushNotesForTermination`), `AppDelegate`, `DesignSystem/Theme.swift` | One seam each, sourced from the tag rather than from the reverse of the pack move, so the wiring matches the restored code. `SettingsTab.title` and the pane's copy go through `L10n` because Delores localizes chrome where upstream does not; the six new `Localizable.xcstrings` keys are the only copy Delores authored |
 | Selection gesture and Context Surface | `Features/Delores/` | Delores-owned |
 | Shared task snapshot | `Features/Delores/Model/InvocationContext.swift` | Stable seam |
 | Quick Action entry with a captured selection | `QuickActionCoordinator` | **Withdrawn**: the selection-aware `run` overload and its `begin(selectionOverride:)` were removed when the Context Surface stopped executing native Quick Actions — its catalog is its own, and the whole overload had no remaining caller |
@@ -349,6 +351,24 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Latest Huaci source and regression harness | `Integrations/HuaciGongju/`, `Scripts/run-huaci-integration-tests.sh` | Vendored integration; explicit adapter required |
 | Quick Actions consent copy | `Features/QuickActions/Settings/QuickActionsSettingsView.swift` | Delores-owned seam |
 | Where an agent is told the Delores contract exists | `AGENTS.md`, one row in its "Read it before you" table | The only Delores content in an otherwise untouched upstream file. The rule itself lives in this document and in `CONTEXT.md`; the row exists so an agent that only ever reads `AGENTS.md` still finds them |
+
+### Two deliberate divergences the restore left behind
+
+The tag's Notes needed two `DesignSystem` changes that arrived upstream between the park and the tag.
+Each was taken as far as Notes needs it and no further, because the rest would have restyled chrome
+Delores had already tuned:
+
+- **`Tooltip` gained `alignment:` and nothing else.** Upstream rewrote the tile in the same release —
+  a delay, a rounded window-background card, a shadow, and a keycap form. Notes only asks to align a
+  tooltip against a narrow window's edge, so `TooltipModifier` takes `alignment` and keeps Delores'
+  capsule. Adopting the rest is a deliberate visual change to every tooltip in the app, and it has not
+  been made.
+- **`BarButton` gained `isSelected` and `isCompact` and nothing else.** Both default `false`, so every
+  existing call site renders exactly as before; upstream's other change in that file (`HeaderMenuSymbol`,
+  built on `SystemSymbolName`, which Delores does not have) was left out.
+
+Both are the kind of seam this document exists to record: small, additive, and reversible by taking
+upstream's file whole once someone wants the redesign.
 
 Do not rename the upstream `Tinycast/` directory, upstream source files, or the generated project
 structure merely to make the product name look uniform. That creates avoidable conflicts on every

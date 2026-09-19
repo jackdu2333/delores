@@ -34,6 +34,7 @@ final class AppCore {
     let windowSwitch = WindowSwitchSession()
     let activationPolicy = ActivationPolicy()
     let uninstall = UninstallSession()
+    let notesStore: NotesStore
     let chatHistory: ChatHistoryStore
     let aiChat: AIChatState
     let aiSettings = AISettingsStore(
@@ -85,6 +86,18 @@ final class AppCore {
         settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
+    /// Window state, not a preference: it rides `UserDefaults` like the active note's filename.
+    private nonisolated static let noteFormattingBarKey = "notesFormattingBarExpanded"
+    @ObservationIgnored private(set) lazy var notesCoordinator = NotesCoordinator(
+        store: notesStore,
+        settings: settings,
+        appIndex: appIndex,
+        core: self,
+        isFormattingBarExpanded: UserDefaults.standard.bool(forKey: Self.noteFormattingBarKey),
+        saveFormattingBarExpanded: {
+            UserDefaults.standard.set($0, forKey: Self.noteFormattingBarKey)
+        })
+
     @ObservationIgnored private(set) lazy var launcherCoordinator = LauncherCoordinator(
         ranking: launcherRanking, windowController: windowController,
         paletteCoordinator: paletteCoordinator,
@@ -96,6 +109,7 @@ final class AppCore {
         fileSearchCoordinator: fileSearchCoordinator,
         menuSearchCoordinator: menuSearchCoordinator,
         windowSwitchCoordinator: windowSwitchCoordinator,
+        notesCoordinator: notesCoordinator,
         core: self)
     @ObservationIgnored private(set) lazy var fallbackCoordinator = FallbackCoordinator(
         store: fallbacks, quicklinks: quicklinks, settings: settings, core: self)
@@ -147,6 +161,14 @@ final class AppCore {
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
         self.clipboardManager = clipboardManager
         textInjector = TextInjector(clipboardManager: clipboardManager)
+        let noteSelectionKey = "notesActiveFileName"
+        notesStore = NotesStore(
+            repository: NotesRepository(
+                applicationSupportDirectory: AppPaths.applicationSupport()),
+            loadSelection: {
+                UserDefaults.standard.string(forKey: noteSelectionKey).map(NoteID.init(rawValue:))
+            },
+            saveSelection: { UserDefaults.standard.set($0?.rawValue, forKey: noteSelectionKey) })
     }
 
     func start() {
@@ -163,6 +185,7 @@ final class AppCore {
             windowSwitchCoordinator.applyEnabled()
             menuSearchCoordinator.applyEnabled()
             fileSearchCoordinator.applyPolicy()
+            notesCoordinator.applyEnabled()
             aiChatCoordinator.applyEnabled()
             mcpCoordinator.applyEnabled()
             customQuickActions.onChange = { [weak self] _ in
@@ -289,6 +312,10 @@ final class AppCore {
         installedAI.stop()
     }
 
+    func flushNotesForTermination() async {
+        await notesCoordinator.prepareForTermination()
+    }
+
     @discardableResult
     func applyInstalledAILifecycle() -> Task<Void, Never> {
         let enabledKinds =
@@ -368,6 +395,7 @@ final class AppCore {
                 $0.windowSwitchCoordinator.applyEnabled()
                 $0.menuSearchCoordinator.applyEnabled()
             })
+        track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
         track({ _ = $0.aiEnabled }, reproject: { $0.aiChatCoordinator.applyEnabled() })
         track(
             {
