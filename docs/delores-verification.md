@@ -68,6 +68,26 @@ original byte for byte so it stays diffable, and the active file has moved on �
 they match would assert the wrong thing. The invariant worth protecting is the opposite one, and it is
 written where a restore would read it.
 
+### 2026-09-19, the hardened build installed — `82b9787f`
+
+Pushed, built and put where the Release channel lives.
+
+| Command | Result |
+| --- | --- |
+| `./Scripts/build-delores-dmg.sh` | **✓ BUILD SUCCEEDED**, `verify-signature.sh` green, `build/Delores-0.2.0.dmg` (9.2 MB) |
+| `PlistBuddy` on the app inside it | `CFBundleShortVersionString` **0.2.0**, `CFBundleVersion` **685** — equal to `git rev-list --count HEAD` at `82b9787f`, which is the number naming the source it was built from |
+| `lipo -archs` on that binary | **x86_64 arm64** — the local Release lane is universal, unlike the CI artifact |
+| `codesign -dv` after installing | `Identifier=com.jackdu.delores`, `flags=0x10000(runtime)`, `Authority=HuaciGongju CodeSign` |
+| `/Applications/Delores.app`, before and after | **0.1.0 / 1 → 0.2.0 / 685.** The old bundle went to the Trash and the new one in with `ditto`, never `cp -R` |
+| The designated requirement, old bundle versus new | **byte-identical** — `identifier "com.jackdu.delores" and certificate root = H"86a60938…"`. That is why the accessibility grant survives a version change, and it was checked against the old bundle in the Trash rather than assumed from the certificate name |
+| `spctl -a -t exec` | **rejected**, expected: the local identity is not notarized. The app carries no quarantine attribute, so it launches |
+| `.github/workflows/ci.yml` on the pushed commit | **✗ failure, and no step ran.** Run `35431737378` failed in **7 s** with an empty step list — `test: failure` and nothing under it. `--log-failed` answers `log not found`. The check-run annotation is the only place the reason appears: *"The job was not started because recent account payments have failed or your spending limit needs to be increased."* The repo is **private**, so Actions minutes are metered. **This commit is therefore not independently verified by CI**, which is the fact worth keeping — the run at `07:26Z` was green in 1m53s and this one at `08:20Z` never started, so what changed is the account, not the code |
+
+The Debug readings in the section above are unaffected: this lane builds Release, and the two share
+every source file. **The installed build number is now 685 while `git rev-list --count HEAD` is one
+higher**, because recording this pushed the count — that is the property working rather than drifting,
+and it is why `delores-versioning.md` refuses to write a count down.
+
 ### 2026-09-19, the Build derived at build time — `e43b62e9`
 
 Added because a document described a rule the code did not implement. `delores-versioning.md` said the
