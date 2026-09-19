@@ -5,19 +5,31 @@ is a set of standalone harnesses, and the manual half is the sweep at the bottom
 
 ## Definition of done
 
-The mechanical bar, in one place so it cannot drift. All five pass before a change is finished.
+The mechanical bar, in one place so it cannot drift.
 
 | Check | Command |
 | --- | --- |
+| Every scripted check below | `./Scripts/local-gate.sh` |
 | The harnesses | `./Scripts/run-tests.sh` |
+| The Delores context harness | `./Scripts/run-delores-tests.sh` |
+| The upstream drift regression | `./Tests/upstream-drift-test.sh` |
+| The vendored Huaci harness | `./Scripts/run-huaci-integration-tests.sh` |
 | Lint | `./Scripts/lint.sh` |
 | Pure-layer purity | `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Tinycast/Features/*/Model/` |
 | A clean build | `xcodebuild … -configuration Debug CODE_SIGNING_ALLOWED=NO`, zero **new** warnings |
 | Docs still true | any doc your change made wrong, fixed in the same commit |
 
-CI runs the first two and does not build the app at all — so the build, the purity grep and the docs
-are on you. Each is expanded below; the manual sweep at the end of this file is the sixth, judged by
-what you touched.
+`./Scripts/local-gate.sh` runs every scripted row above in the order CI used to run them and prints a
+single summary, because on 2026-09-19 GitHub stopped starting jobs on this private repository at all
+(docs/delores-verification.md). `--clean` runs the same set in a throwaway worktree of `HEAD`, which is
+the part a working tree cannot check: a file that was never committed, or a script that never got its
+exec bit, passes in place and fails there. The purity grep, the build and the docs are on you; the
+manual sweep at the end of this file is the last one, judged by what you touched.
+
+This table is load-bearing, so it is worth knowing it was wrong: it said CI ran "the first two" and did
+not build the app, while `ci.yml` built the Debug target and ran two harnesses and the drift regression
+that the table never listed. The bar lives here or it lives nowhere — a row that names a command
+nobody runs is how a check goes missing without anyone deleting it.
 
 ## The harnesses
 
