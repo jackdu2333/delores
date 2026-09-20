@@ -535,11 +535,11 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
                 : metrics.scaled(DeloresContextIslandPlacement.preferredExpandedHeight)
             size = CGSize(
                 width: width,
-                height: mode.isWorking
-                    ? targetHeight
-                    : DeloresContextIslandPlacement.expandedHeight(
-                        preferred: targetHeight,
-                        in: screen))
+                height: DeloresContextIslandPlacement.openedHeight(
+                    preferred: targetHeight,
+                    verticalBarLength: rowLength,
+                    in: screen,
+                    isVertical: barIsVertical))
         } else if barIsVertical {
             // A column's vessel is the strip itself: as thick as its entries, as long as the column
             // it is showing. The row's `vesselWidth` does not apply — its spill is room for controls
@@ -555,7 +555,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
         // Laid out for the card it becomes before the frame animates, so the growth reveals the card
         // rather than stretching the bar.
-        let root = makeRoot(mode, rowWidth: barWidth, rowLength: barLength)
+        let root = makeRoot(mode, rowWidth: barWidth, rowLength: rowLength)
         let hosting = DeloresFirstMouseHostingView(
             rootView: hosted(root, size: size, metrics: metrics))
         hosting.sizingOptions = []
@@ -631,7 +631,9 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         }
         let placement = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: pet.center, edge: pet.edge,
-            collapsedSize: CGSize(width: barWidth, height: barIsVertical ? barLength : barHeight),
+            collapsedSize: CGSize(
+                width: barWidth,
+                height: barIsVertical ? barLengthWithExits : barHeight),
             expandedSize: size, visibleFrame: screen.visibleFrame, bodyRadius: pet.radius)
         adopt(placement)
         return placement.frame

@@ -1,7 +1,12 @@
-# Contributing to Tinycast
+# Contributing to Delores
 
-Check existing [issues](https://github.com/abue-ammar/tinycast/issues) and
-[pull requests](https://github.com/abue-ammar/tinycast/pulls) first.
+Delores openly builds on Tinycast's mature launcher and search foundation. Contributions should
+preserve Delores' product model: one shared core, three surfaces, and capabilities that are not tied
+to only one surface. The Command Surface continues the Tinycast-derived command experience; Context
+and Companion are Delores-owned forms around that core.
+
+Check existing [issues](https://github.com/jackdu2333/delores/issues) and
+[pull requests](https://github.com/jackdu2333/delores/pulls) first.
 
 > **Don't hurry your code. Make sure it works well and is well designed. Don't worry about timing.**
 
@@ -12,7 +17,7 @@ Check existing [issues](https://github.com/abue-ammar/tinycast/issues) and
   after the palette closes.
 - **Design.** New UI must look like it shipped with the app — spacing, type, radii and motion from the
   existing tokens ([`docs/ui.md`](docs/ui.md)). If you genuinely need a new one, justify it in the PR.
-- **No bloat.** Tinycast stays small on purpose — quality over quantity. A clean patch still gets
+- **No bloat.** Delores stays small on purpose — quality over quantity. A clean patch still gets
   declined if the feature isn't worth its weight, so open an issue and settle that before you build.
 - **Never break the Non-negotiables** in [`AGENTS.md`](AGENTS.md).
 
@@ -71,7 +76,7 @@ Two things that are only about contributing, and so are not in those docs:
 
 ## Bugs
 
-macOS version, Tinycast version + channel, steps, expected vs actual. A recording beats a paragraph.
+macOS version, Delores version + channel, steps, expected vs actual. A recording beats a paragraph.
 
 ## Security
 
@@ -79,4 +84,4 @@ Not in the issue tracker — see [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-[AGPL-3.0](LICENSE). Contributions are licensed under the same terms.
+[AGPL-3.0-or-later](LICENSE). Contributions are licensed under the same terms.

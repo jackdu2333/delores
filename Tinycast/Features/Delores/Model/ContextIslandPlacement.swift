@@ -73,6 +73,19 @@ enum DeloresContextIslandPlacement {
         min(preferred, max(0, screen.visibleFrame.height) * maximumVisibleFraction)
     }
 
+    /// Keeps a vertical action strip inside the opened vessel instead of letting its last row clip.
+    static func openedHeight(
+        preferred: CGFloat,
+        verticalBarLength: CGFloat,
+        in screen: InvocationScreen,
+        isVertical: Bool
+    ) -> CGFloat {
+        let visibleHeight = max(0, screen.visibleFrame.height)
+        let capped = min(preferred, visibleHeight * maximumVisibleFraction)
+        guard isVertical else { return capped }
+        return min(max(capped, verticalBarLength), visibleHeight)
+    }
+
     /// The height the bar is actually given. Exposed so the bar can lay itself out against it
     /// instead of against its own wish — a bar laid out at 38pt inside a 28pt panel loses its
     /// bottom edge, which is what clipping the pills looked like.

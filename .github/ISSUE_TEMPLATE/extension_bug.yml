@@ -1,29 +1,33 @@
-name: Extension Bug
-description: A Raycast extension misbehaves inside Tinycast
+name: Legacy Extension Bug
+description: Report an issue in the parked Raycast extension pack
 title: "[Extension]: "
 labels: ["bug", "extension"]
 body:
   - type: markdown
     attributes:
-      value: <sub>⚠️ macOS 15 Sequoia is no longer maintained.</sub>
+      value: <sub>Delores currently targets macOS 26+.</sub>
   - type: markdown
     attributes:
       value: |
-        **Read this first.** Tinycast runs Raycast extensions in its own runtime — a different system,
-        not Raycast. An extension that reaches for something only Raycast has cannot be made to work
-        here, and the issue is closed as `wontfix`:
+        **Read this first.** Raycast Extensions are currently parked under
+        `Packs/LegacyFeatures/` and are not part of the active Delores target. This template is for
+        regressions in that retained pack, not for requesting that the feature be restored.
+
+        The compatibility notes are in
+        [the legacy extension documentation](https://github.com/jackdu2333/delores/blob/main/Packs/LegacyFeatures/docs/extensions.md).
+        An extension that reaches for something only Raycast has cannot be made to work here, and
+        the issue is closed as `wontfix`:
 
         - Raycast AI — `AI.ask`, AI commands, `tools/` AI extensions
         - the Raycast browser extension (`BrowserExtension`)
         - Raycast's `WindowManagement` service
         - Raycast's OAuth proxy, `oauth.raycast.com`
         - Raycast Pro, cloud sync, accounts or teams
-        - an OS permission or entitlement Tinycast doesn't hold
+        - an OS permission or entitlement the legacy pack doesn't hold
         - Raycast-internal APIs, private modules and unpublished behaviour
 
-        The full list of gaps is in
-        [docs/features/extensions.md](https://github.com/abue-ammar/tinycast/blob/main/docs/features/extensions.md#what-isnt-supported-yet).
-        A missing API that Tinycast *could* reasonably implement is worth reporting. "It works in
+        The full list of gaps is in the legacy extension documentation. A regression in the retained
+        runtime is worth reporting. "It works in
         Raycast" on its own is not.
   - type: checkboxes
     id: existing-search
@@ -71,7 +75,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Tinycast version + channel
+      label: Delores version + channel
       placeholder: 0.1.0 stable
     validations:
       required: true
@@ -97,7 +101,7 @@ body:
         **Ticking this is not permission to start.** Wait until a maintainer labels this issue
         `approved` — that label is the only green light. A pull request whose linked issue isn't
         `approved` is closed automatically, unreviewed. Docs-only changes are the exception. Read
-        [CONTRIBUTING.md](https://github.com/abue-ammar/tinycast/blob/main/CONTRIBUTING.md)
+        [CONTRIBUTING.md](https://github.com/jackdu2333/delores/blob/main/CONTRIBUTING.md)
         first — it is required reading, and it is what your PR is held to.
       options:
         - label: I'm willing to implement this myself **once this issue is labelled `approved`**

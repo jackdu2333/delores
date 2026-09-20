@@ -1,6 +1,7 @@
 # Third-party notices
 
-Tinycast is licensed under the GNU Affero General Public License v3 — see [LICENSE](LICENSE). It
+Tinycast and Delores code in this repository are distributed under the GNU Affero General Public
+License v3 or later — see [LICENSE](LICENSE). It
 also redistributes the third-party material recorded below, under the terms stated for each.
 
 ## Brand marks — `Tinycast/Assets.xcassets/AIBrand*.imageset`
@@ -52,3 +53,28 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Companion skins — Petdex source assets
+
+Delores optionally includes companion skins built from seven open-source pet assets distributed
+through [Petdex](https://petdex.dev/). The project reslices and scales selected source frames into
+its own companion atlases. These skins are optional: users may choose among supported pets or turn
+the Companion off, and using a pet created by this project is never required.
+
+The project maintainer has confirmed that the seven source assets below are open-source. This list
+records the direct source asset URLs for provenance. Before redistributing or modifying a source
+asset, verify the applicable licence and attribution requirements in its corresponding Petdex origin
+entry. This NOTICE does not infer or assign a single licence to all Petdex assets.
+
+| Shipped atlas | Petdex asset | Source |
+| --- | --- | --- |
+| `CompanionAtlas-nezuko.generated.png` | `nezukocoder` | <https://assets.petdex.dev/pets/nezukocoder-7d766f7c2597/sprite.webp> |
+| `CompanionAtlas-ddoZvzo.generated.png` | `ddo-zvzo` | <https://assets.petdex.dev/pets/ddo-zvzo-49f5c2067af6/sprite.webp> |
+| `CompanionAtlas-whaledou.generated.png` | `whaledou` | <https://assets.petdex.dev/pets/whaledou-c4cb6b24fb56/sprite.webp> |
+| `CompanionAtlas-xiaoHei.generated.png` | `nightleaf` | <https://assets.petdex.dev/pets/nightleaf-3ffbd69b2946/sprite.webp> |
+| `CompanionAtlas-gugugaga.generated.png` | `gugugaga` | <https://assets.petdex.dev/pets/gugugaga-cedf2dac1434/sprite.webp> |
+| `CompanionAtlas-lillia.generated.png` | `snow-plum-lillia` | <https://assets.petdex.dev/pets/snow-plum-lillia-2a5fc9e46017/sprite.webp> |
+| `CompanionAtlas-dog.generated.png` | `aka-shiba` | <https://assets.petdex.dev/pets/aka-shiba-5758e3fbe12c/sprite.webp> |
+
+The source-of-truth list used to rebuild these atlases is
+[`Scripts/gen-companion-petdex.py`](Scripts/gen-companion-petdex.py).

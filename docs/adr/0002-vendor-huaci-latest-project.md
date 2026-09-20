@@ -41,10 +41,12 @@ To update the snapshot from the local Huaci checkout:
 git status --short
 git subtree pull \
   --prefix=Integrations/HuaciGongju \
-  /Users/jackdu/Documents/小工具/huacigongju main --squash
+  "$HUACI_REPO" main --squash
 ./Scripts/run-huaci-integration-tests.sh
 ./Scripts/run-delores-tests.sh
 ```
+
+Set `HUACI_REPO` to the local Huaci checkout before running the commands.
 
 Resolve conflicts inside the subtree as Huaci-source changes. Resolve conflicts outside the subtree
 only through an explicit Delores adapter decision.

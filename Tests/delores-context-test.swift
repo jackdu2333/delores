@@ -315,6 +315,18 @@ struct DeloresContextTest {
         require(
             DeloresContextIslandPlacement.expandedHeight(preferred: 390, in: shortScreen) == 300,
             "a short display caps the opened card at its visible share")
+        require(
+            DeloresContextIslandPlacement.openedHeight(
+                preferred: 78, verticalBarLength: 190, in: screen, isVertical: true) == 190,
+            "a vertical working card makes room for its full action strip")
+        require(
+            DeloresContextIslandPlacement.openedHeight(
+                preferred: 78, verticalBarLength: 190, in: screen, isVertical: false) == 78,
+            "a horizontal working card keeps its compact height")
+        require(
+            DeloresContextIslandPlacement.openedHeight(
+                preferred: 390, verticalBarLength: 340, in: shortScreen, isVertical: true) == 340,
+            "a tall vertical strip stays visible on a short display")
 
         require(
             DeloresContextIslandPlacement.openCornerRadius

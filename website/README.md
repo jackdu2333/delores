@@ -1,7 +1,11 @@
-# Tinycast website
+# Website migration note
 
-The marketing page and documentation for Tinycast, at
-<https://abue-ammar.github.io/tinycast/>.
+This directory currently contains the inherited Tinycast marketing page and documentation. It is
+not yet the Delores public website. The Delores public entry is the repository root and its GitHub
+project page until this site is rewritten around Delores' one core, three surfaces narrative.
+
+The inherited Tinycast site was previously published at
+<https://abue-ammar.github.io/tinycast/>; that URL is retained here only as upstream provenance.
 
 Next.js (App Router) with a **static export** — there is no server behind the deployed site. Tailwind
 v4 for styling, [Fumadocs](https://fumadocs.dev) for the documentation section.
@@ -60,8 +64,9 @@ use `<kbd>`, which renders through the same keycap component as the marketing pa
 
 ## Deploy
 
-Pushes to `main` touching `website/**` are built and published to GitHub Pages by
-`.github/workflows/website.yml`.
+The Pages workflow is disabled by default until the Delores site migration is complete. Set the
+repository variable `DELORES_WEBSITE_ENABLED=true` only after the copy, repository links, install
+commands and privacy claims have been reviewed for Delores.
 
 Two things are load-bearing and easy to break:
 

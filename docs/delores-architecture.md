@@ -233,6 +233,11 @@ No unit test covers this: the island's UI layer is outside the harness's compile
 does cover it is reading the panel's real bounds from outside the process
 (`CGWindowListCopyWindowInfo`) and comparing them with the size the controller chose.
 
+When the Companion is standing on a vertical edge, an opened vessel is at least as tall as the
+vertical action strip, including its pin, collapse and close controls. The compact working card must
+not keep its horizontal height in that state, or the strip's last action is clipped while a reply is
+starting. The vessel shape is clipped once at the root so the card and strip share one continuous edge.
+
 ## Phase 1.5 boundary
 
 `AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface

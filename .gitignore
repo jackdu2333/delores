@@ -57,6 +57,7 @@ node_modules/
 *.swp
 *.tmp
 *.orig
+/.playwright-mcp/
 
 # Agent workspace: memory and notes for this checkout. Never product code, and an untracked
 # directory here makes `check-upstream-drift.sh` report a dirty tree before every sync.

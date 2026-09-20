@@ -84,7 +84,7 @@ struct AboutView: View {
     }
 
     private var footer: some View {
-        Text(L10n.string("© 2026 Abue Ammar · Released under AGPL-3.0"))
+        Text(L10n.string("© 2026 Abue Ammar · Released under AGPL-3.0-or-later"))
             .font(.caption2)
             .foregroundStyle(.tertiary)
     }
@@ -106,23 +106,13 @@ private struct AboutLink: Identifiable {
 
     static let all: [AboutLink] = [
         AboutLink(
-            id: "website", glyph: .symbol("globe"), title: "Website",
-            detail: "abue-ammar.github.io/tinycast",
-            url: URL(string: "https://abue-ammar.github.io/tinycast/")!),
-        AboutLink(
             id: "github", glyph: .brand("BrandGitHub"), title: "GitHub",
+            detail: "github.com/jackdu2333/delores",
+            url: URL(string: "https://github.com/jackdu2333/delores")!),
+        AboutLink(
+            id: "tinycast", glyph: .symbol("arrow.up.right"), title: "Tinycast source",
             detail: "github.com/abue-ammar/tinycast",
-            url: URL(string: "https://github.com/abue-ammar/tinycast")!),
-        AboutLink(
-            id: "discord", glyph: .brand("BrandDiscord"), title: "Discord",
-            detail: "Join the Delores community",
-            url: URL(string: "https://discord.gg/v2Eeb4QQy3")!),
-        AboutLink(
-            id: "x", glyph: .brand("BrandX"), title: "X", detail: "@abue_ammar",
-            url: URL(string: "https://x.com/abue_ammar")!),
-        AboutLink(
-            id: "email", glyph: .symbol("envelope"), title: "Email",
-            detail: "iabueammar@gmail.com", url: URL(string: "mailto:iabueammar@gmail.com")!)
+            url: URL(string: "https://github.com/abue-ammar/tinycast")!)
     ]
 }
 

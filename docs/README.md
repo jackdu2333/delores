@@ -1,4 +1,9 @@
-# Tinycast documentation
+# Delores documentation
+
+This is the engineering documentation for Delores. Delores keeps Tinycast's source tree and upstream
+conventions so the Command Surface can continue to build on its launcher and search foundation. That
+provenance is intentional; the product model documented here is Delores' one core, three surfaces,
+and many capabilities.
 
 Start with [`AGENTS.md`](../AGENTS.md) at the repo root — it is the short version, and it links here for
 anything that needs more than a line.

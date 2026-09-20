@@ -1,8 +1,7 @@
 name: Website
 
-# Builds the Next.js site in website/ and deploys it to GitHub Pages at
-# https://abue-ammar.github.io/tinycast/. Requires: repo Settings → Pages →
-# Source = "GitHub Actions" (one-time setup).
+# The inherited Tinycast site stays unpublished until it has been rewritten as the Delores site.
+# Enable deliberately with the repository variable DELORES_WEBSITE_ENABLED=true after that review.
 on:
   push:
     branches: [main]
@@ -25,6 +24,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ vars.DELORES_WEBSITE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -262,6 +262,12 @@ struct DeloresContextIslandView: View {
         return barAtLeadingEdge ? .topLeading : .topTrailing
     }
 
+    private var vesselShape: RoundedRectangle {
+        RoundedRectangle(
+            cornerRadius: metrics.scaled(DeloresContextIslandPlacement.openCornerRadius),
+            style: .continuous)
+    }
+
     var body: some View {
         // The bar holds the vessel's own top strip and the card hangs below it, as a ZStack rather
         // than a VStack.
@@ -289,10 +295,8 @@ struct DeloresContextIslandView: View {
             alignment: isVertical ? vesselAlignment : .top)
         // One shape for both states: the corner is wider than half a closed bar's height, so the bar
         // clamps it down to the pill it always was and the card simply grows into the wider corner.
-        .frosted(
-            in: RoundedRectangle(
-                cornerRadius: metrics.scaled(DeloresContextIslandPlacement.openCornerRadius),
-                style: .continuous))
+        .frosted(in: vesselShape)
+        .clipShape(vesselShape)
         .accessibilityElement(children: .contain)
     }
 
@@ -337,9 +341,11 @@ struct DeloresContextIslandView: View {
             } label: {
                 Image(systemName: "stop.fill")
                     .font(.system(size: metrics.scaled(10)))
-                    .foregroundStyle(Theme.Colors.destructive.opacity(0.85))
-                    .padding(metrics.scaled(4))
-                    .background(Circle().fill(Color.primary.opacity(colorScheme == .dark ? 0.08 : 0.05)))
+                    .foregroundStyle(Theme.Colors.destructive)
+                    .frame(width: metrics.scaled(26), height: metrics.scaled(26))
+                    .background(
+                        Circle().fill(
+                            Theme.Colors.destructive.opacity(colorScheme == .dark ? 0.16 : 0.10)))
             }
             .buttonStyle(DeloresIslandPressStyle())
             .help(L10n.string("Stop generating"))

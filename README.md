@@ -11,6 +11,10 @@ select text    → Context Surface    → Translate / Explain / Summarize / Sear
 always there   → Companion Surface  → a glance, the last selection, a hand-off
 ```
 
+Delores openly builds on Tinycast's mature launcher and search foundation. The Delores contribution is
+the product design around that foundation: one shared core, three forms, and capabilities that appear
+in the smallest useful surface for the user's current context.
+
 `CONTEXT.md` defines the vocabulary. The shape of it: a **Surface** is where the reader is, a
 **Capability** is what gets done, and no surface owns the capability behind it. Window snapping and
 the split divider are capabilities with a transient affordance, not a fourth form.
@@ -39,6 +43,10 @@ The latest local Huaci project is preserved at `Integrations/HuaciGongju/` as a 
 integration source. It is not compiled into the Tinycast application target yet; runtime activation
 will go through an explicit Delores adapter so Huaci does not create a second AppDelegate, LLM or
 selection pipeline. See [ADR 0002](docs/adr/0002-vendor-huaci-latest-project.md).
+
+The Companion is optional and its pet is user-selectable. Delores supports pets from the open-source
+Petdex sources listed in [NOTICE.md](NOTICE.md); users may choose a supported pet or turn the
+Companion off, and Delores does not require a pet created by this project.
 
 The local branch is `main`, with the official Tinycast repository registered as
 `upstream`. See [CONTEXT.md](CONTEXT.md) and
@@ -85,5 +93,5 @@ builds and will not install Tinycast releases.
 
 ## License
 
-Delores contains code derived from Tinycast and remains under the GNU Affero General Public License v3.
-See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+Delores contains code derived from Tinycast and remains under the GNU Affero General Public License
+v3 or later. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).

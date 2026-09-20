@@ -1,6 +1,11 @@
 # 划词小工具 (HuaciGongju) for macOS
 
-从 Cherry Studio 核心灵感剥离、专为 macOS 打造的**纯原生极轻量 Floating Quick Action Bar**。
+由 Delores 维护者创作的早期产品形态，专为 macOS 打造的**纯原生极轻量 Floating Quick Action Bar**。
+
+## 归属与灵感边界
+
+HuaciGongju 作为 Delores 的初期形态由项目维护者创作。Cherry Studio 以及其他大型、重型
+客户端仅作为产品与交互灵感参考；本仓库不声称复用了这些项目的代码或素材。
 
 ## 🌟 视觉与交互特性
 
