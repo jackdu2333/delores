@@ -81,7 +81,7 @@ extension SettingsAnchor {
     static let windowManagementOptions = Self(tab: .windowManagement, title: "Options")
 
     /// The Overview states the three forms and nothing else; every switch lives in its own pane.
-    static let deloresSurfaces = Self(tab: .delores, title: "Surfaces")
+    static let deloresSurfaces = Self(tab: .delores, title: "Three ways in")
 
     static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Context Bar")
 

@@ -126,7 +126,7 @@ enum SettingsSearchCatalog {
             pane: .delores,
             keywords: ["overview", "what is delores", "surfaces", "forms", "总览", "三个形态", "介绍"]),
         .init(
-            group: .deloresSurfaces, "Surfaces",
+            group: .deloresSurfaces, "Three ways in",
             keywords: [
                 "command surface", "context surface", "companion surface", "three forms", "形态"
             ])

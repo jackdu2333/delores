@@ -1,7 +1,7 @@
 # Delores packaging and release boundary
 
 Delores has a local signed packaging path, and since 2026-09-19 a release feed of its own on
-`jackdu2333/delores`: releases `v0.2.0` and `v0.2.1`, cut by hand. What it still does not have is an
+`jackdu2333/delores`: releases `v0.2.0`, `v0.2.1` and `v0.2.2`, cut by hand. What it still does not have is an
 *automatic* release channel, and that separation is intentional: a Delores build must never consume
 Tinycast's release feed, GitHub releases, Homebrew casks or signing identity by accident. The two
 feeds are separate because the repositories are — Tinycast's releases live on `abue-ammar/tinycast`,
@@ -14,7 +14,7 @@ On a machine with Xcode 26 and the local signing identity configured:
 
 ```sh
 ./Scripts/build-delores-dmg.sh
-./Scripts/build-delores-dmg.sh 0.2.1
+./Scripts/build-delores-dmg.sh 0.2.2
 ```
 
 The script uses the `Delores` scheme from `Tinycast.xcodeproj`, produces `Delores.app`, and writes
@@ -22,7 +22,7 @@ The script uses the `Delores` scheme from `Tinycast.xcodeproj`, produces `Delore
 another machine with `DELORES_CODE_SIGN_IDENTITY`.
 
 Run it with no argument and the version is whatever `project.yml` carries — `MARKETING_VERSION` is a
-real source of truth and is currently **0.2.1**. The Build is not read from there: the script derives
+real source of truth and is currently **0.2.2**. The Build is not read from there: the script derives
 it as `git rev-list --count HEAD` and passes it as `CURRENT_PROJECT_VERSION`, so the DMG names the
 commit it was built from ([delores-versioning.md](delores-versioning.md)). The argument overrides
 `MARKETING_VERSION` for that one build, and the DMG is named from the built app's own
@@ -39,9 +39,9 @@ for every commit, which is the one thing the number exists not to be.
 
 ```sh
 ./Scripts/build-delores-dmg.sh                       # writes build/Delores-<version>.dmg
-gh release create v0.2.1 --repo jackdu2333/delores \
-  --target "$(git rev-parse HEAD)" --title "Delores 0.2.1" \
-  --notes-file build/RELEASE-NOTES-0.2.1.md build/Delores-0.2.1.dmg
+gh release create v0.2.2 --repo jackdu2333/delores \
+  --target "$(git rev-parse HEAD)" --title "Delores 0.2.2" \
+  --notes-file build/RELEASE-NOTES-0.2.2.md build/Delores-0.2.2.dmg
 ```
 
 Three details in that command are not incidental, and two of them fail quietly:

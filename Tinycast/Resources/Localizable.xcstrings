@@ -5670,6 +5670,56 @@
           }
         }
       }
+    },
+    "Three ways in": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三种用法"
+          }
+        }
+      }
+    },
+    "A thought crosses your mind — find something, open something, just ask. Press the shortcut and it is there; it leaves when you are done.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "脑子里闪过一个念头——想找点什么、打开点什么，或者干脆问一句。按下快捷键，它就在；你忙完了，它就走。"
+          }
+        }
+      }
+    },
+    "You are reading something you do not quite follow. Select it — a few actions appear at the top of the screen, and the answer lands right where you are.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读到一段看不太懂的东西。选中它——屏幕顶上冒出几个动作，答案就落在你眼前。"
+          }
+        }
+      }
+    },
+    "It is simply there, and it never asks you for anything. The moment you remember it, double-click and your last selection comes back.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "它就在那儿，从不向你索取什么。你想起它的时候，双击一下，上次选过的内容就回来了。"
+          }
+        }
+      }
+    },
+    "Three ways in, one Delores. You never have to pick one — what you are doing has already picked it for you.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三种用法，一个 Delores。你不用先挑一个——手头正在做的事，已经替你挑了。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
