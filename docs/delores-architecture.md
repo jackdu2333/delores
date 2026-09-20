@@ -6,6 +6,8 @@ Delores is one tool that appears in three forms. A **Surface** is where the read
 **Capability** is what gets done, and it belongs to the core rather than to any one form. `CONTEXT.md`
 carries the definitions; this is how they are laid out.
 
+![Delores architecture: one core, three surfaces](delores-architecture.svg)
+
 | Surface | Summoned by | What it is for | How much of Delores it shows |
 | --- | --- | --- | --- |
 | Context | a selection gesture | The minimum actions for the text the reader has just selected | The least |

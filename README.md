@@ -1,7 +1,8 @@
 # Delores
 
-**One tool, three forms, on top of Tinycast's core.** Delores keeps the mature Tinycast command and
-capability core and adds the forms that are needed around a selection and on the desktop itself:
+**Delores is one native macOS intent layer that appears in the form the task needs.** It has one
+shared capability core and three user-facing surfaces — the right one appears where the user's task
+begins:
 
 ```text
 one core → three surfaces → many capabilities
@@ -11,15 +12,45 @@ select text    → Context Surface    → Translate / Explain / Summarize / Sear
 always there   → Companion Surface  → a glance, the last selection, a hand-off
 ```
 
+<p align="center">
+  <img src="docs/delores-architecture.svg" alt="Delores architecture: one core, three surfaces" width="100%" />
+</p>
+
 Delores openly builds on Tinycast's mature launcher and search foundation. The Delores contribution is
-the product design around that foundation: one shared core, three forms, and capabilities that appear
-in the smallest useful surface for the user's current context.
+the product design around that foundation: **one shared core, three forms, and capabilities that
+appear in the smallest useful surface for the user's current context.**
+
+If you remember one thing: **Delores is not three separate apps, and the Companion is not the product
+itself.** Context, Companion and Command are three ways into the same core. The Companion is optional;
+users choose whether to use it and which supported pet to show.
 
 `CONTEXT.md` defines the vocabulary. The shape of it: a **Surface** is where the reader is, a
 **Capability** is what gets done, and no surface owns the capability behind it. Window snapping and
 the split divider are capabilities with a transient affordance, not a fourth form.
 
 Product intent and long-term boundaries: [docs/delores-product.md](docs/delores-product.md).
+
+## The three surfaces
+
+| Surface | You start with | What Delores does there |
+| --- | --- | --- |
+| **Context** | You have already selected something | Offers the smallest useful actions — Translate, Explain, Summarize or Search — close to the selection. |
+| **Companion** | You want Delores nearby | Stays on the desktop, remembers the last selection and offers a lightweight hand-off back into Context. |
+| **Command** | You press `⌥ Space` or another hotkey | Opens the complete command layer for search, commands, Chat, Settings and longer-running tasks. |
+
+### Command Surface — the Tinycast-derived foundation
+
+The Command Surface is the most complete form of Delores. It deliberately keeps Tinycast's mature
+launcher/search experience as its foundation while Context and Companion extend the same core into
+the user's current context.
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="Delores Command Surface showing the launcher and search experience" width="920" />
+</p>
+
+The repository includes a Command Surface capture. The architecture diagram above is the source of
+truth for Context and Companion until fresh captures are taken from a build with their live windows
+visible.
 
 ## Current slice
 

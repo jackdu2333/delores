@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 920" role="img" aria-labelledby="title description">
+  <title id="title">Delores architecture: one core, three surfaces</title>
+  <desc id="description">Context, Companion and Command surfaces present a shared Delores capability core.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#23304a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#7c8797" />
+    </marker>
+  </defs>
+
+  <rect width="1600" height="920" rx="36" fill="#f8fafc" />
+
+  <text x="800" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="30" font-weight="700" fill="#202b45">Delores — one product, one core, three surfaces</text>
+  <text x="800" y="101" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="18" fill="#596579">The surface follows the user's context; the capability stays in the core.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="140" width="430" height="150" rx="28" fill="#e2f5ef" stroke="#19816f" stroke-width="2" />
+    <text x="285" y="196" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="32" font-weight="700" fill="#126052">Context</text>
+    <text x="285" y="233" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="20" fill="#226e63">select text → appears nearby</text>
+    <text x="285" y="267" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="16" fill="#438578">minimum useful actions</text>
+
+    <rect x="585" y="140" width="430" height="150" rx="28" fill="#fde8ef" stroke="#b52d61" stroke-width="2" />
+    <text x="800" y="196" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="32" font-weight="700" fill="#8c234c">Companion</text>
+    <text x="800" y="233" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="20" fill="#a33c62">desktop → always close at hand</text>
+    <text x="800" y="267" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="16" fill="#b76b87">optional, user-selectable pet</text>
+
+    <rect x="1100" y="140" width="430" height="150" rx="28" fill="#e5f1ff" stroke="#2368b8" stroke-width="2" />
+    <text x="1315" y="196" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="32" font-weight="700" fill="#174e8a">Command</text>
+    <text x="1315" y="233" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="20" fill="#2869a9">⌥ Space → summon</text>
+    <text x="1315" y="267" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="16" fill="#5684b5">the most complete surface</text>
+  </g>
+
+  <path d="M 285 292 V 354" fill="none" stroke="#7c8797" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M 800 292 V 354" fill="none" stroke="#7c8797" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M 1315 292 V 354" fill="none" stroke="#7c8797" stroke-width="3" marker-end="url(#arrow)" />
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="360" width="1460" height="480" rx="36" fill="#eef0ff" stroke="#5558d8" stroke-width="2" />
+    <text x="800" y="423" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="32" font-weight="700" fill="#30336e">Delores Core — capabilities belong here, not to a single surface</text>
+    <text x="800" y="458" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="17" fill="#5e6295">All three forms can reach the same capability without duplicating its ownership.</text>
+
+    <rect x="120" y="505" width="410" height="185" rx="24" fill="#ffffff" stroke="#9aa0ec" stroke-width="2" />
+    <text x="325" y="563" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#3b3e8a">Actions &amp; AI</text>
+    <text x="325" y="604" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">Translate · Explain · Summarize</text>
+    <text x="325" y="638" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">model routes · streaming · follow-up</text>
+
+    <rect x="595" y="505" width="410" height="185" rx="24" fill="#ffffff" stroke="#9aa0ec" stroke-width="2" />
+    <text x="800" y="563" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#3b3e8a">Search &amp; Text</text>
+    <text x="800" y="604" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">launcher · clipboard · text injection</text>
+    <text x="800" y="638" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">searching · hand-off · context</text>
+
+    <rect x="1070" y="505" width="410" height="185" rx="24" fill="#ffffff" stroke="#9aa0ec" stroke-width="2" />
+    <text x="1275" y="563" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#3b3e8a">Window &amp; Settings</text>
+    <text x="1275" y="604" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">placement · snapping · preferences</text>
+    <text x="1275" y="638" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" fill="#5559a4">one source of truth for behavior</text>
+
+    <rect x="260" y="730" width="1080" height="82" rx="28" fill="#dfe2ff" stroke="#8589e2" stroke-width="1.5" />
+    <text x="800" y="765" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="17" font-weight="600" fill="#414584">Tinycast launcher/search foundation → Command Surface</text>
+    <text x="800" y="790" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="17" font-weight="600" fill="#414584">Delores-owned Context + Companion → the same core</text>
+  </g>
+</svg>
