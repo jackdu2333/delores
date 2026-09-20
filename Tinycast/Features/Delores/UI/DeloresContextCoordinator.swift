@@ -114,8 +114,8 @@ final class DeloresContextCoordinator {
 
     private func captureSelection(after gesture: SelectionGestureMonitor.Gesture) {
         // A pinned island is holding a selection of its own, and the gesture that would replace it is
-        // dropped before it reads anything: the read would paste over the reader's clipboard to no
-        // purpose, and the selection state stays untouched rather than reporting text nobody sees.
+        // dropped before it reads anything: a second automatic read serves no purpose, and the
+        // selection state stays untouched rather than reporting text nobody sees.
         guard !(island.isVisible && (island.isPinned || island.isGenerating)) else { return }
 
         // A window drag or a divider drag is one gesture that belongs to Spatial. Releasing a mouse
@@ -131,18 +131,9 @@ final class DeloresContextCoordinator {
         captureTask?.cancel()
         let generation = UUID()
         captureGeneration = generation
-        let injector = injector
         captureTask = Task { @MainActor [weak self] in
-            var rawText = AccessibilityText.selection(in: target)
-            if rawText == nil {
-                // Synthesizing ⌘C is dangerous if the target app is Finder or the gesture was a double-click
-                // on a non-text item (e.g. opening files in Finder), which interrupts double-click delivery.
-                let isFinder = target.bundleIdentifier == "com.apple.finder"
-                let allowClipboardFallback = !isFinder && gesture.kind == .drag
-                if allowClipboardFallback {
-                    rawText = await injector.copySelection(from: target)
-                }
-            }
+            // Automatic capture is observational: an AX miss must not inject keys or mutate the pasteboard.
+            let rawText = AccessibilityText.selection(in: target)
             guard let rawText,
                 let prepared = DeloresSelectionContextPolicy.prepare(rawText),
                 let self,
