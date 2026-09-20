@@ -35,6 +35,8 @@ const PALETTE = [
 
 const grid = () => new Uint8Array(CELL * CELL);
 const put = (g, x, y, v) => {
+  x = Math.round(x);
+  y = Math.round(y);
   if (x >= 0 && x < CELL && y >= 0 && y < CELL) g[y * CELL + x] = v;
 };
 
@@ -72,6 +74,7 @@ function duck({
   lift = 0,
   lean = 0,
   waddle = 0,
+  gait = null,
   blink = false,
   gaze = 0,
   mouth = "closed",
@@ -112,9 +115,18 @@ function duck({
   }
 
   // Paddle feet
-  const footY = 19 + lift;
+  const footY = 20;
   if (!sleeping) {
-    if (waddle === 1) {
+    const stride = {
+      0: { l: [-5, 0], r: [2, 0] },
+      1: { l: [1, -4], r: [3, 0] },
+      2: { l: [-3, 0], r: [5, 0] },
+      3: { l: [-4, 0], r: [2, -4] },
+    }[gait];
+    if (stride) {
+      rect(g, cx + stride.l[0], footY + stride.l[1], 3, 2, BEAK);
+      rect(g, cx + stride.r[0], footY + stride.r[1], 3, 2, BEAK);
+    } else if (waddle === 1) {
       rect(g, cx - 3, footY - 1, 3, 2, BEAK);
       rect(g, cx + 2, footY, 3, 2, BEAK);
     } else if (waddle === -1) {
@@ -160,10 +172,10 @@ const mirror = (g) => {
 };
 
 const DUCK_WALK = [
-  { lift: 0, lean: 1, waddle: 0 },
-  { lift: -1, lean: 1, waddle: 1 },
-  { lift: 0, lean: 1, waddle: 0 },
-  { lift: -1, lean: 1, waddle: -1 },
+  { lean: 1, gait: 0 },
+  { lift: -1, lean: 1, gait: 1 },
+  { lean: 1, gait: 2 },
+  { lift: -1, lean: 1, gait: 3 },
 ];
 
 function frame(row, col) {
@@ -226,6 +238,12 @@ for (let row = 0; row < ROWS; row++) {
     }
     blit(cell, col, row);
   }
+}
+
+const walkPoses = [0, 1, 2, 3].map((col) => frame(2, col));
+const samePose = (a, b) => a.every((v, i) => v === b[i]);
+if (samePose(walkPoses[0], walkPoses[2]) || samePose(walkPoses[1], walkPoses[3])) {
+  throw new Error("walk cycle repeats a pose");
 }
 
 const CRC_TABLE = (() => {

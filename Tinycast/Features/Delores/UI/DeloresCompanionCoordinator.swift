@@ -374,8 +374,13 @@ final class DeloresCompanionCoordinator {
         // Read from the wander rather than from the window: the window origin is snapped to whole
         // points for the artwork's sake, and that rounding must not colour which way the body turns.
         let from = state.center
+        // Weight and sprite share this frame: a plant that still travels is what reads as a slide.
+        if case .strolling = state.phase {
+            walkFrame += 1
+        }
+        let frame = walkFrame % DeloresCompanionAnimation.walkFrameCount
         let next = DeloresCompanionWander.advance(
-            state, elapsed: elapsed, now: tick, in: loop(on: screen), stepFrame: walkFrame, using: &rng)
+            state, elapsed: elapsed, now: tick, in: loop(on: screen), stepFrame: frame, using: &rng)
         wander = next
         companion.move(to: next.center)
         syncWanderTimers()
@@ -383,8 +388,7 @@ final class DeloresCompanionCoordinator {
         // Ruling 3: the facing reads off the step's horizontal component, and a step with none keeps
         // what it had — a body on a vertical edge must not flip sides every frame.
         facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
-        walkFrame += 1
-        companion.step(frame: walkFrame % DeloresCompanionAnimation.walkFrameCount, facing: facing)
+        companion.step(frame: frame, facing: facing)
     }
 
     private func handleCompanionPointer(at point: CGPoint) {

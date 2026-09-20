@@ -48,6 +48,8 @@ const PALETTE = [
 const grid = () => new Uint8Array(CELL * CELL);
 
 const put = (g, x, y, v) => {
+  x = Math.round(x);
+  y = Math.round(y);
   if (x >= 0 && x < CELL && y >= 0 && y < CELL) g[y * CELL + x] = v;
 };
 
@@ -85,9 +87,19 @@ function outline(g) {
 // MARK: - The poses
 
 // `breathe` sinks the body and leaves the feet planted, which is what makes it read as breathing
-// rather than as a hop; `lift` moves the whole thing, feet included, which is what a step needs.
+// rather than as a hop; `lift` bobs the body, and the feet stay on their own planted line.
 // `lean` shifts it toward the direction of travel and `step` picks which foot is forward.
-function creature({ breathe = 0, lift = 0, lean = 0, step = 0, blink = false, gaze = 0, mouth = "dot", arm = null }) {
+function gaitFeet(step) {
+  switch (step) {
+    case 0: return { left: [-5, 0], right: [2, 0] };
+    case 1: return { left: [1, -4], right: [3, 0] };
+    case 2: return { left: [-3, 0], right: [5, 0] };
+    case 3: return { left: [-4, 0], right: [2, -4] };
+    default: return { left: [0, 0], right: [0, 0] };
+  }
+}
+
+function creature({ breathe = 0, lift = 0, lean = 0, step = null, blink = false, gaze = 0, mouth = "dot", arm = null }) {
   const g = grid();
   const cy = 13 + breathe + lift;
   const cx = 11.5 + lean;
@@ -96,15 +108,11 @@ function creature({ breathe = 0, lift = 0, lean = 0, step = 0, blink = false, ga
   disc(g, cx + 5, cy - 5, 2, 2.6, BODY);
   disc(g, cx, cy, 7.5, 6.8, BODY);
 
-  // Feet: one forward, one back, and on `step` 0 they are level — the pose a trip both starts and
-  // ends on, so a walk cycle reads as a cycle rather than as a lurch.
-  const feet = [
-    [step === 1 ? -1 : 0, step === 1 ? -1 : 0],
-    [step === 3 ? -1 : 0, step === 3 ? -1 : 0],
-  ];
-  const footY = 19 + lift;
-  rect(g, 8 + lean + feet[0][0], footY + feet[0][1], 3, 2, BODY);
-  rect(g, 13 + lean + feet[1][0], footY + feet[1][1], 3, 2, BODY);
+  // Contact / pass / opposite contact / opposite pass — a repeated plant is what reads as a slide.
+  const feet = gaitFeet(step);
+  const footY = 20;
+  rect(g, 8 + lean + feet.left[0], footY + feet.left[1], 3, 2, BODY);
+  rect(g, 13 + lean + feet.right[0], footY + feet.right[1], 3, 2, BODY);
 
   // Light falls from above, so the underside is the shaded half.
   for (let y = 0; y < CELL; y++) {
@@ -156,7 +164,7 @@ const WALK = [
   { lift: 0, lean: 1, step: 0 },
   { lift: -1, lean: 1, step: 1 },
   { lift: 0, lean: 1, step: 2 },
-  { lift: 1, lean: 1, step: 3 },
+  { lift: -1, lean: 1, step: 3 },
 ];
 
 function frame(row, col) {
@@ -233,6 +241,12 @@ for (let row = 0; row < ROWS; row++) {
     }
     blit(cell, col, row);
   }
+}
+
+const walkPoses = [0, 1, 2, 3].map((col) => frame(1, col));
+const samePose = (a, b) => a.every((v, i) => v === b[i]);
+if (samePose(walkPoses[0], walkPoses[2]) || samePose(walkPoses[1], walkPoses[3])) {
+  throw new Error("walk cycle repeats a pose");
 }
 
 // MARK: - PNG

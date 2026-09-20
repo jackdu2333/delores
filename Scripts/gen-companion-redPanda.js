@@ -35,6 +35,8 @@ const PALETTE = [
 
 const grid = () => new Uint8Array(CELL * CELL);
 const put = (g, x, y, v) => {
+  x = Math.round(x);
+  y = Math.round(y);
   if (x >= 0 && x < CELL && y >= 0 && y < CELL) g[y * CELL + x] = v;
 };
 
@@ -74,7 +76,7 @@ function redPanda({
   breathe = 0,
   lift = 0,
   lean = 0,
-  step = 0,
+  step = null,
   blink = false,
   gaze = 0,
   threat = false,   // Famous "hands up" pose
@@ -180,11 +182,15 @@ function redPanda({
   put(g, earX + 2, headY - 1, WHITE_MARK);
 
   // Dark paws
-  const footY = 19 + lift;
-  const f1 = (step === 1) ? -1 : 0;
-  const f2 = (step === 3) ? -1 : 0;
-  rect(g, cx - 4, footY + f1, 3, 2, BELLY_BLACK);
-  rect(g, cx + 2, footY + f2, 3, 2, BELLY_BLACK);
+  const footY = 20;
+  const paws = {
+    0: { l: [-5, 0], r: [2, 0] },
+    1: { l: [1, -4], r: [3, 0] },
+    2: { l: [-3, 0], r: [5, 0] },
+    3: { l: [-4, 0], r: [2, -4] },
+  }[step] || { l: [0, 0], r: [0, 0] };
+  rect(g, cx - 4 + paws.l[0], footY + paws.l[1], 3, 2, BELLY_BLACK);
+  rect(g, cx + 2 + paws.r[0], footY + paws.r[1], 3, 2, BELLY_BLACK);
 
   // Eyes & Nose
   const eyeX = cx + 4 + gaze;
@@ -217,7 +223,7 @@ const PANDA_WALK = [
   { lift: 0, lean: 1, step: 0 },
   { lift: -1, lean: 1, step: 1 },
   { lift: 0, lean: 1, step: 2 },
-  { lift: 1, lean: 1, step: 3 },
+  { lift: -1, lean: 1, step: 3 },
 ];
 
 function frame(row, col) {
@@ -283,6 +289,12 @@ for (let row = 0; row < ROWS; row++) {
     }
     blit(cell, col, row);
   }
+}
+
+const walkPoses = [0, 1, 2, 3].map((col) => frame(2, col));
+const samePose = (a, b) => a.every((v, i) => v === b[i]);
+if (samePose(walkPoses[0], walkPoses[2]) || samePose(walkPoses[1], walkPoses[3])) {
+  throw new Error("walk cycle repeats a pose");
 }
 
 const CRC_TABLE = (() => {

@@ -203,8 +203,8 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 | 行 | 动画 | 帧格 | 帧率 | 驱动 |
 | --- | --- | --- | --- | --- |
 | 0 | idle 呼吸（2 帧）+ 眨眼（1 帧） | 3/5 格 | 呼吸 1 fps | **CA 离散关键帧，无限重复（裁决 1）**；眨眼 = 一次性 Timer 排期 3–8 s，播一次即回落 |
-| 1 | 走左 | 5/5 格 | 8 fps | 由 strollTimer 顺带切帧 |
-| 2 | 走右 | 5/5 格 | 8 fps | 同上 |
+| 1 | 走左 | 4/5 格 | 6 fps | 由 strollTimer 顺带切帧；四帧互不重复：接触 / 摆腿 / 对侧接触 / 对侧摆腿 |
+| 2 | 走右 | 4/5 格 | 6 fps | 同上，镜像或对向源帧。位移权重与正在绘制的那一帧同号 |
 | 3 | 反应：glance（2）+ wave（2）+ chat（1） | 5/5 格 | 8–12 fps | 一次性 CA 动画播 1–2 循环回落 idle |
 | 4 | 待机闲趣：yawn / stretch / flop 趴地 | 4/5 格 | 2–4 fps | 长歇期间一次性 CA 动画，播完回落 idle |
 | 5 | 杂技特写：hop / roll / landing 翻滚 | 4/5 格 | 5–8 fps | 特殊互动或掉落一次性 CA 动画，播完回落 idle |
@@ -217,6 +217,7 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 资产生成走 `Scripts/gen-companion-atlas.js`（Node，同 `gen-currencies.js` 家风）：输入源帧
 PNG，输出图集 + `CompanionAtlas.generated.swift`（行列枚举与帧数常量）。生成物不手改，
 且**必须提交**——构建不得依赖 Node。
+Petdex 皮肤的走路行由 `Scripts/gen-companion-petdex.py` 重切：源表 8 帧取 0/2/4/6，贴地对齐、最近邻缩放，idle 等行不动。
 
 **归属**：`CompanionAtlas.generated.swift` 放 `Features/Delores/Model/`（纯常量，可进 harness）；
 图集 PNG 放 `Tinycast/Resources/`。

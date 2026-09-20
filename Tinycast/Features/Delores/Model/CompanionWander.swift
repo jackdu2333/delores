@@ -96,7 +96,7 @@ enum DeloresCompanionWander {
         }
     }
 
-    /// Foot-planting gait dynamics: push-off frames surge forward, contact frames plant firmly.
+    /// Odd frames are the passing / push-off poses; even frames plant. The index is the drawn frame.
     static func stepWeight(for frame: Int) -> CGFloat {
         let cycle = frame % 4
         return (cycle == 1 || cycle == 3) ? 1.5 : 0.5
