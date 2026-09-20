@@ -5720,6 +5720,46 @@
           }
         }
       }
+    },
+    "What it is": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "它是什么"
+          }
+        }
+      }
+    },
+    "A small task should not have to become a big one.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一件小事，不该变成一件大事。"
+          }
+        }
+      }
+    },
+    "Delores is not an app you open and work inside.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 不是一个要打开、要待在里面干活的 App。"
+          }
+        }
+      }
+    },
+    "It waits in the menu bar, comes to you where you already are, and is gone before you close it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "它在菜单栏里等着，出现在你已经待着的地方；还没等你关，它就已经退场了。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
