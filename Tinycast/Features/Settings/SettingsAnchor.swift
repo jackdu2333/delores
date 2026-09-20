@@ -8,10 +8,18 @@ struct SettingsAnchor: Hashable, Sendable {
 
 // Named `<pane><Section>` throughout, so the constant for a section is always guessable from it.
 extension SettingsAnchor {
-    static let generalGlobalShortcuts = Self(tab: .general, title: "Global Shortcuts")
-    static let generalSearch = Self(tab: .general, title: "Search")
-    static let generalHyperKey = Self(tab: .general, title: "Hyper Key")
-    static let generalAppearance = Self(tab: .general, title: "Appearance")
+    /// Everything the palette itself reads: its summons, its ranking, its keys and how it is drawn.
+    /// It was the whole of "General", which meant the pane that named the product's everyday
+    /// settings was in fact the launcher's.
+    static let commandSurfaceGlobalShortcuts = Self(
+        tab: .commandSurface, title: "Global Shortcuts")
+    static let commandSurfaceSearch = Self(tab: .commandSurface, title: "Search")
+    static let commandSurfaceHyperKey = Self(tab: .commandSurface, title: "Hyper Key")
+    static let commandSurfaceAppearance = Self(tab: .commandSurface, title: "Appearance")
+    /// What the palette does between summons: where it returns to, how it leaves, which keyboard.
+    static let commandSurfaceBehaviour = Self(tab: .commandSurface, title: "Behaviour")
+
+    /// The app itself rather than any one Surface: whether it starts, and whether it is in the bar.
     static let generalGeneral = Self(tab: .general, title: "General")
 
     static let applicationsSearchScopes = Self(tab: .applications, title: "Search Scopes")
@@ -69,9 +77,16 @@ extension SettingsAnchor {
         tab: .windowManagement, title: "Layout Commands")
     static let windowManagementOptions = Self(tab: .windowManagement, title: "Options")
 
-    static let deloresCompanion = Self(tab: .delores, title: "Companion")
-    static let deloresContextBar = Self(tab: .delores, title: "Context Bar")
-    static let deloresSpatial = Self(tab: .delores, title: "Window Capabilities")
+    /// The Overview states the three forms and nothing else; every switch lives in its own pane.
+    static let deloresSurfaces = Self(tab: .delores, title: "Surfaces")
+
+    static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Context Bar")
+
+    static let companionSurfaceCompanion = Self(tab: .companionSurface, title: "Companion")
+
+    /// Snapping and the divider are window-placement capabilities, not a Surface of their own.
+    static let windowSnappingCapabilities = Self(
+        tab: .windowSnapping, title: "Window Capabilities")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")
     static let clipboardCommands = Self(tab: .clipboard, title: "Commands")

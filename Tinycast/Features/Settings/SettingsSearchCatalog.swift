@@ -111,65 +111,90 @@ enum SettingsSearchCatalog {
     // Pane order, then section order within a pane, so this reads as a table of contents.
 
     static let entries: [SettingsSearchEntry] =
-        general + applications + systemSettings
-        + systemActions + commands + quicklinks + appleShortcuts + fallbacks + ai + quickActions + fileSearch
-        + notes
-        + navigation + windowManagement + delores + clipboard
-        + permissions + backup + about
+        delores
+        + commandSurface + applications + systemSettings + systemActions + commands
+        + quicklinks + appleShortcuts + fallbacks
+        + contextSurface
+        + companionSurface
+        + windowManagement + windowSnapping + ai + quickActions + clipboard + notes
+        + fileSearch + navigation
+        + general + permissions + backup + about
 
-    private static let general: [SettingsSearchEntry] = [
-        .init(pane: .general, keywords: ["preferences", "settings", "偏好", "设置", "通用"]),
+    /// The product's own page. It states the three forms; no row here is a setting.
+    private static let delores: [SettingsSearchEntry] = [
         .init(
-            .generalGlobalShortcuts, "App Launcher",
+            pane: .delores,
+            keywords: ["overview", "what is delores", "surfaces", "forms", "总览", "三个形态", "介绍"]),
+        .init(
+            group: .deloresSurfaces, "Surfaces",
+            keywords: [
+                "command surface", "context surface", "companion surface", "three forms", "形态"
+            ])
+    ]
+
+    /// Everything the palette itself reads. These rows were "General"'s until the pane that fronts
+    /// the product stopped opening on the launcher's own shortcut.
+    private static let commandSurface: [SettingsSearchEntry] = [
+        .init(
+            pane: .commandSurface,
+            keywords: ["palette", "launcher", "command surface", "命令面板", "启动器"]),
+        .init(
+            .commandSurfaceGlobalShortcuts, "App Launcher",
             keywords: ["hotkey", "shortcut", "summon", "palette", "热键", "快捷键", "召唤"]),
         .init(
-            .generalSearch, "Learned ranking",
+            .commandSurfaceSearch, "Learned ranking",
             keywords: ["reset", "history", "order", "privacy"]),
         .init(
-            .generalHyperKey, "Hyper Key",
+            .commandSurfaceHyperKey, "Hyper Key",
             keywords: ["modifier", "remap", "caps lock", "capslock"]),
         .init(
-            .generalHyperKey, "Quick Press",
+            .commandSurfaceHyperKey, "Quick Press",
             keywords: ["tap", "escape", "single press"]),
         .init(
-            .generalHyperKey, "Include Shift (⇧)",
+            .commandSurfaceHyperKey, "Include Shift (⇧)",
             keywords: ["modifier", "chord"]),
         .init(
-            .generalAppearance, "Theme",
+            .commandSurfaceAppearance, "Theme",
             keywords: ["dark", "light", "mode", "appearance"]),
         .init(
-            .generalAppearance, "Interface size",
+            .commandSurfaceAppearance, "Interface size",
             keywords: ["text size", "font size", "scale", "zoom", "bigger", "larger", "legible"]),
         .init(
-            .generalAppearance, "Background transparency",
+            .commandSurfaceAppearance, "Background transparency",
             keywords: ["glass", "opacity", "blur", "translucency", "reset"]),
         .init(
-            .generalAppearance, "Compact mode",
+            .commandSurfaceAppearance, "Compact mode",
             keywords: ["slim", "search bar", "small"]),
         .init(
-            .generalAppearance, "Show favorites in compact mode",
+            .commandSurfaceAppearance, "Show favorites in compact mode",
             keywords: ["pinned", "apps", "compact"]),
         .init(
-            .generalAppearance, "Follow the cursor across displays",
+            .commandSurfaceAppearance, "Follow the cursor across displays",
             keywords: ["monitor", "screen", "pointer", "multi display"]),
         .init(
-            .generalAppearance, "Drag to reposition",
+            .commandSurfaceAppearance, "Drag to reposition",
             keywords: ["move", "position", "window"]),
+        .init(
+            .commandSurfaceBehaviour, "Pop to Root Search",
+            keywords: ["reset", "timeout", "back"]),
+        .init(
+            .commandSurfaceBehaviour, "Escape Key Behavior",
+            keywords: ["escape", "esc", "back", "close", "navigate"]),
+        .init(
+            .commandSurfaceBehaviour, "Auto-switch input source",
+            keywords: ["keyboard", "layout", "language", "abc"])
+    ]
+
+    /// The app itself rather than any one form: whether it starts with the Mac, and whether it is
+    /// in the menu bar.
+    private static let general: [SettingsSearchEntry] = [
+        .init(pane: .general, keywords: ["preferences", "settings", "偏好", "设置", "通用"]),
         .init(
             .generalGeneral, "Launch at login",
             keywords: ["startup", "login item", "start", "boot"]),
         .init(
             .generalGeneral, "Show in menu bar",
-            keywords: ["menubar", "status item", "icon", "hide"]),
-        .init(
-            .generalGeneral, "Pop to Root Search",
-            keywords: ["reset", "timeout", "back"]),
-        .init(
-            .generalGeneral, "Escape Key Behavior",
-            keywords: ["escape", "esc", "back", "close", "navigate"]),
-        .init(
-            .generalGeneral, "Auto-switch input source",
-            keywords: ["keyboard", "layout", "language", "abc"])
+            keywords: ["menubar", "status item", "icon", "hide"])
     ]
 
     private static let applications: [SettingsSearchEntry] = [
@@ -370,13 +395,42 @@ enum SettingsSearchCatalog {
             keywords: ["exclude", "password manager", "ignore", "privacy", "menu bar"])
     ]
 
-    private static let delores: [SettingsSearchEntry] = [
+    /// What the bar offers for a selection. Its rows are its own catalogue, not Quick Actions'.
+    private static let contextSurface: [SettingsSearchEntry] = [
         .init(
-            pane: .delores,
-            keywords: ["companion", "pet", "spatial", "snap", "split", "divider", "桌宠", "吸附", "分屏"]),
-        .init(.deloresCompanion, "Enable desktop companion", keywords: ["pet", "presence", "companion"]),
-        .init(.deloresSpatial, "Enable window snapping", keywords: ["snap", "drag", "window"]),
-        .init(.deloresSpatial, "Enable split divider", keywords: ["seam", "resize", "tiled"])
+            pane: .contextSurface,
+            keywords: [
+                "selected text", "bar", "translate", "explain", "summarize", "search",
+                "划词", "翻译", "解释", "总结"
+            ]),
+        .init(
+            .contextSurfaceContextBar, "Enable the Context Surface",
+            keywords: ["turn on", "off", "bar", "accessibility", "划词", "开关"]),
+        .init(
+            group: .contextSurfaceContextBar, "Context Bar",
+            keywords: ["rows", "actions", "model", "划词栏"])
+    ]
+
+    private static let companionSurface: [SettingsSearchEntry] = [
+        .init(
+            pane: .companionSurface,
+            keywords: ["companion", "pet", "desktop", "presence", "桌宠", "桌面伙伴"]),
+        .init(
+            .companionSurfaceCompanion, "Enable desktop companion",
+            keywords: ["pet", "presence", "companion"])
+    ]
+
+    /// Window placement that answers a gesture rather than a summon; not a Surface of its own.
+    private static let windowSnapping: [SettingsSearchEntry] = [
+        .init(
+            pane: .windowSnapping,
+            keywords: ["snap", "split", "divider", "seam", "tiled", "吸附", "分屏", "中缝"]),
+        .init(
+            .windowSnappingCapabilities, "Enable window snapping",
+            keywords: ["snap", "drag", "window"]),
+        .init(
+            .windowSnappingCapabilities, "Enable split divider",
+            keywords: ["seam", "resize", "tiled"])
     ]
 
     private static let windowManagement: [SettingsSearchEntry] = [

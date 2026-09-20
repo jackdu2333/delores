@@ -84,6 +84,7 @@
 		22EE4D5AFAAA12E649666019 /* PermissionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C7D17F97002FD58E8A5F53 /* PermissionsSettingsView.swift */; };
 		22FD39D92B6AC3E3E2D9D6FB /* NoteSwitcherWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5311551EDC3AE497384CDE89 /* NoteSwitcherWindowController.swift */; };
 		23426631D4EF6840F510B855 /* QuicklinkTemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36E9D831127BF673B5E1D3D /* QuicklinkTemplateEngine.swift */; };
+		2367D46E0B2BEB3EDC149009 /* WindowSnappingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32348621FB912DFADE2E113 /* WindowSnappingSettingsView.swift */; };
 		24774D18B408004B9016A007 /* WindowLayoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112FAE46D58E17331C1CEEAF /* WindowLayoutStore.swift */; };
 		24BDA1C2A8F9A6026D4EFA65 /* CalcNumberBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A8322A12267B2A82422281 /* CalcNumberBase.swift */; };
 		24EFA87B2617537B6CAAD52B /* FileSearchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC2CD86BAA6567B66B2B4DB /* FileSearchSettingsView.swift */; };
@@ -154,6 +155,7 @@
 		425EFB24DF9C320864624E73 /* NoteBlockDecoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38F41CCCC45DEC05CF48F77D /* NoteBlockDecoration.swift */; };
 		428266F88C6D26C003F1D3A0 /* NoteCheckboxGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6B72A1A1FF3D08CFC3FA7D /* NoteCheckboxGeometry.swift */; };
 		42CDB6A71960204B194EDC8B /* CommandEscapeTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D05FD9A7137951B2EC6C39 /* CommandEscapeTap.swift */; };
+		432433CCEE6178D6C258B28A /* ContextSurfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2C921774A8EAB0624CA063A /* ContextSurfaceSettingsView.swift */; };
 		43DBCE7B5A84D0D6322124F5 /* MessageHUDController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2CB71671625A1F446316A1 /* MessageHUDController.swift */; };
 		44646A576847F2D9FB68D8CF /* MCPServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F8B8787A7197579A6F6ECC /* MCPServerManager.swift */; };
 		4549280508130B232069071E /* BackupSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112551581ECF83B53D405334 /* BackupSettingsView.swift */; };
@@ -218,7 +220,6 @@
 		5FB708EC91426C41762AB96B /* CalculatorHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D032AC22E53BB9997E492F /* CalculatorHistoryStore.swift */; };
 		5FC53F9968A5DFF24CD109DD /* VisibilityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17EA0B9FFCBAB10941EC7702 /* VisibilityStore.swift */; };
 		5FED92BC16B1463EBDE38D77 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D41B9E6F2C617D28C83AFF /* ShortcutRecorder.swift */; };
-		60DB748ED47F620DB2F315B3 /* DeloresSpatialSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */; };
 		613827876C48EF88F2162C10 /* NotificationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FB75182A60F65BA1FB9BA8 /* NotificationToken.swift */; };
 		6201D9ACD9A52B253AC5562F /* DeloresContextIslandController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521FEF035F743E5E3AEFF48D /* DeloresContextIslandController.swift */; };
 		6288859DDF7AB08BFC13A41B /* ActionOutcomeCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DA6ECD783C30317588E063 /* ActionOutcomeCopy.swift */; };
@@ -310,6 +311,7 @@
 		8F66949F8518CF6F1878AEEF /* QuicklinkDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FFFE3901140714D3A7BB4C /* QuicklinkDestination.swift */; };
 		902E16DA6E408318597CD000 /* WindowZOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD2273796C5CEA4E63E9E5E /* WindowZOrder.swift */; };
 		906C261B36E9E0B597198E3D /* UninstallRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7DAF3FFEE6CAB656B0FA8A /* UninstallRules.swift */; };
+		9100F36D9F74A3385E236C39 /* DeloresOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F9F7BEA40D61B51D118741 /* DeloresOverviewView.swift */; };
 		914402CB38C5D09C611AA8F4 /* AIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106F9FEF3F0C36E0C5686DA7 /* AIRequest.swift */; };
 		916CFA20A66AC96B2610A0D5 /* WindowLayoutRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6951305850D11CA90D16A162 /* WindowLayoutRunner.swift */; };
 		92EDFE4591BE41718ECE1C82 /* ChatGPTSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943495E91C0D09B633746515 /* ChatGPTSubscriptionManager.swift */; };
@@ -327,6 +329,7 @@
 		9A7BBA93D54AB1638F1EBE6F /* SpaceGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9B724FD9A867189A6118DF7 /* SpaceGesture.swift */; };
 		9A80D2997DCF835AF225A586 /* RunningAppsMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5FA545F484D7666E9A5F14 /* RunningAppsMonitor.swift */; };
 		9AB58511EEDCD01E6139D194 /* NoteEditPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BB8F2CE628925F41B330B5 /* NoteEditPlan.swift */; };
+		9B2DB698BE7AA468A4B4AE80 /* CommandSurfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DB3128F95B174934B5B06D /* CommandSurfaceSettingsView.swift */; };
 		9B3BC1DCC478DA7517F04182 /* CalculatorHistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */; };
 		9BB417EBD7843DDE09AA0200 /* ChatCopyButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 030E67F6AC9A292F385FB5A5 /* ChatCopyButton.swift */; };
 		9C596362466373F9EDC246E3 /* CompanionAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C685F41F1573D32C3FF59159 /* CompanionAnimation.swift */; };
@@ -342,6 +345,7 @@
 		A1F267E9D9914DB60DEEE0AD /* DoubleTapDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83C54F3A609CD1C2CDF304FB /* DoubleTapDetector.swift */; };
 		A239EDD9C83ED3D8250D2F9F /* KeyboardFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9905A21DC8D37323B614F60C /* KeyboardFocus.swift */; };
 		A320745F576C5915217DF113 /* ClipboardCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5B89168050723B7221F04A2 /* ClipboardCoordinator.swift */; };
+		A33C076F0549B7A518F2E616 /* CompanionSurfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435F462785659484AFE8890C /* CompanionSurfaceSettingsView.swift */; };
 		A41185C975CBF97A8C6EAC19 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF36BDC9ACE867DCC2CCF746 /* SystemPromptEditor.swift */; };
 		A47E49315D60D94CF75E22C9 /* PaletteDropGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418527DD2F2370A1B82A13B7 /* PaletteDropGuideView.swift */; };
 		A500AF3BF8910B335A7A936C /* HUDPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB1752929BA1ACC0BC54865C /* HUDPanel.swift */; };
@@ -653,6 +657,7 @@
 		416DB6FCDAC89ED39E24AF1C /* CompanionAtlas-dog.generated.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "CompanionAtlas-dog.generated.png"; sourceTree = "<group>"; };
 		418527DD2F2370A1B82A13B7 /* PaletteDropGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteDropGuideView.swift; sourceTree = "<group>"; };
 		418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		435F462785659484AFE8890C /* CompanionSurfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionSurfaceSettingsView.swift; sourceTree = "<group>"; };
 		4395BACF833C810961A248F0 /* BarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarButton.swift; sourceTree = "<group>"; };
 		439D94674FA1F5020C3AA0E8 /* AppleShortcutCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleShortcutCoordinator.swift; sourceTree = "<group>"; };
 		43F3BC11AD77D8A58671F83E /* HotKeyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyAction.swift; sourceTree = "<group>"; };
@@ -695,7 +700,6 @@
 		570CE37C7133E28F7495ED91 /* MarkdownCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownCodeView.swift; sourceTree = "<group>"; };
 		57694B58B0A17CAC1D697FAA /* BundleNameCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleNameCache.swift; sourceTree = "<group>"; };
 		58D62BFB4EC604AE6171BBA3 /* CountryZoneData.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryZoneData.generated.swift; sourceTree = "<group>"; };
-		59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeloresSpatialSettingsView.swift; sourceTree = "<group>"; };
 		5A1E7B96668721F12170CD72 /* WindowActionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowActionMemory.swift; sourceTree = "<group>"; };
 		5A83359DA89BD4E1E6FC3087 /* FileSearchQuickLook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchQuickLook.swift; sourceTree = "<group>"; };
 		5ADCDDCEBA1EBB74810BDFC4 /* CustomQuickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomQuickAction.swift; sourceTree = "<group>"; };
@@ -710,6 +714,7 @@
 		603A68732C12BAC45EE55EBF /* ToolRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRunner.swift; sourceTree = "<group>"; };
 		60CCB1A47E0022BAEDD1EE96 /* CalculatorHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryView.swift; sourceTree = "<group>"; };
 		60D4D2146CE38403B2DDB072 /* CustomQuickActionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomQuickActionStore.swift; sourceTree = "<group>"; };
+		60DB3128F95B174934B5B06D /* CommandSurfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSurfaceSettingsView.swift; sourceTree = "<group>"; };
 		61D7B06067FB35E7CC6C1E09 /* FallbacksSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbacksSettingsView.swift; sourceTree = "<group>"; };
 		61FFFE3901140714D3A7BB4C /* QuicklinkDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuicklinkDestination.swift; sourceTree = "<group>"; };
 		621B09CB5CF15517D9FDAB5B /* PaletteFilterAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteFilterAction.swift; sourceTree = "<group>"; };
@@ -750,6 +755,7 @@
 		71B96B69CB4E52319BB3EC7D /* FileSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchService.swift; sourceTree = "<group>"; };
 		72DF1178CD8AD726AC6F9874 /* CalculatorCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorCardView.swift; sourceTree = "<group>"; };
 		72F0F0DDA5FC1F6ED59E73E9 /* DoubleTapModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapModifier.swift; sourceTree = "<group>"; };
+		72F9F7BEA40D61B51D118741 /* DeloresOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeloresOverviewView.swift; sourceTree = "<group>"; };
 		730BF08D764698989DF963A0 /* MenuSearchShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuSearchShortcut.swift; sourceTree = "<group>"; };
 		7355ACD6D1BE7BC7FCA26BD2 /* CodexAppServerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerClient.swift; sourceTree = "<group>"; };
 		73E25B87C692D5FEE1FBF994 /* PanelTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelTransition.swift; sourceTree = "<group>"; };
@@ -924,6 +930,7 @@
 		C004F2C2EFDD340A73C6AB02 /* PaletteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteCoordinator.swift; sourceTree = "<group>"; };
 		C01F57ADD9C5610D4DD87825 /* CompanionAtlas.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAtlas.generated.swift; sourceTree = "<group>"; };
 		C214E40D42F4812F141C16A8 /* ColorPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPreview.swift; sourceTree = "<group>"; };
+		C2C921774A8EAB0624CA063A /* ContextSurfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSurfaceSettingsView.swift; sourceTree = "<group>"; };
 		C3C83D437500107168E12647 /* QuickActionSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionSettings.swift; sourceTree = "<group>"; };
 		C41B7D28CD2AF8AD14DA6FC3 /* SettingsAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAnchor.swift; sourceTree = "<group>"; };
 		C42ACB4D70CA089A6E948069 /* MenuSearchSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuSearchSession.swift; sourceTree = "<group>"; };
@@ -962,6 +969,7 @@
 		D2AA1CD3EDD5900B261B1677 /* NoteMarkdownStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteMarkdownStyler.swift; sourceTree = "<group>"; };
 		D2D032AC22E53BB9997E492F /* CalculatorHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryStore.swift; sourceTree = "<group>"; };
 		D2E1C14C150F3EC6EC5D610B /* BuiltInQuickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInQuickAction.swift; sourceTree = "<group>"; };
+		D32348621FB912DFADE2E113 /* WindowSnappingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSnappingSettingsView.swift; sourceTree = "<group>"; };
 		D381DD8CB296A6D5CFF90111 /* ClipboardFileKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardFileKind.swift; sourceTree = "<group>"; };
 		D3A6E15A480A4779ACCE259D /* EmptyResults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyResults.swift; sourceTree = "<group>"; };
 		D43E5D47E198B86901D75515 /* ChatGPTSubscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTSubscription.swift; sourceTree = "<group>"; };
@@ -1377,6 +1385,8 @@
 		37FE09946F348A5EA157CB56 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				435F462785659484AFE8890C /* CompanionSurfaceSettingsView.swift */,
+				C2C921774A8EAB0624CA063A /* ContextSurfaceSettingsView.swift */,
 				D7E834DE0914B0732CD1F905 /* DeloresCompanionCoordinator.swift */,
 				F2305C46B71E58EEFA9AEE67 /* DeloresCompanionMenu.swift */,
 				34FBD60D86F9733BB1D804C9 /* DeloresContextCoordinator.swift */,
@@ -1384,10 +1394,11 @@
 				CD525401BB111969C5FA91E8 /* DeloresContextIslandView.swift */,
 				A8CB7DA1B0385B1ABB258A01 /* DeloresCoordinator.swift */,
 				883681223B3B2D0C2E569F53 /* DeloresDividerPanel.swift */,
+				72F9F7BEA40D61B51D118741 /* DeloresOverviewView.swift */,
 				7A9B08F555E9EC9607C541BC /* DeloresSpatialPanels.swift */,
-				59A79BE2CBBE5D478F524B0D /* DeloresSpatialSettingsView.swift */,
 				4DF2045F458EBB82AB9DC39A /* DeloresSplitDividerCoordinator.swift */,
 				3B81A1CBA4EB1C89C131B414 /* DeloresWindowSnapCoordinator.swift */,
+				D32348621FB912DFADE2E113 /* WindowSnappingSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -1812,6 +1823,7 @@
 			isa = PBXGroup;
 			children = (
 				36E3D293BBB70F957362BB87 /* CommandsSettingsView.swift */,
+				60DB3128F95B174934B5B06D /* CommandSurfaceSettingsView.swift */,
 				418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */,
 				29D547CAB18AFCFC0390C943 /* NavigationSettingsView.swift */,
 				B3C7D17F97002FD58E8A5F53 /* PermissionsSettingsView.swift */,
@@ -2632,16 +2644,19 @@
 				89872774514D83EC2BD60F1E /* CommandCatalog.swift in Sources */,
 				42CDB6A71960204B194EDC8B /* CommandEscapeTap.swift in Sources */,
 				BEAAD72E748375E0039AC90F /* CommandID.swift in Sources */,
+				9B2DB698BE7AA468A4B4AE80 /* CommandSurfaceSettingsView.swift in Sources */,
 				752C5F665E12ED818320C02E /* CommandsSettingsView.swift in Sources */,
 				1545F0D79421A893EA104C3A /* CompactFavoritesRow.swift in Sources */,
 				9C596362466373F9EDC246E3 /* CompanionAnimation.swift in Sources */,
 				14C38441A2444054E5F54F52 /* CompanionAtlas.generated.swift in Sources */,
 				32567201F74DA240FE6F4FA9 /* CompanionLoop.swift in Sources */,
 				1AB91DEE2B70BA7C98006486 /* CompanionShell.swift in Sources */,
+				A33C076F0549B7A518F2E616 /* CompanionSurfaceSettingsView.swift in Sources */,
 				DB9D7AAB296CAF448A3990B9 /* CompanionWander.swift in Sources */,
 				7EA8057463FE0CD5D4565667 /* ContextAction.swift in Sources */,
 				EF0D68DF017F99AFA32A2D3F /* ContextAnswerAccumulator.swift in Sources */,
 				E4A0DF2B81DB1818BAC1B91F /* ContextIslandPlacement.swift in Sources */,
+				432433CCEE6178D6C258B28A /* ContextSurfaceSettingsView.swift in Sources */,
 				A024F68213FEB918BEF31255 /* CountryZoneData.generated.swift in Sources */,
 				2EBB42C7EB17F37628765B17 /* CurrencyData.generated.swift in Sources */,
 				5A91C58340D02ED0939BCAE2 /* CurrencyFeed.swift in Sources */,
@@ -2656,8 +2671,8 @@
 				317AD5CC0666F8A5D69A6763 /* DeloresContextIslandView.swift in Sources */,
 				EF140AD58F7CF2DB5190F543 /* DeloresCoordinator.swift in Sources */,
 				31B7A586F32A53DFB74E65A5 /* DeloresDividerPanel.swift in Sources */,
+				9100F36D9F74A3385E236C39 /* DeloresOverviewView.swift in Sources */,
 				7016F0F2354F99C5A9A55D64 /* DeloresSpatialPanels.swift in Sources */,
-				60DB748ED47F620DB2F315B3 /* DeloresSpatialSettingsView.swift in Sources */,
 				54BB1685B95B934E8CC8E3E2 /* DeloresSplitDividerCoordinator.swift in Sources */,
 				6E63C2637FE30D824FA1354F /* DeloresWindowSnapCoordinator.swift in Sources */,
 				F93CD1542844003929AB1BDB /* DialogChip.swift in Sources */,
@@ -2990,6 +3005,7 @@
 				018324CD7AB1996821F4070D /* WindowMover.swift in Sources */,
 				664D82881F3B90E6B1D504EB /* WindowPlacementEngine.swift in Sources */,
 				6AF8D4CB26C1B1F53C71B5E4 /* WindowReader.swift in Sources */,
+				2367D46E0B2BEB3EDC149009 /* WindowSnappingSettingsView.swift in Sources */,
 				BD0B60F4203FD2D852377CD1 /* WindowSwitchCoordinator.swift in Sources */,
 				F46DE2571A85FA24BD4E3B3A /* WindowSwitchEntry.swift in Sources */,
 				E8FFCAEE49AC44E4889DAF4D /* WindowSwitchList.swift in Sources */,

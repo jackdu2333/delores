@@ -5281,12 +5281,12 @@
         }
       }
     },
-    "© 2026 Abue Ammar · Released under AGPL-3.0": {
+    "© 2026 Abue Ammar · Released under AGPL-3.0-or-later": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "© 2026 Abue Ammar · 以 AGPL-3.0 发布"
+            "value": "© 2026 Abue Ammar · 以 AGPL-3.0-or-later 发布"
           }
         }
       }
@@ -5417,6 +5417,186 @@
           "stringUnit": {
             "state": "translated",
             "value": "笔记就是这个文件夹里的 Markdown 文件，每条笔记一个文件。更换文件夹不会移动任何文件。"
+          }
+        }
+      }
+    },
+    "Overview": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "总览"
+          }
+        }
+      }
+    },
+    "Command Surface": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令面板"
+          }
+        }
+      }
+    },
+    "Context Surface": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下文面板"
+          }
+        }
+      }
+    },
+    "Companion Surface": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面伙伴"
+          }
+        }
+      }
+    },
+    "Capabilities": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能力"
+          }
+        }
+      }
+    },
+    "Window Snapping": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口吸附"
+          }
+        }
+      }
+    },
+    "Surfaces": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "形态"
+          }
+        }
+      }
+    },
+    "Always available": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "始终可用"
+          }
+        }
+      }
+    },
+    "On": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已关闭"
+          }
+        }
+      }
+    },
+    "The Context Surface is off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下文面板处于关闭状态"
+          }
+        }
+      }
+    },
+    "Summoned by its shortcut when you want to start or find something. It is the most complete form: search, commands, Chat and Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "想发起或查找什么时，用快捷键召唤它。它是三个形态中最完整的一个：搜索、命令、对话与设置。"
+          }
+        }
+      }
+    },
+    "Appears at the top of the screen for the text you have already selected, and offers the smallest useful set of actions for it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当你选中文字后，它出现在屏幕顶部，为这段文字提供最小够用的一组操作。"
+          }
+        }
+      }
+    },
+    "Stays on the desktop so Delores can be found without being summoned: a glance, your last selection, a hand-off.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常驻桌面，让 Delores 不必被召唤也能找到：看一眼、回到上次选区、转交给其他形态。"
+          }
+        }
+      }
+    },
+    "One core, three forms. A capability belongs to Delores rather than to a form, so it is configured once however many forms can reach it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一个核心，三种形态。能力属于 Delores 而不是某个形态，所以无论多少形态能触达它，它都只在一处配置。"
+          }
+        }
+      }
+    },
+    "Opens the %@ settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开「%@」设置"
+          }
+        }
+      }
+    },
+    "Enable the Context Surface": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用上下文面板"
+          }
+        }
+      }
+    },
+    "The bar appears at the top of the screen for the text you have already selected. It shares its switch, and its Accessibility grant, with Quick Actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选中文字时，它出现在屏幕顶部。它与快捷操作共用同一个开关，也共用同一份辅助功能授权。"
           }
         }
       }
