@@ -53,8 +53,10 @@ selection gesture
     └─ a press asking for Chat → AIChatCoordinator → the chat surface in the palette
 ```
 
-The island owns its own catalogue. `DeloresContextAction` defines the four rows
-(translate/explain/summarize/search) with their prompts, and which of them rewrites the selection. It
+The island owns its own catalogue. `DeloresContextAction` defines the four shipped rows
+(translate/explain/summarize/search) with their prompts, and which of them rewrites the selection.
+Custom rows are written in Context Surface settings into the same store Quick Actions uses, and join
+those four on the next selection. The island
 reads exactly five things from Quick Actions and nothing else: the rows the reader wrote in Settings, a
 per-action prompt override they wrote there, the model route bound to an action id
 (`quickActions.provider(forActionID:)`), the backend that route means for `translate`
@@ -153,7 +155,7 @@ app — the deliberate cost of not stealing the keyboard over a fresh selection.
 opening it also cancels the press, because `onAction` does not fire until the growth ends.
 
 The handoff animation is now reserved for the explicit `Ask AI` escalation. Catalog actions
-(translate / explain / summarize / search) execute in the Context Surface's own card. They do not
+(translate / explain / summarize / search, and any custom row) execute in the Context Surface's own card. They do not
 leave through the Quick Action admission path, and they do not open Chat.
 
 Two differences between the surfaces are recorded rather than resolved, because each direction is a
@@ -348,7 +350,7 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Quick Action entry with a captured selection | `QuickActionCoordinator` | **Withdrawn**: the selection-aware `run` overload and its `begin(selectionOverride:)` were removed when the Context Surface stopped executing native Quick Actions — its catalog is its own, and the whole overload had no remaining caller |
 | Per-action route for a Context Surface action that no Quick Action backs | `AppCore.quickActionProvider(forActionID:)`, `QuickActionSettingsStore.model(forActionID:)` **and now `modelOverride(forActionID:)` / `setModelOverride(_:forActionID:)`**, `QuickActionCoordinator.provider(forActionID:)` | One small integration seam. Id-keyed, so a per-action model binding survives a catalog Delores owns; `quickActionProvider(for:)` and `model(for:)` now delegate to these, so no behaviour moved. The two by-id accessors were added when the bar's rows got a settings section of their own — the read existed, the write did not, and `setModelOverride(_:for:)` cannot serve an id like `explain` that no `QuickAction` can be made from |
 | Reader-replaceable per-action prompt, reached by id | `QuickActionCoordinator.instructionOverride(forActionID:)`, `QuickActionSettings.instructionOverride(forActionID:)` | The Context Surface applies it to any catalog row whose id is also a `BuiltInQuickAction`, so a prompt rewritten in Settings reaches the bar. Id-keyed for the same reason the model route is: the two catalogues overlap without agreeing. `provider(for:)` is **still unreferenced** — delete them the next time the chat handoff is designed and they remain unused |
-| Custom Quick Actions on the Context Surface | `QuickActionCoordinator.customQuickActionRows`, `DeloresContextAction.available(aiEnabled:customActions:)` | One-way: the bar copies the rows Settings owns and never writes one, so neither catalogue can be changed by the surface that borrowed it. The row's entry id is its binding key, so a model bound in Settings survives the trip |
+| Custom Quick Actions on the Context Surface | `QuickActionCoordinator.customQuickActionRows`, `DeloresContextAction.available(aiEnabled:customActions:)`, `ContextSurfaceSettingsView` | Settings writes them through the same store Quick Actions uses; the island only copies. The row's entry id is its binding key, so a model bound in Settings survives the trip |
 | Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |

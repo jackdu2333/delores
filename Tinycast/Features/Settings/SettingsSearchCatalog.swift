@@ -401,14 +401,17 @@ enum SettingsSearchCatalog {
             pane: .contextSurface,
             keywords: [
                 "selected text", "bar", "translate", "explain", "summarize", "search",
-                "划词", "翻译", "解释", "总结"
+                "custom", "划词", "翻译", "解释", "总结", "自定义"
             ]),
         .init(
             .contextSurfaceContextBar, "Enable the Context Surface",
             keywords: ["turn on", "off", "bar", "accessibility", "划词", "开关"]),
         .init(
             group: .contextSurfaceContextBar, "Context Bar",
-            keywords: ["rows", "actions", "model", "划词栏"])
+            keywords: ["rows", "actions", "model", "划词栏"]),
+        .init(
+            .contextSurfaceContextBar, "Add action",
+            keywords: ["custom", "prompt", "new", "自定义", "添加"])
     ]
 
     private static let companionSurface: [SettingsSearchEntry] = [

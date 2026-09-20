@@ -5600,6 +5600,26 @@
           }
         }
       }
+    },
+    "Add action": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加动作"
+          }
+        }
+      }
+    },
+    "These are the buttons on the island that appears when you select text. Your own actions join Translate, Explain, Summarize and Search. A row without its own model follows the one chosen in the Quick Actions pane. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些是划词后出现在岛上的按钮。你自己添加的动作会和翻译、解释、总结、搜索一起出现。没有单独模型的行会跟随快捷操作窗格中的选择。「%@」在绑定模型前使用苹果翻译；遇到苹果没有的语言时，回退到共享模型。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
