@@ -395,7 +395,7 @@ final class AppSettings {
         deloresCompanionSize = DeloresCompanionShell.Size(
             rawValue: defaults.integer(forKey: Key.deloresCompanionSize.rawValue)) ?? .regular
         deloresCompanionKind = DeloresCompanionShell.Kind(
-            rawValue: defaults.string(forKey: Key.deloresCompanionKind.rawValue) ?? "") ?? .duck
+            rawValue: defaults.string(forKey: Key.deloresCompanionKind.rawValue) ?? "") ?? .standard
         deloresWindowSnappingEnabled = defaults.bool(
             forKey: Key.deloresWindowSnappingEnabled.rawValue)
         deloresSplitDividerEnabled = defaults.bool(

@@ -26,7 +26,7 @@ final class DeloresCompanionBodyView: NSView {
 
     private let sprite = CALayer()
 
-    override init(frame frameRect: NSRect) {
+    init(frame frameRect: NSRect, kind: DeloresCompanionShell.Kind = .standard) {
         super.init(frame: frameRect)
         wantsLayer = true
         // Authored at 1x and scaled by the GPU, so nearest: linear turns every edge into a smear.
@@ -43,7 +43,7 @@ final class DeloresCompanionBodyView: NSView {
             "position": NSNull(),
             "bounds": NSNull(),
         ]
-        sprite.contents = Self.atlas(for: .duck)
+        sprite.contents = Self.atlas(for: kind)
         sprite.contentsRect = DeloresCompanionAnimation.contentsRect(row: .idle, frame: 0)
         layer?.addSublayer(sprite)
     }
@@ -169,7 +169,7 @@ final class DeloresCompanionPanel: NSPanel {
 
     private var size: DeloresCompanionShell.Size
 
-    init(size: DeloresCompanionShell.Size) {
+    init(size: DeloresCompanionShell.Size, kind: DeloresCompanionShell.Kind = .standard) {
         self.size = size
         super.init(
             contentRect: CGRect(x: 0, y: 0, width: size.side, height: size.side),
@@ -181,7 +181,8 @@ final class DeloresCompanionPanel: NSPanel {
         ignoresMouseEvents = true; isReleasedWhenClosed = false; canHide = false
         becomesKeyOnlyIfNeeded = true
         body = DeloresCompanionBodyView(
-            frame: CGRect(origin: .zero, size: CGSize(width: size.side, height: size.side)))
+            frame: CGRect(origin: .zero, size: CGSize(width: size.side, height: size.side)),
+            kind: kind)
         contentView = body
     }
 

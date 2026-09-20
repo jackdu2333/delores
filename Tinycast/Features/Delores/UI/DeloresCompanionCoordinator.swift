@@ -166,7 +166,8 @@ final class DeloresCompanionCoordinator {
         guard companionMonitor == nil, companionLocalMonitor == nil else { return }
         guard let screen = DeloresWindowGeometry.activeScreen() else { return }
         isRunning = true
-        let panel = companion ?? DeloresCompanionPanel(size: settings.deloresCompanionSize)
+        let panel = companion ?? DeloresCompanionPanel(size: settings.deloresCompanionSize, kind: settings.deloresCompanionKind)
+        panel.applyKind(settings.deloresCompanionKind)
         companion = panel
         panel.onSingleClick = { [weak self] in self?.companionSingleClick() }
         panel.onDoubleClick = { [weak self] in self?.companionDoubleClick() }
