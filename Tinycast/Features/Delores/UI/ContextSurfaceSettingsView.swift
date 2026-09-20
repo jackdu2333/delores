@@ -1,13 +1,12 @@
 import Combine
 import SwiftUI
 
-/// The Context Surface: the rows the bar offers once something has been selected, and the model
-/// behind each one.
+/// The Context Surface: one pane for everything that answers a selection.
 ///
-/// The rows are listed here because the bar's catalogue is not the same as Quick Actions': 解释 and
-/// 搜索 have no Quick Action behind them, so they had no row anywhere to be configured from, and
-/// the two that do overlap could otherwise only be reached by finding them in the other pane.
-/// Custom rows are written here into the same store Quick Actions uses, so the island can copy them.
+/// The AI sections, the Quick Actions catalogue and the bar's own rows share one switch and one
+/// model route, so they belong in one `Form`. The switch stays in `QuickActionsSettingsView`, which
+/// asks for the Accessibility grant through `QuickActionCoordinator.setEnabled` — a second binding
+/// here would skip that consent step.
 struct ContextSurfaceSettingsView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(QuickActionSettingsStore.self) private var quickActions
@@ -16,57 +15,10 @@ struct ContextSurfaceSettingsView: View {
     @State private var customEditing: CustomQuickActionEditRequest?
 
     var body: some View {
-        @Bindable var settings = settings
-        return Form {
-            Section {
-                // The same `quickActionsEnabled` the Quick Actions pane binds: one switch with two
-                // entry points, not a second switch. The two features share an Accessibility grant,
-                // so splitting the consent would ask for it twice.
-                Toggle(isOn: $settings.quickActionsEnabled) {
-                    SettingsRowTitle(.contextSurfaceContextBar, "Enable the Context Surface")
-                    Text(
-                        L10n.string(
-                            "The bar appears at the top of the screen for the text you have already selected. It shares its switch, and its Accessibility grant, with Quick Actions."
-                        ))
-                }
-                Group {
-                    ForEach(DeloresContextAction.catalog) { action in
-                        SettingsRow(title: action.displayTitle, subtitle: answerRoute(action)) {
-                            SymbolImage(name: action.symbol, size: Theme.Size.settingsRowIcon)
-                                .frame(width: Theme.Size.settingsRowIcon)
-                        } trailing: {
-                            if action.needsModel {
-                                Button {
-                                    editingAction = action
-                                } label: {
-                                    SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
-                                }
-                                .buttonStyle(.plain)
-                                .help(L10n.format("Choose the model for %@", action.displayTitle))
-                                .accessibilityLabel(
-                                    L10n.format("Choose the model for %@", action.displayTitle))
-                            }
-                        }
-                    }
-                    ForEach(customActions.actions, content: customRow)
-                    Button {
-                        customEditing = CustomQuickActionEditRequest(action: nil)
-                    } label: {
-                        SettingsRowTitle(.contextSurfaceContextBar, "Add action")
-                    }
-                }
-                .settingsEnabled(settings.quickActionsEnabled)
-            } header: {
-                SettingsSectionHeader(.contextSurfaceContextBar)
-            } footer: {
-                Text(
-                    L10n.format(
-                        "These are the buttons on the island that appears when you select text. Your own actions join Translate, Explain, Summarize and Search. A row without its own model follows the one chosen in the Quick Actions pane. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.",
-                        DeloresContextAction.translateTitle)
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+        Form {
+            AISettingsView()
+            QuickActionsSettingsView()
+            contextBarSection
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.contextSurface)
@@ -78,6 +30,53 @@ struct ContextSurfaceSettingsView: View {
             CustomQuickActionEditorSheet(
                 request: request,
                 model: request.action.flatMap { quickActions.modelOverride(for: .custom($0)) })
+        }
+    }
+
+    /// The rows the bar offers, each with the model that answers it.
+    ///
+    /// The rows are listed here because the bar's catalogue is not the same as Quick Actions': 解释
+    /// and 搜索 have no Quick Action behind them, so they had no row anywhere to be configured from,
+    /// and the two that do overlap could otherwise only be reached by finding them in another pane.
+    @ViewBuilder private var contextBarSection: some View {
+        Section {
+            Group {
+                ForEach(DeloresContextAction.catalog) { action in
+                    SettingsRow(title: action.displayTitle, subtitle: answerRoute(action)) {
+                        SymbolImage(name: action.symbol, size: Theme.Size.settingsRowIcon)
+                            .frame(width: Theme.Size.settingsRowIcon)
+                    } trailing: {
+                        if action.needsModel {
+                            Button {
+                                editingAction = action
+                            } label: {
+                                SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
+                            }
+                            .buttonStyle(.plain)
+                            .help(L10n.format("Choose the model for %@", action.displayTitle))
+                            .accessibilityLabel(
+                                L10n.format("Choose the model for %@", action.displayTitle))
+                        }
+                    }
+                }
+                ForEach(customActions.actions, content: customRow)
+                Button {
+                    customEditing = CustomQuickActionEditRequest(action: nil)
+                } label: {
+                    SettingsRowTitle(.contextSurfaceContextBar, "Add action")
+                }
+            }
+            .settingsEnabled(settings.quickActionsEnabled)
+        } header: {
+            SettingsSectionHeader(.contextSurfaceContextBar)
+        } footer: {
+            Text(
+                L10n.format(
+                    "These are the buttons on the island that appears when you select text. Your own actions join Translate, Explain, Summarize and Search. A row without its own model follows the one chosen under Actions above. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.",
+                    DeloresContextAction.translateTitle)
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -150,7 +149,7 @@ private struct ContextActionModelSheet: View {
                         "With nothing bound this row keeps Apple's translator; a pair it does not have falls back to the shared model."
                     )
                     : L10n.string(
-                        "Same as Quick Actions follows the Model section of the Quick Actions pane."))
+                        "Same as Quick Actions follows the Model section above."))
 
             HStack {
                 Spacer()

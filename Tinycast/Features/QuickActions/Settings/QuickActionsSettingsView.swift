@@ -1,7 +1,7 @@
 import Combine
 import SwiftUI
 
-/// A peer of the AI pane, not a section in it: it only borrows the provider layer.
+/// The Quick Actions sections and their switch, composed into the Context Surface pane they share.
 struct QuickActionsSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var appSettings
@@ -17,7 +17,8 @@ struct QuickActionsSettingsView: View {
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        Form {
+        // A `Group`, not a `Form`: the Context Surface pane owns the one `Form` these compose into.
+        Group {
             Section {
                 Toggle(isOn: enabledBinding) {
                     SettingsRowTitle(.quickActionsQuickActions, "Enable Quick Actions")
@@ -48,8 +49,6 @@ struct QuickActionsSettingsView: View {
             }
             .settingsEnabled(appSettings.quickActionsEnabled)
         }
-        .formStyle(.grouped)
-        .settingsScrollTarget(.quickActions)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
         .sheet(item: $editingAction) { action in
             InstructionsEditorSheet(

@@ -74,9 +74,7 @@ HuaciGongju 作为 Delores 的初期形态由项目维护者创作。Cherry Stud
   **改代码、重新编译、重新签名，授权始终保持有效。**
 - **证书规格**：自签名根证书（`CA:true` + `codeSigning` 扩展），CN = `HuaciGongju CodeSign`，
   有效期 10 年，已装入 `login` 钥匙串并设为「代码签名」用途的受信任根。
-- **备份位置**：`~/.config/huaci-codesign/`
-  （刻意放在仓库之外，避免被 Obsidian Git 之类的自动备份脚本提交入库；
-  该目录内含恢复步骤与重新生成方法说明）。
+- **备份要求**：签名材料必须保存在仓库之外的本地安全位置，不得提交到 Git 或同步到公共仓库。
 - **前提**：`.app` 的 `CFBundleIdentifier` 需保持稳定，修改它会生成新的授权条目。
 
 > ⚠️ 授权认的是 `.app` 包。仓库根目录的裸二进制 `HuaciGongjuBin` 不携带 bundle 标识，

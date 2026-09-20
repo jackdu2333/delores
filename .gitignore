@@ -59,6 +59,21 @@ node_modules/
 *.orig
 /.playwright-mcp/
 
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+*.keychain-db
+Secrets.xcconfig
+*.secrets.xcconfig
+credentials*.json
+secrets*.json
+
 # Agent workspace: memory and notes for this checkout. Never product code, and an untracked
 # directory here makes `check-upstream-drift.sh` report a dirty tree before every sync.
 .workbuddy/

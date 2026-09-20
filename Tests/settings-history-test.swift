@@ -153,7 +153,7 @@ struct SettingsHistoryTests {
             ("paste history", .clipboard),
             ("window manage", .windowManagement),
             ("raycast export", .backup),
-            ("mcp", .ai)
+            ("mcp", .contextSurface)
         ]
         for (query, tab) in cases {
             let found = SettingsSearchCatalog.results(for: query).first

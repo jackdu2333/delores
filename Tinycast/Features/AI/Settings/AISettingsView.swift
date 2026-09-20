@@ -19,7 +19,8 @@ struct AISettingsView: View {
     var body: some View {
         @Bindable var appSettings = appSettings
         @Bindable var settings = settings
-        return Form {
+        // A `Group`, not a `Form`: the Context Surface pane owns the one `Form` these are composed into.
+        return Group {
             Section {
                 Toggle(isOn: $appSettings.aiEnabled) {
                     SettingsRowTitle(.aiAI, "Enable AI")
@@ -34,7 +35,7 @@ struct AISettingsView: View {
                 SettingsSectionHeader(.aiAI)
             }
 
-            FeatureCommandsSection(owner: .ai, anchor: .aiCommands)
+            FeatureCommandsSection(owner: .contextSurface, anchor: .aiCommands)
                 .settingsEnabled(appSettings.aiEnabled)
 
             Group {
@@ -46,8 +47,6 @@ struct AISettingsView: View {
             }
             .settingsEnabled(appSettings.aiEnabled)
         }
-        .formStyle(.grouped)
-        .settingsScrollTarget(.ai)
         .sheet(isPresented: $providersPresented) {
             providersSheet
         }

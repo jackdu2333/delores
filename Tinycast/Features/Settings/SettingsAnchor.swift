@@ -41,21 +41,24 @@ extension SettingsAnchor {
 
     static let fallbacksFallbacks = Self(tab: .fallbacks, title: "Fallbacks")
 
-    static let aiAI = Self(tab: .ai, title: "AI")
-    static let aiProviders = Self(tab: .ai, title: "Providers")
-    static let aiDefault = Self(tab: .ai, title: "Default")
-    static let aiChat = Self(tab: .ai, title: "Chat")
-    static let aiConversations = Self(tab: .ai, title: "Conversations")
-    static let aiSystemPrompt = Self(tab: .ai, title: "System prompt")
-    static let aiInstalledAI = Self(tab: .ai, title: "Installed AI")
-    static let aiAPIConnections = Self(tab: .ai, title: "API Connections")
-    static let aiMCPServers = Self(tab: .ai, title: "MCP Servers")
-    static let aiCommands = Self(tab: .ai, title: "Commands")
+    // These keep their `ai` prefix though the pane merged into `.contextSurface`: the name still
+    // says whose section it is, and renaming would touch five files for no reader-visible gain.
+    static let aiAI = Self(tab: .contextSurface, title: "AI")
+    static let aiProviders = Self(tab: .contextSurface, title: "Providers")
+    static let aiDefault = Self(tab: .contextSurface, title: "Default")
+    static let aiChat = Self(tab: .contextSurface, title: "Chat")
+    static let aiConversations = Self(tab: .contextSurface, title: "Conversations")
+    static let aiSystemPrompt = Self(tab: .contextSurface, title: "System prompt")
+    static let aiInstalledAI = Self(tab: .contextSurface, title: "Installed AI")
+    static let aiAPIConnections = Self(tab: .contextSurface, title: "API Connections")
+    static let aiMCPServers = Self(tab: .contextSurface, title: "MCP Servers")
+    static let aiCommands = Self(tab: .contextSurface, title: "Commands")
 
-    static let quickActionsQuickActions = Self(tab: .quickActions, title: "Quick Actions")
-    static let quickActionsActions = Self(tab: .quickActions, title: "Actions")
-    static let quickActionsModel = Self(tab: .quickActions, title: "Model")
-    static let quickActionsTranslate = Self(tab: .quickActions, title: "Translate")
+    // Same reason as the `ai` block above: the pane is `.contextSurface` now, the name is not.
+    static let quickActionsQuickActions = Self(tab: .contextSurface, title: "Quick Actions")
+    static let quickActionsActions = Self(tab: .contextSurface, title: "Actions")
+    static let quickActionsModel = Self(tab: .contextSurface, title: "Model")
+    static let quickActionsTranslate = Self(tab: .contextSurface, title: "Translate")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
     static let fileSearchCommands = Self(tab: .fileSearch, title: "Commands")
@@ -84,9 +87,11 @@ extension SettingsAnchor {
 
     static let companionSurfaceCompanion = Self(tab: .companionSurface, title: "Companion")
 
-    /// Snapping and the divider are window-placement capabilities, not a Surface of their own.
+    /// Snapping and the divider are the two ways a drag splits a screen, so the pane is named for
+    /// what the reader is trying to do rather than for the mechanism that does it. "Window
+    /// Snapping" named the mechanism and left a reader looking for 分屏 with nowhere to land.
     static let windowSnappingCapabilities = Self(
-        tab: .windowSnapping, title: "Window Capabilities")
+        tab: .windowSnapping, title: "Split Screen")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")
     static let clipboardCommands = Self(tab: .clipboard, title: "Commands")

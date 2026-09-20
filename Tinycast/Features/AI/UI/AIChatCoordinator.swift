@@ -506,7 +506,7 @@ final class AIChatCoordinator {
 
     func showSettings() {
         paletteCoordinator.hidePalette(restoreFocus: false)
-        settingsCoordinator.showSettings(tab: .ai)
+        settingsCoordinator.showSettings(tab: .contextSurface)
     }
 
     func availability() -> String? {

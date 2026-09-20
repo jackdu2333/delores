@@ -9,6 +9,7 @@ import SwiftUI
 /// form of their own.
 struct WindowSnappingSettingsView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(SettingsNavigationState.self) private var navigation
     /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
     @State private var isTrusted = Permissions.isAccessibilityTrusted()
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -35,7 +36,7 @@ struct WindowSnappingSettingsView: View {
                     SettingsRowTitle(.windowSnappingCapabilities, "Enable window snapping")
                     Text(
                         L10n.string(
-                            "Drag a window up to the island at the top of the display, and drop it on the layout you want."
+                            "Drag a window up to the island at the top of the display, and drop it on the split you want."
                         ))
                 }
                 Toggle(isOn: dividerBinding) {
@@ -48,13 +49,26 @@ struct WindowSnappingSettingsView: View {
             } header: {
                 SettingsSectionHeader(.windowSnappingCapabilities)
             } footer: {
-                Text(
-                    L10n.string(
-                        "Both read and move other apps' windows through the same Accessibility permission Delores uses to paste. Neither is enabled by default, and neither is restored from a settings backup."
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    Text(
+                        L10n.string(
+                            "Both read and move other apps' windows through the same Accessibility permission Delores uses to paste. Neither is enabled by default, and neither is restored from a settings backup."
+                        )
                     )
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    // The keyboard-driven half of window placement lives in its own pane and the two
+                    // names read alike, so the difference is stated where the question gets asked.
+                    Button(
+                        L10n.string(
+                            "Window Management places a window from the keyboard instead, and keeps a saved arrangement of several."
+                        )
+                    ) {
+                        navigation.select(.windowManagement)
+                    }
+                    .buttonStyle(.link)
+                    .font(.caption)
+                }
             }
         }
         .formStyle(.grouped)

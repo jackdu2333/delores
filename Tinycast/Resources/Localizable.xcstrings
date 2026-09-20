@@ -5620,6 +5620,56 @@
           }
         }
       }
+    },
+    "Split Screen": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分屏"
+          }
+        }
+      }
+    },
+    "Drag a window up to the island at the top of the display, and drop it on the split you want.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把窗口拖到屏幕顶部的岛上，松手放到你想要的分屏位置。"
+          }
+        }
+      }
+    },
+    "Window Management places a window from the keyboard instead, and keeps a saved arrangement of several.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口管理则是用快捷键摆放窗口，且能保存多窗口的整套排列。"
+          }
+        }
+      }
+    },
+    "These are the buttons on the island that appears when you select text. Your own actions join Translate, Explain, Summarize and Search. A row without its own model follows the one chosen under Actions above. %@ keeps Apple's translator until you bind a model to it, and falls back to that shared model for a language Apple's translator does not have.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些就是选中文字时出现的浮岛上那排按钮。你自己写的操作会加入翻译、解释、总结和搜索。某一行若没有单独指定模型，就跟随上方「操作」里选的模型。%@ 在你为它绑定模型之前一直使用 Apple 的翻译器；遇到 Apple 不支持的语言时，回退到那个共享模型。"
+          }
+        }
+      }
+    },
+    "Same as Quick Actions follows the Model section above.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「与快捷操作相同」表示跟随上方「模型」区块的选择。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

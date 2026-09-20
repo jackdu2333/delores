@@ -52,8 +52,8 @@ extension SettingsTab {
         switch self {
         case .quicklinks:
             [.createQuicklink, .searchQuicklinks, .importQuicklinks, .exportQuicklinks]
-        case .ai: [.aiChat]
-        case .quickActions: [.fixGrammar, .rewrite, .translate, .summarize]
+        // The merge put AI's chat command and the Quick Actions catalogue in one pane.
+        case .contextSurface: [.aiChat, .fixGrammar, .rewrite, .translate, .summarize]
         case .fileSearch: [.searchFiles]
         case .notes: [.showNotes, .createNote, .searchNotes]
         case .navigation: [.switchWindows, .searchMenuItems]

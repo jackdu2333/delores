@@ -114,9 +114,9 @@ enum SettingsSearchCatalog {
         delores
         + commandSurface + applications + systemSettings + systemActions + commands
         + quicklinks + appleShortcuts + fallbacks
-        + contextSurface
+        + contextSurface + ai + quickActions
         + companionSurface
-        + windowManagement + windowSnapping + ai + quickActions + clipboard + notes
+        + windowManagement + windowSnapping + clipboard + notes
         + fileSearch + navigation
         + general + permissions + backup + about
 
@@ -281,8 +281,8 @@ enum SettingsSearchCatalog {
             keywords: ["no results", "empty", "search web", "order", "无结果", "回退"])
     ]
 
+    /// These rows land on `.contextSurface`, which now owns the pane-level entry as well.
     private static let ai: [SettingsSearchEntry] = [
-        .init(pane: .ai, keywords: ["chat", "llm", "model", "openai", "anthropic", "聊天", "模型"]),
         .init(.aiAI, "Enable AI", keywords: ["chat", "llm"]),
         .init(
             .aiProviders, "Providers",
@@ -316,10 +316,8 @@ enum SettingsSearchCatalog {
             keywords: ["shortcut", "launcher", "chat"])
     ]
 
+    /// Same as the `ai` block above: the pane-level entry belongs to `.contextSurface`.
     private static let quickActions: [SettingsSearchEntry] = [
-        .init(
-            pane: .quickActions,
-            keywords: ["selected text", "rewrite", "translate", "summarize", "划词", "翻译", "总结"]),
         .init(
             .quickActionsQuickActions, "Enable Quick Actions",
             keywords: ["selected text", "accessibility"]),
@@ -404,9 +402,6 @@ enum SettingsSearchCatalog {
                 "custom", "划词", "翻译", "解释", "总结", "自定义"
             ]),
         .init(
-            .contextSurfaceContextBar, "Enable the Context Surface",
-            keywords: ["turn on", "off", "bar", "accessibility", "划词", "开关"]),
-        .init(
             group: .contextSurfaceContextBar, "Context Bar",
             keywords: ["rows", "actions", "model", "划词栏"]),
         .init(
@@ -427,7 +422,10 @@ enum SettingsSearchCatalog {
     private static let windowSnapping: [SettingsSearchEntry] = [
         .init(
             pane: .windowSnapping,
-            keywords: ["snap", "split", "divider", "seam", "tiled", "吸附", "分屏", "中缝"]),
+            keywords: [
+                "snap", "split", "split screen", "divider", "seam", "tiled",
+                "吸附", "分屏", "窗口分屏", "中缝"
+            ]),
         .init(
             .windowSnappingCapabilities, "Enable window snapping",
             keywords: ["snap", "drag", "window"]),

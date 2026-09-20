@@ -21,8 +21,6 @@ struct SettingsDetailView: View {
             case .fallbacks: FallbacksSettingsView()
             case .windowManagement: WindowManagementSettingsView()
             case .windowSnapping: WindowSnappingSettingsView()
-            case .ai: AISettingsView()
-            case .quickActions: QuickActionsSettingsView()
             case .clipboard: ClipboardSettingsView()
             case .notes: NotesSettingsView()
             case .fileSearch: FileSearchSettingsView()

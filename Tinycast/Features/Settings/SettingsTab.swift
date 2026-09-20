@@ -4,7 +4,7 @@ enum SettingsTab: CaseIterable, Identifiable {
     // the three Surfaces, what the launcher lists, the shared capabilities, then the app itself.
     case delores, commandSurface, contextSurface, companionSurface,
         applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts, fallbacks,
-        windowManagement, windowSnapping, ai, quickActions, clipboard, notes, fileSearch, navigation,
+        windowManagement, windowSnapping, clipboard, notes, fileSearch, navigation,
         general, permissions, backup, about
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
@@ -24,9 +24,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .appleShortcuts: return L10n.string("Apple Shortcuts")
         case .fallbacks: return L10n.string("Fallbacks")
         case .windowManagement: return L10n.string("Window Management")
-        case .windowSnapping: return L10n.string("Window Snapping")
-        case .ai: return L10n.string("AI")
-        case .quickActions: return L10n.string("Quick Actions")
+        case .windowSnapping: return L10n.string("Split Screen")
         case .clipboard: return L10n.string("Clipboard")
         case .notes: return L10n.string("Notes")
         case .fileSearch: return L10n.string("File Search")
@@ -38,8 +36,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         }
     }
 
-    /// One symbol per pane, and no two panes share one: the Overview and AI both used to draw
-    /// `sparkles`, so the sidebar had no way to tell them apart.
+    /// One symbol per pane, and no two panes share one.
     var systemImage: String {
         switch self {
         case .delores: return "house"
@@ -55,8 +52,6 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .fallbacks: return "arrow.turn.down.right"
         case .windowManagement: return "macwindow"
         case .windowSnapping: return "rectangle.split.2x1"
-        case .ai: return "sparkles"
-        case .quickActions: return "wand.and.sparkles"
         case .clipboard: return "doc.on.clipboard"
         case .notes: return "text.page"
         case .fileSearch: return "doc.text.magnifyingglass"
@@ -107,10 +102,7 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .companion:
             return [.companionSurface]
         case .capabilities:
-            return [
-                .windowManagement, .windowSnapping, .ai, .quickActions, .clipboard, .notes,
-                .fileSearch, .navigation
-            ]
+            return [.windowManagement, .windowSnapping, .clipboard, .notes, .fileSearch, .navigation]
         case .system:
             return [.general, .permissions, .backup, .about]
         }
