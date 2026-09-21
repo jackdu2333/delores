@@ -16,6 +16,10 @@ struct DeloresContextCompanionHosting {
     /// A shell hung off the body came on screen, or went away. While one is up the body stands
     /// still: a body that walked out from under the bar it opened leaves the bar over nothing.
     var held: (Bool) -> Void
+    /// The bar has stepped aside and handed the reader's wait to the body, or taken it back. The
+    /// Companion is the only thing on screen while it is handed over, so it is the only thing that
+    /// can say an answer is on its way.
+    var thinking: (Bool) -> Void
 }
 
 /// Routes a captured selection to whatever the reader pressed.
@@ -152,7 +156,9 @@ final class DeloresContextCoordinator {
     private func suppressForFullscreen() {
         guard isMonitoring, AXWindowAccess.isFrontmostAppFullscreen() else { return }
         captureTask?.cancel()
-        guard island.isVisible else { return }
+        // The body is hidden in a full-screen Space too, so a wait it was carrying has nowhere to
+        // show its answer and nothing left to say it is coming.
+        guard island.isBusy else { return }
         cancelAnswer()
         island.dismiss(notifying: false)
         clearContext()
@@ -162,7 +168,7 @@ final class DeloresContextCoordinator {
         // A pinned island is holding a selection of its own, and the gesture that would replace it is
         // dropped before it reads anything: a second automatic read serves no purpose, and the
         // selection state stays untouched rather than reporting text nobody sees.
-        guard !(island.isVisible && (island.isPinned || island.isGenerating)) else { return }
+        guard !(island.isBusy && (island.isPinned || island.isGenerating)) else { return }
 
         // A window drag or a divider drag is one gesture that belongs to Spatial. Releasing a mouse
         // button at the end of either is not a selection, and reading the target app for text would
@@ -271,6 +277,9 @@ final class DeloresContextCoordinator {
         let pet = companionHosting?.anchor(screen.visibleFrame)
         island.onCompanionRelocated = { [weak self] center, edge in
             self?.companionHosting?.relocate(center, edge)
+        }
+        island.onCompanionThinking = { [weak self] thinking in
+            self?.companionHosting?.thinking(thinking)
         }
         // Told either way rather than only when there is one: the bar before this one may have been
         // holding the body still, and a replacement that went to the menu bar has to let it go.

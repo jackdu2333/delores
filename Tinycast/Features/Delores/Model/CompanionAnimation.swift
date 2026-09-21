@@ -33,6 +33,14 @@ enum DeloresCompanionAnimation {
     /// One loop of a reaction. Played twice and then left, at a rate a pixel reads as deliberate.
     static let reactionDuration: TimeInterval = 0.24
 
+    /// One loop of the thinking pose, for as long as the reader is waiting on an answer.
+    ///
+    /// Slower than `reactionDuration` on purpose. A reaction is a punctuated event — it fires and is
+    /// gone, so a brisk rate reads as alert. Thinking is held for seconds at a time and sits next to
+    /// whatever the reader is reading, so the same rate would read as fidgeting rather than as
+    /// rummaging. The gaze still moves, just at a pace that does not ask to be watched.
+    static let thinkingFrameDuration: TimeInterval = 0.42
+
     /// Duration for lazy loitering / daze behaviors (yawn, stretch, flop).
     static let dazeDuration: TimeInterval = 1.6
 

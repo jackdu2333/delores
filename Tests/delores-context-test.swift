@@ -1112,13 +1112,14 @@ struct DeloresContextTest {
         require(last.minY == 0, "the last row sits on the sheet's bottom edge")
         require(last.minX == 0.4, "the frame index is the column")
 
-        // Ruling 2: one timer drives the step and the frame together, so this is a trade, not a saving.
+        // Ruling 2, rewritten: the pose and the position no longer share a clock. The position is
+        // moved on its own, faster beat, and the two rates are whole multiples of each other so the
+        // cadence cannot drift.
         require(DeloresCompanionAnimation.walkFrame == 1.0 / 6.0, "walking is pinned at an ambling 6 fps")
+        require(DeloresCompanionAnimation.walkStep == 1.0 / 18.0, "the body is moved on a faster beat")
+        let movesPerPose = DeloresCompanionAnimation.walkFrame / DeloresCompanionAnimation.walkStep
+        require(abs(movesPerPose - 3) < 0.0001, "a whole number of moves to a drawn pose")
         require(DeloresCompanionAnimation.breathDuration == 2.0, "a breath is two seconds across two frames")
-        require(DeloresCompanionWander.stepWeight(for: 0) == 0.5, "a contact frame plants")
-        require(DeloresCompanionWander.stepWeight(for: 1) == 1.5, "a passing frame pushes off")
-        require(DeloresCompanionWander.stepWeight(for: 2) == 0.5, "the opposite contact plants too")
-        require(DeloresCompanionWander.stepWeight(for: 3) == 1.5, "the opposite passing pushes off")
     }
 
     private static func testInvocationContext() {
@@ -1263,24 +1264,26 @@ struct DeloresContextTest {
         require(DeloresCompanionWander.nextWake(after: walking) == nil, "a trip runs on frames")
 
         let late = DeloresCompanionWander.advance(
-            walking, elapsed: 600, now: firstRest + 61, in: loop, stepFrame: 1, using: &rng)
-        require(late.phase.isWalking, "a capped frame does not finish a trip")
+            walking, elapsed: 600, now: firstRest + 61, in: loop, using: &rng)
+        require(late.phase.isWalking, "a capped tick does not finish a trip")
         let ceiling = CGFloat(DeloresCompanionWander.maximumStep)
             * DeloresCompanionWander.speedRange.upperBound
-            * DeloresCompanionWander.stepWeight(for: 1)
         require(
             distance(late.center, walking.center) <= ceiling + 0.01,
-            "a frame that arrives late is capped instead of teleporting the body")
+            "a tick that arrives late is capped instead of teleporting the body")
 
-        var plantRng = SeededRandom(seed: 0xBEEF)
-        var pushRng = SeededRandom(seed: 0xBEEF)
-        let planted = DeloresCompanionWander.advance(
-            walking, elapsed: 0.1, now: firstRest + 0.2, in: loop, stepFrame: 0, using: &plantRng)
-        let pushed = DeloresCompanionWander.advance(
-            walking, elapsed: 0.1, now: firstRest + 0.2, in: loop, stepFrame: 1, using: &pushRng)
-        require(
-            distance(pushed.center, walking.center) > distance(planted.center, walking.center) + 0.01,
-            "a push-off frame travels farther than a plant")
+        // Even ground, whatever pose happens to be on screen: the pace used to rise and fall with
+        // the frame, which is what read as a twitch.
+        var evenRng = SeededRandom(seed: 0xBEEF)
+        var twiceRng = SeededRandom(seed: 0xBEEF)
+        let once = DeloresCompanionWander.advance(
+            walking, elapsed: 0.1, now: firstRest + 0.2, in: loop, using: &evenRng)
+        let twice = DeloresCompanionWander.advance(
+            walking, elapsed: 0.2, now: firstRest + 0.3, in: loop, using: &twiceRng)
+        let oneTick = distance(once.center, walking.center)
+        let twoTicks = distance(twice.center, walking.center)
+        require(twoTicks > oneTick * 1.8, "twice the time covers twice the ground")
+        require(twoTicks < oneTick * 2.2, "and no more than it")
 
         // Both draws have a short body and a long tail. The tail is the whole reason the thing reads
         // as occupied rather than scheduled.

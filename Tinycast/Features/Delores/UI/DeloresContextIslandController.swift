@@ -80,6 +80,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// it; without this the two would drift apart on screen.
     var onCompanionRelocated: ((CGPoint, DeloresCompanionEdge) -> Void)?
 
+    /// Told that the wait is the Companion's, and that it is over. The bar steps aside and the body
+    /// says what it would have said; the answer arrives back here either way.
+    var onCompanionThinking: ((Bool) -> Void)?
+
     /// The bar's width, measured once while the bar is the only thing in the panel.
     ///
     /// Never re-measured: a card holds a paragraph, whose ideal width is the length of its longest
@@ -118,6 +122,15 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// an animation, and a press outlives the panel whenever a new selection replaces it meanwhile.
     private var panelGeneration = UUID()
 
+    /// The wait is the Companion's: the panel has stepped aside and the body is carrying it.
+    ///
+    /// Held rather than derived from the answer, because `isVisible` has to stay honest — nothing of
+    /// ours *is* on screen while this is set, and every dismissal watcher reads that.
+    private var isWaitingOnCompanion = false
+
+    /// Escape, watched while nothing of ours is on screen to receive it.
+    private var waitingEscapeMonitor: Any?
+
     /// The bar holds no key of its own (see `becomesKeyOnlyIfNeeded` below), so losing key cannot
     /// be what closes it. These watch for the reader clicking elsewhere — and for one of our own
     /// windows taking the keyboard, which is how the palette summons the island out of the way.
@@ -127,11 +140,22 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     var isVisible: Bool { panel?.isVisible == true }
     var isGenerating: Bool { answer?.isRunning == true }
 
+    /// Whether this surface still owns the reader's attention: on screen, or handed to the Companion
+    /// while an answer is on its way. A surface that has stepped aside is still a surface with a
+    /// reply coming, and a new selection must no more replace it than it would replace a visible one.
+    var isBusy: Bool { isVisible || isWaitingOnCompanion }
+
     /// The card's opening. The bar grows where it stands and only then hands the answer over, so the
     /// hand-off reads as one downward gesture instead of a window swap.
     private enum Card {
         /// Long enough to be read as a gesture, short enough not to sit between press and answer.
         static let growth: TimeInterval = 0.20
+    }
+
+    /// The wait, handed to the Companion's body: how long the bar takes to make way for it.
+    private enum Wait {
+        /// Short, because for its length two things are on screen saying the same thing.
+        static let fade: TimeInterval = 0.12
     }
 
     // MARK: - Lifecycle
@@ -286,6 +310,14 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
     func dismiss(notifying: Bool = true) {
         teardownDismissalWatchers()
+        // The wait goes with the surface: a body still thinking about a question that was just put
+        // away is a body answering nothing. Not `endWaitingOnCompanion`, which would bring the
+        // panel back to the screen this is taking it off.
+        if isWaitingOnCompanion {
+            isWaitingOnCompanion = false
+            onCompanionThinking?(false)
+        }
+        teardownWaitingEscape()
         guard let closing = panel else {
             if notifying { presented?.onDismiss() }
             return
@@ -394,13 +426,92 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// Swaps the card under the bar. The bar itself never changes: it stays live so the reader can
     /// run a second action on the same selection without closing this one first.
     func showAnswer(_ next: DeloresContextIslandAnswer, animated: Bool = true) {
-        guard let panel, panel.isVisible else { return }
+        guard isBusy else { return }
         answer = next
         // A fresh press is the reader asking for the card; a reply that lands while they have it
         // collapsed is not, and must not pop it back open over whatever they moved on to reading.
         if next.isRunning { isCardCollapsed = false }
         guard !isCardCollapsed else { return }
-        render(.result(next), animated: animated)
+        // The wait is handed to the Companion when there is one to hand it to.
+        //
+        // A card's compact working height is a *horizontal* bar's shape: 78pt under a row of pills.
+        // A strip standing beside the body has its long axis the other way, and the vessel cannot be
+        // shorter than the strip without cutting the strip's own controls off — so the working card
+        // there is the length of the whole strip, a large empty card. Nothing on screen beats the
+        // wrong thing on screen, and the body is already what the reader is looking at.
+        if next.isRunning, companionAnchor != nil {
+            beginWaitingOnCompanion()
+            return
+        }
+        let cameBack = isWaitingOnCompanion
+        if cameBack { endWaitingOnCompanion() }
+        // Animated even when the caller asked for none: that request is about one more line of text
+        // arriving in a card already on screen, not about a card arriving out of nothing.
+        render(.result(next), animated: animated || cameBack)
+    }
+
+    // MARK: - The wait, handed to the Companion
+
+    /// Steps aside so the body can carry the wait. The panel is kept, not dismissed: the selection,
+    /// the actions and the callbacks this surface was opened with are what the card comes back to,
+    /// and rebuilding them from a second capture would put a different selection under the answer.
+    private func beginWaitingOnCompanion() {
+        guard !isWaitingOnCompanion, let panel else { return }
+        isWaitingOnCompanion = true
+        let generation = panelGeneration
+        onCompanionThinking?(true)
+        installWaitingEscape(for: generation)
+        // Faded rather than ordered out at once: a bar that blinks away reads as a window closing,
+        // and what happened is that the body took the wait over.
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Wait.fade
+            panel.animator().alphaValue = 0
+        } completionHandler: { [weak self] in
+            // AppKit runs the handler on the main thread; the parameter just isn't typed for it.
+            MainActor.assumeIsolated {
+                // An answer may have landed inside the fade, and ordering out then would hide the
+                // card that just arrived.
+                guard let self, self.panelGeneration == generation, self.isWaitingOnCompanion
+                else { return }
+                self.panel?.orderOut(nil)
+            }
+        }
+    }
+
+    /// Takes the wait back. Whatever ended it — an answer, a stop, a failure — the card is about to
+    /// say which, so this only puts the surface back under it.
+    private func endWaitingOnCompanion() {
+        guard isWaitingOnCompanion else { return }
+        isWaitingOnCompanion = false
+        teardownWaitingEscape()
+        onCompanionThinking?(false)
+        guard let panel else { return }
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+    }
+
+    /// Escape while nothing of ours is on screen to receive it.
+    ///
+    /// A surface that stepped aside took its buttons with it, and a reader waiting on a model that
+    /// has gone quiet needs a way out that does not involve waiting longer. Escape is the key this
+    /// surface already answers, and getting out cancels the answer with it — a reply nobody is
+    /// waiting for any more is a token bill with nothing to show for it.
+    private func installWaitingEscape(for generation: UUID) {
+        teardownWaitingEscape()
+        waitingEscapeMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard Int(event.keyCode) == kVK_Escape else { return }
+            MainActor.assumeIsolated {
+                guard let self, self.panelGeneration == generation, self.isWaitingOnCompanion
+                else { return }
+                self.dismiss()
+            }
+        }
+    }
+
+    private func teardownWaitingEscape() {
+        guard let waitingEscapeMonitor else { return }
+        NSEvent.removeMonitor(waitingEscapeMonitor)
+        self.waitingEscapeMonitor = nil
     }
 
     /// Puts the card away where it stands. The bar stays live and the selection stays held, so the

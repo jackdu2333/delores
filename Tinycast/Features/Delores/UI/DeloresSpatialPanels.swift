@@ -112,6 +112,30 @@ final class DeloresCompanionBodyView: NSView {
         sprite.add(play, forKey: Self.reactionKey)
     }
 
+    /// A pose held until it is told to stop, rather than played and dropped back.
+    ///
+    /// The difference is who owns the end. A reaction is over when its count runs out because
+    /// nothing outside the body is waiting on it; waiting is owned by whatever the reader asked
+    /// for, which may take a moment or a minute, so the pose stops when *that* says so. Playing a
+    /// one-shot on a loop would also mean guessing a duration, and any guess is wrong for some
+    /// question — too short leaves the body idling while the reader is still waiting, too long
+    /// leaves it rummaging after the answer has landed.
+    func hold(_ reaction: CompanionAtlas.Reaction) {
+        sprite.removeAnimation(forKey: Self.breathKey)
+        sprite.removeAnimation(forKey: Self.reactionKey)
+        sprite.contentsRect = DeloresCompanionAnimation.contentsRect(
+            row: .reaction, frame: reaction.rawValue)
+        let play = CAKeyframeAnimation(keyPath: "contentsRect")
+        play.values = (0..<reaction.frameCount).map { frame in
+            DeloresCompanionAnimation.contentsRect(row: .reaction, frame: reaction.rawValue + frame)
+        }
+        play.calculationMode = .discrete
+        play.duration =
+            DeloresCompanionAnimation.thinkingFrameDuration * Double(reaction.frameCount)
+        play.repeatCount = .infinity
+        sprite.add(play, forKey: Self.reactionKey)
+    }
+
     /// Play a one-shot daze/restful behavior (yawn, stretch, flop) during a prolonged rest.
     func daze() {
         sprite.removeAnimation(forKey: Self.breathKey)
@@ -226,6 +250,14 @@ final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
         }
     }
     func showBubble() { play(.chat) }
+
+    /// The reader is waiting on an answer, and the body is the only thing on screen saying so: the
+    /// surface that would have carried the wait has stepped aside for it.
+    func startThinking() { body.hold(.glance) }
+
+    /// The wait is over — answered, stopped or given up on. Which it was is the card's business;
+    /// the body only owes the reader its ordinary self back.
+    func stopThinking() { body.rest() }
 
     /// Standing still. A pose the wander drives, not a gesture: see `DeloresCompanionBodyView.rest`.
     func rest() { body.rest() }

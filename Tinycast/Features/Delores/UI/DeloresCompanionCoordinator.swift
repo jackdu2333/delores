@@ -56,6 +56,16 @@ final class DeloresCompanionCoordinator {
     func prepareForTermination() { stopCompanion() }
     func recordSelection(_ text: String) { currentSelection = text; companion?.play(.glance) }
 
+    /// The reader is waiting on an answer, and the surface that would have said so has stepped aside
+    /// for the body.
+    ///
+    /// Idempotent in both directions on purpose: the wait's real end is a stream, and a pose asked
+    /// for twice is a pose restarted mid-cycle — which is a twitch the reader did not ask for.
+    func setThinking(_ thinking: Bool) {
+        guard let companion, companion.isVisible else { return }
+        thinking ? companion.startThinking() : companion.stopThinking()
+    }
+
     // MARK: - Shells the Companion opened
 
     /// Where a shell opened on the display whose visible area is `visibleFrame` should hang: off the

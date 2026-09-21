@@ -24,7 +24,8 @@ final class DeloresCoordinator {
             relocate: { [weak companion] center, edge in companion?.relocate(to: center, edge: edge) },
             held: { [weak companion] isHeld in
                 if isHeld { companion?.holdForShell() } else { companion?.releaseShell() }
-            })
+            },
+            thinking: { [weak companion] isThinking in companion?.setThinking(isThinking) })
         // A snap island grows out of the body the same way: with the Companion on, a window is
         // brought to the body itself, and only a display the body is not standing on still has the
         // top-centre fallback. Read-only — a drag must not move the body to meet it.
