@@ -115,8 +115,8 @@ struct SettingsHistoryTests {
     static func sidebarOrder() {
         expect(
             SettingsSection.allCases.map { String(describing: $0) }
-                == ["delores", "context", "companion", "searchBox", "system"],
-            "sidebar keeps the five product blocks in the intended order")
+                == ["delores", "context", "companion", "splitScreen", "searchBox", "system"],
+            "sidebar keeps the product blocks in the intended order, Split Screen after the Surfaces")
     }
 
     static func sidebarCoversEveryPane() {

@@ -69,7 +69,7 @@ enum SettingsTab: CaseIterable, Identifiable {
 /// The axis is the reader's situation, not the code's ownership. The three Surfaces lead, and every
 /// search-box extension sits under one configuration block rather than competing with them.
 enum SettingsSection: CaseIterable, Identifiable {
-    case delores, context, companion, searchBox, system
+    case delores, context, companion, splitScreen, searchBox, system
     /// See `SettingsTab.id`: distinct types keep the two namespaces from colliding.
     var id: Self { self }
 
@@ -78,6 +78,9 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .delores: return L10n.string("Overview")
         case .context: return L10n.string("Context Surface")
         case .companion: return L10n.string("Companion Surface")
+        // Unused while the section holds one pane — `SettingsSidebarView` draws that as a bare
+        // row rather than a header over a single item — but the enum asks every case for one.
+        case .splitScreen: return L10n.string("Split Screen")
         case .searchBox: return L10n.string("Search Box Settings")
         case .system: return L10n.string("System")
         }
@@ -91,12 +94,16 @@ enum SettingsSection: CaseIterable, Identifiable {
             return [
                 .commandSurface, .applications, .systemSettings, .systemActions, .commands,
                 .quicklinks, .appleShortcuts, .fallbacks,
-                .splitScreen, .clipboard, .notes, .fileSearch, .navigation
+                .clipboard, .notes, .fileSearch, .navigation
             ]
         case .context:
             return [.contextSurface]
         case .companion:
             return [.companionSurface]
+        // Its own destination right after the Surfaces, not a row inside the long group below it:
+        // it is a gesture Delores answers, and it was unfindable as the ninth of thirteen.
+        case .splitScreen:
+            return [.splitScreen]
         case .system:
             return [.general, .permissions, .backup, .about]
         }
