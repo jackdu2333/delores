@@ -432,6 +432,25 @@ on it belongs to no pack, which is a seam worth stating twice:
   `Tests/tool-runner-test.swift` pins all of it, including that a tool which writes before its own child
   outlives it still yields both its output and a truthful status.
 
+## Naming: what is still called Tinycast, on purpose
+
+The rename is not total, and the residue is deliberate rather than unfinished. Everything that leaves
+the process or reaches a person was changed; this is what was kept, so it does not get relitigated:
+
+| Still `tinycast` | Why |
+| --- | --- |
+| `com.tinycast.backup` in `Info.plist` | Declared **imported**, not exported. It is upstream's identifier, and it stays declared so a backup written before the rename still opens. Exporting it would claim it as Delores'. |
+| `Tinycast.xcodeproj` and the `Tinycast` target | Generated from `project.yml`, and the name is load-bearing for merging upstream. The **scheme** is `Delores`, which is what every command uses. |
+| `tinycast://…` row identities in the launcher | Internal placeholders. `AppLauncher.open` is reached only for "Open in Browser", nothing registers the scheme, and `tinycast` in the env of the login shell is a marker for the reader's own rc file. Changing either would move persisted alias and ranking keys for no visible gain. |
+| `com.tinycast.perf` (os_signpost), `com.tinycast.capslock-remap` (queue label) | Process-local labels. Renaming them grows the upstream diff and tells nobody anything. |
+| `TinycastApp`, `…ForTinycastPasteboardMutation`, `Paster.tinycastEventTag` | Swift type and method names plus an in-memory event tag. Purely internal. |
+| `Tinycast/tinycast.icon`, `Tinycast/…` directory names | The icon is still upstream's artwork. Replacing it is a design decision, not a rename. The source layout is upstream's, and moving directories turns every future merge into a conflict. |
+| Many internal `///` comments | Still say "Tinycast" as the product name. Cosmetic, and deliberately not swept in the same change as the functional rename. |
+
+What did change: the exported UTI and its `.delores` extension, the bundle IDs, the internal pasteboard
+type, the `KeychainSecretStore` and support-directory fallbacks, the About window's links, the AI
+User-Agent and MCP client name, every user-visible string, and the release documents.
+
 ## Upstream workflow
 
 `upstream` points to the official Tinycast repository, `https://github.com/abue-ammar/tinycast`.

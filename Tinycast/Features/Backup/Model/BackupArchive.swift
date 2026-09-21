@@ -2,9 +2,11 @@ import AppleArchive
 import Foundation
 import System
 
-/// Seals a `BackupBundle` directory into one `.tinycast` file, and opens one back up.
+/// Seals a `BackupBundle` directory into one `.delores` file, and opens one back up.
 enum BackupArchive {
-    static let fileExtension = "tinycast"
+    // Unused: the extension comes from the UTI's tag specification, which is what the save panel
+    // reads. Kept because it names the format, and corrected with the rename so it cannot mislead.
+    static let fileExtension = "delores"
 
     enum ArchiveError: LocalizedError, Equatable {
         case cannotWrite

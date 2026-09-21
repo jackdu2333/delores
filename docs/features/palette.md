@@ -31,8 +31,14 @@ The command palette is a borderless floating `NSPanel` hosting SwiftUI; see
 
 ## Summoning
 
+Nothing is bound out of the box. The first arrow below is a binding the user records, and the diagram
+names ⌥Space only because that is the one this project happens to use. Until a binding exists,
+`HotKeyManager` registers nothing for `.togglePalette` and `storedBinding(for:)` reads as unbound, so
+the whole chain is inert. Recording happens through `ShortcutRecorder(action: .togglePalette)` in
+General settings and in onboarding.
+
 ```
-⌥Space (Carbon) → HotKeyCenter → HotKeyManager.perform → AppCore's onTogglePalette closure
+⌥Space (recorded) → HotKeyCenter → HotKeyManager.perform → AppCore's onTogglePalette closure
                                                               ↓
                                           PaletteCoordinator.togglePalette()
                                                               ↓

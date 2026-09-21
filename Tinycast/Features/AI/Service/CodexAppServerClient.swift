@@ -138,7 +138,7 @@ final class CodexAppServerClient {
                 method: "initialize",
                 params: [
                     "clientInfo": [
-                        "name": "tinycast",
+                        "name": "delores",
                         "title": "Delores",
                         "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
                             ?? "0"
