@@ -3,6 +3,21 @@
 The local loop: set up, build, run, regenerate. Shipping a build is [release.md](release.md);
 verifying a change is [testing.md](testing.md).
 
+> **Delores note.** This is the inherited Tinycast document, and four of its specifics are not this
+> tree's. Read them from here, not from the prose below:
+>
+> - the build scheme is **`Delores`**, not `Tinycast` (`xcodebuild -project Tinycast.xcodeproj
+>   -scheme Delores`; the project file kept its upstream name, the scheme did not);
+> - the signing identity is the locally created **`HuaciGongju CodeSign`**, not `Tinycast
+>   Self-Signed` — see [delores-architecture.md](delores-architecture.md) and `project.yml`, where it
+>   is a base-level setting shared by Debug and Release;
+> - the bundle IDs are `com.jackdu.delores` and `com.jackdu.delores.dev` (Debug builds to a
+>   `Delores Dev.app`, in DerivedData rather than `/Applications`);
+> - Delores' own code lives under `Features/Delores/`; since the settings reorganisation the panes
+>   live in `Features/Settings/Panes/`. `AGENTS.md` is a pure upstream file that must stay that way.
+>
+> Everything else — requirements, the generators, the LSP sync, formatting — still holds.
+
 ## Requirements
 
 - macOS 26 or later (Liquid Glass).
@@ -43,7 +58,7 @@ project settings in `project.yml`, run `xcodegen generate` and commit the result
 
 ### The dev channel
 
-Debug builds are a separate channel: **`Tinycast Dev.app`**, bundle id `com.tinycast.app.dev`. Every
+Debug builds are a separate channel: **`Delores Dev.app`**, bundle id `com.jackdu.delores.dev`. Every
 persisted thing is keyed by bundle id — `~/Library/Preferences/<id>.plist` (settings and hotkey
 bindings), `~/Library/Application Support/<id>/` (the onboarding marker, quicklinks,
 clipboard history, calculator history and launch ranking),

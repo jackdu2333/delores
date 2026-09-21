@@ -5291,12 +5291,12 @@
         }
       }
     },
-    "© 2026 Abue Ammar · Released under AGPL-3.0-or-later": {
+    "© 2026 Jack Du · a modified version of Tinycast (© 2026 Abue Ammar) · AGPL-3.0-or-later": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "© 2026 Abue Ammar · 以 AGPL-3.0-or-later 发布"
+            "value": "© 2026 Jack Du · 基于 Tinycast 修改（© 2026 Abue Ammar）· AGPL-3.0-or-later"
           }
         }
       }

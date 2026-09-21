@@ -26,15 +26,40 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<!-- Exported, but deliberately no CFBundleDocumentTypes: claiming the type would make a
-	     double-clicked .tinycast launch straight into writing over someone's data. The identifier
+	     double-clicked .delores launch straight into writing over someone's data. The identifier
 	     is fixed rather than per-channel so Dev and stable can read each other's exports. -->
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.tinycast.backup</string>
+			<string>com.jackdu.delores.backup</string>
 			<key>UTTypeDescription</key>
 			<string>Delores Backup</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>delores</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<!-- Delores was called Tinycast, and this is the identifier it exported then. Imported rather
+	     than exported because it belongs to the upstream application: declaring someone else's
+	     identifier as your own is how two apps come to own one type between them. It stays
+	     declared so a `.tinycast` file exported before the rename still opens. -->
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.tinycast.backup</string>
+			<key>UTTypeDescription</key>
+			<string>Tinycast Backup (legacy)</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>

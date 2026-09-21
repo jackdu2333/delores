@@ -1,5 +1,11 @@
-Tinycast
-Copyright (C) 2026 Abue Ammar
+Delores — a modified version of Tinycast
+Copyright (C) 2026 Jack Du, and contributors to Delores
+Copyright (C) 2026 Abue Ammar, for the Tinycast work this is derived from
+
+Modified from Tinycast beginning 2026-09-16. Upstream:
+<https://github.com/abue-ammar/tinycast>. This work:
+<https://github.com/jackdu2333/delores>. The notices for third-party material Delores
+redistributes are in NOTICE.md.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

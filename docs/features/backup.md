@@ -1,6 +1,6 @@
 # Backup
 
-Export and import of Tinycast's own data as a single `.tinycast` file, plus the entry point for
+Export and import of Delores' own data as a single `.delores` file, plus the entry point for
 importing a Raycast export. The feature lives in `Features/Backup/`.
 
 A backup carries four independently selectable categories, ticked on export and again on import:
@@ -16,7 +16,7 @@ A backup carries four independently selectable categories, ticked on export and 
 - **A flag that grants a capability is never carried by a backup**, whether it is excluded from
   `SettingsBackupCoverage` or kept out of `AppSettings` entirely. Importing a config must not be able
   to grant something the user never granted. This change adds content, never a capability.
-- **No absolute path may enter a `.tinycast`.** A clip's `imagePath` names a file on the Mac that wrote
+- **No absolute path may enter a `.delores`.** A clip's `imagePath` names a file on the Mac that wrote
   it, so `BackupClipboardItem` carries a bundle-relative `imageName` instead. `backup-archive-test`
   asserts the produced file contains neither `/Users` nor `/Library` — the analogue of
   `settings-backup-test`'s capability checks, and for the same reason: this file gets sent to
@@ -37,7 +37,7 @@ A backup carries four independently selectable categories, ticked on export and 
 | `Model/BackupCategory.swift` | The categories and the descriptor every one of them must name |
 | `Model/BackupManifest.swift` | The table of contents, the format constant and its guard |
 | `Model/BackupBundle.swift` | The payload directory's layout and part-by-part encode/decode |
-| `Model/BackupArchive.swift` | Directory ⇄ `.tinycast`; the only file importing `AppleArchive` |
+| `Model/BackupArchive.swift` | Directory ⇄ `.delores`; the only file importing `AppleArchive` |
 | `Model/BackupClipboardItem.swift` | The portable clip, with no path in it |
 | `Model/SettingsBackup.swift` | The settings, fixed/per-item hotkey payloads, and their `Codable` shape |
 | `Model/SettingsBackupCoverage.swift` | The coverage declaration the harness checks |
@@ -48,7 +48,7 @@ A backup carries four independently selectable categories, ticked on export and 
 | `Service/BackupApplier.swift` | Staging → stores, returning a per-category summary |
 | `Service/BackupActions.swift` | The effectful half: file pickers, the archive calls, dialogs |
 | `Service/RaycastDecoder.swift` | Container recognition, decrypt and decode |
-| `Service/RaycastImportReader.swift` | Raycast → Tinycast field mapping |
+| `Service/RaycastImportReader.swift` | Raycast → Delores field mapping |
 | `Service/Scrypt.swift`, `Platform/Compression/Zlib.swift` | The crypto and decompression primitives |
 | `Settings/BackupCategorySelection.swift` | The category checkboxes, on both halves of the pane |
 | `Settings/BackupSettingsView.swift` | The pane |

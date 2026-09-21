@@ -3,7 +3,12 @@ import UniformTypeIdentifiers
 
 extension UTType {
     /// Not per-channel: a UTI names an interchange format, so Dev must read stable's exports.
-    static let tinycastBackup = UTType(exportedAs: "com.tinycast.backup")
+    static let deloresBackup = UTType(exportedAs: "com.jackdu.delores.backup")
+
+    /// What Delores exported while it was called Tinycast, and what upstream's app still exports.
+    /// Imported rather than exported because the identifier is not this app's to claim; kept so a
+    /// backup written before the rename still opens, which is the whole reason to keep it at all.
+    static let legacyTinycastBackup = UTType(importedAs: "com.tinycast.backup")
 }
 
 /// The backup flows' entry points, shared by the Settings pane and the commands.
@@ -32,13 +37,17 @@ enum BackupActions {
         return panel.url
     }
 
-    static func chooseJSONFile() -> URL? { chooseFile(ofType: .json) }
+    static func chooseJSONFile() -> URL? { chooseFile(ofTypes: [.json]) }
 
-    static func chooseBackupFile() -> URL? { chooseFile(ofType: .tinycastBackup) }
+    /// Both types, because a `.tinycast` export predates the rename and is still this person's data.
+    /// The save side offers only the current one: nothing new should be written in the old name.
+    static func chooseBackupFile() -> URL? {
+        chooseFile(ofTypes: [.deloresBackup, .legacyTinycastBackup])
+    }
 
-    private static func chooseFile(ofType type: UTType) -> URL? {
+    private static func chooseFile(ofTypes types: [UTType]) -> URL? {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [type]
+        panel.allowedContentTypes = types
         panel.allowsMultipleSelection = false
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK else { return nil }
@@ -53,7 +62,7 @@ enum BackupActions {
     ) async throws
         -> BackupComposer.Result
     {
-        guard let destination = chooseSaveLocation(named: "Delores", type: .tinycastBackup) else {
+        guard let destination = chooseSaveLocation(named: "Delores", type: .deloresBackup) else {
             throw CancellationError()
         }
         let plan = BackupComposer.plan(categories, from: core)

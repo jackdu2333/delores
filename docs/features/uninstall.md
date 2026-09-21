@@ -67,8 +67,8 @@ Two further guards on that rule:
 - **Vendor namespaces don't prefix-match.** A two-component ID like `com.adobe` names a vendor, not a
   product, so `allowsBundleIDPrefixMatch` requires three components. `com.adobe` still matches itself.
 - **An installed sibling owns its own artifacts.** If any _other_ installed app's bundle ID is a
-  longer match for the same component, that app owns it. Without this, uninstalling `com.tinycast.app`
-  would also trash `com.tinycast.app.beta` and `…​.dev` — separate products that merely share a
+  longer match for the same component, that app owns it. Without this, uninstalling `com.jackdu.delores`
+  would also trash `com.jackdu.delores.beta` and `…​.dev` — separate products that merely share a
   namespace, which is exactly the channel-isolation invariant in reverse.
 
 **`groupContainer`** — strips a leading `group.` and/or a 10-character Team ID (uppercase

@@ -84,7 +84,9 @@ struct AboutView: View {
     }
 
     private var footer: some View {
-        Text(L10n.string("© 2026 Abue Ammar · Released under AGPL-3.0-or-later"))
+        // AGPL §5(a) wants upstream's notice kept, and the derivative's own added beside it. The
+        // long form of both lives in LICENSE; this is the one line the window has room for.
+        Text(L10n.string("© 2026 Jack Du · a modified version of Tinycast (© 2026 Abue Ammar) · AGPL-3.0-or-later"))
             .font(.caption2)
             .foregroundStyle(.tertiary)
     }
