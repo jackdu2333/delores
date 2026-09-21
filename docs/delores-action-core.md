@@ -114,7 +114,7 @@ Both sides ship a `translate`, and they are different products:
 - Delores' is a **language-model prompt** — a long Chinese instruction that decomposes code
   identifiers, decides the direction from the input language, and refuses to obey anything in the text.
 
-Decided (nono, 2026-09-17): **one action id, two backends.** So:
+Decided (2026-09-17): **one action id, two backends.** So:
 
 - `id == "translate"` is one definition. Its `backend` is `.translationFramework` or `.languageModel`.
 - Which one is used is decided the same way the model route already is: **if the reader bound a route to

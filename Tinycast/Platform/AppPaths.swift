@@ -3,13 +3,13 @@ import Foundation
 /// The per-channel storage roots. Keyed by bundle id so a Dev build never shares a stable's dirs.
 enum AppPaths {
     static func caches(
-        bundleID: String = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
+        bundleID: String = Bundle.main.bundleIdentifier ?? "com.jackdu.delores"
     ) -> URL {
         root(.cachesDirectory, bundleID: bundleID)
     }
 
     static func applicationSupport(
-        bundleID: String = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
+        bundleID: String = Bundle.main.bundleIdentifier ?? "com.jackdu.delores"
     ) -> URL {
         root(.applicationSupportDirectory, bundleID: bundleID)
     }
@@ -17,7 +17,7 @@ enum AppPaths {
     /// Where Notes lives until a folder of the person's own is chosen. The default stays inside the
     /// per-channel support root, so it is still a Dev build's own folder and not a stable's.
     static func defaultNotesDirectory(
-        bundleID: String = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
+        bundleID: String = Bundle.main.bundleIdentifier ?? "com.jackdu.delores"
     ) -> URL {
         applicationSupport(bundleID: bundleID).appendingPathComponent("Notes", isDirectory: true)
     }

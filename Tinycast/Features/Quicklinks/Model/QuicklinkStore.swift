@@ -46,7 +46,7 @@ final class QuicklinkStore {
 
     /// Under Application Support, each debug/release channel gets its own authored library.
     private static var defaultDirectory: URL {
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.tinycast.app"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.jackdu.delores"
         return FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(bundleID, isDirectory: true)

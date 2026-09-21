@@ -1,6 +1,6 @@
 import Foundation
 
-/// The payload a `.tinycast` seals; pure, so the harness drives the real layout.
+/// The payload a `.delores` archive seals; pure, so the harness drives the real layout.
 struct BackupBundle: Sendable {
     enum LearningPart: String, CaseIterable, Sendable {
         case ranking
