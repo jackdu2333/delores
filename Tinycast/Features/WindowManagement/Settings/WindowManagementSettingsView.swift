@@ -26,6 +26,8 @@ struct WindowManagementSettingsView: View {
                 commands
             }
             .settingsEnabled(settings.windowManagementEnabled)
+
+            WindowSnappingSection()
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.windowManagement)

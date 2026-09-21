@@ -16,6 +16,7 @@ final class DeloresSplitDividerCoordinator {
     private static let dividerPairGap: CGFloat = 12
     private static let dividerMouseEpsilon: CGFloat = 0.5
     private static let dividerScanInterval: TimeInterval = 0.08
+    private var pairGapTolerance: CGFloat { max(Self.dividerPairGap, CGFloat(settings.windowGap) + 4) }
     private struct SplitPair {
         let left: AXUIElement; let right: AXUIElement
         var leftRect: CGRect; var rightRect: CGRect; let screen: NSScreen
@@ -75,7 +76,7 @@ final class DeloresSplitDividerCoordinator {
         else { return nil }
         let l = geometry.flip(leftFrame)
         let r = geometry.flip(rightFrame)
-        guard abs(r.minX - l.maxX) <= Self.dividerPairGap else { return nil }
+        guard abs(r.minX - l.maxX) <= pairGapTolerance else { return nil }
         let pair = SplitPair(
             left: left.window, right: right.window, leftRect: l, rightRect: r, screen: screen)
         guard pair.height >= 120 else { return nil }
@@ -221,7 +222,7 @@ final class DeloresSplitDividerCoordinator {
         let leftIsLeft = left.minX <= right.minX
         let l = leftIsLeft ? left : right
         let r = leftIsLeft ? right : left
-        guard abs(r.minX - l.maxX) <= Self.dividerPairGap else { return nil }
+        guard abs(r.minX - l.maxX) <= pairGapTolerance else { return nil }
         var refreshed = pair
         refreshed.leftRect = l
         refreshed.rightRect = r
@@ -297,7 +298,7 @@ final class DeloresSplitDividerCoordinator {
                 let seamY = max(left.rect.minY, right.rect.minY)
                 let seamHeight = max(0, min(left.rect.maxY, right.rect.maxY) - seamY)
                 let dividerX = (left.rect.maxX + right.rect.minX) / 2
-                guard gap <= Self.dividerPairGap,
+                guard gap <= pairGapTolerance,
                       seamHeight / min(left.rect.height, right.rect.height) >= 0.7 else { continue }
                 let distance = abs(point.x - dividerX)
                 guard distance <= Self.dividerHoverTolerance,

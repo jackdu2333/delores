@@ -3,21 +3,15 @@ import SwiftUI
 
 /// The window-placement capabilities that answer a gesture rather than a summon: snapping and the
 /// split divider.
-///
-/// They are deliberately **not** a Surface — they have no place to be and nothing of their own to
-/// say — which is why they sit under Capabilities beside Window Management rather than claiming a
-/// form of their own.
-struct WindowSnappingSettingsView: View {
+struct WindowSnappingSection: View {
     @Environment(AppSettings.self) private var settings
-    @Environment(SettingsNavigationState.self) private var navigation
     /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
     @State private var isTrusted = Permissions.isAccessibilityTrusted()
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         @Bindable var settings = settings
-        return Form {
-            Section {
+        return Section {
                 if needsAccessibility {
                     SettingsRow(
                         title: L10n.string("Accessibility permission required"),
@@ -49,7 +43,6 @@ struct WindowSnappingSettingsView: View {
             } header: {
                 SettingsSectionHeader(.windowSnappingCapabilities)
             } footer: {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     Text(
                         L10n.string(
                             "Both read and move other apps' windows through the same Accessibility permission Delores uses to paste. Neither is enabled by default, and neither is restored from a settings backup."
@@ -57,22 +50,7 @@ struct WindowSnappingSettingsView: View {
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    // The keyboard-driven half of window placement lives in its own pane and the two
-                    // names read alike, so the difference is stated where the question gets asked.
-                    Button(
-                        L10n.string(
-                            "Window Management places a window from the keyboard instead, and keeps a saved arrangement of several."
-                        )
-                    ) {
-                        navigation.select(.windowManagement)
-                    }
-                    .buttonStyle(.link)
-                    .font(.caption)
-                }
             }
-        }
-        .formStyle(.grouped)
-        .settingsScrollTarget(.windowSnapping)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
     }
 
@@ -111,6 +89,6 @@ struct WindowSnappingSettingsView: View {
     private var needsAccessibilitySubtitle: String {
         isTrusted
             ? ""
-            : "Delores can't read or move other apps' windows until it is granted."
+            : L10n.string("Delores can't read or move other apps' windows until it is granted.")
     }
 }

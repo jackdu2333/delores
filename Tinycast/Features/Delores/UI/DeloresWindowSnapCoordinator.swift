@@ -171,7 +171,7 @@ final class DeloresWindowSnapCoordinator {
             guard snapIsActive, let candidate = snapCandidate, let snapIsland,
                   let screen = DeloresWindowGeometry.screenContaining(point),
                   let slot = snapIsland.slot(at: point) else { return }
-            let target = slot.rect(in: screen.visibleFrame)
+            let target = slot.rect(in: screen.visibleFrame, gap: CGFloat(settings.windowGap))
             // Only a window that really went there is worth remembering: see `registerSnappedWindow`.
             if DeloresWindowGeometry.setWindowFrame(candidate.window, rect: target) {
                 onWindowSnapped?(candidate.window, slot, target, screen)

@@ -5221,6 +5221,16 @@
         }
       }
     },
+    "Window & Split Screen": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口与分屏"
+          }
+        }
+      }
+    },
     "With nothing bound this row keeps Apple's translator; a pair it does not have falls back to the shared model.": {
       "localizations": {
         "zh-Hans": {

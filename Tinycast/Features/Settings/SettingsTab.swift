@@ -4,7 +4,7 @@ enum SettingsTab: CaseIterable, Identifiable {
     // the three Surfaces, search-box configuration, then the app itself.
     case delores, commandSurface, contextSurface, companionSurface,
         applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts, fallbacks,
-        windowManagement, windowSnapping, clipboard, notes, fileSearch, navigation,
+        windowManagement, clipboard, notes, fileSearch, navigation,
         general, permissions, backup, about
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
@@ -23,8 +23,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .quicklinks: return L10n.string("Quicklinks")
         case .appleShortcuts: return L10n.string("Apple Shortcuts")
         case .fallbacks: return L10n.string("Fallbacks")
-        case .windowManagement: return L10n.string("Window Management")
-        case .windowSnapping: return L10n.string("Split Screen")
+        case .windowManagement: return L10n.string("Window & Split Screen")
         case .clipboard: return L10n.string("Clipboard")
         case .notes: return L10n.string("Notes")
         case .fileSearch: return L10n.string("File Search")
@@ -51,7 +50,6 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .appleShortcuts: return "square.2.layers.3d"
         case .fallbacks: return "arrow.turn.down.right"
         case .windowManagement: return "macwindow"
-        case .windowSnapping: return "rectangle.split.2x1"
         case .clipboard: return "doc.on.clipboard"
         case .notes: return "text.page"
         case .fileSearch: return "doc.text.magnifyingglass"
@@ -91,7 +89,7 @@ enum SettingsSection: CaseIterable, Identifiable {
             return [
                 .commandSurface, .applications, .systemSettings, .systemActions, .commands,
                 .quicklinks, .appleShortcuts, .fallbacks,
-                .windowManagement, .windowSnapping, .clipboard, .notes, .fileSearch, .navigation
+                .windowManagement, .clipboard, .notes, .fileSearch, .navigation
             ]
         case .context:
             return [.contextSurface]

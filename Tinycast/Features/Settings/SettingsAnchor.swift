@@ -93,7 +93,7 @@ extension SettingsAnchor {
     /// what the reader is trying to do rather than for the mechanism that does it. "Window
     /// Snapping" named the mechanism and left a reader looking for 分屏 with nowhere to land.
     static let windowSnappingCapabilities = Self(
-        tab: .windowSnapping, title: "Split Screen")
+        tab: .windowManagement, title: "Split Screen")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")
     static let clipboardCommands = Self(tab: .clipboard, title: "Commands")

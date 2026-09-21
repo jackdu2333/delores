@@ -276,46 +276,32 @@ enum DeloresSnapSlot {
         }
     }
 
-    func rect(in frame: CGRect) -> CGRect {
-        let margin: CGFloat = 6
-        let gap: CGFloat = 8
-        let usableWidth = frame.width - margin * 2
-        let usableHeight = frame.height - margin * 2
-        let halfWidth = (usableWidth - gap) / 2
-        let halfHeight = (usableHeight - gap) / 2
+    func rect(in frame: CGRect, gap: CGFloat = 0) -> CGRect {
+        let g = WindowPlacementEngine.sanitizedGap(gap, in: frame)
+        let f = fractions
+        let left = frame.minX + f.x0 * frame.width + (f.x0 == 0 ? g : g / 2)
+        let right = frame.minX + f.x1 * frame.width - (f.x1 == 1 ? g : g / 2)
+        let top = frame.maxY - (f.y0 * frame.height + (f.y0 == 0 ? g : g / 2))
+        let bottom = frame.maxY - (f.y1 * frame.height - (f.y1 == 1 ? g : g / 2))
+        return WindowPlacementEngine.rounded(
+            CGRect(x: left, y: bottom, width: max(1, right - left), height: max(1, top - bottom)))
+    }
+
+    private var fractions: (x0: CGFloat, x1: CGFloat, y0: CGFloat, y1: CGFloat) {
+        let oneThird: CGFloat = 1.0 / 3.0
+        let twoThirds: CGFloat = 2.0 / 3.0
         switch self {
-        case .left:
-            return CGRect(x: frame.minX + margin, y: frame.minY + margin,
-                          width: halfWidth, height: usableHeight)
-        case .right:
-            return CGRect(x: frame.midX + gap / 2, y: frame.minY + margin,
-                          width: halfWidth, height: usableHeight)
-        case .mainWorkspace:
-            let mainWidth = (usableWidth - gap) * 2 / 3
-            return CGRect(x: frame.minX + margin, y: frame.minY + margin,
-                          width: mainWidth, height: usableHeight)
-        case .sideWorkspace:
-            let mainWidth = (usableWidth - gap) * 2 / 3
-            let sideWidth = usableWidth - gap - mainWidth
-            return CGRect(x: frame.maxX - margin - sideWidth, y: frame.minY + margin,
-                          width: sideWidth, height: usableHeight)
-        case .leftThird, .centerThird, .rightThird:
-            let thirdWidth = (usableWidth - gap * 2) / 3
-            let index: CGFloat = self == .leftThird ? 0 : (self == .centerThird ? 1 : 2)
-            return CGRect(x: frame.minX + margin + index * (thirdWidth + gap),
-                          y: frame.minY + margin, width: thirdWidth, height: usableHeight)
-        case .topLeft:
-            return CGRect(x: frame.minX + margin, y: frame.midY + gap / 2,
-                          width: halfWidth, height: halfHeight)
-        case .topRight:
-            return CGRect(x: frame.midX + gap / 2, y: frame.midY + gap / 2,
-                          width: halfWidth, height: halfHeight)
-        case .bottomLeft:
-            return CGRect(x: frame.minX + margin, y: frame.minY + margin,
-                          width: halfWidth, height: halfHeight)
-        case .bottomRight:
-            return CGRect(x: frame.midX + gap / 2, y: frame.minY + margin,
-                          width: halfWidth, height: halfHeight)
+        case .left: return (0, 0.5, 0, 1)
+        case .right: return (0.5, 1, 0, 1)
+        case .mainWorkspace: return (0, twoThirds, 0, 1)
+        case .sideWorkspace: return (twoThirds, 1, 0, 1)
+        case .leftThird: return (0, oneThird, 0, 1)
+        case .centerThird: return (oneThird, twoThirds, 0, 1)
+        case .rightThird: return (twoThirds, 1, 0, 1)
+        case .topLeft: return (0, 0.5, 0, 0.5)
+        case .topRight: return (0.5, 1, 0, 0.5)
+        case .bottomLeft: return (0, 0.5, 0.5, 1)
+        case .bottomRight: return (0.5, 1, 0.5, 1)
         }
     }
 }

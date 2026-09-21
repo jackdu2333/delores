@@ -418,7 +418,7 @@ enum SettingsSearchCatalog {
     /// Window placement that answers a gesture rather than a summon; not a Surface of its own.
     private static let windowSnapping: [SettingsSearchEntry] = [
         .init(
-            pane: .windowSnapping,
+            group: .windowSnappingCapabilities, "Split Screen",
             keywords: [
                 "snap", "split", "split screen", "divider", "seam", "tiled",
                 "吸附", "分屏", "窗口分屏", "中缝"
@@ -434,7 +434,10 @@ enum SettingsSearchCatalog {
     private static let windowManagement: [SettingsSearchEntry] = [
         .init(
             pane: .windowManagement,
-            keywords: ["tile", "halves", "thirds", "maximize", "snap", "layouts", "arrangement", "平铺", "布局"]),
+            keywords: [
+                "tile", "halves", "thirds", "maximize", "snap", "layouts", "arrangement",
+                "split", "split screen", "divider", "seam", "平铺", "布局", "分屏", "吸附", "中缝"
+            ]),
         .init(
             .windowManagementWindowManagement, "Enable window management",
             keywords: ["tile", "accessibility"]),

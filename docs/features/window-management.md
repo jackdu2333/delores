@@ -5,7 +5,7 @@ native fullscreen and Space switching — searchable in the palette and bindable
 35 commands, no new dependencies and no new permission: they reuse the Accessibility grant clipboard
 paste already needs.
 
-Ships **off**. Settings › Window Management is the switch, and while it is off there are no launcher
+Ships **off**. Settings › Window & Split Screen is the switch, and while it is off there are no launcher
 entries and a still-registered shortcut moves nothing.
 
 ## Invariants
