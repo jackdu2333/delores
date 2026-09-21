@@ -961,12 +961,12 @@
         }
       }
     },
-    "Choose a .tinycast file exported from Delores.": {
+    "Choose a backup file exported from Delores.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择从 Delores 导出的 .tinycast 文件。"
+            "value": "选择从 Delores 导出的备份文件。"
           }
         }
       }
@@ -1031,12 +1031,12 @@
         }
       }
     },
-    "Choose what to include, then save it as a single .tinycast file.": {
+    "Choose what to include, then save it as a single .delores file.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择要包含的内容，然后保存为单个 .tinycast 文件。"
+            "value": "选择要包含的内容，然后保存为单个 .delores 文件。"
           }
         }
       }

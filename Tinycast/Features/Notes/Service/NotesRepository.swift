@@ -16,7 +16,7 @@ struct NotesRepository: Sendable {
             case .unreadable(let fileURL):
                 return "The note isn't valid UTF-8. (\(fileURL.lastPathComponent))"
             case .invalidLocation(let fileURL):
-                return "The note file is outside this Tinycast channel. (\(fileURL.path))"
+                return "The note file is outside this Delores channel. (\(fileURL.path))"
             case .io(let fileURL, let message):
                 return "Could not access \(fileURL.path): \(message)"
             }

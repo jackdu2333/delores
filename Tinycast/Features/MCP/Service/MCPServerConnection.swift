@@ -102,7 +102,7 @@ final class MCPServerConnection {
         "protocolVersion": MCPProtocol.version,
         "capabilities": [:],
         "clientInfo": [
-            "name": "tinycast",
+            "name": "delores",
             "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
         ]
     ]

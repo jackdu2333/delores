@@ -78,10 +78,12 @@ secrets*.json
 # directory here makes `check-upstream-drift.sh` report a dirty tree before every sync.
 .workbuddy/
 # Website (Next.js). `out/` is the static export, `.source/` is generated from
-# content/docs by fumadocs-mdx on install and build.
+# content/docs by fumadocs-mdx on install and build. The tsbuildinfo appears
+# whenever `tsc` runs, including a bare `tsc --noEmit` with no emit at all.
 website/.next/
 website/out/
 website/.source/
+website/tsconfig.tsbuildinfo
 
 # Real Raycast exports carry the author's clipboard history; the harness builds its own fixtures.
 *.rayconfig

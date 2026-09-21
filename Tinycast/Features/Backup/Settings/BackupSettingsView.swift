@@ -47,7 +47,7 @@ struct BackupSettingsView: View {
                     }
                 } label: {
                     SettingsRowTitle(.backupExport, "Export Backup")
-                    Text(L10n.string("Choose what to include, then save it as a single .tinycast file."))
+                    Text(L10n.string("Choose what to include, then save it as a single .delores file."))
                 }
                 BackupCategorySelection(selection: $exportSelection)
                 if let backupStatus { statusRow(backupStatus) }
@@ -160,7 +160,10 @@ struct BackupSettingsView: View {
 
     private var backupFileSubtitle: String {
         guard let name = backupFile?.lastPathComponent else {
-            return "Choose a .tinycast file exported from Delores."
+            // Deliberately does not name an extension: the picker accepts both the current
+            // `.delores` and the `.tinycast` written before the rename, and a subtitle that named
+            // only one of them would read as a restriction the panel does not enforce.
+            return "Choose a backup file exported from Delores."
         }
         return openedManifest == nil ? "\(name) — couldn't be read" : name
     }

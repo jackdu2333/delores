@@ -163,7 +163,7 @@ final class DoubleTapMonitor: HealthCheckable {
         else {
             // Even a listen-only tap needs Accessibility; the health timer retries until granted.
             if !loggedTapFailure {
-                NSLog("Tinycast: Failed to create double-tap event tap")
+                NSLog("Delores: Failed to create double-tap event tap")
                 loggedTapFailure = true
             }
             needsAccessibility = true
