@@ -263,21 +263,6 @@ run entry-icon-test        Tinycast/Platform/Appearance.swift \
                            Tinycast/Platform/Images/FileIconStamp.swift
 run system-action-test     Tinycast/Features/SystemActions/Model/SystemAction.swift
 run volume-test            Tinycast/Features/SystemActions/Model/VolumeLevel.swift
-run window-command-test    Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowActionMemory.swift
-run space-gesture-test     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/SpaceGesture.swift
-run window-layout-test     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutAnchor.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutDisplay.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayout.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutGeometry.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutPlan.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutStore.swift
 run uninstall-test         Tinycast/Features/Uninstall/Model/UninstallTarget.swift \
                            Tinycast/Features/Uninstall/Model/UninstallSearchRoot.swift \
                            Tinycast/Features/Uninstall/Model/UninstallRules.swift \

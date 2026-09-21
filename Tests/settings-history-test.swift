@@ -159,7 +159,7 @@ struct SettingsHistoryTests {
             ("caps lock", .commandSurface),
             ("launch at login", .general),
             ("paste history", .clipboard),
-            ("window manage", .windowManagement),
+            ("split screen", .splitScreen),
             ("raycast export", .backup),
             ("mcp", .contextSurface)
         ]

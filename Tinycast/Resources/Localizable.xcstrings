@@ -211,16 +211,6 @@
         }
       }
     },
-    "A layout puts named apps at fixed sizes on chosen displays, in one pass.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "布局会把指定应用按固定尺寸一次放到选定显示器上。"
-          }
-        }
-      }
-    },
     "A New Conversation": {
       "localizations": {
         "zh-Hans": {
@@ -387,16 +377,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "添加别名"
-          }
-        }
-      }
-    },
-    "Add an app to this layout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "向此布局添加应用"
           }
         }
       }
@@ -971,36 +951,6 @@
         }
       }
     },
-    "Choose an icon": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择图标"
-          }
-        }
-      }
-    },
-    "Choose File…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择文件…"
-          }
-        }
-      }
-    },
-    "Choose Folder…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择文件夹…"
-          }
-        }
-      }
-    },
     "Choose the model for %@": {
       "localizations": {
         "zh-Hans": {
@@ -1441,16 +1391,6 @@
         }
       }
     },
-    "Create Layout from Current Windows": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从当前窗口创建布局"
-          }
-        }
-      }
-    },
     "Current": {
       "localizations": {
         "zh-Hans": {
@@ -1487,16 +1427,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在 ½、⅓ 和 ⅔ 间循环"
-          }
-        }
-      }
-    },
-    "Cycling": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "循环"
           }
         }
       }
@@ -1791,16 +1721,6 @@
         }
       }
     },
-    "Drag a window up to the island at the top of the display, and drop it on the layout you want.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把窗口拖到屏幕顶部的岛屿上，再放到想要的布局。"
-          }
-        }
-      }
-    },
     "Drag to reposition": {
       "localizations": {
         "zh-Hans": {
@@ -2021,16 +1941,6 @@
         }
       }
     },
-    "Enable window management": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启用窗口管理"
-          }
-        }
-      }
-    },
     "Enable window snapping": {
       "localizations": {
         "zh-Hans": {
@@ -2061,32 +1971,12 @@
         }
       }
     },
-    "Enter URL…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "输入 URL…"
-          }
-        }
-      }
-    },
     "Entries older than this are deleted automatically.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "超过此时长的条目会自动删除。"
-          }
-        }
-      }
-    },
-    "Entry being edited": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在编辑的条目"
           }
         }
       }
@@ -2231,26 +2121,6 @@
         }
       }
     },
-    "Find the window commands in launcher search.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可在启动器搜索中找到窗口命令。"
-          }
-        }
-      }
-    },
-    "Find your layouts in launcher search, beside the window commands.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可在启动器搜索中找到布局，与窗口命令列在一起。"
-          }
-        }
-      }
-    },
     "Find your quicklinks in launcher search.": {
       "localizations": {
         "zh-Hans": {
@@ -2337,16 +2207,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "全屏"
-          }
-        }
-      }
-    },
-    "Gap between windows": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口间距"
           }
         }
       }
@@ -2701,16 +2561,6 @@
         }
       }
     },
-    "Its global shortcut and launcher references go with it.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "它的全局快捷键和启动器引用也会被移除。"
-          }
-        }
-      }
-    },
     "Its global shortcut and launcher references will also be removed.": {
       "localizations": {
         "zh-Hans": {
@@ -2857,26 +2707,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "布局"
-          }
-        }
-      }
-    },
-    "Layout Commands": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "布局命令"
-          }
-        }
-      }
-    },
-    "Layout commands": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "布局命令"
           }
         }
       }
@@ -3111,16 +2941,6 @@
         }
       }
     },
-    "Moves the window you were last in, using the Accessibility permission Delores already uses to paste.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移动你刚才所在的窗口，使用 Delores 粘贴时已有的辅助功能权限。"
-          }
-        }
-      }
-    },
     "Moving": {
       "localizations": {
         "zh-Hans": {
@@ -3201,16 +3021,6 @@
         }
       }
     },
-    "New Layout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新建布局"
-          }
-        }
-      }
-    },
     "Nezuko (coding demon)": {
       "localizations": {
         "zh-Hans": {
@@ -3237,16 +3047,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有 API 连接。"
-          }
-        }
-      }
-    },
-    "No app yet": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没有应用"
           }
         }
       }
@@ -3287,16 +3087,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有 MCP 服务器。"
-          }
-        }
-      }
-    },
-    "No windows to capture": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "没有可捕获的窗口"
           }
         }
       }
@@ -3671,16 +3461,6 @@
         }
       }
     },
-    "Points left between tiled windows and around the screen edge.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平铺窗口之间以及屏幕边缘留出的间距。"
-          }
-        }
-      }
-    },
     "Pop to root": {
       "localizations": {
         "zh-Hans": {
@@ -3931,16 +3711,6 @@
         }
       }
     },
-    "Remove This Entry": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除此条目"
-          }
-        }
-      }
-    },
     "Remove “%@”?": {
       "localizations": {
         "zh-Hans": {
@@ -4141,16 +3911,6 @@
         }
       }
     },
-    "Run this layout": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "运行此布局"
-          }
-        }
-      }
-    },
     "Same as Quick Actions": {
       "localizations": {
         "zh-Hans": {
@@ -4247,16 +4007,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜索 GitHub"
-          }
-        }
-      }
-    },
-    "Search layouts…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索布局…"
           }
         }
       }
@@ -4527,16 +4277,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在菜单栏中显示"
-          }
-        }
-      }
-    },
-    "Show layouts in launcher": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在启动器中显示布局"
           }
         }
       }
@@ -4817,16 +4557,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "此操作无法撤销。"
-          }
-        }
-      }
-    },
-    "This display isn't connected.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此显示器未连接。"
           }
         }
       }
@@ -5181,52 +4911,12 @@
         }
       }
     },
-    "Window Capabilities": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口能力"
-          }
-        }
-      }
-    },
-    "Window commands": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口命令"
-          }
-        }
-      }
-    },
-    "Window Layouts": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口布局"
-          }
-        }
-      }
-    },
     "Window Management": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "窗口管理"
-          }
-        }
-      }
-    },
-    "Window & Split Screen": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口与分屏"
           }
         }
       }
@@ -5497,16 +5187,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "能力"
-          }
-        }
-      }
-    },
-    "Window Snapping": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口吸附"
           }
         }
       }

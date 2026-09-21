@@ -264,7 +264,6 @@ enum BackupActions {
         if s.hiddenItems > 0 { parts.append("\(s.hiddenItems) hidden items") }
         if s.aliases > 0 { parts.append("\(s.aliases) aliases") }
         if s.quicklinks > 0 { parts.append("\(s.quicklinks) quicklinks") }
-        if s.windowLayouts > 0 { parts.append("\(s.windowLayouts) window layouts") }
         guard !parts.isEmpty else { return nil }
         return "Applied " + parts.joined(separator: ", ") + "."
     }

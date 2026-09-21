@@ -7,8 +7,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case command
         case quickAction
         case systemAction
-        case windowCommand
-        case windowLayout
         case quicklink
         case appleShortcut
 
@@ -38,16 +36,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
                 return KindDescriptor(
                     label: "System Action", sectionTitle: "System Actions",
                     openVerb: "Run System Action", canHideFromSearch: true,
-                    canRevealInFinder: false, isSymbolIcon: true)
-            case .windowCommand:
-                return KindDescriptor(
-                    label: "Window Command", sectionTitle: "Window Management",
-                    openVerb: "Move Window", canHideFromSearch: true,
-                    canRevealInFinder: false, isSymbolIcon: true)
-            case .windowLayout:
-                return KindDescriptor(
-                    label: "Window Layout", sectionTitle: "Window Layouts",
-                    openVerb: "Arrange Windows", canHideFromSearch: true,
                     canRevealInFinder: false, isSymbolIcon: true)
             case .quicklink:
                 return KindDescriptor(
@@ -142,10 +130,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
             return bundleID.map { .settingsPane(bundleID: $0) }
         case .systemAction:
             return SystemActionCatalog.action(forEntryID: id).map { .systemAction(id: $0.id) }
-        case .windowCommand:
-            return WindowCommandCatalog.command(forEntryID: id).map { .windowCommand(id: $0.id) }
-        case .windowLayout:
-            return WindowLayout.id(fromEntryID: id).map { .windowLayout(id: $0) }
         case .quicklink:
             return Quicklink.id(fromEntryID: id).map { .quicklink(id: $0) }
         case .appleShortcut:
@@ -176,9 +160,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case .quickAction:
             return CommandCatalog.command(for: self)?.sfSymbol ?? CustomQuickAction.sfSymbol
         case .systemAction: return SystemActionCatalog.action(forEntryID: id)?.sfSymbol ?? "questionmark"
-        case .windowCommand:
-            return WindowCommandCatalog.command(forEntryID: id)?.sfSymbol ?? "questionmark"
-        case .windowLayout: return WindowLayout.sfSymbol
         case .application, .systemSettings, .appleShortcut: return "questionmark"
         }
     }
@@ -194,14 +175,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
 }
 
 extension AppEntry {
-    /// The one row a layout draws, wherever it is offered from.
-    init(_ layout: WindowLayout) {
-        self.init(
-            id: layout.entryID, name: layout.name,
-            url: URL(string: "tinycast://window-layout/" + layout.id.uuidString)!,
-            bundleID: nil, kind: .windowLayout, symbolName: layout.iconSymbol)
-    }
-
     /// The one row a custom Quick Action draws, wherever it is offered from.
     init(_ action: CustomQuickAction) {
         self.init(
@@ -277,18 +250,8 @@ final class AppIndex {
         }
         .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
-    private static let allWindowCommandEntries: [AppEntry] = WindowCommandCatalog.all
-        .map { command in
-            AppEntry(
-                id: command.entryID, name: command.name,
-                url: URL(string: "tinycast://window-command/" + command.id.rawValue)!,
-                bundleID: nil, kind: .windowCommand)
-        }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
     private var discoveredEntries: [AppEntry] = []
-    private var windowCommandEntries: [AppEntry] = []
-    private var windowLayoutEntries: [AppEntry] = []
     private var quicklinkEntries: [AppEntry] = []
     private var appleShortcutEntries: [AppEntry] = []
     private var customQuickActionEntries: [AppEntry] = []
@@ -361,22 +324,6 @@ final class AppIndex {
     func setAppleShortcuts(_ entries: [AppEntry]) {
         guard entries != appleShortcutEntries else { return }
         appleShortcutEntries = entries
-        publishEntries()
-    }
-
-    /// Shows or hides the window-command slice; the catalog itself is static.
-    func setWindowCommandsVisible(_ visible: Bool) {
-        let entries = visible ? Self.allWindowCommandEntries : []
-        guard entries != windowCommandEntries else { return }
-        windowCommandEntries = entries
-        publishEntries()
-    }
-
-    /// Replaces the layout slice; a toggle can't split its entries from their section.
-    func setWindowLayouts(_ layouts: [WindowLayout]) {
-        let entries = layouts.sorted(by: WindowLayout.precedes).map(AppEntry.init)
-        guard entries != windowLayoutEntries else { return }
-        windowLayoutEntries = entries
         publishEntries()
     }
 
@@ -486,7 +433,7 @@ final class AppIndex {
             discoveredEntries
             + Self.named(
                 quicklinkEntries + appleShortcutEntries + Self.systemActionEntries
-                    + windowLayoutEntries + windowCommandEntries + quickActionEntries
+                    + quickActionEntries
                     + commandEntries)
         guard updated != apps else { return }
         apps = updated

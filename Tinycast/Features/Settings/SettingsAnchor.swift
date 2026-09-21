@@ -72,12 +72,10 @@ extension SettingsAnchor {
     static let navigationCommands = Self(tab: .navigation, title: "Commands")
     static let navigationMenuSearch = Self(tab: .navigation, title: "Search Menu Bar Items")
 
-    static let windowManagementWindowManagement = Self(
-        tab: .windowManagement, title: "Window Management")
-    static let windowManagementLayouts = Self(tab: .windowManagement, title: "Window Layouts")
-    static let windowManagementLayoutCommands = Self(
-        tab: .windowManagement, title: "Layout Commands")
-    static let windowManagementOptions = Self(tab: .windowManagement, title: "Options")
+    // Upstream's window management — layouts, the placement commands, cycling — is no longer
+    // offered, so it has no anchors here. Its files sit under
+    // `Packs/LegacyFeatures/WindowManagement/`; the active tree still compiles
+    // `WindowPlacementEngine` because Delores' snapping asks it for geometry.
 
     /// The Overview's opening statement, then the three forms; every switch lives in its own pane.
     static let deloresIdentity = Self(tab: .delores, title: "What it is")
@@ -93,7 +91,7 @@ extension SettingsAnchor {
     /// what the reader is trying to do rather than for the mechanism that does it. "Window
     /// Snapping" named the mechanism and left a reader looking for 分屏 with nowhere to land.
     static let windowSnappingCapabilities = Self(
-        tab: .windowManagement, title: "Split Screen")
+        tab: .splitScreen, title: "Split Screen")
 
     static let clipboardClipboard = Self(tab: .clipboard, title: "Clipboard")
     static let clipboardCommands = Self(tab: .clipboard, title: "Commands")

@@ -8,8 +8,6 @@ final class HotKeyManager {
     /// The launcher's own command funnel, so a shortcut and a palette row run the same thing.
     var onRunCommand: ((CommandID) -> Void)?
     var onRunSystemAction: ((SystemAction.ID) -> Void)?
-    var onRunWindowCommand: ((WindowCommand.ID) -> Void)?
-    var onRunWindowLayout: ((UUID) -> Void)?
     var onOpenQuicklink: ((UUID) -> Void)?
     var onRunQuickAction: ((UUID) -> Void)?
     var onRunAppleShortcut: ((UUID) -> Void)?
@@ -49,14 +47,10 @@ final class HotKeyManager {
     private let boundPaneKey = "boundPaneBundleIDs"
     private let boundQuicklinkKey = "boundQuicklinkIDs"
     private let boundQuickActionKey = "boundQuickActionIDs"
-    private let boundWindowLayoutKey = "boundWindowLayoutIDs"
     private let boundAppleShortcutKey = "boundAppleShortcutIDs"
 
-    func start(
-        quicklinkIDs: Set<UUID>, windowLayoutIDs: Set<UUID>, quickActionIDs: Set<UUID>
-    ) {
+    func start(quicklinkIDs: Set<UUID>, quickActionIDs: Set<UUID>) {
         prune(key: boundQuicklinkKey, live: quicklinkIDs) { .quicklink(id: $0) }
-        prune(key: boundWindowLayoutKey, live: windowLayoutIDs) { .windowLayout(id: $0) }
         prune(key: boundQuickActionKey, live: quickActionIDs) { .quickAction(id: $0) }
         // After the prunes, so a dropped record can't survive in memory this session.
         for action in candidateActions { bindings[action] = storedBinding(for: action) }
@@ -84,9 +78,6 @@ final class HotKeyManager {
 
     /// Quicklink UUIDs with a binding — the same index, its own namespace.
     var boundQuicklinkIDs: [UUID] { boundIDs(key: boundQuicklinkKey) }
-
-    /// Window-layout UUIDs with a binding; authored records, so they need an index of their own.
-    var boundWindowLayoutIDs: [UUID] { boundIDs(key: boundWindowLayoutKey) }
 
     var boundQuickActionIDs: [UUID] { boundIDs(key: boundQuickActionKey) }
 
@@ -134,11 +125,9 @@ final class HotKeyManager {
             index(id, bound: binding != nil, key: boundQuicklinkKey)
         case .quickAction(let id):
             index(id, bound: binding != nil, key: boundQuickActionKey)
-        case .windowLayout(let id):
-            index(id, bound: binding != nil, key: boundWindowLayoutKey)
         case .appleShortcut(let id):
             index(id, bound: binding != nil, key: boundAppleShortcutKey)
-        case .togglePalette, .command, .systemAction, .windowCommand:
+        case .togglePalette, .command, .systemAction:
             break
         }
         candidateActionsCache = nil
@@ -178,10 +167,8 @@ final class HotKeyManager {
         actions += boundPaneBundleIDs.map { .settingsPane(bundleID: $0) }
         actions += boundQuicklinkIDs.map { .quicklink(id: $0) }
         actions += boundQuickActionIDs.map { .quickAction(id: $0) }
-        actions += boundWindowLayoutIDs.map { .windowLayout(id: $0) }
         actions += boundAppleShortcutIDs.map { .appleShortcut(id: $0) }
         actions += SystemAction.ID.allCases.map { .systemAction(id: $0) }
-        actions += WindowCommand.ID.allCases.map { .windowCommand(id: $0) }
         candidateActionsCache = actions
         return actions
     }
@@ -196,10 +183,6 @@ final class HotKeyManager {
             return displayName?(action) ?? bundleID
         case .systemAction(let id):
             return SystemActionCatalog.action(id: id).name
-        case .windowCommand(let id):
-            return WindowCommandCatalog.command(id: id)?.name ?? "Window Command"
-        case .windowLayout:
-            return displayName?(action) ?? "Window Layout"
         case .quicklink:
             return displayName?(action) ?? "Quicklink"
         case .quickAction:
@@ -236,8 +219,6 @@ final class HotKeyManager {
         case .app(let bundleID): AppLauncher.toggle(bundleID: bundleID)
         case .settingsPane(let bundleID): AppLauncher.openSettingsPane(bundleID: bundleID)
         case .systemAction(let id): onRunSystemAction?(id)
-        case .windowCommand(let id): onRunWindowCommand?(id)
-        case .windowLayout(let id): onRunWindowLayout?(id)
         case .quicklink(let id): onOpenQuicklink?(id)
         case .quickAction(let id): onRunQuickAction?(id)
         case .appleShortcut(let id): onRunAppleShortcut?(id)

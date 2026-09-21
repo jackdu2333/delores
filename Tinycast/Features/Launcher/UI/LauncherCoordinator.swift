@@ -9,8 +9,6 @@ final class LauncherCoordinator {
     private let settingsCoordinator: SettingsCoordinator
     private let systemActionCoordinator: SystemActionCoordinator
     private let quicklinkCoordinator: QuicklinkCoordinator
-    private let windowCommandCoordinator: WindowCommandCoordinator
-    private let windowLayoutCoordinator: WindowLayoutCoordinator
     private let fileSearchCoordinator: FileSearchCoordinator
     private let menuSearchCoordinator: MenuSearchCoordinator
     private let windowSwitchCoordinator: WindowSwitchCoordinator
@@ -25,8 +23,6 @@ final class LauncherCoordinator {
         settingsCoordinator: SettingsCoordinator,
         systemActionCoordinator: SystemActionCoordinator,
         quicklinkCoordinator: QuicklinkCoordinator,
-        windowCommandCoordinator: WindowCommandCoordinator,
-        windowLayoutCoordinator: WindowLayoutCoordinator,
         fileSearchCoordinator: FileSearchCoordinator,
         menuSearchCoordinator: MenuSearchCoordinator,
         windowSwitchCoordinator: WindowSwitchCoordinator,
@@ -39,8 +35,6 @@ final class LauncherCoordinator {
         self.settingsCoordinator = settingsCoordinator
         self.systemActionCoordinator = systemActionCoordinator
         self.quicklinkCoordinator = quicklinkCoordinator
-        self.windowCommandCoordinator = windowCommandCoordinator
-        self.windowLayoutCoordinator = windowLayoutCoordinator
         self.fileSearchCoordinator = fileSearchCoordinator
         self.menuSearchCoordinator = menuSearchCoordinator
         self.windowSwitchCoordinator = windowSwitchCoordinator
@@ -85,17 +79,6 @@ final class LauncherCoordinator {
             systemActionCoordinator.runSystemAction(id: action.id)
             return
         }
-        if app.kind == .windowCommand {
-            guard let command = WindowCommandCatalog.command(forEntryID: app.id) else { return }
-            windowCommandCoordinator.runWindowCommand(id: command.id)
-            return
-        }
-        if app.kind == .windowLayout {
-            // The coordinator hides the palette itself: a layout must not restore focus first.
-            guard let id = WindowLayout.id(fromEntryID: app.id) else { return }
-            windowLayoutCoordinator.runWindowLayout(id: id)
-            return
-        }
         // Before the palette hides: an unfilled quicklink stays up to ask first.
         if app.kind == .quicklink {
             guard let id = Quicklink.id(fromEntryID: app.id) else { return }
@@ -114,7 +97,7 @@ final class LauncherCoordinator {
         case .systemSettings:
             guard let bundleID = app.bundleID else { return }
             AppLauncher.openSettingsPane(bundleID: bundleID)
-        case .command, .quickAction, .systemAction, .windowCommand, .windowLayout, .quicklink,
+        case .command, .quickAction, .systemAction, .quicklink,
             .appleShortcut:
             break  // handled above
         }
@@ -156,12 +139,6 @@ final class LauncherCoordinator {
             notesCoordinator.searchNotes()
         case .searchQuicklinks:
             paletteCoordinator.togglePalette(mode: .quicklinks)
-        case .createWindowLayout:
-            dismissPalette()
-            windowLayoutCoordinator.editWindowLayout(nil)
-        case .captureWindowLayout:
-            dismissPalette()
-            windowLayoutCoordinator.captureWindowLayout()
         case .createQuicklink:
             dismissPalette()
             quicklinkCoordinator.editQuicklink(nil)

@@ -19,7 +19,7 @@ struct SettingsDetailView: View {
             case .quicklinks: QuicklinksSettingsView()
             case .appleShortcuts: AppleShortcutsSettingsView()
             case .fallbacks: FallbacksSettingsView()
-            case .windowManagement: WindowManagementSettingsView()
+            case .splitScreen: SplitScreenSettingsView()
             case .clipboard: ClipboardSettingsView()
             case .notes: NotesSettingsView()
             case .fileSearch: FileSearchSettingsView()

@@ -308,8 +308,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   consumes and the caret keeps everywhere else
 - The highlight always sits on the row the footer pill describes
 - With a calculation typed, the calculator card is first and is selected first
-- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks, System Actions,
-  Window Management and Commands
+- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks, System Actions
+  (no Window Management section: that feature is parked, so neither its commands nor its layouts index)
 - With a non-ASCII input source active, ⌘K opens Actions; ↑/↓ move it, ↵ activates, Escape closes it
 - While a menu is open, typing does **not** change the query and the caret is hidden
 - Tab toggles launcher ↔ clipboard; bare Backspace on an empty query backs out of a sub-screen

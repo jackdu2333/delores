@@ -116,7 +116,7 @@ enum SettingsSearchCatalog {
         + companionSurface
         + commandSurface + applications + systemSettings + systemActions + commands
         + quicklinks + appleShortcuts + fallbacks
-        + windowManagement + windowSnapping + clipboard + notes
+        + windowSnapping + clipboard + notes
         + fileSearch + navigation
         + general + permissions + backup + about
 
@@ -429,45 +429,6 @@ enum SettingsSearchCatalog {
         .init(
             .windowSnappingCapabilities, "Enable split divider",
             keywords: ["seam", "resize", "tiled"])
-    ]
-
-    private static let windowManagement: [SettingsSearchEntry] = [
-        .init(
-            pane: .windowManagement,
-            keywords: [
-                "tile", "halves", "thirds", "maximize", "snap", "layouts", "arrangement",
-                "split", "split screen", "divider", "seam", "平铺", "布局", "分屏", "吸附", "中缝"
-            ]),
-        .init(
-            .windowManagementWindowManagement, "Enable window management",
-            keywords: ["tile", "accessibility"]),
-        .init(
-            .windowManagementOptions, "Cycling",
-            keywords: ["repeat", "thirds", "halves", "displays", "monitor", "screens"]),
-        .init(
-            .windowManagementOptions, "Gap between windows",
-            keywords: ["padding", "spacing", "margin", "points"]),
-        .init(
-            group: .windowManagementOptions, "Window commands",
-            keywords: ["shortcut", "left half", "maximize", "center"]),
-        .init(
-            group: .windowManagementLayoutCommands, "Layout commands",
-            keywords: ["shortcut", "launcher", "create layout", "capture"]),
-        .init(
-            group: .windowManagementLayouts, "Window Layouts",
-            keywords: [
-                "layout", "arrangement", "workspace", "preset", "restore windows",
-                "multi display", "monitor"
-            ]),
-        .init(
-            .windowManagementLayouts, "Show layouts in launcher",
-            keywords: ["hide", "visibility", "search"]),
-        .init(
-            .windowManagementLayouts, "New Layout",
-            keywords: ["add", "create", "arrangement", "preset"]),
-        .init(
-            .windowManagementLayouts, "Create Layout from Current Windows",
-            keywords: ["capture", "snapshot", "current", "save arrangement"])
     ]
 
     private static let clipboard: [SettingsSearchEntry] = [
