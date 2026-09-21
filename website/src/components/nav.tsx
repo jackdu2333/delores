@@ -1,7 +1,7 @@
 import { BookOpen, Star } from "lucide-react";
 import { nav, site } from "../data/site";
 import { starCount } from "../lib/version";
-import { DiscordLogo, GitHubLogo, Logo } from "./ui/icon";
+import { GitHubLogo, Logo } from "./ui/icon";
 import { Link } from "./ui/link";
 import { ThemeSwitch } from "./ui/theme-toggle";
 
@@ -68,16 +68,6 @@ export async function Nav() {
                 {stars}
               </span>
             )}
-          </a>
-          <a
-            href={site.community.discord}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Join the Discord"
-            title="Join the Discord"
-            className={iconButtonClass}
-          >
-            <DiscordLogo size={16} />
           </a>
           <ThemeSwitch />
         </div>

@@ -106,3 +106,39 @@ Delores values:
 
 When that decision is made, update this document and the release workflow together. A Tinycast
 release is not a valid Delores update even if the binary contains compatible source code.
+
+## Website release gate
+
+`website/` carries Delores' identity now — its own name, repository and subpath, and no link to
+upstream's community or funding — but the content behind that identity is not ours yet. It is
+**not published**: the repository is private, so Pages is off, and the `deploy` job in
+`website.yml` is switched off by the `DELORES_WEBSITE_ENABLED` variable rather than failing. That is
+the only reason the list below is not urgent. Every item is a claim about this project that is
+currently someone else's:
+
+- **The screenshots and the tour video are of upstream's app, and some show its name in the UI.**
+  `backup-import-settings.png` labels a section "Tinycast" and offers to "Restore from a Tinycast
+  backup". No amount of copy fixes this: the ten `public/*.png` and `public/delores-in-action.mp4`
+  (renamed from `tinycast-in-action.mp4`, but the frames inside are still upstream's) have to be
+  recaptured from a Delores build before any of them is shown. This is the one item that cannot be
+  worked around.
+- **`content/docs/**` and the inherited `docs/*.md` are upstream's prose.** The `Tinycast` in that
+  text is a product name, not a reference, so it has to be rewritten page by page — 125 mentions
+  under `website/content/docs/` and 249 more across `docs/*.md`. Only the pages made wrong by the
+  rename itself (the `.delores` extension, the support directory) were fixed in the code change
+  that caused them.
+- **The logo wall is off the page.** `companies` in `website/src/data/site.ts` is upstream's list,
+  and the section read as an endorsement claim built on other people's trademarks. `LogoWall` is
+  not rendered; it needs evidence of its own before it goes back.
+- **No community or funding link.** `site.community.discord` and `site.support` are still upstream's
+  values and are kept only as a record — every consumer was removed. The Support button was a Polar
+  page that paid upstream's author, so a click would have sent a reader's money to the wrong
+  project. Delores needs its own, or neither.
+- **The inherited app icon.** The mark is another project's artwork. `Tinycast/tinycast.icon` is an
+  Icon Composer document holding exactly one asset, `Assets/thunder.svg`, and `project.yml` compiles
+  it under `ASSETCATALOG_COMPILER_APPICON_NAME: tinycast` — so a build ships `tinycast.icns` with
+  upstream's lightning mark on it, and every size of it. The site's `Logo` is the same shape
+  flattened. A Delores mark is a design decision, not a rename.
+
+Nothing above changes the licensing position: the site is a derivative work, the attribution in
+`LICENSE` covers it, and not publishing it means the obligations are not yet triggered.

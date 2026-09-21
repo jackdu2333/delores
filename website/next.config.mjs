@@ -2,10 +2,12 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX();
 
-// The site lives at abue-ammar.github.io/tinycast, not at a domain root.
+// The site is meant for jackdu2333.github.io/delores, not a domain root. This
+// must match the repository name in data/site.ts, because GitHub Pages serves
+// the export under it.
 // Exported to the client too, because `basePath` only auto-prefixes next/link
 // and next/image — a raw URL handed to the lightbox has to prefix itself.
-const basePath = "/tinycast";
+const basePath = "/delores";
 
 /** @type {import('next').NextConfig} */
 const config = {

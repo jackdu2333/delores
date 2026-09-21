@@ -4,7 +4,6 @@ import { Gallery } from "../components/gallery";
 import { Ethos } from "../components/ethos";
 import { Hero } from "../components/hero";
 import { Keyboard } from "../components/keyboard";
-import { LogoWall } from "../components/logo-wall";
 import { Nav } from "../components/nav";
 import { Privacy } from "../components/privacy";
 import { Support } from "../components/support";
@@ -15,11 +14,12 @@ export default function HomePage() {
   return (
     <>
       <Nav />
-      {/* The hero's grid and the logo wall both reach the window edges and set
-          their own inner width, so the page width lives on the group below. */}
+      {/* The hero's grid reaches the window edges and sets its own inner
+          width, so the page width lives on the group below. */}
       <main>
         <Hero />
-        <LogoWall />
+        {/* No `<LogoWall />`: its list of companies is upstream's and supports no claim about
+            Delores. See the note in components/logo-wall.tsx. */}
         <div className="mx-auto max-w-7xl">
           <Features />
           <Gallery />

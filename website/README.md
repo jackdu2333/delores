@@ -14,7 +14,7 @@ v4 for styling, [Fumadocs](https://fumadocs.dev) for the documentation section.
 
 ```sh
 npm install
-npm run dev      # http://localhost:3000/tinycast
+npm run dev      # http://localhost:3000/delores
 ```
 
 `npm install` runs `fumadocs-mdx`, which generates `.source/` from `content/docs/`. That directory is
@@ -74,7 +74,7 @@ Two things are load-bearing and easy to break:
   with `_`. Without it, everything under `_next/` 404s and the site renders unstyled.
 - **The workflow uploads `website/out`**, which is where a Next.js export lands.
 
-The site is served from the `/tinycast/` subpath, set as `basePath` in `next.config.mjs`. `next/link`
+The site is served from the `/delores/` subpath, set as `basePath` in `next.config.mjs`. `next/link`
 and `next/image` prefix it automatically; a raw URL string does not, which is what `src/lib/asset.ts`
 is for.
 
@@ -82,7 +82,7 @@ To test the real deployed shape rather than the dev server:
 
 ```sh
 npm run build
-mkdir -p /tmp/pages && cp -r out /tmp/pages/tinycast
+mkdir -p /tmp/pages && cp -r out /tmp/pages/delores
 cd /tmp/pages && python3 -m http.server 4321
-# http://localhost:4321/tinycast/
+# http://localhost:4321/delores/
 ```

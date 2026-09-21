@@ -5,7 +5,7 @@ description: Save your setup to one file, choose what goes in and what comes bac
 
 **Settings → Backup**
 
-A backup is one `.tinycast` file. You tick what goes into it, and you tick again what comes back out
+A backup is one `.delores` file. You tick what goes into it, and you tick again what comes back out
 when you import. The two choices are separate, so a file with everything in it can still restore only
 your clipboard history.
 
@@ -21,12 +21,15 @@ there is no room for checkboxes there.
 
 ## Read this before relying on it
 
-**The format belongs to Tinycast and may change between versions. The only promise is that a backup
+**The format belongs to Delores and may change between versions. The only promise is that a backup
 imports into the same version that made it.**
 
-The file records which version wrote it. A Tinycast that does not recognize it says so clearly,
+The file records which version wrote it. A build that does not recognize it says so clearly,
 instead of importing half of it. A backup is for moving your setup to another Mac today, or restoring
 after a reinstall. It is not a long-term archive.
+
+A file written before the app was renamed from Tinycast still imports: the old `.tinycast` type is
+declared as an imported one, so it opens in the same picker. New backups are always `.delores`.
 
 ## Imports are never silent
 
@@ -72,7 +75,7 @@ had them.
 
 ## Where your data actually lives
 
-Everything a backup carries is also an ordinary file, in `~/Library/Application Support/com.tinycast.app/`:
+Everything a backup carries is also an ordinary file, in `~/Library/Application Support/com.jackdu.delores/`:
 
 | What                                          | Where                                          |
 | --------------------------------------------- | ---------------------------------------------- |
@@ -82,4 +85,4 @@ Everything a backup carries is also an ordinary file, in `~/Library/Application 
 | [AI chats](/docs/ai)                          | `ai-chats.sqlite3`, never in a backup          |
 
 Notes are plain Markdown. Copying that folder is a perfectly good backup, and you can read the files
-without Tinycast. That is the point of keeping them that way.
+without Delores. That is the point of keeping them that way.

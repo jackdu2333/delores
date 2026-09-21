@@ -1,6 +1,14 @@
 import { companies } from "../data/site";
 import { CompanyLogo } from "./ui/company-logos";
 
+// BLOCKED — do not put this back on the page as it stands.
+//
+// The list behind it (`companies` in data/site.ts) is inherited from upstream Tinycast, where it
+// presumably recorded real users. Nothing here shows that any of those companies uses Delores,
+// and the section reads as an endorsement claim built on other people's trademarks. It needs
+// either evidence of its own or replacing with something true — until then it is not rendered.
+// `<LogoWall />` is deliberately absent from app/page.tsx.
+
 // The list is rendered twice and the track scrolls exactly half its width, so
 // the second copy lands where the first started and the loop has no seam.
 const track = [...companies, ...companies];
@@ -8,7 +16,7 @@ const track = [...companies, ...companies];
 export function LogoWall() {
   return (
     <section
-      aria-label="Companies using Tinycast"
+      aria-label="Trusted and used every day by people at"
       className="border-y border-border bg-tint/2"
     >
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-10">

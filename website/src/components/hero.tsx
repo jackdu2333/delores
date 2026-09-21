@@ -1,9 +1,8 @@
 import { ArrowRight, Download } from "lucide-react";
-import { brewInstallCommand, brewTrustCommand, hero, site } from "../data/site";
+import { hero, site } from "../data/site";
 import { latestVersion } from "../lib/version";
 import { HeroPalette } from "./hero-palette";
 import { Button } from "./ui/button";
-import { CommandLine } from "./ui/command-line";
 import { Link } from "./ui/link";
 
 export async function Hero() {
@@ -56,14 +55,6 @@ export async function Hero() {
           >
             {hero.sub}
           </p>
-
-          <div
-            className="rise mt-8 max-w-xl space-y-2"
-            style={{ animationDelay: "180ms" }}
-          >
-            <CommandLine command={brewTrustCommand} />
-            <CommandLine command={brewInstallCommand} />
-          </div>
 
           <div
             className="rise mt-6 flex flex-wrap items-center gap-3"

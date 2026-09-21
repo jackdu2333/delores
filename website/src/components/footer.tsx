@@ -3,13 +3,14 @@ import { latestVersion } from "../lib/version";
 import { Logo } from "./ui/icon";
 import { Link } from "./ui/link";
 
+// Discord and Support used to sit here. Both URLs were upstream's — a Discord invite to their
+// server and a Polar page that collected money for their author — so neither belongs on a
+// Delores page. Delores has no community or funding link of its own yet; add one when it does.
 const links = [
   { label: "Docs", href: "/docs" },
   { label: "Privacy", href: "/#privacy" },
   { label: "Install", href: "/docs/install" },
   { label: "GitHub", href: site.repo },
-  { label: "Discord", href: site.community.discord },
-  { label: "Support", href: site.support },
 ];
 
 // One rule and one row. Everything a three-column sitemap held is a scroll or a
