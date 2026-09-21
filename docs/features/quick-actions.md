@@ -228,9 +228,12 @@ At the cap the matrix is the feature's largest allocation, so its cells are `UIn
 ## Reading the selection
 
 Two tiers, in order. `AccessibilityText.read` asks for `kAXSelectedTextAttribute`, then the
-text-marker range browsers use instead. `AXManualAccessibility` is set on the application element
-first, because Chromium builds its accessibility tree only once something asks and Chrome, Electron
-apps and VS Code otherwise answer every attribute with nothing.
+text-marker range browsers use instead, then a selected-text range into `AXValue` when the host
+exposes that rather than a ready-made string. Automatic capture also hit-tests the mouse-up
+point and walks a short parent chain, because some chat hosts keep focus on a container.
+`AXManualAccessibility` is set on the application element first, because Chromium builds its
+accessibility tree only once something asks and Chrome, Electron apps and VS Code otherwise
+answer every attribute with nothing.
 
 When Accessibility yields nothing, `TextInjector.copySelection` borrows a ⌘C: snapshot the
 pasteboard, synthesise the chord, wait for `changeCount` to **move**, read, restore. It lives on

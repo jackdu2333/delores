@@ -133,7 +133,7 @@ final class DeloresContextCoordinator {
         captureGeneration = generation
         captureTask = Task { @MainActor [weak self] in
             // Automatic capture is observational: an AX miss must not inject keys or mutate the pasteboard.
-            let rawText = AccessibilityText.selection(in: target)
+            let rawText = AccessibilityText.selection(in: target, at: gesture.screenPoint)
             guard let rawText,
                 let prepared = DeloresSelectionContextPolicy.prepare(rawText),
                 let self,
