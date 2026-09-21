@@ -792,6 +792,16 @@ struct DeloresContextTest {
                 gesture: .doubleClick),
             "WeChat double-click stays observational")
         require(
+            DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.tencent.WxWorkMacEntCustomized",
+                gesture: .drag),
+            "customized WeCom drag may borrow a clipboard copy")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.tencent.WxWorkMacEntCustomized",
+                gesture: .doubleClick),
+            "customized WeCom double-click stays observational")
+        require(
             !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
                 bundleIdentifier: "com.kingsoft.wpsoffice.mac",
                 gesture: .drag),
@@ -805,7 +815,7 @@ struct DeloresContextTest {
             !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
                 bundleIdentifier: "com.tencent.WeWorkMac",
                 gesture: .drag),
-            "WeCom is not on the allowlist yet")
+            "public WeCom is not on this Mac's allowlist")
         require(
             !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
                 bundleIdentifier: nil,

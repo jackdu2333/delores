@@ -239,8 +239,8 @@ When Accessibility yields nothing, a **shortcut press** may borrow a ⌘C throug
 `TextInjector.copySelection`: snapshot the pasteboard, synthesise the chord, wait for
 `changeCount` to **move**, read, restore. It may activate the target, because the reader asked.
 Automatic capture does not share that path. An AX miss stays an AX miss, except for a WeChat
-drag, which may use `copySelectionIfFrontmost` — the same snapshot / ⌘C / restore, but only if
-WeChat already holds the keyboard, and never by activating it. Both live on `TextInjector`
+or customized WeCom drag, which may use `copySelectionIfFrontmost` — the same snapshot / ⌘C /
+restore, but only if that app already holds the keyboard, and never by activating it. Both live on `TextInjector`
 because the pasteboard has one owner — the same lease, queue and `ClipboardManager`
 coordination a paste needs, and a second owner would race it.
 
