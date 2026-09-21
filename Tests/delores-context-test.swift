@@ -12,6 +12,7 @@ struct DeloresContextTest {
         testQuickActionDescriptors()
         MainActor.assumeIsolated { testActionSessionRunner() }
         testGesturePolicy()
+        testAutomaticSelectionCompatibility()
         testOwnSurfaceHitPolicy()
         MainActor.assumeIsolated { testSurfaceInteractionGate() }
         testCompanionLoop()
@@ -777,6 +778,39 @@ struct DeloresContextTest {
                 previousReleaseDistance: 4,
                 elapsedSincePreviousRelease: 0.35) == nil,
             "late second click is ignored")
+    }
+
+    private static func testAutomaticSelectionCompatibility() {
+        require(
+            DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.tencent.xinWeChat",
+                gesture: .drag),
+            "WeChat drag may borrow a clipboard copy")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.tencent.xinWeChat",
+                gesture: .doubleClick),
+            "WeChat double-click stays observational")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.kingsoft.wpsoffice.mac",
+                gesture: .drag),
+            "WPS never receives an automatic ⌘C")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.apple.finder",
+                gesture: .drag),
+            "Finder never receives an automatic ⌘C")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: "com.tencent.WeWorkMac",
+                gesture: .drag),
+            "WeCom is not on the allowlist yet")
+        require(
+            !DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                bundleIdentifier: nil,
+                gesture: .drag),
+            "an unnamed app cannot borrow a copy")
     }
 
     private static func testCompanionShell() {

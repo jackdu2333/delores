@@ -23,6 +23,7 @@ swiftc \
     "$ROOT/Tinycast/Features/Delores/Model/ActionDefinition.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/ContextIslandPlacement.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/SelectionGesturePolicy.swift" \
+    "$ROOT/Tinycast/Features/Delores/Model/AutomaticSelectionCompatibility.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/OwnSurfaceHitPolicy.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionLoop.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionWander.swift" \

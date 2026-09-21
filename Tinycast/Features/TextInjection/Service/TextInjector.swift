@@ -132,6 +132,15 @@ final class TextInjector {
         return await copySelection(from: targetApp, pasteboard: NSPasteboard.general)
     }
 
+    /// Automatic capture may only copy when the target already holds the keyboard.
+    func copySelectionIfFrontmost(from targetApp: NSRunningApplication?) async -> String? {
+        await deliveryQueue.drain()
+        guard finishPendingPasteboardOwnership(),
+            deliveryIsAllowed(targetApp: targetApp, promptForInteractiveAccessibility: false)
+        else { return nil }
+        return await copySelection(from: targetApp, pasteboard: NSPasteboard.general)
+    }
+
     /// Split for the harness, which drives a stub pasteboard rather than another app.
     func copySelection(
         from targetApp: NSRunningApplication?, pasteboard: any PasteboardAccess

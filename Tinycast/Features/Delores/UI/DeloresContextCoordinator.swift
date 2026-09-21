@@ -132,8 +132,15 @@ final class DeloresContextCoordinator {
         let generation = UUID()
         captureGeneration = generation
         captureTask = Task { @MainActor [weak self] in
-            // Automatic capture is observational: an AX miss must not inject keys or mutate the pasteboard.
-            let rawText = AccessibilityText.selection(in: target, at: gesture.screenPoint)
+            var rawText = AccessibilityText.selection(in: target, at: gesture.screenPoint)
+            if rawText == nil,
+                !Task.isCancelled,
+                DeloresAutomaticSelectionCompatibility.allowsClipboardFallback(
+                    bundleIdentifier: target.bundleIdentifier,
+                    gesture: gesture.kind)
+            {
+                rawText = await self?.injector.copySelectionIfFrontmost(from: target)
+            }
             guard let rawText,
                 let prepared = DeloresSelectionContextPolicy.prepare(rawText),
                 let self,

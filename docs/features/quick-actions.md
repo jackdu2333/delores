@@ -235,9 +235,13 @@ point and walks a short parent chain, because some chat hosts keep focus on a co
 accessibility tree only once something asks and Chrome, Electron apps and VS Code otherwise
 answer every attribute with nothing.
 
-When Accessibility yields nothing, `TextInjector.copySelection` borrows a ⌘C: snapshot the
-pasteboard, synthesise the chord, wait for `changeCount` to **move**, read, restore. It lives on
-`TextInjector` because the pasteboard has one owner — the same lease, queue and `ClipboardManager`
+When Accessibility yields nothing, a **shortcut press** may borrow a ⌘C through
+`TextInjector.copySelection`: snapshot the pasteboard, synthesise the chord, wait for
+`changeCount` to **move**, read, restore. It may activate the target, because the reader asked.
+Automatic capture does not share that path. An AX miss stays an AX miss, except for a WeChat
+drag, which may use `copySelectionIfFrontmost` — the same snapshot / ⌘C / restore, but only if
+WeChat already holds the keyboard, and never by activating it. Both live on `TextInjector`
+because the pasteboard has one owner — the same lease, queue and `ClipboardManager`
 coordination a paste needs, and a second owner would race it.
 
 **The `changeCount` guard is load-bearing.** With nothing selected, ⌘C is a no-op; returning the

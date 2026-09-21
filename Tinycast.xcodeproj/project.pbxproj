@@ -253,6 +253,7 @@
 		6F644313A467DB269FDBAED6 /* FilePreviewThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC0CEDE9677C9C2485586B3 /* FilePreviewThumbnail.swift */; };
 		7016F0F2354F99C5A9A55D64 /* DeloresSpatialPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9B08F555E9EC9607C541BC /* DeloresSpatialPanels.swift */; };
 		71AA40FC4B8C57FFDE5F8DFC /* SystemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE72CE02F853ACE956627347 /* SystemAction.swift */; };
+		71C76A46955B90AF7D2E0C63 /* AutomaticSelectionCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B7F1282F3C506F89BC2B56 /* AutomaticSelectionCompatibility.swift */; };
 		73C3912866D29C26E4CED1D2 /* AIModelSelectionRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D1EA2460590C49B4A66C64 /* AIModelSelectionRows.swift */; };
 		74ACDD85B9F03C36E9258695 /* SettingsSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7AA1305D43303E055DEE1E9 /* SettingsSplitViewController.swift */; };
 		74BE9E8319C8302EF525E6B2 /* QuicklinkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685FB7FD7E4E5BE6606440D0 /* QuicklinkStore.swift */; };
@@ -910,6 +911,7 @@
 		B6A96350EBE68EC79497FA2D /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
 		B715A0256D2D0DDE1D28FC98 /* ChatHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatHistoryStore.swift; sourceTree = "<group>"; };
 		B7AA1305D43303E055DEE1E9 /* SettingsSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSplitViewController.swift; sourceTree = "<group>"; };
+		B7B7F1282F3C506F89BC2B56 /* AutomaticSelectionCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticSelectionCompatibility.swift; sourceTree = "<group>"; };
 		B97A8C3E88FEBCBBEADF415B /* LauncherScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherScreen.swift; sourceTree = "<group>"; };
 		B9B724FD9A867189A6118DF7 /* SpaceGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceGesture.swift; sourceTree = "<group>"; };
 		B9D14B02D3FE262EADFD3404 /* MarkdownTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTableView.swift; sourceTree = "<group>"; };
@@ -1738,6 +1740,7 @@
 				E28A8121E40DA3FA168A714B /* ActionConversation.swift */,
 				BC85596F6189BA3A0E755EF9 /* ActionDefinition.swift */,
 				EE9D4FB970002997A9A7CE03 /* ActionSession.swift */,
+				B7B7F1282F3C506F89BC2B56 /* AutomaticSelectionCompatibility.swift */,
 				C685F41F1573D32C3FF59159 /* CompanionAnimation.swift */,
 				C01F57ADD9C5610D4DD87825 /* CompanionAtlas.generated.swift */,
 				E0C1F85F1016AE8AFDCFD464 /* CompanionLoop.swift */,
@@ -2570,6 +2573,7 @@
 				9DFE7A312D079C7125DB43DE /* AppleShortcutsSettingsView.swift in Sources */,
 				BD45A99F26C015BF00AC77D5 /* ApplicationsSettingsView.swift in Sources */,
 				490729CFD28033431962367B /* ArmedHover.swift in Sources */,
+				71C76A46955B90AF7D2E0C63 /* AutomaticSelectionCompatibility.swift in Sources */,
 				A0A247FFDB1EA278C0F6F813 /* BackupActions.swift in Sources */,
 				0FCFCEA4477672D62A3295ED /* BackupApplier.swift in Sources */,
 				32E151D0C1A3EB1979EE1E53 /* BackupArchive.swift in Sources */,
