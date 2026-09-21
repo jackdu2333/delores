@@ -55,9 +55,8 @@ extension SettingsAnchor {
     static let aiCommands = Self(tab: .contextSurface, title: "Commands")
 
     // Same reason as the `ai` block above: the pane is `.contextSurface` now, the name is not.
-    static let quickActionsQuickActions = Self(tab: .contextSurface, title: "Quick Actions")
-    static let quickActionsActions = Self(tab: .contextSurface, title: "Actions")
-    static let quickActionsModel = Self(tab: .contextSurface, title: "Model")
+    static let quickActionsQuickActions = Self(tab: .contextSurface, title: "Context Surface")
+    static let quickActionsModel = Self(tab: .contextSurface, title: "Answering model")
     static let quickActionsTranslate = Self(tab: .contextSurface, title: "Translate")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
@@ -84,7 +83,9 @@ extension SettingsAnchor {
     static let deloresIdentity = Self(tab: .delores, title: "What it is")
     static let deloresSurfaces = Self(tab: .delores, title: "Three ways in")
 
-    static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Context Bar")
+    /// "Selection Toolbar", not "Context Bar": the bar acts on a selection, and a name that says so
+    /// is the one a reader looks for.
+    static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Selection Toolbar")
 
     static let companionSurfaceCompanion = Self(tab: .companionSurface, title: "Companion")
 

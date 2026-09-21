@@ -23,6 +23,7 @@ struct SettingsHistoryTests {
         roundTrips()
         aNewBranchDiscardsTheOldOne()
         clampsAtBothEnds()
+        sidebarOrder()
         sidebarCoversEveryPane()
         sidebarIdentityNamespacesAreDisjoint()
         catalogCoversEveryPane()
@@ -110,6 +111,13 @@ struct SettingsHistoryTests {
 
     // MARK: - Sidebar taxonomy
     // The sidebar renders groups, so a pane in none is unreachable but still compiles.
+
+    static func sidebarOrder() {
+        expect(
+            SettingsSection.allCases.map { String(describing: $0) }
+                == ["delores", "context", "companion", "searchBox", "system"],
+            "sidebar keeps the five product blocks in the intended order")
+    }
 
     static func sidebarCoversEveryPane() {
         let grouped = SettingsSection.allCases.flatMap(\.tabs)

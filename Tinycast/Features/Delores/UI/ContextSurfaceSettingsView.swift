@@ -1,27 +1,39 @@
 import Combine
 import SwiftUI
 
-/// The Context Surface: one pane for everything that answers a selection.
+/// The Context Surface: one pane for everything that answers a selection, in the order it is set up.
 ///
-/// The AI sections, the Quick Actions catalogue and the bar's own rows share one switch and one
-/// model route, so they belong in one `Form`. The switch stays in `QuickActionsSettingsView`, which
-/// asks for the Accessibility grant through `QuickActionCoordinator.setEnabled` — a second binding
-/// here would skip that consent step.
+/// Turn AI on and choose its model, turn the Surface on, then the toolbar's own rows, then the
+/// model and language those rows fall back to, and last the chat sections this Surface never
+/// reads. It used to open on ten AI sections and leave the toolbar — the pane's whole subject —
+/// at the bottom.
+///
+/// The built-in Quick Actions have no list of their own here: the toolbar's rows are the one place
+/// a selection's actions are listed and given a model. The switch lives in this file because it
+/// writes through `QuickActionCoordinator.setEnabled` — the consent and the Accessibility grant
+/// are that call's, and a direct binding would skip both.
 struct ContextSurfaceSettingsView: View {
+    @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var settings
     @Environment(QuickActionSettingsStore.self) private var quickActions
     @State private var editingAction: DeloresContextAction?
     @Environment(CustomQuickActionStore.self) private var customActions
     @State private var customEditing: CustomQuickActionEditRequest?
+    /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
+    @State private var isTrusted = Permissions.isAccessibilityTrusted()
+    private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Form {
             AISettingsView()
-            QuickActionsSettingsView()
+            switchSection
             contextBarSection
+            QuickActionsSettingsView()
+            AIChatSettingsView()
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.contextSurface)
+        .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
         .sheet(item: $editingAction) { action in
             ContextActionModelSheet(action: action)
                 .environment(quickActions)
@@ -31,6 +43,45 @@ struct ContextSurfaceSettingsView: View {
                 request: request,
                 model: request.action.flatMap { quickActions.modelOverride(for: .custom($0)) })
         }
+    }
+
+    /// The Surface's own switch, and the grant it cannot work without.
+    ///
+    /// It writes through `QuickActionCoordinator.setEnabled`, which asks for consent and for the
+    /// Accessibility grant; binding `quickActionsEnabled` directly would skip both.
+    private var switchSection: some View {
+        Section {
+            Toggle(isOn: enabledBinding) {
+                SettingsRowTitle(.quickActionsQuickActions, "Enable the Context Surface")
+                Text(
+                    L10n.string(
+                        "Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the toolbar at the top of the screen."
+                    ))
+            }
+            if settings.quickActionsEnabled, !isTrusted {
+                // Every shortcut fails without it; better said here than found one press later.
+                SettingsRow(
+                    title: L10n.string("Accessibility permission required"),
+                    subtitle: "Delores can't read your selection until it is granted."
+                ) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Theme.Colors.destructive)
+                        .frame(width: Theme.Size.settingsRowIcon)
+                } trailing: {
+                    Button(L10n.string("Open System Settings")) {
+                        Permissions.openAccessibilitySettings()
+                    }
+                }
+            }
+        } header: {
+            SettingsSectionHeader(.quickActionsQuickActions)
+        }
+    }
+
+    private var enabledBinding: Binding<Bool> {
+        Binding(
+            get: { settings.quickActionsEnabled },
+            set: { core.quickActionCoordinator.setEnabled($0) })
     }
 
     /// The rows the bar offers, each with the model that answers it.

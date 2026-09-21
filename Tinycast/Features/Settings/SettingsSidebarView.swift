@@ -29,9 +29,14 @@ struct SettingsSidebarView: View {
     private var browse: some View {
         List(selection: selection) {
             ForEach(SettingsSection.allCases) { section in
-                Section(section.title) {
-                    ForEach(section.tabs) { tab in
-                        Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                if section.tabs.count == 1, let tab = section.tabs.first {
+                    // A one-pane Surface is already a top-level destination; no duplicate header.
+                    Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                } else {
+                    Section(section.title) {
+                        ForEach(section.tabs) { tab in
+                            Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                        }
                     }
                 }
             }

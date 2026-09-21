@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
     // Declaration order carries no meaning: `SettingsSection` states the sidebar's order. The
     // cases are grouped here only so a reader can see which side of the product each one serves —
-    // the three Surfaces, what the launcher lists, the shared capabilities, then the app itself.
+    // the three Surfaces, search-box configuration, then the app itself.
     case delores, commandSurface, contextSurface, companionSurface,
         applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts, fallbacks,
         windowManagement, windowSnapping, clipboard, notes, fileSearch, navigation,
@@ -13,7 +13,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         switch self {
         // The pane answers "what is Delores", so it is named for that rather than for the group.
         case .delores: return L10n.string("Overview")
-        case .commandSurface: return L10n.string("Command Surface")
+        case .commandSurface: return L10n.string("Search Box")
         case .contextSurface: return L10n.string("Context Surface")
         case .companionSurface: return L10n.string("Companion Surface")
         case .applications: return L10n.string("Applications")
@@ -66,24 +66,19 @@ enum SettingsTab: CaseIterable, Identifiable {
 
 /// Declaration order is display order; not `.Section`, which would shadow SwiftUI's `Section`.
 ///
-/// The axis is the reader's situation, not the code's ownership. The three Surfaces *are* the
-/// product, so they lead and the Overview answers "what is this" before any switch does. A
-/// capability belongs to the core rather than to a Surface, so it is listed once under one heading
-/// instead of being copied into whichever pane happens to expose it. What the launcher lists is the
-/// Command Surface's own contents, which is why the category panes sit inside it rather than
-/// beside the capabilities they read.
+/// The axis is the reader's situation, not the code's ownership. The three Surfaces lead, and every
+/// search-box extension sits under one configuration block rather than competing with them.
 enum SettingsSection: CaseIterable, Identifiable {
-    case delores, command, context, companion, capabilities, system
+    case delores, context, companion, searchBox, system
     /// See `SettingsTab.id`: distinct types keep the two namespaces from colliding.
     var id: Self { self }
 
     var title: String {
         switch self {
-        case .delores: return L10n.string("Delores")
-        case .command: return L10n.string("Command Surface")
+        case .delores: return L10n.string("Overview")
         case .context: return L10n.string("Context Surface")
         case .companion: return L10n.string("Companion Surface")
-        case .capabilities: return L10n.string("Capabilities")
+        case .searchBox: return L10n.string("Search Box Settings")
         case .system: return L10n.string("System")
         }
     }
@@ -92,17 +87,16 @@ enum SettingsSection: CaseIterable, Identifiable {
         switch self {
         case .delores:
             return [.delores]
-        case .command:
+        case .searchBox:
             return [
                 .commandSurface, .applications, .systemSettings, .systemActions, .commands,
-                .quicklinks, .appleShortcuts, .fallbacks
+                .quicklinks, .appleShortcuts, .fallbacks,
+                .windowManagement, .windowSnapping, .clipboard, .notes, .fileSearch, .navigation
             ]
         case .context:
             return [.contextSurface]
         case .companion:
             return [.companionSurface]
-        case .capabilities:
-            return [.windowManagement, .windowSnapping, .clipboard, .notes, .fileSearch, .navigation]
         case .system:
             return [.general, .permissions, .backup, .about]
         }

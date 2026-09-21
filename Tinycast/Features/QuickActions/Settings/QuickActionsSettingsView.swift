@@ -1,70 +1,25 @@
 import Combine
 import SwiftUI
 
-/// The Quick Actions sections and their switch, composed into the Context Surface pane they share.
+/// The model that answers the selection toolbar, and the language it translates to; composed into
+/// the pane that owns them.
+///
+/// It no longer lists the built-in Quick Actions, and no longer carries the switch: the toolbar's
+/// own rows are the one list of what a selection can do, and the switch belongs to the pane, which
+/// writes it through `QuickActionCoordinator.setEnabled`.
 struct QuickActionsSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var appSettings
     @Environment(QuickActionSettingsStore.self) private var store
-    @Environment(CustomQuickActionStore.self) private var customActions
     @Environment(AISettingsStore.self) private var aiSettings
-    @Environment(VisibilityStore.self) private var visibility
-
-    /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
-    @State private var isTrusted = Permissions.isAccessibilityTrusted()
-    @State private var editingAction: BuiltInQuickAction?
-    @State private var customEditing: CustomQuickActionEditRequest?
-    private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         // A `Group`, not a `Form`: the Context Surface pane owns the one `Form` these compose into.
         Group {
-            Section {
-                Toggle(isOn: enabledBinding) {
-                    SettingsRowTitle(.quickActionsQuickActions, "Enable Quick Actions")
-                    Text(
-                    L10n.string("Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the Context Island."))
-                }
-                if appSettings.quickActionsEnabled, !isTrusted {
-                    // Every shortcut fails without it; better said here than found one press later.
-                    SettingsRow(
-                        title: L10n.string("Accessibility permission required"),
-                        subtitle: "Delores can't read your selection until it is granted."
-                    ) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(Theme.Colors.destructive)
-                            .frame(width: Theme.Size.settingsRowIcon)
-                    } trailing: {
-                        Button(L10n.string("Open System Settings")) { Permissions.openAccessibilitySettings() }
-                    }
-                }
-            } header: {
-                SettingsSectionHeader(.quickActionsQuickActions)
-            }
-
-            Group {
-                actionsSection
-                modelSection
-                languageSection
-            }
-            .settingsEnabled(appSettings.quickActionsEnabled)
+            modelSection
+            languageSection
         }
-        .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
-        .sheet(item: $editingAction) { action in
-            InstructionsEditorSheet(
-                action: action,
-                instructionOverride: store.settings.instructionOverride(for: action),
-                modelOverride: store.modelOverride(for: .builtIn(action))
-            ) { instructionOverride, modelOverride in
-                store.settings.setInstructionOverride(instructionOverride, for: action)
-                store.setModelOverride(modelOverride, for: .builtIn(action))
-            }
-        }
-        .sheet(item: $customEditing) { request in
-            CustomQuickActionEditorSheet(
-                request: request,
-                model: request.action.flatMap { store.modelOverride(for: .custom($0)) })
-        }
+        .settingsEnabled(appSettings.quickActionsEnabled)
         .onAppear {
             core.quickActionCoordinator.loadLanguages()
             store.repairModel(against: aiSettings.connections, fallback: aiSettings.defaultModel)
@@ -81,82 +36,6 @@ struct QuickActionsSettingsView: View {
         .onChange(of: core.chatGPTSubscription.models) { repairInstalledModel() }
         .onChange(of: core.chatGPTSubscription.phase) { repairInstalledModel() }
         .onChange(of: core.installedAI.statuses) { repairInstalledModel() }
-    }
-
-    private var actionsSection: some View {
-        Section {
-            ForEach(BuiltInQuickAction.allCases, content: builtInRow)
-            ForEach(customActions.actions) { action in
-                SettingsRow(title: action.name, subtitle: subtitle(for: .custom(action))) {
-                    SymbolImage(name: action.symbol, size: Theme.Size.quickActionHeaderIcon)
-                        .frame(width: Theme.Size.settingsRowIcon)
-                } trailing: {
-                    editButton(title: action.name) {
-                        customEditing = CustomQuickActionEditRequest(action: action)
-                    }
-                    AliasField(key: action.entryID, name: action.name)
-                    ShortcutRecorder(action: .quickAction(id: action.id), isQuiet: true)
-                    resultPicker(title: action.name, selection: previewBinding(action))
-                    launcherToggle(title: action.name, entry: AppEntry(action))
-                }
-            }
-            Button {
-                customEditing = CustomQuickActionEditRequest(action: nil)
-            } label: {
-                SettingsRowTitle(.quickActionsActions, "Add Quick Action")
-            }
-        } header: {
-            SettingsSectionHeader(.quickActionsActions)
-        } footer: {
-            Text(
-                    L10n.string("Replace puts the result straight into your document — undo in the app you were in brings it back. Preview shows it in a panel first. The checkbox lists the action in the launcher; its shortcut works either way."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    private func builtInRow(_ action: BuiltInQuickAction) -> some View {
-        let entry = CommandCatalog.entry(for: CommandID(action))
-        return SettingsRow(title: action.title, subtitle: subtitle(for: .builtIn(action))) {
-            Image(systemName: action.symbol)
-                .frame(width: Theme.Size.settingsRowIcon)
-        } trailing: {
-            if !action.usesTranslationFramework {
-                editButton(title: action.title) { editingAction = action }
-            }
-            // The four left the Commands pane with their kind, and its alias field with it.
-            if let entry { AliasField(entry: entry) }
-            ShortcutRecorder(action: .command(CommandID(action)), isQuiet: true)
-            resultPicker(title: action.title, selection: previewBinding(action))
-                .disabled(action.alwaysPreviews)
-            if let entry { launcherToggle(title: action.title, entry: entry) }
-        }
-    }
-
-    private func editButton(title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            SymbolImage(name: "pencil", size: Theme.Size.quickActionHeaderIcon)
-        }
-        .buttonStyle(.plain)
-        .help("Edit \(title)")
-        .accessibilityLabel("Edit \(title)")
-    }
-
-    private func resultPicker(title: String, selection: Binding<Bool>) -> some View {
-        Picker("", selection: selection) {
-            Text(L10n.string("Replace")).tag(false)
-            Text(L10n.string("Preview")).tag(true)
-        }
-        .labelsHidden()
-        .fixedSize()
-        .accessibilityLabel("What \(title) does with its result")
-    }
-
-    private func launcherToggle(title: String, entry: AppEntry) -> some View {
-        Toggle("", isOn: launcherBinding(entry))
-            .labelsHidden()
-            .toggleStyle(.checkbox)
-            .accessibilityLabel("Show \(title) in launcher")
     }
 
     private var modelSection: some View {
@@ -181,7 +60,7 @@ struct QuickActionsSettingsView: View {
         } footer: {
             Text(
                     L10n.format(
-                        "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set in the Delores pane, beside their rows. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.",
+                        "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the selection toolbar's rows too, except the ones given a model of their own — those are set beside their rows, under Selection Toolbar below. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.",
                         DeloresContextAction.translateTitle))
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -209,44 +88,6 @@ struct QuickActionsSettingsView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
-    }
-
-    private func subtitle(for action: QuickAction) -> String? {
-        let details = [
-            action.alwaysPreviews ? "Always shown in a panel" : nil,
-            store.modelOverride(for: action).map(routeTitle)
-        ].compactMap(\.self)
-        return details.isEmpty ? nil : details.joined(separator: " · ")
-    }
-
-    private func routeTitle(_ selection: AIModelSelection) -> String {
-        let model = modelChoices.first { $0.matches(selection) }?.title ?? selection.model
-        guard let effort = selection.effort else { return model }
-        return "\(model) (\(ChatGPTSubscription.Effort(id: effort, detail: nil).title))"
-    }
-
-    private var enabledBinding: Binding<Bool> {
-        Binding(
-            get: { appSettings.quickActionsEnabled },
-            set: { core.quickActionCoordinator.setEnabled($0) })
-    }
-
-    private func previewBinding(_ action: BuiltInQuickAction) -> Binding<Bool> {
-        Binding(
-            get: { store.settings.previewsResult(action) },
-            set: { store.settings.setPreviewsResult($0, for: action) })
-    }
-
-    private func previewBinding(_ action: CustomQuickAction) -> Binding<Bool> {
-        Binding(
-            get: { action.previewsResult },
-            set: { core.quickActionCoordinator.setPreviewsResult($0, id: action.id) })
-    }
-
-    private func launcherBinding(_ entry: AppEntry) -> Binding<Bool> {
-        Binding(
-            get: { visibility.isItemVisible(entry) },
-            set: { visibility.setItemVisible($0, for: entry) })
     }
 
     private var languageBinding: Binding<String> {
@@ -288,69 +129,5 @@ struct QuickActionsSettingsView: View {
         store.repairInstalledModel(
             available: options, unavailableSources: unavailable,
             fallback: aiSettings.defaultModel)
-    }
-
-    private struct InstructionsEditorSheet: View {
-        @Environment(\.dismiss) private var dismiss
-        @State private var instructions: String
-        @State private var model: AIModelSelection?
-
-        let action: BuiltInQuickAction
-        let builtIn: String
-        let onSave: (String?, AIModelSelection?) -> Void
-
-        init(
-            action: BuiltInQuickAction, instructionOverride: String?,
-            modelOverride: AIModelSelection?,
-            onSave: @escaping (String?, AIModelSelection?) -> Void
-        ) {
-            self.action = action
-            let builtIn = QuickActionPrompt.instructions(for: action)
-            _instructions = State(initialValue: instructionOverride ?? builtIn)
-            _model = State(initialValue: modelOverride)
-            self.builtIn = builtIn
-            self.onSave = onSave
-        }
-
-        var body: some View {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                Text("Customize \(action.title)")
-                    .font(.title2.weight(.bold))
-
-                Text("Tell Delores how you want \(action.title) to handle your selected text.")
-                    .foregroundStyle(.secondary)
-
-                TextEditor(text: $instructions)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .padding(Theme.Spacing.sm)
-                    .frame(height: Theme.Size.editorTextHeight * 2)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
-                            .fill(Theme.Colors.cardFill)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
-                            .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-                    )
-
-                QuickActionModelPicker(selection: $model)
-
-                HStack {
-                    Button(L10n.string("Use Default")) { instructions = builtIn }
-                        .disabled(instructions == builtIn)
-                    Spacer()
-                    Button(L10n.string("Cancel")) { dismiss() }
-                        .keyboardShortcut(.cancelAction)
-                    Button(L10n.string("Save")) {
-                        onSave(instructions == builtIn ? nil : instructions, model)
-                        dismiss()
-                    }
-                    .keyboardShortcut(.defaultAction)
-                }
-            }
-            .padding(Theme.Spacing.xxl)
-            .frame(width: Theme.Size.editorSheetWidth)
-        }
     }
 }

@@ -5441,6 +5441,26 @@
         }
       }
     },
+    "Search Box": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索框"
+          }
+        }
+      }
+    },
+    "Search Box Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索框配置"
+          }
+        }
+      }
+    },
     "Context Surface": {
       "localizations": {
         "zh-Hans": {
@@ -5757,6 +5777,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "它在菜单栏里等着，出现在你已经待着的地方；还没等你关，它就已经退场了。"
+          }
+        }
+      }
+    },
+    "Answering model": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回答用的模型"
+          }
+        }
+      }
+    },
+    "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the Context Bar's rows too, except the ones given a model of their own — those are set beside their rows, under Context Bar below. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刻意与对话的模型分开：一天要按很多次的快捷键，不该每次都计费。Apple Intelligence 就跑在这台 Mac 上，不花钱。它也负责回答上下文栏里的各行，除非那一行单独指定了模型——那些模型就在下方「上下文栏」里、紧挨着各自的行设置。%@ 在你给它指定模型之前一直使用 Apple 的翻译器，除非遇到 Apple 不支持的语言对。"
+          }
+        }
+      }
+    },
+    "Selection Toolbar": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "划词工具栏"
+          }
+        }
+      }
+    },
+    "Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the toolbar at the top of the screen.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对任何 app 里选中的文字直接动手。Delores 只在你按下快捷键、或完成一次选择手势之后才读取选区，然后在屏幕顶部浮出工具栏。"
+          }
+        }
+      }
+    },
+    "Separate from chat's model on purpose: a shortcut you press all day should not bill an API every time. Apple Intelligence runs on this Mac for nothing. It answers the selection toolbar's rows too, except the ones given a model of their own — those are set beside their rows, under Selection Toolbar below. %@ keeps Apple's translator unless it is given one, or unless the pair is one Apple cannot do.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刻意与对话的模型分开：一天要按很多次的快捷键，不该每次都计费。Apple Intelligence 就跑在这台 Mac 上，不花钱。它也负责回答划词工具栏里的各行，除非那一行单独指定了模型——那些模型就在下方「划词工具栏」里、紧挨着各自的行设置。%@ 在你给它指定模型之前一直使用 Apple 的翻译器，除非遇到 Apple 不支持的语言对。"
           }
         }
       }

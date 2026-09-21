@@ -35,17 +35,10 @@ struct AISettingsView: View {
                 SettingsSectionHeader(.aiAI)
             }
 
-            FeatureCommandsSection(owner: .contextSurface, anchor: .aiCommands)
+            // The model comes straight after the switch that turns AI on: it is the one thing a
+            // reader has to settle before the toolbar further down can answer anything.
+            defaultModelSection
                 .settingsEnabled(appSettings.aiEnabled)
-
-            Group {
-                defaultModelSection
-                chatSection
-                conversationsSection
-                systemPromptSection
-                MCPSettingsSection()
-            }
-            .settingsEnabled(appSettings.aiEnabled)
         }
         .sheet(isPresented: $providersPresented) {
             providersSheet
@@ -118,76 +111,6 @@ struct AISettingsView: View {
             providers.append(count == 1 ? "1 API connection" : "\(count) API connections")
         }
         return providers.isEmpty ? "No external providers ready" : providers.joined(separator: ", ")
-    }
-
-    private var chatSection: some View {
-        @Bindable var settings = settings
-        return Section {
-            Toggle(isOn: $settings.webSearchEnabled) {
-                    SettingsRowTitle(.aiChat, "Web search")
-                Text(
-                    "Sends prompts on to a search engine when the route offers one — Codex and OpenRouter.")
-            }
-        } header: {
-            SettingsSectionHeader(.aiChat)
-        } footer: {
-            Text(L10n.string("Images pasted into the chat go to any model that accepts them; others never see one."))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var conversationsSection: some View {
-        @Bindable var settings = settings
-        return Section {
-            Picker(selection: $settings.opensTo) {
-                ForEach(AIOpensTo.allCases) { Text($0.title).tag($0) }
-            } label: {
-                SettingsRowTitle(.aiConversations, "Opens to")
-                Text(L10n.string("What summoning AI Chat lands on."))
-            }
-            if settings.opensTo == .recent {
-                Picker(selection: $settings.newChatAfter) {
-                    ForEach(AINewChatAfter.allCases) { Text($0.title).tag($0) }
-                } label: {
-                    SettingsRowTitle(.aiConversations, "Start a new conversation after")
-                    Text(L10n.string("Idle this long and the next summon starts fresh instead."))
-                }
-            }
-            Picker(selection: $settings.retention) {
-                ForEach(AIRetention.allCases) { Text($0.title).tag($0) }
-            } label: {
-                SettingsRowTitle(.aiConversations, "Keep conversations")
-                Text(L10n.string("Older conversations are deleted permanently."))
-            }
-            .onChange(of: settings.retention) { core.aiChatCoordinator.applyRetention() }
-        } header: {
-            SettingsSectionHeader(.aiConversations)
-        } footer: {
-            Text(
-                    L10n.string("Conversations stay on this Mac. Nothing here is carried in a settings backup — which chats a Mac keeps is that Mac's business."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    private var systemPromptSection: some View {
-        @Bindable var settings = settings
-        return Section {
-            Toggle(isOn: $settings.systemPromptEnabled) {
-                    SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
-                Text(L10n.string("Off sends nothing ahead of your message, not even what Delores says about itself."))
-            }
-            SystemPromptEditor(text: $settings.systemPrompt)
-                .settingsEnabled(settings.systemPromptEnabled)
-        } header: {
-            SettingsSectionHeader(.aiSystemPrompt)
-        } footer: {
-            Text(
-                    L10n.string("Your text is sent ahead of every message in every chat, after what Delores already tells the model about itself. Both are billed again on each turn."))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
     }
 
     private var providersSheet: some View {
@@ -627,5 +550,113 @@ private struct AIConnectionRow: View {
 
     private var modelCount: String {
         connection.models.count == 1 ? "1 model" : "\(connection.models.count) models"
+    }
+}
+
+/// Chat, its prompt, the launcher commands and MCP: the AI surface the selection toolbar never reads.
+///
+/// Its own view so the pane can put the toolbar above them. They used to sit inside
+/// `AISettingsView`, which composes as one block and so could only be wholly before the toolbar or
+/// wholly after it — and "wholly before" is what buried the toolbar under ten AI sections.
+struct AIChatSettingsView: View {
+    @Environment(AppCore.self) private var core
+    @Environment(AISettingsStore.self) private var settings
+    @Environment(AppSettings.self) private var appSettings
+
+    var body: some View {
+        Group {
+            FeatureCommandsSection(owner: .contextSurface, anchor: .aiCommands)
+                .settingsEnabled(appSettings.aiEnabled)
+            Group {
+                chatSection
+                conversationsSection
+                systemPromptSection
+                MCPSettingsSection()
+            }
+            .settingsEnabled(appSettings.aiEnabled)
+        }
+    }
+
+    private var chatSection: some View {
+        @Bindable var settings = settings
+        return Section {
+            Toggle(isOn: $settings.webSearchEnabled) {
+                SettingsRowTitle(.aiChat, "Web search")
+                Text(
+                    "Sends prompts on to a search engine when the route offers one — Codex and OpenRouter.")
+            }
+        } header: {
+            SettingsSectionHeader(.aiChat)
+        } footer: {
+            Text(
+                L10n.string(
+                    "Images pasted into the chat go to any model that accepts them; others never see one."
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private var conversationsSection: some View {
+        @Bindable var settings = settings
+        return Section {
+            Picker(selection: $settings.opensTo) {
+                ForEach(AIOpensTo.allCases) { Text($0.title).tag($0) }
+            } label: {
+                SettingsRowTitle(.aiConversations, "Opens to")
+                Text(L10n.string("What summoning AI Chat lands on."))
+            }
+            if settings.opensTo == .recent {
+                Picker(selection: $settings.newChatAfter) {
+                    ForEach(AINewChatAfter.allCases) { Text($0.title).tag($0) }
+                } label: {
+                    SettingsRowTitle(.aiConversations, "Start a new conversation after")
+                    Text(L10n.string("Idle this long and the next summon starts fresh instead."))
+                }
+            }
+            Picker(selection: $settings.retention) {
+                ForEach(AIRetention.allCases) { Text($0.title).tag($0) }
+            } label: {
+                SettingsRowTitle(.aiConversations, "Keep conversations")
+                Text(L10n.string("Older conversations are deleted permanently."))
+            }
+            .onChange(of: settings.retention) { core.aiChatCoordinator.applyRetention() }
+        } header: {
+            SettingsSectionHeader(.aiConversations)
+        } footer: {
+            Text(
+                L10n.string(
+                    "Conversations stay on this Mac. Nothing here is carried in a settings backup — which chats a Mac keeps is that Mac's business."
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private var systemPromptSection: some View {
+        @Bindable var settings = settings
+        return Section {
+            Toggle(isOn: $settings.systemPromptEnabled) {
+                SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
+                Text(
+                    L10n.string(
+                        "Off sends nothing ahead of your message, not even what Delores says about itself."
+                    ))
+            }
+            SystemPromptEditor(text: $settings.systemPrompt)
+                .settingsEnabled(settings.systemPromptEnabled)
+        } header: {
+            SettingsSectionHeader(.aiSystemPrompt)
+        } footer: {
+            Text(
+                L10n.string(
+                    "Your text is sent ahead of every message in every chat, after what Delores already tells the model about itself. Both are billed again on each turn."
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 }

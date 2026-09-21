@@ -108,14 +108,14 @@ enum SettingsSearchCatalog {
     }
 
     // MARK: - The index
-    // Pane order, then section order within a pane, so this reads as a table of contents.
+    // Sidebar order, then section order within a pane, so this reads as a table of contents.
 
     static let entries: [SettingsSearchEntry] =
         delores
-        + commandSurface + applications + systemSettings + systemActions + commands
-        + quicklinks + appleShortcuts + fallbacks
         + contextSurface + ai + quickActions
         + companionSurface
+        + commandSurface + applications + systemSettings + systemActions + commands
+        + quicklinks + appleShortcuts + fallbacks
         + windowManagement + windowSnapping + clipboard + notes
         + fileSearch + navigation
         + general + permissions + backup + about
@@ -137,7 +137,10 @@ enum SettingsSearchCatalog {
     private static let commandSurface: [SettingsSearchEntry] = [
         .init(
             pane: .commandSurface,
-            keywords: ["palette", "launcher", "command surface", "命令面板", "启动器"]),
+            keywords: [
+                "palette", "launcher", "command surface", "search box", "search settings",
+                "命令面板", "搜索框", "搜索框配置", "启动器"
+            ]),
         .init(
             .commandSurfaceGlobalShortcuts, "App Launcher",
             keywords: ["hotkey", "shortcut", "summon", "palette", "热键", "快捷键", "召唤"]),
@@ -319,14 +322,8 @@ enum SettingsSearchCatalog {
     /// Same as the `ai` block above: the pane-level entry belongs to `.contextSurface`.
     private static let quickActions: [SettingsSearchEntry] = [
         .init(
-            .quickActionsQuickActions, "Enable Quick Actions",
-            keywords: ["selected text", "accessibility"]),
-        .init(
-            group: .quickActionsActions, "Actions",
-            keywords: ["shortcut", "replace", "preview", "customize"]),
-        .init(
-            .quickActionsActions, "Add Quick Action",
-            keywords: ["new", "custom", "prompt", "instructions", "alias"]),
+            .quickActionsQuickActions, "Enable the Context Surface",
+            keywords: ["selected text", "accessibility", "划词", "启用"]),
         .init(
             .quickActionsModel, "Model",
             keywords: ["llm", "ai", "default"]),
@@ -402,7 +399,7 @@ enum SettingsSearchCatalog {
                 "custom", "划词", "翻译", "解释", "总结", "自定义"
             ]),
         .init(
-            group: .contextSurfaceContextBar, "Context Bar",
+            group: .contextSurfaceContextBar, "Selection Toolbar",
             keywords: ["rows", "actions", "model", "划词栏"]),
         .init(
             .contextSurfaceContextBar, "Add action",
