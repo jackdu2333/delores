@@ -443,7 +443,7 @@ the process or reaches a person was changed; this is what was kept, so it does n
 | `Tinycast.xcodeproj` and the `Tinycast` target | Generated from `project.yml`, and the name is load-bearing for merging upstream. The **scheme** is `Delores`, which is what every command uses. |
 | `tinycast://…` row identities in the launcher | Internal placeholders. `AppLauncher.open` is reached only for "Open in Browser", nothing registers the scheme, and `tinycast` in the env of the login shell is a marker for the reader's own rc file. Changing either would move persisted alias and ranking keys for no visible gain. |
 | `com.tinycast.perf` (os_signpost), `com.tinycast.capslock-remap` (queue label) | Process-local labels. Renaming them grows the upstream diff and tells nobody anything. |
-| `TinycastApp`, `…ForTinycastPasteboardMutation`, `Paster.tinycastEventTag` | Swift type and method names plus an in-memory event tag. Purely internal. |
+| `TinycastApp`, `…ForTinycastPasteboardMutation`, `Paster.tinycastEventTag`, `NSAttributedString.Key.noteBlockDecoration` | Swift type and method names, plus an in-memory event tag and an attributed-string key whose value is a non-serializable decoration object. Purely internal; none of them can reach a file or the pasteboard. |
 | `Tinycast/tinycast.icon`, `Tinycast/…` directory names | The icon is still upstream's artwork. Replacing it is a design decision, not a rename. The source layout is upstream's, and moving directories turns every future merge into a conflict. |
 | Many internal `///` comments | Still say "Tinycast" as the product name. Cosmetic, and deliberately not swept in the same change as the functional rename. |
 
