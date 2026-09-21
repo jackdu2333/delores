@@ -169,16 +169,26 @@ function cat({
   put(g, earX + 3, headY - 4, FUR_ORANGE);
   put(g, earX + 2, headY - 4, NOSE_PINK);
 
-  // Four Little Paws
+  // Four little paws. Both swing about the body's centre line so the cycle is symmetric, and the
+  // off-side paw stays in shade whichever of the two is in front: seen from the side, a contact and
+  // its opposite are otherwise the same pair of rectangles with their labels swapped, and the cycle
+  // then has no way at all to show that it ever changed feet.
   const footY = 20;
   const paws = {
-    0: { l: [-5, 0], r: [2, 0] },
-    1: { l: [1, -4], r: [3, 0] },
-    2: { l: [-3, 0], r: [5, 0] },
-    3: { l: [-4, 0], r: [2, -4] },
-  }[step] || { l: [0, 0], r: [0, 0] };
-  rect(g, cx - 4 + paws.l[0], footY + paws.l[1], 3, 2, FUR_MAIN);
-  rect(g, cx + 2 + paws.r[0], footY + paws.r[1], 3, 2, FUR_MAIN);
+    0: { l: [-5, 0], r: [5, 0] },
+    1: { l: [-1, -2], r: [1, 0] },
+    2: { l: [5, 0], r: [-5, 0] },
+    3: { l: [1, 0], r: [-1, -2] },
+  }[step] || { l: [-4, 0], r: [2, 0] };
+  const plant = (paw, isOffSide) => {
+    const x = cx + paw[0], y = footY + paw[1];
+    // A lifted paw is drawn inside the body, which is the same colour: without an outline of its own
+    // the paw vanishes, and the pose reads as a cat with a leg missing.
+    if (paw[1] !== 0) rect(g, x - 1, y - 1, 5, 4, OUTLINE);
+    rect(g, x, y, 3, 2, isOffSide ? FUR_SHADE : FUR_MAIN);
+  };
+  plant(paws.l, true);
+  plant(paws.r, false);
 
   // Eyes & Whiskers
   const eyeX = cx + 4 + gaze;

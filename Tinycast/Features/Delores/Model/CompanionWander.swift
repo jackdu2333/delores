@@ -69,11 +69,10 @@ enum DeloresCompanionWander {
             phase: .resting(until: now + restDuration(using: &rng)))
     }
 
-    /// One frame. A rest that is not yet due returns the state untouched, which is what lets the
+    /// One tick. A rest that is not yet due returns the state untouched, which is what lets the
     /// caller run no timer at all in between.
     static func advance(
         _ state: State, elapsed: TimeInterval, now: TimeInterval, in loop: DeloresCompanionLoop,
-        stepFrame: Int = 0,
         using rng: inout some RandomNumberGenerator
     ) -> State {
         switch state.phase {
@@ -89,17 +88,13 @@ enum DeloresCompanionWander {
                     speed: CGFloat.random(in: speedRange, using: &rng)))
         case .strolling(let index, let destination, let speed):
             let run = loop.run(at: index)
-            let baseBudget = speed * CGFloat(min(max(elapsed, 0), maximumStep))
-            let budget = baseBudget * stepWeight(for: stepFrame)
+            // Even ground. The cadence belongs to the sprite now, not to the clock: a budget that
+            // rose and fell with the pose is what made the walk twitch, because the frames that
+            // travelled fastest were the ones with a foot in the air.
+            let budget = speed * CGFloat(min(max(elapsed, 0), maximumStep))
             return travel(
                 state, run: index, to: destination, budget: budget, in: run, at: now, using: &rng)
         }
-    }
-
-    /// Odd frames are the passing / push-off poses; even frames plant. The index is the drawn frame.
-    static func stepWeight(for frame: Int) -> CGFloat {
-        let cycle = frame % 4
-        return (cycle == 1 || cycle == 3) ? 1.5 : 0.5
     }
 
     /// When the caller has to think about the Companion again: the end of a rest, or nothing at all

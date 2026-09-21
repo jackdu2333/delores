@@ -21,6 +21,15 @@ enum DeloresCompanionAnimation {
     /// walk animation usually runs at, because the body strolls and quicker feet read as scurrying.
     static let walkFrame: TimeInterval = 1.0 / 6.0
 
+    /// How often the body is *moved* while walking.
+    ///
+    /// Ruling 2, rewritten. The pose and the position used to share one clock, which made the walk a
+    /// staircase — the body was elsewhere for a sixth of a second and then it was here. Three
+    /// position ticks to one pose now, and at the speeds it ambles at that is about one point per
+    /// tick: the distance pixel art wants to travel, since a slower tick jumps far enough to read as
+    /// a slide and a faster one spends most of its frames standing still.
+    static let walkStep: TimeInterval = 1.0 / 18.0
+
     /// One loop of a reaction. Played twice and then left, at a rate a pixel reads as deliberate.
     static let reactionDuration: TimeInterval = 0.24
 

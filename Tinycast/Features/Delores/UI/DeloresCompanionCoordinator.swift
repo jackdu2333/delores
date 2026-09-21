@@ -31,17 +31,22 @@ final class DeloresCompanionCoordinator {
     private var rng = SystemRandomNumberGenerator()
     /// Which way the body is looking, and how far through the walk cycle it is. A rest has neither a
     /// frame to advance nor a direction worth remembering, so both belong to the walk alone.
+    ///
+    /// `walkElapsed` is the pose's own clock, counted out of the ticks that move the body: the two
+    /// rates are whole multiples of each other, so the cadence cannot drift.
     private var facing: DeloresCompanionFacing = .right
     private var walkFrame = 0
+    private var walkElapsed: TimeInterval = 0
     var onOpenContext: (() -> Void)?
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
     /// How far off the visible edge the body rides, which is its own radius: a body drawn at the
     /// larger step stands further in, or it would hang off the display.
     private var bodyRadius: CGFloat { settings.deloresCompanionSize.radius }
-    /// Frames while walking. A rest runs none at all, so this is the only frame cost there is — and
-    /// the sprite's second ruling makes it the walk's frame rate too: one timer, step and frame both.
-    private static var strollFrame: TimeInterval { DeloresCompanionAnimation.walkFrame }
+    /// How often the body is moved while walking. A rest runs no timer at all, so this is the whole
+    /// of the Companion's walking cost — and it is the *position's* rate, not the pose's: the pose is
+    /// counted out inside it, three of these ticks to one drawn frame.
+    private static var strollStep: TimeInterval { DeloresCompanionAnimation.walkStep }
     /// Monotonic, so a clock change cannot make a rest look overdue or a step look enormous.
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
     init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate, onOpenContext: (() -> Void)? = nil) {
@@ -324,7 +329,7 @@ final class DeloresCompanionCoordinator {
             wakeTimer?.invalidate(); wakeTimer = nil
             guard strollTimer == nil else { return }
             lastWanderTick = now
-            let timer = Timer(timeInterval: Self.strollFrame, repeats: true) { [weak self] _ in
+            let timer = Timer(timeInterval: Self.strollStep, repeats: true) { [weak self] _ in
                 Task { @MainActor [weak self] in self?.advanceWander() }
             }
             strollTimer = timer
@@ -364,13 +369,8 @@ final class DeloresCompanionCoordinator {
         // Read from the wander rather than from the window: the window origin is snapped to whole
         // points for the artwork's sake, and that rounding must not colour which way the body turns.
         let from = state.center
-        // Weight and sprite share this frame: a plant that still travels is what reads as a slide.
-        if case .strolling = state.phase {
-            walkFrame += 1
-        }
-        let frame = walkFrame % DeloresCompanionAnimation.walkFrameCount
         let next = DeloresCompanionWander.advance(
-            state, elapsed: elapsed, now: tick, in: loop(on: screen), stepFrame: frame, using: &rng)
+            state, elapsed: elapsed, now: tick, in: loop(on: screen), using: &rng)
         wander = next
         companion.move(to: next.center)
         syncWanderTimers()
@@ -378,7 +378,20 @@ final class DeloresCompanionCoordinator {
         // Ruling 3: the facing reads off the step's horizontal component, and a step with none keeps
         // what it had — a body on a vertical edge must not flip sides every frame.
         facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
-        companion.step(frame: frame, facing: facing)
+        // Setting off walks into its first pose rather than waiting a frame for one, and always into
+        // the contact pose: a trip begins with both feet down.
+        if case .resting = state.phase {
+            walkElapsed = 0
+            walkFrame = 0
+            companion.step(frame: 0, facing: facing)
+            return
+        }
+        // The pose keeps its own slower clock, counted out of the same ticks that move the body.
+        walkElapsed += elapsed
+        guard walkElapsed >= DeloresCompanionAnimation.walkFrame else { return }
+        walkElapsed -= DeloresCompanionAnimation.walkFrame
+        walkFrame += 1
+        companion.step(frame: walkFrame % DeloresCompanionAnimation.walkFrameCount, facing: facing)
     }
 
     private func handleCompanionPointer(at point: CGPoint) {

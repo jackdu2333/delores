@@ -118,14 +118,24 @@ function duck({
   const footY = 20;
   if (!sleeping) {
     const stride = {
-      0: { l: [-5, 0], r: [2, 0] },
-      1: { l: [1, -4], r: [3, 0] },
-      2: { l: [-3, 0], r: [5, 0] },
-      3: { l: [-4, 0], r: [2, -4] },
+      0: { l: [-5, 0], r: [5, 0] },
+      1: { l: [-1, -2], r: [1, 0] },
+      2: { l: [5, 0], r: [-5, 0] },
+      3: { l: [1, 0], r: [-1, -2] },
     }[gait];
     if (stride) {
-      rect(g, cx + stride.l[0], footY + stride.l[1], 3, 2, BEAK);
-      rect(g, cx + stride.r[0], footY + stride.r[1], 3, 2, BEAK);
+      // Both feet swing about the body's centre line so the cycle is symmetric, and the off-side one
+      // is drawn a pixel narrower whichever of the two is in front. Seen from the side, a contact and
+      // its opposite are otherwise the same two rectangles with their labels swapped, and the cycle
+      // then has no way at all to show that it ever changed feet.
+      const plant = (foot, isOffSide) => {
+        const x = cx + foot[0], y = footY + foot[1];
+        // A lifted foot sits inside the body: without an outline of its own it reads as no foot.
+        if (foot[1] !== 0) rect(g, x - 1, y - 1, 5, 4, OUTLINE);
+        rect(g, x, y, isOffSide ? 2 : 3, 2, BEAK);
+      };
+      plant(stride.l, true);
+      plant(stride.r, false);
     } else if (waddle === 1) {
       rect(g, cx - 3, footY - 1, 3, 2, BEAK);
       rect(g, cx + 2, footY, 3, 2, BEAK);

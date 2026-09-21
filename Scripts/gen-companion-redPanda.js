@@ -181,16 +181,25 @@ function redPanda({
   rect(g, earX + 1, headY + 1, 4, 2, WHITE_MARK);
   put(g, earX + 2, headY - 1, WHITE_MARK);
 
-  // Dark paws
+  // Dark paws. Both swing about the body's centre line so the cycle is symmetric, and the off-side
+  // one is drawn a pixel narrower whichever of the two is in front: seen from the side, a contact and
+  // its opposite are otherwise the same two rectangles with their labels swapped, and the cycle then
+  // has no way at all to show that it ever changed feet.
   const footY = 20;
   const paws = {
-    0: { l: [-5, 0], r: [2, 0] },
-    1: { l: [1, -4], r: [3, 0] },
-    2: { l: [-3, 0], r: [5, 0] },
-    3: { l: [-4, 0], r: [2, -4] },
-  }[step] || { l: [0, 0], r: [0, 0] };
-  rect(g, cx - 4 + paws.l[0], footY + paws.l[1], 3, 2, BELLY_BLACK);
-  rect(g, cx + 2 + paws.r[0], footY + paws.r[1], 3, 2, BELLY_BLACK);
+    0: { l: [-5, 0], r: [5, 0] },
+    1: { l: [-1, -2], r: [1, 0] },
+    2: { l: [5, 0], r: [-5, 0] },
+    3: { l: [1, 0], r: [-1, -2] },
+  }[step] || { l: [-4, 0], r: [2, 0] };
+  const plant = (paw, isOffSide) => {
+    const x = cx + paw[0], y = footY + paw[1];
+    // A lifted paw is drawn inside the body: without an outline of its own it reads as no paw.
+    if (paw[1] !== 0) rect(g, x - 1, y - 1, 5, 4, OUTLINE);
+    rect(g, x, y, isOffSide ? 2 : 3, 2, BELLY_BLACK);
+  };
+  plant(paws.l, true);
+  plant(paws.r, false);
 
   // Eyes & Nose
   const eyeX = cx + 4 + gaze;

@@ -89,13 +89,20 @@ function outline(g) {
 // `breathe` sinks the body and leaves the feet planted, which is what makes it read as breathing
 // rather than as a hop; `lift` bobs the body, and the feet stay on their own planted line.
 // `lean` shifts it toward the direction of travel and `step` picks which foot is forward.
+//
+// A cycle is contact / pass / opposite contact / opposite pass, and "opposite" carries the whole
+// walk: the two contact poses must put a *different* foot in front, and the planted foot must travel
+// backwards relative to the body. Pushing the ground behind you is the only thing that reads as
+// walking — two contacts that are the same pose a pixel apart never change feet, and a body whose
+// every foot slides forward is a body on ice.
 function gaitFeet(step) {
   switch (step) {
-    case 0: return { left: [-5, 0], right: [2, 0] };
-    case 1: return { left: [1, -4], right: [3, 0] };
-    case 2: return { left: [-3, 0], right: [5, 0] };
-    case 3: return { left: [-4, 0], right: [2, -4] };
-    default: return { left: [0, 0], right: [0, 0] };
+    case 0: return { left: [-5, 0], right: [5, 0] };
+    case 1: return { left: [-1, -2], right: [1, 0] };
+    case 2: return { left: [5, 0], right: [-5, 0] };
+    case 3: return { left: [1, 0], right: [-1, -2] };
+    // Standing still keeps the feet where they always were, either side of the body.
+    default: return { left: [-4, 0], right: [1, 0] };
   }
 }
 
@@ -108,18 +115,31 @@ function creature({ breathe = 0, lift = 0, lean = 0, step = null, blink = false,
   disc(g, cx + 5, cy - 5, 2, 2.6, BODY);
   disc(g, cx, cy, 7.5, 6.8, BODY);
 
-  // Contact / pass / opposite contact / opposite pass — a repeated plant is what reads as a slide.
-  const feet = gaitFeet(step);
-  const footY = 20;
-  rect(g, 8 + lean + feet.left[0], footY + feet.left[1], 3, 2, BODY);
-  rect(g, 13 + lean + feet.right[0], footY + feet.right[1], 3, 2, BODY);
-
   // Light falls from above, so the underside is the shaded half.
   for (let y = 0; y < CELL; y++) {
     for (let x = 0; x < CELL; x++) {
       if (g[y * CELL + x] === BODY && y >= cy + 3) g[y * CELL + x] = SHADE;
     }
   }
+
+  // Contact / pass / opposite contact / opposite pass — a repeated plant is what reads as a slide.
+  //
+  // Both feet swing about the body's centre line, so the cycle is symmetric. And the off-side foot
+  // stays in shade whichever of the two is in front: seen from the side, "the left foot leads" and
+  // "the right foot leads" are the same two rectangles with their labels swapped, so without a
+  // difference that travels with the foot rather than with the position, the cycle has no way at all
+  // to show that it ever changed feet.
+  const feet = gaitFeet(step);
+  const footY = 20;
+  const plant = (foot, isOffSide) => {
+    const x = 11.5 + lean + foot[0], y = footY + foot[1];
+    // A lifted foot is drawn inside the torso, and the torso is the same colour: without an outline
+    // of its own the foot vanishes, and the pose reads as a body with a leg missing.
+    if (foot[1] !== 0) rect(g, x - 1, y - 1, 5, 4, OUTLINE);
+    rect(g, x, y, 3, 2, isOffSide ? SHADE : BODY);
+  };
+  plant(feet.left, true);
+  plant(feet.right, false);
 
   const eyeY = cy - 3;
   if (blink) {
@@ -245,8 +265,21 @@ for (let row = 0; row < ROWS; row++) {
 
 const walkPoses = [0, 1, 2, 3].map((col) => frame(1, col));
 const samePose = (a, b) => a.every((v, i) => v === b[i]);
-if (samePose(walkPoses[0], walkPoses[2]) || samePose(walkPoses[1], walkPoses[3])) {
-  throw new Error("walk cycle repeats a pose");
+// What must not repeat is a pose *next to itself*: that is what reads as a limp. The two passing
+// poses are each other's mirror and come out identical — the cycle is symmetric, so what one foot
+// does the other does half a cycle later — and that is correct, not a repetition: the cycle reads
+// contact, pass, opposite contact, pass.
+for (let i = 0; i < 4; i++) {
+  if (samePose(walkPoses[i], walkPoses[(i + 1) % 4])) {
+    throw new Error(`walk cycle repeats a pose at frame ${i}`);
+  }
+}
+// And the two contacts have to be *opposite*, not merely different: a cycle that puts the same foot
+// in front on both contacts never changes feet, which reads as a shuffle however smoothly the body
+// travels. Being merely a few pixels apart passes the check above, so it needs its own.
+const leadingFoot = (step) => Math.sign(gaitFeet(step).left[0] - gaitFeet(step).right[0]);
+if (leadingFoot(0) === leadingFoot(2)) {
+  throw new Error("walk cycle never swaps which foot leads");
 }
 
 // MARK: - PNG
