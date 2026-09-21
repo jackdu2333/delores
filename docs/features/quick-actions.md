@@ -244,6 +244,10 @@ restore, but only if that app already holds the keyboard, and never by activatin
 because the pasteboard has one owner — the same lease, queue and `ClipboardManager`
 coordination a paste needs, and a second owner would race it.
 
+Automatic capture also stays off a native fullscreen Space. The island panel no longer joins
+fullscreen as an auxiliary window, and a frontmost `AXFullScreen` window both skips capture and
+dismisses a bar that was already up.
+
 **The `changeCount` guard is load-bearing.** With nothing selected, ⌘C is a no-op; returning the
 pasteboard's existing contents there would transform whatever the reader last copied and paste it
 over their selection. Movement is the only proof a copy happened — never comparing content, which

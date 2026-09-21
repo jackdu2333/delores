@@ -56,6 +56,16 @@ enum AXWindowAccess {
         return (value as? Bool) ?? false
     }
 
+    /// Native fullscreen is the reader's Space; Delores surfaces must not join it.
+    static func isFrontmostAppFullscreen() -> Bool {
+        guard let app = NSWorkspace.shared.frontmostApplication,
+            app.bundleIdentifier != Bundle.main.bundleIdentifier
+        else { return false }
+        let application = application(for: app.processIdentifier)
+        if let target = targetWindow(in: application), isFullScreen(target) { return true }
+        return windows(in: application).contains(where: isFullScreen)
+    }
+
     // MARK: - Bringing one forward
 
     static func unminimize(_ window: AXUIElement) -> Bool {

@@ -222,7 +222,7 @@ final class DeloresCompanionCoordinator {
 
     private func evaluateFullscreenPresence() {
         guard isRunning else { return }
-        let fullscreen = isFrontmostAppFullscreen()
+        let fullscreen = AXWindowAccess.isFrontmostAppFullscreen()
         if fullscreen && !isHiddenForFullscreen {
             isHiddenForFullscreen = true
             stopWanderTimers()
@@ -242,17 +242,6 @@ final class DeloresCompanionCoordinator {
             companion.present(at: center)
             settle(at: center, on: screen)
         }
-    }
-
-    private func isFrontmostAppFullscreen() -> Bool {
-        guard let app = NSWorkspace.shared.frontmostApplication else { return false }
-        if app.bundleIdentifier == Bundle.main.bundleIdentifier { return false }
-        let appElement = AXWindowAccess.application(for: app.processIdentifier)
-        if let target = AXWindowAccess.targetWindow(in: appElement), AXWindowAccess.isFullScreen(target) {
-            return true
-        }
-        let windows = AXWindowAccess.windows(in: appElement)
-        return windows.contains(where: { AXWindowAccess.isFullScreen($0) })
     }
 
     private func stopCompanion() {

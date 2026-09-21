@@ -43,6 +43,8 @@ final class DeloresContextCoordinator {
     @ObservationIgnored private var lastFingerprint: DeloresSelectionFingerprint?
     @ObservationIgnored private var lastSelectionUptime = -Double.infinity
     @ObservationIgnored private var targetApplication: NSRunningApplication?
+    @ObservationIgnored private var spaceObserver: NSObjectProtocol?
+    @ObservationIgnored private var appObserver: NSObjectProtocol?
     private var lastCapturedSelection: (text: String, target: NSRunningApplication, point: CGPoint, timestamp: Date)?
 
     /// The card is re-hosted on every update, which is cheap but not free, and a model emits deltas
@@ -95,11 +97,13 @@ final class DeloresContextCoordinator {
         guard !isMonitoring, settings.quickActionsEnabled else { return }
         isMonitoring = true
         gestureMonitor.start()
+        startFullscreenSuppression()
     }
 
     func stop() {
         isMonitoring = false
         gestureMonitor.stop()
+        stopFullscreenSuppression()
         captureTask?.cancel()
         captureTask = nil
         cancelAnswer()
@@ -110,6 +114,48 @@ final class DeloresContextCoordinator {
         lastCapturedSelection = nil
         lastFingerprint = nil
         lastSelectionUptime = -Double.infinity
+    }
+
+    private func startFullscreenSuppression() {
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.suppressForFullscreen()
+                try? await Task.sleep(for: .milliseconds(350))
+                self?.suppressForFullscreen()
+            }
+        }
+        appObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.suppressForFullscreen() }
+        }
+        suppressForFullscreen()
+    }
+
+    private func stopFullscreenSuppression() {
+        if let spaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
+            self.spaceObserver = nil
+        }
+        if let appObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(appObserver)
+            self.appObserver = nil
+        }
+    }
+
+    private func suppressForFullscreen() {
+        guard isMonitoring, AXWindowAccess.isFrontmostAppFullscreen() else { return }
+        captureTask?.cancel()
+        guard island.isVisible else { return }
+        cancelAnswer()
+        island.dismiss(notifying: false)
+        clearContext()
     }
 
     private func captureSelection(after gesture: SelectionGestureMonitor.Gesture) {
@@ -127,6 +173,8 @@ final class DeloresContextCoordinator {
             let target = NSWorkspace.shared.frontmostApplication,
             target.bundleIdentifier != Bundle.main.bundleIdentifier
         else { return }
+        // Fullscreen is the reader's Space; capturing there would overlay it and may send a ⌘C.
+        guard !AXWindowAccess.isFrontmostAppFullscreen() else { return }
 
         captureTask?.cancel()
         let generation = UUID()
@@ -148,6 +196,7 @@ final class DeloresContextCoordinator {
                 self.isMonitoring,
                 self.settings.quickActionsEnabled,
                 !Task.isCancelled,
+                !AXWindowAccess.isFrontmostAppFullscreen(),
                 !DeloresSelectionContextPolicy.isDuplicate(
                     prepared.fingerprint,
                     previous: self.lastFingerprint,
@@ -198,6 +247,7 @@ final class DeloresContextCoordinator {
         at point: CGPoint,
         timestamp: Date
     ) {
+        guard !AXWindowAccess.isFrontmostAppFullscreen() else { return }
         let screen = resolveScreen(for: point)
         let selection = SelectionInvocation(
             text: prepared.text,

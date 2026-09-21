@@ -215,7 +215,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false)
         panel.level = .statusBar
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        // Regular spaces only: fullScreenAuxiliary would put the bar over a fullscreen app.
+        panel.collectionBehavior = [.canJoinAllSpaces]
         panel.isMovableByWindowBackground = false
         // The bar appears over a selection the reader may still be working on — ⌘C, ⌘X and Delete
         // belong to their app, not to a bar they never clicked. Key is taken only when a control
