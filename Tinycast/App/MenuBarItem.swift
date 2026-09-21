@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// Tinycast's own menu-bar item. It carries no feature state, so no feature can hide or reshape it.
+/// Delores's own menu-bar item. It carries no feature state, so no feature can hide or reshape it.
 struct MenuBarLabel: View {
     let appName: String
 
     var body: some View {
-        Image(systemName: "macwindow.on.rectangle")
+        Image("DeloresMenuBarIcon")
+            .renderingMode(.template)
             .accessibilityLabel(appName)
     }
 }
