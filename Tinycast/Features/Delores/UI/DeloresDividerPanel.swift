@@ -1,6 +1,6 @@
 import AppKit
 
-final class DeloresDividerPanel: NSPanel {
+final class DeloresDividerPanel: NSPanel, DeloresSelectionBlockingSurface {
     var onMouseDown: ((CGPoint) -> Void)?
     var onMouseDragged: ((CGPoint) -> Void)?
     var onMouseUp: (() -> Void)?
@@ -387,4 +387,3 @@ final class DeloresDividerView: NSView {
         CATransaction.commit()
     }
 }
-

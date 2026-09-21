@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// The ⌘K menu's own window, so glass renders against the desktop and nothing clips it.
-final class MenuPanel: NSPanel {
+final class MenuPanel: NSPanel, DeloresSelectionBlockingSurface {
     weak var paletteState: PaletteState?
 
     /// Key stays with the palette: its `onKeyPress` handlers drive this menu's selection.

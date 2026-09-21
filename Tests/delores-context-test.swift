@@ -464,11 +464,18 @@ struct DeloresContextTest {
         let interactive = DeloresSurfaceWindowSnapshot(
             frame: CGRect(x: 100, y: 100, width: 300, height: 200),
             isVisible: true,
-            ignoresMouseEvents: false)
+            ignoresMouseEvents: false,
+            blocksSelection: true)
         let passthrough = DeloresSurfaceWindowSnapshot(
             frame: CGRect(x: 500, y: 100, width: 300, height: 200),
             isVisible: true,
-            ignoresMouseEvents: true)
+            ignoresMouseEvents: true,
+            blocksSelection: true)
+        let settingsWindow = DeloresSurfaceWindowSnapshot(
+            frame: CGRect(x: 100, y: 100, width: 300, height: 200),
+            isVisible: true,
+            ignoresMouseEvents: false,
+            blocksSelection: false)
         require(
             DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
                 at: CGPoint(x: 98, y: 100), in: [interactive]),
@@ -481,6 +488,10 @@ struct DeloresContextTest {
             !DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
                 at: CGPoint(x: 900, y: 900), in: [interactive]),
             "points outside own surfaces remain eligible")
+        require(
+            !DeloresOwnSurfaceHitPolicy.containsInteractiveSurface(
+                at: CGPoint(x: 200, y: 150), in: [settingsWindow]),
+            "a Settings window behind another app does not suppress selection")
     }
 
     /// One mouse gesture belongs to one surface. These are the rules the Context Surface reads

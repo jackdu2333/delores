@@ -4,7 +4,7 @@ import SwiftUI
 /// The Companion's own menu, in a window of its own: the body is too small to hold one, and a menu
 /// AppKit has to run a tracking loop for is the one thing never to hang off a body that walks the
 /// menu bar.
-final class DeloresCompanionMenuPanel: NSPanel {
+final class DeloresCompanionMenuPanel: NSPanel, DeloresSelectionBlockingSurface {
     /// `PopoverMenu` arms its hover highlight off a `PaletteState`; the Companion owns no palette,
     /// so this menu brings its own: opening it must not re-key the palette's own menu.
     weak var menuState: PaletteState?

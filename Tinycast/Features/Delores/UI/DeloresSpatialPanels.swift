@@ -153,7 +153,7 @@ final class DeloresCompanionBodyView: NSView {
     }
 }
 
-final class DeloresCompanionPanel: NSPanel {
+final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
     var onSingleClick: (() -> Void)?
     var onDoubleClick: (() -> Void)?
     var onLongPress: (() -> Void)?
@@ -320,7 +320,7 @@ enum DeloresSnapSlot {
     }
 }
 
-final class DeloresSnapIslandPanel: NSPanel {
+final class DeloresSnapIslandPanel: NSPanel, DeloresSelectionBlockingSurface {
     private(set) var layout: SnapIslandGeometry.Layout = .horizontal
     /// Where the island last settled, so a run already resting there is left alone.
     private var restingFrame: CGRect?

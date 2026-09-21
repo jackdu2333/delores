@@ -354,7 +354,7 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
-| Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester`, `DeloresSurfaceInteractionGate` | Interactive windows only; pass-through overlays remain transparent; one gesture belongs to one surface |
+| Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester`, `DeloresSurfaceInteractionGate` | Explicitly marked interactive surfaces only; ordinary windows such as Settings stay out, pass-through overlays remain transparent, and one gesture belongs to one surface |
 | Quick Action admission | `QuickActionStartResult`, `QuickActionCoordinator` | Shared capability returns an explicit start result |
 | Product identity and build metadata | `project.yml`, generated project, `Info.plist` | Delores-owned seam |
 | Delores model gate | `.github/workflows/ci.yml`, `Scripts/run-delores-tests.sh` | Delores-owned seam |

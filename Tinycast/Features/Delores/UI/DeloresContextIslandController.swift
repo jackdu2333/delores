@@ -8,7 +8,7 @@ final class DeloresFirstMouseHostingView<Content: View>: NSHostingView<Content> 
     }
 }
 
-private final class DeloresContextIslandPanel: NSPanel {
+private final class DeloresContextIslandPanel: NSPanel, DeloresSelectionBlockingSurface {
     /// Escape. Handled at the panel for the same reason the palette handles it there: it is the one
     /// key the window owns itself, and a hosted view has no field editor to route it through.
     /// Nil means this surface does not answer it and the event carries on.

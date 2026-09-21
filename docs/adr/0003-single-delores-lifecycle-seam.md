@@ -16,9 +16,10 @@ disappear without explanation.
 AppCore exposes one `DeloresCoordinator`. Its child coordinators remain private to Delores, and
 future Surface routing or arbitration stays behind that owner.
 
-The selection monitor ignores only windows that are both visible and interactive. A visible window
-that sets `ignoresMouseEvents` remains pass-through, so a HUD or drop guide cannot suppress a valid
-selection underneath it.
+The selection monitor ignores only surfaces explicitly marked as selection-blocking that are both
+visible and interactive. Ordinary app windows such as Settings stay out of that set, even when their
+frames remain visible behind another app. A marked window that sets `ignoresMouseEvents` remains
+pass-through, so a HUD or drop guide cannot suppress a valid selection underneath it.
 
 Quick Action entry returns an admission result: `started`, `busy` or `disabled`. A Context Island is
 dismissed only after `started`; `busy` keeps the island visible with an explicit status.

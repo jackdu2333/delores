@@ -5,6 +5,7 @@ struct DeloresSurfaceWindowSnapshot: Equatable, Sendable {
     let frame: CGRect
     let isVisible: Bool
     let ignoresMouseEvents: Bool
+    let blocksSelection: Bool
 }
 
 enum DeloresOwnSurfaceHitPolicy {
@@ -14,7 +15,8 @@ enum DeloresOwnSurfaceHitPolicy {
         padding: CGFloat = 4
     ) -> Bool {
         windows.contains { window in
-            window.isVisible
+            window.blocksSelection
+                && window.isVisible
                 && !window.ignoresMouseEvents
                 && window.frame.insetBy(dx: -padding, dy: -padding).contains(point)
         }
