@@ -8,7 +8,7 @@ enum DeloresCompanionExpression { case glance, chat }
 
 /// The body itself: one layer holding one decoded atlas, and a frame that is a rectangle into that one
 /// image — which is why a pose costs a CGRect and neither a decode nor a rebuilt view tree.
-final class DeloresCompanionBodyView: NSView, NSAccessibilityButton {
+final class DeloresCompanionBodyView: NSView, @MainActor NSAccessibilityButton {
     private static let breathKey = "breath"
     private static let reactionKey = "reaction"
 
