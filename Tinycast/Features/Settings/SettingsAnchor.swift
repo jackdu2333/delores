@@ -77,8 +77,8 @@ extension SettingsAnchor {
     static let deloresIdentity = Self(tab: .delores, title: "What it is")
     static let deloresSurfaces = Self(tab: .delores, title: "Three ways in")
 
-    /// "Selection Toolbar", not "Context Bar": the bar acts on a selection, and a name that says so
-    /// is the one a reader looks for.
+    /// Keep the enable section's anchor distinct from the action list; its localized display name
+    /// is still Selection Toolbar.
     static let contextSurfaceEnable = Self(tab: .contextSurface, title: "Context Surface")
     static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Selection Toolbar")
 

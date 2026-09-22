@@ -15,7 +15,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .delores: return L10n.string("Overview")
         case .aiAndActions: return L10n.string("AI & Actions")
         case .commandSurface: return L10n.string("Search Box")
-        case .contextSurface: return L10n.string("Context Surface")
+        case .contextSurface: return L10n.string("Selection Toolbar")
         case .companionSurface: return L10n.string("Companion Surface")
         case .applications: return L10n.string("Applications")
         case .systemSettings: return L10n.string("System Settings")
@@ -79,7 +79,7 @@ enum SettingsSection: CaseIterable, Identifiable {
         switch self {
         case .delores: return L10n.string("Overview")
         case .core: return L10n.string("Core Capabilities")
-        case .context: return L10n.string("Context Surface")
+        case .context: return L10n.string("Selection Toolbar")
         case .companion: return L10n.string("Companion Surface")
         // Unused while the section holds one pane — `SettingsSidebarView` draws that as a bare
         // row rather than a header over a single item — but the enum asks every case for one.

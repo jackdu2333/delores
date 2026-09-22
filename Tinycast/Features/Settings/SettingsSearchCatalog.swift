@@ -398,7 +398,7 @@ enum SettingsSearchCatalog {
                 "custom", "划词", "翻译", "解释", "总结", "自定义"
             ]),
         .init(
-            group: .contextSurfaceEnable, "Enable the Context Surface",
+            group: .contextSurfaceEnable, "Enable the Selection Toolbar",
             keywords: ["selected text", "accessibility", "划词", "启用"]),
         .init(
             group: .contextSurfaceContextBar, "Selection Toolbar",

@@ -5196,7 +5196,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "上下文面板"
+            "value": "划词工具栏"
           }
         }
       }
@@ -5276,7 +5276,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "上下文面板处于关闭状态"
+            "value": "划词工具栏处于关闭状态"
           }
         }
       }
@@ -5331,12 +5331,12 @@
         }
       }
     },
-    "Enable the Context Surface": {
+    "Enable the Selection Toolbar": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "启用上下文面板"
+            "value": "启用划词工具栏"
           }
         }
       }

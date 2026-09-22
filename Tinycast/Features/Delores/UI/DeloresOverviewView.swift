@@ -37,7 +37,7 @@ struct DeloresOverviewView: View {
                     state: L10n.string("Always available"))
                 surface(
                     tab: .contextSurface, symbol: "text.cursor",
-                    title: L10n.string("Context Surface"),
+                    title: L10n.string("Selection Toolbar"),
                     subtitle: L10n.string(
                         "You are reading something you do not quite follow. Select it — a few actions appear at the top of the screen, and the answer lands right where you are."
                     ),

@@ -47,7 +47,7 @@ struct ContextSurfaceSettingsView: View {
     private var switchSection: some View {
         Section {
             Toggle(isOn: enabledBinding) {
-                SettingsRowTitle(.contextSurfaceEnable, "Enable the Context Surface")
+                SettingsRowTitle(.contextSurfaceEnable, "Enable the Selection Toolbar")
                 Text(
                     L10n.string(
                         "Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the toolbar at the top of the screen."
