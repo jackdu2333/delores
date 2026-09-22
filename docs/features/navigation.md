@@ -29,7 +29,8 @@ launcher and a still-recorded shortcut for either does nothing.
 - **Activation hides with `restoreFocus: false`.** Restoring focus reactivates the displaced app,
   which races the raise and can land on the wrong window — the same reason a Space command does it.
 - **`AXWindowAccess` stays the one AX window layer.** `unminimize` and `focus` live there rather
-  than in a second AX shim, and Window Layouts brings its frontmost window forward through `focus`.
+  than in a second AX shim; Spatial Window Placement is a separate capability and is not part of
+  this switcher's ownership graph.
 
 ## How it is put together
 
@@ -70,8 +71,8 @@ and takes every window whose subrole is `AXStandardWindow`. That is looser than
 what a switcher is for, and a window on another Space reports no frame until it is raised, so
 requiring one would hide it.
 
-Each element gets a 0.2 s messaging timeout, the same as the layout inventory and the menu walk, so
-one hung app cannot stall the summon.
+Each element gets a 0.2 s messaging timeout, the same as the menu walk, so one hung app cannot stall
+the summon.
 
 The app icon rides on the entry as a `FileIconStamp` and its bundle URL, and the row draws it through
 `EntryIconView(source: .file(stamp:))` — so `IconCache` decodes once per app however many windows it

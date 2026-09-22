@@ -137,8 +137,8 @@ install; one that exists but will not decode sets `isAvailable` false and makes 
 `QuicklinkStore`'s rule: authored data is reported on, never written over.
 
 **Deleting unwinds only once the record is gone.** Confirm, remove, *then* drop the binding, the
-route override, the favorite, the alias, the visibility key and the ranking. `WindowLayoutCoordinator`'s order: a failed
-delete must never leave a kept record stripped of its shortcut.
+route override, the favorite, the alias, the visibility key and the ranking. A failed delete must
+never leave a kept record stripped of its shortcut.
 
 Only Fix Grammar applies unseen: it changes what was wrong, where a rewrite changes the voice.
 Summarize can never be told to replace text unseen — it answers a question *about* the text, so

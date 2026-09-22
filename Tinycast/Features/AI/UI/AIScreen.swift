@@ -239,7 +239,7 @@ private struct AttachmentChip: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Remove \(attachment.name)")
+            .help(L10n.format("Remove %@", attachment.name))
         }
         // Inset under the inner gap, so the thumbnail reads as filling the pill.
         .padding(.horizontal, metrics.size.chatAttachmentInset)
@@ -339,8 +339,8 @@ private struct PendingAttachmentsChips: View {
                             cornerRadius: metrics.radius.attachmentChip, style: .continuous
                         ).fill(Theme.Colors.controlSurface)
                     )
-                    .help("\(attachments.count) files attached")
-                    .accessibilityLabel("\(attachments.count) files attached")
+                    .help(L10n.format("%lld files attached", Int64(attachments.count)))
+                    .accessibilityLabel(L10n.format("%lld files attached", Int64(attachments.count)))
             }
         }
     }

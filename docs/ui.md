@@ -29,6 +29,29 @@ Five load-bearing ideas, in priority order:
 4. **Edges dissolve, they don't clip.** Scroll-driven mask, no separators between list and bars.
 5. **Glass only on floating controls.** The main surface is never glass; pills/menus/circles are.
 
+## Delores look across surfaces
+
+The three product surfaces share one visual grammar, but they do not share one material. The
+following baseline keeps the product recognisable while allowing each surface to answer the moment it
+belongs to:
+
+| Surface | Shared anchors | Intentional material difference |
+| --- | --- | --- |
+| Context | edge placement, rounded corners, `Theme` spacing/type, localized action labels | glass vessel and result card; it is a short-lived answer attached to the current selection |
+| Companion | display-edge placement, pixel-precise geometry, localized accessibility name | sprite only; no glass panel, action catalogue or model state lives in the body |
+| Command | keyboard-first focus, `Theme` alpha ramp, keycaps, `Theme.MenuMotion` | centered palette panel with behind-window blur and scrim; it owns search and command execution |
+
+Settings is the shared configuration surface rather than a fourth Delores shape: it uses the native
+titled window and grouped form grammar, while reusing the same tokens, copy rules and accessibility
+semantics. A new control should first attach to an existing surface and capability; it should not
+create a new persistent surface merely because its implementation is convenient.
+
+Across all surfaces, the non-negotiable anchors are the dark branch of `Theme.Colors`, the spacing,
+radius and typography tokens, the same primary/secondary state hierarchy, and `L10n` for visible
+chrome. Motion may differ in duration when the physical metaphor differs, but it must still respect
+`Theme.MenuMotion` and the system reduce-motion setting. Companion's sprite and Spatial Snap's
+transient geometry are deliberate exceptions to the glass material, not alternate brand systems.
+
 ---
 
 ## Non-negotiable invariants
@@ -36,7 +59,7 @@ Five load-bearing ideas, in priority order:
 These are the things that quietly break the look if changed. Preserve them unless the task is explicitly to change them.
 
 - **Dark is the baseline and its values are frozen.** Every `Theme.Colors` token resolves per appearance, and its **dark branch is the literal the forced-dark build shipped** — restated, never recomputed. Retune a light branch freely; touch a dark one only when the task is to change Dark. `AppCore.applyAppearance()` is the only place an appearance is assigned, from `AppSettings.appearance`; `.system` assigns `nil` so AppKit follows macOS.
-- **New colors go through `Theme.Colors.ramp(dark:light:)`** (an alpha that inverts) or `adaptive(dark:light:)` (two explicit `NSColor`s, for anything that isn't a plain inversion — `panelScrim`, `glassFrost`). Never a bare `Color.white.opacity(…)` in a view: it disappears in Light.
+- **New colors go through `Theme.Colors.ramp(dark:light:)`** (an alpha that inverts) or `adaptive(dark:light:)` (two explicit `NSColor`s, for anything that isn't a plain inversion — `panelScrim`, `glassFrost`, `glassSurfaceScrim`). Never a bare `Color.white.opacity(…)` in a view: it disappears in Light.
 - **No grays, no opaque fills on the surface.** Reach for `Theme.Colors.*` instead of `.gray`, `NSColor.windowBackground`, etc.
 - **Three things stay fixed in both appearances, on purpose.** The `EdgeDissolve`/`OverflowFade` gradients are **mask luminance, not color** — inverting them breaks the dissolve everywhere. `ExtensionTintColors` and a tinted `IconCache` tile keep white ink, because a saturated tile carries its own contrast. And `IconCache` cannot use a dynamic `NSColor` at all: it rasterizes off-main, so the surface is carried explicitly and is part of the cache key.
 - **An icon is drawn for a surface *and* a system icon style, and both move under you.** macOS restyles the icons `NSWorkspace` hands out when System Settings → Appearance → **Icon & widget style** changes, so `IconStyleMonitor` and Tinycast's own appearance both call `IconCache.invalidateStyled()`. **The monitor may not invalidate on the notification itself.** AppKit posts `NSWorkspaceIconAppearanceConfigurationDidChange` before IconServices has swapped what `NSWorkspace` vends — measured at 25–120ms behind, jittering run to run — and the images it hands back are live objects macOS restyles in place, so flattening one on the signal freezes the *outgoing* style into a bitmap nothing ever invalidates again. `IconStyleMonitor` therefore polls `IconCache.styleFingerprint()` until the pixels actually move, and only then invalidates. Waiting also sidesteps the cost: re-flattening every icon the instant a restyle begins forces a cold IconServices regeneration, measured at 160× the settled draw cost. That drops the cached bitmaps, bumps every cache key so an in-flight decode cannot repopulate a stale one, and moves `IconCache.style.generation`. **Any view that draws an icon must key its fetch on that generation** — wrap the view's own key in `IconRequest`, or call `IconCache.observeStyle()` where the icon is resolved synchronously in a `body`. It is reached through `IconCache` rather than injected precisely because icons are drawn in menus, popovers and every list, where a missed injection would be a silent staleness bug.
@@ -188,10 +211,13 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `cardFill`        | white 0.05     | black 0.04     | settings/calc card fill                          |
 | `cardStroke`      | white 0.10     | black 0.10     | settings/calc card border + inset dividers       |
 | `glassFrost`      | white 0.05     | white **0.25** | whitish tint layered into the floating glass     |
+| `glassSurfaceScrim` | transparent  | white **0.30** | light-only veil that improves glass text contrast over a black menu bar |
 | `dropGuide`       | white 0.35     | black 0.35     | the palette's drop guides while dragging         |
 
 `glassFrost` is white in **both** — the frost brightens glass rather than inking it — so it is an
 `adaptive` pair, not a `ramp`. `panelScrim` is the ramp's inverse, for the same reason.
+`glassSurfaceScrim` is intentionally transparent in Dark and a 30% white veil in Light: on a black
+menu bar, un-veiled system glass can turn black while the light theme still expects black text.
 `brand`, `destructive`, `success` and `dropGuideArmed` are fixed hues and adapt on their own.
 
 Beyond these, `.secondary`/`.tertiary` foreground styles are fine for SF Symbols (they resolve against
@@ -648,37 +674,11 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   table hangs 15 pt past its own view into the Form row's padding, where the lazy stack's rows sat.
   A long list whose rows hold no AppKit control can stay a `LazyVStack`.
 
-### The window-layout editor
+### Retired Window Layout editor
 
-`Theme.Size.layoutEditorSheet` is **900 × 660, both stated**. The width less
-`layoutInspectorColumn` (300) leaves the preview two thirds of the sheet, and the canvas is greedy
-inside it — a fixed preview box would spend that third on margin. **The height is stated because the
-inspector grows**: picking an app reveals Argument, Size, Offset and Position, and an intrinsic
-sheet would jump out from under the pointer mid-click. The inspector scrolls if it ever overflows.
-
-Every inspector control — text field, dropdown, add button — is one `layoutFieldChrome`: a
-`Radius.barControl` rounded rect at `layoutControlHeight`, `cardFill` on `cardStroke`, accent-stroked
-while focused. A numeric field fills its half of the row rather than sizing to a stated width, so a
-value can never be cropped, and `layoutFieldUnit` keeps "%" and "pt" on one x.
-
-**The entry dropdown is a button and a popover, not a `Menu`**: a menu label stretches an `NSImage`
-out of aspect, which is what made the app icon smear. The rest of the app already picks apps this
-way (`AppPickerPopover`).
-
-In the position grid the **glyph floats in a wider cell** carrying the `contentShape`, so a click
-anywhere in the cell lands — a bare stroke is hittable only on the line itself. Each anchor's block
-takes half a pinned axis and all of a spanned one, which is what makes nine cells nine silhouettes
-rather than nine identical rectangles.
-
-`layoutPreviewGround` is **`adaptive`, never `ramp`**: a drawn display is dark in both appearances,
-and a ramp would invert it in Light. `layoutPreviewWindow` is white in both for the same reason — it
-sits on that always-dark plate. `Radius.glyph` (2) exists because `thumbnail` rounds a 10 pt square
-into a circle.
-
-The Save button draws a `⌘ ↵` cap, which the no-caps-on-buttons rule above otherwise forbids. That
-rule guards against a printed cap drifting from what `DialogPanel.sendEvent` handles separately; here
-the cap and the behaviour come from one `.keyboardShortcut`, so the drift is structurally impossible.
-See [features/window-layouts.md](features/window-layouts.md#the-editor).
+The saved Window Layout editor is no longer an active Delores capability. Its historical geometry and
+chrome are preserved in [features/window-layouts.md](features/window-layouts.md) for migration
+reference only; layout-specific tokens are intentionally absent from the active design system.
 
 ### The shortcut recorder callout
 

@@ -8,12 +8,14 @@ enum DeloresCompanionExpression { case glance, chat }
 
 /// The body itself: one layer holding one decoded atlas, and a frame that is a rectangle into that one
 /// image — which is why a pose costs a CGRect and neither a decode nor a rebuilt view tree.
-final class DeloresCompanionBodyView: NSView {
+final class DeloresCompanionBodyView: NSView, NSAccessibilityButton {
     private static let breathKey = "breath"
     private static let reactionKey = "reaction"
 
     /// Cached decoded atlas images per creature kind.
     private static var atlasCache: [DeloresCompanionShell.Kind: CGImage] = [:]
+    private var kind: DeloresCompanionShell.Kind
+    var onAccessibilityPress: (() -> Void)?
 
     private static func atlas(for kind: DeloresCompanionShell.Kind) -> CGImage? {
         if let cached = atlasCache[kind] { return cached }
@@ -27,7 +29,11 @@ final class DeloresCompanionBodyView: NSView {
     private let sprite = CALayer()
 
     init(frame frameRect: NSRect, kind: DeloresCompanionShell.Kind = .standard) {
+        self.kind = kind
         super.init(frame: frameRect)
+        setAccessibilityElement(true)
+        setAccessibilityRole(.button)
+        setAccessibilityHelp(L10n.string("Press to reopen the last selection."))
         wantsLayer = true
         // Authored at 1x and scaled by the GPU, so nearest: linear turns every edge into a smear.
         sprite.magnificationFilter = .nearest
@@ -49,6 +55,15 @@ final class DeloresCompanionBodyView: NSView {
     }
 
     required init?(coder: NSCoder) { fatalError("DeloresCompanionBodyView is not made in a nib") }
+
+    override func accessibilityLabel() -> String? {
+        L10n.format("Desktop companion: %@", L10n.text(kind.displayName))
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        onAccessibilityPress?()
+        return true
+    }
 
     override func layout() {
         super.layout()
@@ -173,6 +188,7 @@ final class DeloresCompanionBodyView: NSView {
     }
 
     func applyKind(_ kind: DeloresCompanionShell.Kind) {
+        self.kind = kind
         sprite.contents = Self.atlas(for: kind)
     }
 }
@@ -184,6 +200,10 @@ final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
     var onRightClick: (() -> Void)?
     var onDrag: ((CGPoint) -> Void)?
     var onDragEnded: ((CGPoint) -> Void)?
+    var onAccessibilityPress: (() -> Void)? {
+        get { body.onAccessibilityPress }
+        set { body.onAccessibilityPress = newValue }
+    }
     private var down = CGPoint.zero
     private var dragged = false
     private var longPressTimer: Timer?
@@ -288,53 +308,6 @@ final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
     /// pointer has rested on the body, so what this opens is the body's own menu, not the desk's.
     override func rightMouseDown(with event: NSEvent) {
         onRightClick?()
-    }
-}
-
-enum DeloresSnapSlot {
-    case left, right, mainWorkspace, sideWorkspace
-    case leftThird, centerThird, rightThird
-    case topLeft, topRight, bottomLeft, bottomRight
-
-    /// Which side of the seam it shares with its neighbour, for pairing. The quarters and the centre
-    /// third answer `false` because neither has one neighbour to pair with: a quarter is stacked, so
-    /// its seam is horizontal and not something this divider resizes, and the centre third has
-    /// something either side of it.
-    var isLeftOfSeam: Bool {
-        switch self {
-        case .left, .mainWorkspace, .leftThird: return true
-        case .right, .sideWorkspace, .rightThird: return false
-        case .centerThird, .topLeft, .topRight, .bottomLeft, .bottomRight: return false
-        }
-    }
-
-    func rect(in frame: CGRect, gap: CGFloat = 0) -> CGRect {
-        let g = WindowPlacementEngine.sanitizedGap(gap, in: frame)
-        let f = fractions
-        let left = frame.minX + f.x0 * frame.width + (f.x0 == 0 ? g : g / 2)
-        let right = frame.minX + f.x1 * frame.width - (f.x1 == 1 ? g : g / 2)
-        let top = frame.maxY - (f.y0 * frame.height + (f.y0 == 0 ? g : g / 2))
-        let bottom = frame.maxY - (f.y1 * frame.height - (f.y1 == 1 ? g : g / 2))
-        return WindowPlacementEngine.rounded(
-            CGRect(x: left, y: bottom, width: max(1, right - left), height: max(1, top - bottom)))
-    }
-
-    private var fractions: (x0: CGFloat, x1: CGFloat, y0: CGFloat, y1: CGFloat) {
-        let oneThird: CGFloat = 1.0 / 3.0
-        let twoThirds: CGFloat = 2.0 / 3.0
-        switch self {
-        case .left: return (0, 0.5, 0, 1)
-        case .right: return (0.5, 1, 0, 1)
-        case .mainWorkspace: return (0, twoThirds, 0, 1)
-        case .sideWorkspace: return (twoThirds, 1, 0, 1)
-        case .leftThird: return (0, oneThird, 0, 1)
-        case .centerThird: return (oneThird, twoThirds, 0, 1)
-        case .rightThird: return (twoThirds, 1, 0, 1)
-        case .topLeft: return (0, 0.5, 0, 0.5)
-        case .topRight: return (0.5, 1, 0, 0.5)
-        case .bottomLeft: return (0, 0.5, 0.5, 1)
-        case .bottomRight: return (0.5, 1, 0.5, 1)
-        }
     }
 }
 

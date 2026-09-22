@@ -12,7 +12,9 @@ The mechanical bar, in one place so it cannot drift.
 | Every scripted check below | `./Scripts/local-gate.sh` |
 | The harnesses | `./Scripts/run-tests.sh` |
 | The Delores context harness | `./Scripts/run-delores-tests.sh` |
+| The Delores geometry harness | `./Scripts/run-delores-geometry-tests.sh` |
 | The upstream drift regression | `./Tests/upstream-drift-test.sh` |
+| Product boundaries | `./Scripts/check-product-boundaries.sh` |
 | The vendored Huaci harness | `./Scripts/run-huaci-integration-tests.sh` |
 | Lint | `./Scripts/lint.sh` |
 | Pure-layer purity | `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Tinycast/Features/*/Model/` |
@@ -114,8 +116,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
-| `window-command-test` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
-| `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` — the layout record, its geometry and its inverse, the plan and the store |
+| `delores-geometry-test` | `DeloresSnapGeometry.swift`, `DeloresDividerGeometry.swift` and the shared placement geometry used by Spatial Snap/Divider |
 | `uninstall-test` | all five pure files in `Uninstall/Model/` |
 | `quicklink-test` | all of `Quicklinks/Model/` |
 | `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
@@ -308,8 +309,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   consumes and the caret keeps everywhere else
 - The highlight always sits on the row the footer pill describes
 - With a calculation typed, the calculator card is first and is selected first
-- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks, System Actions
-  (no Window Management section: that feature is parked, so neither its commands nor its layouts index)
+- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks and System Actions
+  (no retired Window Management or Window Layouts index)
 - With a non-ASCII input source active, ⌘K opens Actions; ↑/↓ move it, ↵ activates, Escape closes it
 - While a menu is open, typing does **not** change the query and the caret is hidden
 - Tab toggles launcher ↔ clipboard; bare Backspace on an empty query backs out of a sub-screen
@@ -408,13 +409,13 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   System Settings ▸ General ▸ Language & Region without a relaunch — and nothing prompts for location
 - A crypto query (`1 btc`, `0.5 sol to eur`) answers, and `1 usd to btc` stays in plain notation
 
-### System actions and window management
+### System actions and spatial placement
 
 - A confirmation-gated action (Restart, Quit All) confirms, showing the subject's own glyph
 - Volume actions show the volume HUD; everything else shows the message pill
 - Holding a bound hotkey does **not** stack dialogs
-- Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔
-- "Top Half" lands flush with the top of the visible frame, on a secondary display too
+- Dragging a window to the top edge reveals Spatial Snap only during the drag, then dismisses it
+- Split Divider appears only over a valid seam, clamps both windows together, and rolls back a partial move
 
 ### Notes
 

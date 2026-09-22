@@ -211,7 +211,7 @@ rather than being dropped whole.
 
 A query that *equals* a category's own name lists that whole category under its section header, in the
 order the section shows when the field is empty. Both words a kind already carries work — the section
-title and the singular label, `Quicklinks`/`Quicklink`, `Window Management`/`Window Command` — read straight
+title and the singular label, `Quicklinks`/`Quicklink` — read straight
 off `KindDescriptor` by `AppEntry.Kind.named(by:)`, so no category name is written a second time and a
 new `Kind` case gets its category word for free.
 
@@ -405,7 +405,7 @@ permission-aware failures. With the palette closed it targets the frontmost app,
 Quit All act on the same window a palette launch would have.
 
 System actions occupy their own launcher section and their own Settings pane. The empty-query publication
-order is applications, System Settings, quicklinks, system actions, window commands, then built-in
+order is applications, System Settings, quicklinks, system actions, then built-in
 commands; the sectioned view filters in that same order so the visible rows remain
 identical to the flat selection index.
 Search, favorites, visibility and learned ranking work through the normal `AppEntry` path, and every
@@ -454,23 +454,12 @@ reports remaining failures together.
 Preference-backed toggles refuse to write when the current value can't be read, and notification
 dismissal matches Accessibility subroles rather than English labels.
 
-## Window commands
+## Spatial window placement
 
-`WindowCommandCatalog` supplies the 32 window actions as a static slice, published as a whole by
-`AppIndex.setWindowCommandsVisible(_:)` and shown under a "Window Management" section. Like system
-actions they carry dedicated global hotkeys (`AppEntry.hotKeyAction` returns `.windowCommand(id:)`),
-so launcher rows render keycaps for them. Their per-command shortcut and visibility controls live in
-Settings › Window Management rather than a launcher-category pane of their own — the same projection
-pattern used by other feature-owned controls. The feature ships off. See
-[window-management.md](window-management.md).
-
-## Window layouts
-
-`WindowLayoutStore` supplies its slice sorted by name, published
-immediately **before** the window commands so the two read as one family. Their per-layout shortcut
-and launcher checkbox live in Settings › Window Management beside the commands', and
-`windowLayoutsShowInLauncher` takes the section and its two commands out together. See
-[window-layouts.md](window-layouts.md).
+Window Management commands and Window Layouts are retired and no longer contribute launcher rows,
+settings panes or hotkey registrations. The active Window Placement capability is owned by Delores'
+Spatial Surface: Snap Island and Split Divider answer a drag that is already in progress and do not
+become searchable launcher commands.
 
 ## Quicklinks
 
@@ -517,9 +506,9 @@ and three places read it: `FeatureCommandsSection` draws the pane's rows from it
 category gate for it in both `isVisible` and `allowsHotKey`. Stamping the entry rather than sniffing its
 id is what keeps "which pane owns this" out of the entry-ID namespace.
 
-Seven panes own commands today — AI, Quick Actions, File Search, Navigation, Window Management,
-Clipboard and Quicklinks. What is left in Settings › Commands is the set no feature switch
-governs: Calculator History, the three backup commands, Settings, About and Quit.
+Feature-specific panes own the commands they still expose today — AI, Quick Actions, File Search,
+Navigation, Clipboard and Quicklinks. What is left in Settings › Commands is the set no feature
+switch governs: Calculator History, the backup commands, Settings, About and Quit.
 
 A pane's list is also its display order, so `CommandID`'s declaration order is grouped by owner.
 Nothing keys on that order — `CommandCatalog.all` sorts by name and every preference keys on the raw
@@ -620,8 +609,8 @@ favorite, alias and learned ranking survive the round trip, and its shortcut kee
 
 The row is offered only where Settings can undo it, and `KindDescriptor.canHideFromSearch` is that
 rule — per kind, and a new `Kind` case has to answer it to compile. Applications, System Settings,
-Commands, Quick Actions, System Actions, Window Commands and Window Layouts each draw a per-row checkbox
-in their pane, so they carry it. Quicklinks do not: their pane lists a record with its own switches, not
+Commands, Quick Actions and System Actions each draw a per-row checkbox in their pane, so they carry
+it. Quicklinks do not: their pane lists a record with its own switches, not
 a launcher checkbox — a hide nothing in
 Settings can visibly undo is a trap, not a shortcut.
 `AppActionsMenu` adds the query-driven guard the favorites row already uses: a typed URL lives only

@@ -5561,12 +5561,142 @@
         }
       }
     },
+    "AI Chat": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 对话"
+          }
+        }
+      }
+    },
+    "Ask AI Chat what you typed  ⇥": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "询问 AI 对话你输入的内容  ⇥"
+          }
+        }
+      }
+    },
     "Choose a model in Settings → Core → AI & Actions.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "在设置 → 核心能力 → AI 与操作中选择模型。"
+          }
+        }
+      }
+    },
+    "Click to hide": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击隐藏"
+          }
+        }
+      }
+    },
+    "Click to reveal": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击显示"
+          }
+        }
+      }
+    },
+    "Configure…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置…"
+          }
+        }
+      }
+    },
+    "Desktop companion: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面桌宠：%@"
+          }
+        }
+      }
+    },
+    "Double-tap shortcuts need Accessibility access. Click to grant it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击快捷键需要辅助功能权限。点击以授予权限。"
+          }
+        }
+      }
+    },
+    "Hidden: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已隐藏：%@"
+          }
+        }
+      }
+    },
+    "Hide the prompt": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏提示词"
+          }
+        }
+      }
+    },
+    "Press to reopen the last selection.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下以重新打开上次的选区。"
+          }
+        }
+      }
+    },
+    "Remove %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除 %@"
+          }
+        }
+      }
+    },
+    "Show the prompt": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示提示词"
+          }
+        }
+      }
+    },
+    "%lld files attached": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已附加 %lld 个文件"
           }
         }
       }

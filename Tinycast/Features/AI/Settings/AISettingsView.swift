@@ -532,14 +532,14 @@ private struct AIConnectionRow: View {
         } trailing: {
             Button(action: onEdit) { Image(systemName: "pencil") }
                 .buttonStyle(.plain)
-                .help("Edit \(connection.title)")
-                .accessibilityLabel("Edit \(connection.title)")
+                .help(L10n.format("Edit %@", connection.title))
+                .accessibilityLabel(L10n.format("Edit %@", connection.title))
             Button(action: onRemove) {
                 Image(systemName: "trash").foregroundStyle(.red)
             }
             .buttonStyle(.plain)
-            .help("Remove \(connection.title)")
-            .accessibilityLabel("Remove \(connection.title)")
+            .help(L10n.format("Remove %@", connection.title))
+            .accessibilityLabel(L10n.format("Remove %@", connection.title))
         }
     }
 

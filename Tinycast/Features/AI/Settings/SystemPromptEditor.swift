@@ -28,7 +28,10 @@ struct SystemPromptEditor: View {
                     Image(systemName: isRevealed ? "eye.slash" : "eye")
                 }
                 .buttonStyle(.plain)
-                .help(isRevealed ? "Hide the prompt" : "Show the prompt")
+                .help(
+                    isRevealed
+                    ? L10n.string("Hide the prompt")
+                    : L10n.string("Show the prompt"))
                 .disabled(text.isBlank)
                 .accessibilityLabel(isRevealed ? "Hide the system prompt" : "Show the system prompt")
             }

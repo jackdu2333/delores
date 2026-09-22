@@ -557,13 +557,13 @@ struct RootPaletteView: View {
     private var aiChatTabHint: some View {
         BarButton(chrome: .rounded, action: cycleMode) {
             HStack(spacing: metrics.spacing.sm) {
-                Text("AI Chat")
+                Text(L10n.string("AI Chat"))
                     .font(metrics.typography.bar)
                     .foregroundStyle(Theme.Colors.textSecondary)
                 KeyCapChip(text: "⇥", style: .outline)
             }
         }
-        .help("Ask AI Chat what you typed  ⇥")
+        .help(L10n.string("Ask AI Chat what you typed  ⇥"))
     }
 
     /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
@@ -711,7 +711,7 @@ struct RootPaletteView: View {
             if showActions {
                 BarButton(action: toggleActions) {
                     HStack(spacing: metrics.spacing.sm) {
-                        Text("Actions")
+                        Text(L10n.string("Actions"))
                             .font(metrics.typography.bar)
                             .foregroundStyle(Theme.Colors.textSecondary)
                         HStack(spacing: metrics.spacing.xxs) {

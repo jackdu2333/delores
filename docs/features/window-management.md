@@ -1,4 +1,8 @@
-# Window Management
+# Archived: Window Management
+
+> This document describes the retired Tinycast Window Management command catalogue. It is preserved
+> as a migration reference only; Delores no longer ships those launcher commands or their Settings
+> pane. The active product keeps Window Placement as a capability for Spatial Snap and Split Divider.
 
 Rectangle-style window actions — halves, quarters, fourths, thirds, sizing, nudging, display moves,
 native fullscreen and Space switching — searchable in the palette and bindable to global shortcuts.

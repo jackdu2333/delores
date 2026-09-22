@@ -71,7 +71,7 @@ struct ShortcutRecorder: View {
                         .foregroundStyle(.orange)
                 }
                 .buttonStyle(.plain)
-                .help("Double-tap shortcuts need Accessibility access. Click to grant it.")
+                .help(L10n.string("Double-tap shortcuts need Accessibility access. Click to grant it."))
             }
             ForEach(Array(binding.keycaps.enumerated()), id: \.offset) { _, cap in
                 Text(cap)

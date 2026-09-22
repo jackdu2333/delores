@@ -9,13 +9,14 @@ that is silently assumed to pass is how a broken build reaches the default branc
 It is a record, not a task list. Update the results when a check runs again; do not delete the rows
 that say why something could not run, or the next person re-derives them.
 
-**Current status, read 2026-09-19 on source baseline `0fa06c93`: Xcode is not installed.** `xcode-select -p` says
+**Current status, read 2026-09-22 on source baseline `b73a94ab`: Xcode is not installed.** `xcode-select -p` says
 `/Library/Developer/CommandLineTools`, there is no `Xcode.app` under `/Applications`, and
 `xcodebuild -version` refuses with "requires Xcode". The build therefore cannot run here, and
-`./Scripts/run-tests.sh` is **49 of 53** — all four failures are the missing SwiftUI macros. The
-Delores harness, the upstream-drift regression and the purity grep all pass. SwiftLint 0.65.1 *is*
-installed, and `./Scripts/lint.sh` is lint-clean, but only with the `TOOLCHAIN_DIR` override below;
-the bare form still aborts. Everything below that describes Xcode 27 as installed and selected is a
+`./Scripts/run-tests.sh` is **48 of 53** — all five failures come from the missing SwiftUI macro
+plugin (`SwiftUIMacros.EntryMacro`). The Delores context harness, the new geometry harness (20/20),
+the upstream-drift regression, the product-boundary gate, the vendored Huaci harness and the purity
+grep pass. SwiftLint 0.65.1 *is* installed, and lint is clean when the gate supplies the
+`TOOLCHAIN_DIR` override below; the bare form still aborts. Everything below that describes Xcode 27 as installed and selected is a
 historical reading, kept because it is what the `BUILD SUCCEEDED` and 73/73 rows were recorded
 against — not a fact about this machine now. Check `xcode-select -p` before trusting any row.
 
@@ -319,6 +320,7 @@ The Companion's wander is a pure model, asserted from a fixed seed in
 | Drag a window onto a pet standing on the bottom edge, with the Dock showing | The island appears immediately above the pet, and the pointer can climb onto it without the island vanishing on the way. Before this was fixed the island was placed a Dock's height above the body — 69pt of dead space on the 1920×1080 display here, and on a pet riding the Dock's own top the placement lifted it 24pt as well — so the drag left the target on the way up and the run was torn down under it |
 | Change the display arrangement while it is walking | It stays on screen. It must not jump to the right-hand edge at mid-height, which is what a screen change used to do |
 | Enter a full-screen space (video, slides) | The body hides while the frontmost window is full screen and comes back when it leaves. `39d99893` added the suppression this row used to record as an accepted gap |
+| Focus the Companion with VoiceOver and press it | The sprite body exposes a localized button label and its press action reopens the last selection, or shows the existing empty-selection reaction |
 | Idle cost, companion on and resting | No periodic work between trips; a rest schedules one wake rather than running a frame timer |
 
 ## Known gaps carried by the Companion
@@ -333,11 +335,11 @@ what the manual pass above has to cover.
   surfaces grow out of the pet beside its body, so the strip is shared by design, not contested.
 - Pausing while the reader is typing is not implemented. The signal it would use,
   `CGEventSource.secondsSinceLastEventType`, needs no new permission.
-- The companion has no accessibility label and no menu-bar entry, so a keyboard-only reader cannot
-  reach it. Double-clicking it to reopen the last selection is also gated on Accessibility permission.
+- The Companion now exposes a localized accessibility button label and press action. It still has no
+  menu-bar entry; that remains a product decision, and the body menu itself remains pointer-only.
 - Its reactions drop back to the idle pose on their own — `react` writes the idle frame first, so a
   one-shot animation returns to it without a timer — but the capture change is not signalled to the
   reader, and the no-selection double-click shows no bubble.
 - The menu on the body is pointer-only by construction: it takes no key, so it leaves on a click away
-  rather than Escape and has no keyboard navigation. A keyboard-only reader cannot open it at all,
-  which is the same gap the accessibility label above is waiting on.
+  rather than Escape and has no keyboard navigation. The body itself is now reachable as a button;
+  opening the settings menu remains pointer-only pending a product decision about a menu-bar entry.

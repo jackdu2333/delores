@@ -96,14 +96,14 @@ private struct MCPServerRow: View {
         } trailing: {
             Button(action: onEdit) { Image(systemName: "pencil") }
                 .buttonStyle(.plain)
-                .help("Edit \(server.title)")
-                .accessibilityLabel("Edit \(server.title)")
+                .help(L10n.format("Edit %@", server.title))
+                .accessibilityLabel(L10n.format("Edit %@", server.title))
             Button(action: onRemove) {
                 Image(systemName: "trash").foregroundStyle(.red)
             }
             .buttonStyle(.plain)
-            .help("Remove \(server.title)")
-            .accessibilityLabel("Remove \(server.title)")
+            .help(L10n.format("Remove %@", server.title))
+            .accessibilityLabel(L10n.format("Remove %@", server.title))
         }
     }
 

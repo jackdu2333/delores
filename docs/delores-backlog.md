@@ -16,10 +16,16 @@
 >   `DeloresActionDefinition.translationRoute`; `QuickActionRunner` no longer branches on `.summarize`.
 > - **A reaction returns to idle** (item 8, half) — `react` writes the idle frame first, so a one-shot
 >   animation drops back to it with no timer; the `daze` and `acrobatics` rows exist too.
+> - **Light glass stabilizer** (item 4) — `Theme.Colors.glassSurfaceScrim` adds a 30% white veil in
+>   Light only; the dark branch remains transparent and `appearance-test` pins both branches.
+> - **Companion accessibility path** (item 7, label portion) — the sprite body is a button with a
+>   localized label and VoiceOver press action; the menu-bar entry remains a product decision.
+> - **Spatial geometry regression harness** — Snap and Divider geometry now share pure models and
+>   `Scripts/run-delores-geometry-tests.sh` measures the seam, gap, clamp and ratio rules.
 >
-> Still open, re-checked at `b0270ede`: the card-header model selector, the collapsible thinking block,
-> the keyboard-idle wander pause, the Companion's accessibility label and menu-bar entry, and the public
-> release channel.
+> Still open at that snapshot, re-checked at `b0270ede`: the card-header model selector, the collapsible
+> thinking block, the keyboard-idle wander pause, the Companion's menu-bar entry, and the public release
+> channel. The later landed updates above supersede the corresponding label and glass rows.
 
 > 快照时间：2026-09-18 00:02，基线 `39f5d13`（工作树含未提交的 Companion Shell WIP）。
 > 方法：设计文档（product / architecture / action-core / verification / companion-sprite / release /

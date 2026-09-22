@@ -23,7 +23,7 @@ enum AIPreamble {
         last selection when it is clicked.
 
         Delores also provides a fuzzy app launcher, global and per-app hotkeys, clipboard history \
-        for text and images, an inline calculator, quicklinks, window management and file search.
+        for text and images, an inline calculator, quicklinks, spatial window placement and file search.
 
         It is written in SwiftUI and AppKit against the current macOS only, with no third-party \
         dependencies and no bundled web runtime, and it runs as a menu-bar accessory with no Dock \

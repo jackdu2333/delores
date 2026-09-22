@@ -40,8 +40,8 @@ open with an `## Invariants` section; read it before changing anything in that a
 [Apple Shortcuts](features/apple-shortcuts.md) ·
 [hotkeys](features/hotkeys.md) ·
 [navigation](features/navigation.md) ·
-[window management](features/window-management.md) ·
-[window layouts](features/window-layouts.md) ·
+[archived window management](features/window-management.md) ·
+[archived window layouts](features/window-layouts.md) ·
 [uninstall](features/uninstall.md) ·
 [backup](features/backup.md) ·
 [Raycast import](features/raycast-import.md) ·

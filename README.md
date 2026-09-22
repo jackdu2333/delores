@@ -25,7 +25,7 @@ Delores (1 Core)
 │   └── Command Surface    (⌥ Space · 全局启动器/指令中心 · 最完整能力)
 └── N Capabilities (底层共享能力)
     ├── AI Actions (流式生成 / 自定义 Prompt / 模型路由)
-    ├── Spatial Snap & Split (顶部分屏胶囊 / 智能吸附 / 拖拽分屏)
+    ├── Window Placement (顶部分屏胶囊 / 智能吸附 / 拖拽分屏)
     ├── Clipboard & Search (剪贴板历史 / 本地与应用全局搜索)
     └── Text Injection (无缝回写当前上下文应用)
 ```
@@ -64,7 +64,9 @@ Delores (1 Core)
 
 ---
 
-### 3. Spatial Window Snap —— 直觉式顶部窗口分屏胶囊
+### Capability: Spatial Window Snap —— 直觉式顶部窗口分屏胶囊
+
+这是 Window Placement 能力的瞬时入口，不是第四种产品形态：它只在用户已经拖动窗口时出现，手势结束后随即退场。
 
 整理多窗口不需要记忆复杂的快捷键组合。当你拖拽任意应用窗口贴近屏幕顶部边缘，Snap Island 自动浮出分屏比例预选胶囊（二分屏、黄金比例 1/3+2/3、四象限、三分屏）。
 
@@ -77,7 +79,7 @@ Delores (1 Core)
 
 ---
 
-### 4. Command Surface —— 最完备的全局指令与启动层
+### 3. Command Surface —— 最完备的全局指令与启动层
 
 按下 `⌥ Space`，唤出强大的全局 Command 面板。作为 Delores 最完备的形态，它承载全局应用搜索、系统命令、剪贴板管理、沉浸式长对话以及个性化设置。
 

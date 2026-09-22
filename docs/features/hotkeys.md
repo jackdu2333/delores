@@ -42,8 +42,8 @@ the keycap rendering — only the _engine_ differs.
 Bindings persist as JSON strings under `hotkey.<action>` UserDefaults keys, computed in one place —
 `HotKeyAction.defaultsKey`, which doubles as the `HotKeyCenter` registration id. The set of bound
 bundle IDs lives in `boundAppBundleIDs` and is re-registered on launch. System Settings panes use
-`boundPaneBundleIDs`; quicklinks and window layouts use their stable UUIDs in
-`boundQuicklinkIDs` and `boundWindowLayoutIDs`. Those are the per-item case — unlike a fixed catalog,
+`boundPaneBundleIDs`; quicklinks use their stable UUIDs in `boundQuicklinkIDs`. Those are the
+per-item case — unlike a fixed catalog,
 there is no `allCases` to walk — so each needs an index for `start()`
 to re-register from
 and to prune bindings whose record was deleted while Tinycast wasn't running. That prune is why
@@ -71,20 +71,17 @@ own pane when `SettingsTab.ownedCommands` names it. `hotkey.togglePalette` is th
 no command row. `HotKeyManager` names them all through `CommandID`, so a conflict callout spells an
 action exactly as its command row does.
 
-Like a window command, the chord registers regardless of the launcher row. Clipboard, File Search,
+Like a feature command, the chord registers regardless of the launcher row. Clipboard, File Search,
 Quicklinks and AI Chat each re-check their own feature switch before opening; see
 [file-search.md](file-search.md#invocation). A hidden launcher row does not disable its shortcut, but
 disabling the feature does. `SettingsBackup.HotkeyBackup` carries them as one `commands` map keyed by
 `CommandID` raw value.
 
-System actions and window commands are the fixed-catalog case: they persist under
-`hotkey.systemAction.<raw-id>` and `hotkey.windowCommand.<raw-id>`
-and need **no** bound-ID index, because `start()` and `conflictOwner` can just iterate `allCases` and
-`register` no-ops on an unbound item. A registered window-command shortcut still runs nothing while the
-feature switch is off — `WindowCommandCoordinator.runWindowCommand` re-checks it (see
-[window-management.md](window-management.md)); a system-action shortcut likewise goes through
-`SystemActionCoordinator.runSystemAction(id:)`, so the confirmation gate holds for a hotkey exactly as it does for the
-palette.
+System actions are the fixed-catalog case: they persist under
+`hotkey.systemAction.<raw-id>` and need **no** bound-ID index, because `start()` and `conflictOwner`
+can iterate `allCases` and `register` no-ops on an unbound item. They still go through
+`SystemActionCoordinator.runSystemAction(id:)`, so the confirmation gate holds for a hotkey exactly
+as it does for the palette.
 
 ## Double-tap modifiers
 

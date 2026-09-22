@@ -70,10 +70,8 @@ extension SettingsAnchor {
     static let navigationCommands = Self(tab: .navigation, title: "Commands")
     static let navigationMenuSearch = Self(tab: .navigation, title: "Search Menu Bar Items")
 
-    // Upstream's window management — layouts, the placement commands, cycling — is no longer
-    // offered, so it has no anchors here. Its files sit under
-    // `Packs/LegacyFeatures/WindowManagement/`; the active tree still compiles
-    // `WindowPlacementEngine` because Delores' snapping asks it for geometry.
+    // Retired window-management commands have no anchors here; Delores keeps only shared placement
+    // geometry because Spatial Snap asks it for gap and frame calculations.
 
     /// The Overview's opening statement, then the three forms; every switch lives in its own pane.
     static let deloresIdentity = Self(tab: .delores, title: "What it is")

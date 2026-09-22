@@ -13,16 +13,20 @@ final class DeloresSplitDividerCoordinator {
     private var recentLeftSnap: DeloresSnapRecord?
     private var recentRightSnap: DeloresSnapRecord?
     private static let dividerHoverTolerance: CGFloat = DeloresDividerPanel.width / 2
-    private static let dividerPairGap: CGFloat = 12
     private static let dividerMouseEpsilon: CGFloat = 0.5
     private static let dividerScanInterval: TimeInterval = 0.08
-    private var pairGapTolerance: CGFloat { max(Self.dividerPairGap, CGFloat(settings.windowGap) + 4) }
+    private var pairGapTolerance: CGFloat {
+        max(DeloresDividerGeometry.defaultPairGap, CGFloat(settings.windowGap) + 4)
+    }
     private struct SplitPair {
         let left: AXUIElement; let right: AXUIElement
         var leftRect: CGRect; var rightRect: CGRect; let screen: NSScreen
-        var dividerX: CGFloat { (leftRect.maxX + rightRect.minX) / 2 }
-        var y: CGFloat { max(leftRect.minY, rightRect.minY) }
-        var height: CGFloat { max(0, min(leftRect.maxY, rightRect.maxY) - y) }
+        var geometry: DeloresDividerGeometry.Seam {
+            DeloresDividerGeometry.Seam(left: leftRect, right: rightRect)
+        }
+        var dividerX: CGFloat { geometry.dividerX }
+        var y: CGFloat { geometry.y }
+        var height: CGFloat { geometry.height }
     }
     private struct DividerDrag { let pair: SplitPair; let startX: CGFloat }
     private struct DeloresSnapRecord { let window: AXUIElement; let rect: CGRect; let when: TimeInterval }
@@ -76,10 +80,13 @@ final class DeloresSplitDividerCoordinator {
         else { return nil }
         let l = geometry.flip(leftFrame)
         let r = geometry.flip(rightFrame)
-        guard abs(r.minX - l.maxX) <= pairGapTolerance else { return nil }
+        guard let seam = DeloresDividerGeometry.seam(
+            left: l, right: r, gapTolerance: pairGapTolerance,
+            minimumHeight: DeloresDividerGeometry.minimumPairHeight)
+        else { return nil }
         let pair = SplitPair(
-            left: left.window, right: right.window, leftRect: l, rightRect: r, screen: screen)
-        guard pair.height >= 120 else { return nil }
+            left: left.window, right: right.window,
+            leftRect: seam.left, rightRect: seam.right, screen: screen)
         return pair
     }
 
@@ -126,13 +133,9 @@ final class DeloresSplitDividerCoordinator {
     private func resetToFiftyFifty() {
         guard Permissions.isAccessibilityTrusted() else { return }
         guard let pair = splitPair ?? findSplitPair(near: NSEvent.mouseLocation) else { return }
-        let total = pair.leftRect.width + pair.rightRect.width
-        let half = total / 2
-        let left = CGRect(
-            x: pair.leftRect.minX, y: pair.leftRect.minY, width: half, height: pair.leftRect.height)
-        let right = CGRect(
-            x: pair.leftRect.minX + half, y: pair.rightRect.minY,
-            width: total - half, height: pair.rightRect.height)
+        let reset = DeloresDividerGeometry.reset(pair.geometry)
+        let left = reset.left
+        let right = reset.right
         let leftApplied = DeloresWindowGeometry.setWindowFrame(pair.left, rect: left)
         let rightApplied = DeloresWindowGeometry.setWindowFrame(pair.right, rect: right)
         // Same rule a refused drag follows: nothing half-applied stays on the screen.
@@ -200,14 +203,13 @@ final class DeloresSplitDividerCoordinator {
     /// so the numbers are already there to move away from; rounding to whole percent because "47%
     /// : 53%" is read at a glance where "46.8% : 53.2%" has to be looked at.
     private func reportRatio(leftWidth: CGFloat, total: CGFloat) {
-        guard total > 0 else { return }
-        let left = Int((leftWidth / total * 100).rounded())
-        divider?.updateRatio(left: left, right: 100 - left)
+        guard let ratio = DeloresDividerGeometry.ratio(leftWidth: leftWidth, total: total) else { return }
+        divider?.updateRatio(left: ratio.left, right: ratio.right)
     }
 
     private func isNearDivider(_ point: CGPoint, pair: SplitPair) -> Bool {
-        abs(point.x - pair.dividerX) <= Self.dividerHoverTolerance
-            && point.y >= pair.y && point.y <= pair.y + pair.height
+        DeloresDividerGeometry.isNear(
+            point, seam: pair.geometry, tolerance: Self.dividerHoverTolerance)
     }
 
     /// Reads the two cached windows back, so a pair that drifted apart stops being a seam. Cheaper
@@ -219,30 +221,24 @@ final class DeloresSplitDividerCoordinator {
         else { return nil }
         let left = geometry.flip(leftAX)
         let right = geometry.flip(rightAX)
-        let leftIsLeft = left.minX <= right.minX
-        let l = leftIsLeft ? left : right
-        let r = leftIsLeft ? right : left
-        guard abs(r.minX - l.maxX) <= pairGapTolerance else { return nil }
+        guard let seam = DeloresDividerGeometry.seam(
+            left: left, right: right, gapTolerance: pairGapTolerance,
+            minimumHeight: DeloresDividerGeometry.minimumPairHeight)
+        else { return nil }
         var refreshed = pair
-        refreshed.leftRect = l
-        refreshed.rightRect = r
-        guard refreshed.height >= 120 else { return nil }
+        refreshed.leftRect = seam.left
+        refreshed.rightRect = seam.right
         return refreshed
     }
 
     private func dragDivider(to point: CGPoint) {
         guard let start = dividerStart else { return }
         let total = start.pair.leftRect.width + start.pair.rightRect.width
-        let minWidth: CGFloat = 250
-        guard total >= minWidth * 2 else { return }
-        let leftWidth = min(max(start.pair.leftRect.width + point.x - start.startX, minWidth), total - minWidth)
-        let delta = leftWidth - start.pair.leftRect.width
-        let left = CGRect(
-            x: start.pair.leftRect.minX, y: start.pair.leftRect.minY,
-            width: leftWidth, height: start.pair.leftRect.height)
-        let right = CGRect(
-            x: start.pair.rightRect.minX + delta, y: start.pair.rightRect.minY,
-            width: total - leftWidth, height: start.pair.rightRect.height)
+        guard let moved = DeloresDividerGeometry.dragged(
+            start.pair.geometry, deltaX: point.x - start.startX)
+        else { return }
+        let left = moved.left
+        let right = moved.right
         let leftApplied = DeloresWindowGeometry.setWindowFrame(start.pair.left, rect: left)
         let rightApplied = DeloresWindowGeometry.setWindowFrame(start.pair.right, rect: right)
         guard leftApplied, rightApplied else {
@@ -253,7 +249,7 @@ final class DeloresSplitDividerCoordinator {
             return
         }
         divider?.show(x: (left.maxX + right.minX) / 2, y: start.pair.y, height: start.pair.height)
-        reportRatio(leftWidth: leftWidth, total: total)
+        reportRatio(leftWidth: moved.left.width, total: total)
     }
 
     private func endDivider() {
@@ -294,26 +290,27 @@ final class DeloresSplitDividerCoordinator {
                 let a = candidates[i], b = candidates[j]
                 let left = a.rect.minX < b.rect.minX ? a : b
                 let right = a.rect.minX < b.rect.minX ? b : a
-                let gap = abs(right.rect.minX - left.rect.maxX)
-                let seamY = max(left.rect.minY, right.rect.minY)
-                let seamHeight = max(0, min(left.rect.maxY, right.rect.maxY) - seamY)
-                let dividerX = (left.rect.maxX + right.rect.minX) / 2
-                guard gap <= pairGapTolerance,
-                      seamHeight / min(left.rect.height, right.rect.height) >= 0.7 else { continue }
-                let distance = abs(point.x - dividerX)
-                guard distance <= Self.dividerHoverTolerance,
-                      point.y >= seamY, point.y <= seamY + seamHeight else { continue }
+                guard let seam = DeloresDividerGeometry.seam(
+                    left: left.rect,
+                    right: right.rect,
+                    gapTolerance: pairGapTolerance,
+                    minimumOverlapRatio: DeloresDividerGeometry.minimumOverlapRatio)
+                else { continue }
+                let distance = abs(point.x - seam.dividerX)
+                guard DeloresDividerGeometry.isNear(
+                    point, seam: seam, tolerance: Self.dividerHoverTolerance)
+                else { continue }
                 // Nearest seam wins: two overlapping pairs must not make the handle jump.
                 if let best, distance >= best.distance { continue }
-                guard let leftWindow = window(pid: left.pid, near: left.rect),
-                      let rightWindow = window(pid: right.pid, near: right.rect),
+                guard let leftWindow = window(pid: left.pid, near: seam.left),
+                      let rightWindow = window(pid: right.pid, near: seam.right),
                       AXWindowAccess.isSettable(kAXPositionAttribute, on: leftWindow),
                       AXWindowAccess.isSettable(kAXPositionAttribute, on: rightWindow)
                 else { continue }
                 best = (
                     SplitPair(
-                        left: leftWindow, right: rightWindow, leftRect: left.rect,
-                        rightRect: right.rect, screen: screen),
+                        left: leftWindow, right: rightWindow, leftRect: seam.left,
+                        rightRect: seam.right, screen: screen),
                     distance)
             }
         }

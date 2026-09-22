@@ -1,4 +1,7 @@
-# Window Layouts
+# Archived: Window Layouts
+
+> This document describes the retired saved-layout editor. It is preserved as a migration reference
+> only; Window Layouts are no longer an active Delores capability or launcher entry.
 
 A **Window Layout** is a saved, declarative arrangement: these apps, at these sizes, at these
 positions, on these displays. Running it from the launcher or a global shortcut opens whatever isn't

@@ -164,7 +164,7 @@ enum Theme {
         static let previewAspectRatio: CGFloat = 16 / 9
         /// Opening size and resize floor: the Quick Actions row's width, the sidebar's full height.
         static let settingsWindow = CGSize(width: 900, height: 700)
-        /// Settings sidebar: a fixed column, wide enough for "Window Management".
+        /// Settings sidebar: a fixed column, wide enough for the longest surface title.
         static let settingsSidebar: CGFloat = 215
         /// The narrowest the pane column may get before a grouped row's control starts colliding.
         static let settingsDetailMinimum: CGFloat = 420
@@ -174,24 +174,6 @@ enum Theme {
         static let interfaceSizeSegment: CGFloat = 40
         /// The sidebar's search field; matches a grouped `Form` row's control height.
         static let settingsSearchField: CGFloat = 28
-        /// The layout editor. Height is stated so selecting an entry cannot resize the sheet.
-        static let layoutEditorSheet = CGSize(width: 900, height: 660)
-        /// The inspector column; the preview takes the rest, keeping the split two-to-one.
-        static let layoutInspectorColumn: CGFloat = 300
-        /// The entry dropdown's list, wider than its button so a long app name still reads.
-        static let layoutEntryPopover: CGFloat = 260
-        /// An app icon inside a preview rect, small enough a narrow window still shows one.
-        static let layoutPreviewIcon: CGFloat = 22
-        /// A numbered display tab under the preview.
-        static let layoutDisplayTab: CGFloat = 24
-        /// Every inspector control — field, dropdown, add button — sits on this one height.
-        static let layoutControlHeight: CGFloat = 28
-        /// The unit slot in a numeric field, stated so "%" and "pt" put their digits on one x.
-        static let layoutFieldUnit: CGFloat = 16
-        static let layoutPositionGlyph = CGSize(width: 26, height: 19)
-        static let layoutPositionStroke: CGFloat = 1.5
-        /// A position cell's clickable row; the glyph floats inside it, so the whole cell hits.
-        static let layoutPositionCell: CGFloat = 34
         /// Settings editor modals: fixed width, intrinsic height.
         static let editorSheetWidth: CGFloat = 480
         /// The multi-line box inside those modals; it scrolls rather than grows the sheet.
@@ -361,16 +343,9 @@ enum Theme {
         static let cardFill = ramp(dark: 0.05, light: 0.04)
         static let cardStroke = ramp(dark: 0.10, light: 0.10)
         /// White in both: the frost brightens glass, and light glass needs more to read at all.
-        /// A window on the preview's plate. White in both, since the plate is always dark.
-        static let layoutPreviewWindow = adaptive(
-            dark: .srgbInk(1, alpha: 0.22), light: .srgbInk(1, alpha: 0.28))
-        /// The selected one, lifted enough to read as chosen before the accent stroke is seen.
-        static let layoutPreviewWindowSelected = adaptive(
-            dark: .srgbInk(1, alpha: 0.38), light: .srgbInk(1, alpha: 0.44))
-        /// The preview's plate: a display is dark in both appearances, so `adaptive`, not `ramp`.
-        static let layoutPreviewGround = adaptive(
-            dark: .srgbInk(0, alpha: 0.55), light: .srgbInk(0, alpha: 0.50))
         static let glassFrost = adaptive(dark: .srgbInk(1, alpha: 0.05), light: .srgbInk(1, alpha: 0.25))
+        /// A light-only veil improves black menu-bar text contrast through a translucent glass panel.
+        static let glassSurfaceScrim = adaptive(dark: .clear, light: .srgbInk(1, alpha: 0.30))
         /// The pill behind the header of the section a Settings search jumped to.
         static let searchFlash = Color.accentColor.opacity(0.35)
         /// The two squares of a checkerboard, behind a colour with alpha to show.
@@ -398,5 +373,8 @@ extension View {
     func frosted(in shape: some Shape) -> some View {
         glassEffect(.regular.interactive().tint(Theme.Colors.glassFrost), in: shape)
             .tint(.clear)
+            .overlay {
+                shape.fill(Theme.Colors.glassSurfaceScrim).allowsHitTesting(false)
+            }
     }
 }

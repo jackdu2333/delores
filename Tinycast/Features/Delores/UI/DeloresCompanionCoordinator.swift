@@ -186,6 +186,7 @@ final class DeloresCompanionCoordinator {
         companion = panel
         panel.onSingleClick = { [weak self] in self?.companionSingleClick() }
         panel.onDoubleClick = { [weak self] in self?.companionDoubleClick() }
+        panel.onAccessibilityPress = { [weak self] in self?.companionDoubleClick() }
         panel.onLongPress = { [weak self] in self?.companion?.showBubble() }
         panel.onDrag = { [weak self] point in self?.dragCompanion(to: point) }
         panel.onDragEnded = { [weak self] point in self?.dropCompanion(at: point) }

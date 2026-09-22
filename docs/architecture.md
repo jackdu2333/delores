@@ -16,7 +16,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ Calculator/* · SystemAction · VolumeLevel · HotKey{Action,Binding} ·       │
 │ HyperKey · DoubleTap{Modifier,Detector} · Clipboard{Store,Filter} ·        │
 │ Color{Value,Format,Spaces} · WindowCommand · WindowCycle ·                 │
-│ WindowPlacementEngine · WindowActionMemory · WindowLayout/* ·              │
+│ WindowPlacementEngine · WindowActionMemory ·                              │
 │ SpaceGesture · PaletteRowIndex ·                                           │
 │ Uninstall{Target,SearchRoot,Rules,Protection,Plan} · AppleShortcut ·       │
 │ Quicklink{,Destination,Store,Archive,TemplateEngine} ·                     │
@@ -34,7 +34,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 ┌─ EFFECT ─────────────────────────▼─────────────────────────────────────────┐
 │ AppIndex · SpotlightNames · AppLauncher · FileSearchService ·              │
 │ SettingsPaneScanner · AliasStore · VisibilityStore ·                       │
-│ AXWindowAccess · AXScreens · WindowInventory · WindowLayoutRunner ·        │
+│ AXWindowAccess · AXScreens · WindowInventory ·                            │
 │ IconCache · WindowMover · UninstallScanner · UninstallRunner ·             │
 │ SystemActionRunner · QuicklinkLauncher · TextInjector · Paster ·           │
 │ ClipboardManager · CurrencyRateStore · HotKeyCenter · KeyShortcut ·        │
@@ -89,7 +89,7 @@ the shared primitives and system shims every feature draws on. Neither may depen
 `AppCore.shared` (`App/AppCore.swift`) is a `@MainActor` singleton owning every long-lived thing in the
 active app: the stores (`AppIndex`, `ClipboardStore`, `QuicklinkStore`, `FavoritesStore`,
 `VisibilityStore`, `AliasStore`, `LauncherRankingStore`, `CalculatorHistoryStore`, `CurrencyRateStore`,
-`ChatHistoryStore`, `WindowLayoutStore`), the managers and monitors (`ClipboardManager`,
+`ChatHistoryStore`), the managers and monitors (`ClipboardManager`,
 `HotKeyManager`, `HyperKeyTap`, `RunningAppsMonitor`), the shared state (`AppSettings`, `PaletteState`,
 `FileSearchSession`, `MenuSearchSession`, `UninstallSession`), the active feature coordinators, and
 the window controllers. Retired packs are outside this owner graph.

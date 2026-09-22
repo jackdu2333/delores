@@ -27,7 +27,12 @@ for arg in "$@"; do
     esac
 done
 
-export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+if [ -d /Applications/Xcode.app/Contents/Developer ]; then
+    DELORES_DEFAULT_DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+else
+    DELORES_DEFAULT_DEVELOPER_DIR=/Library/Developer/CommandLineTools
+fi
+export DEVELOPER_DIR="${DEVELOPER_DIR:-$DELORES_DEFAULT_DEVELOPER_DIR}"
 
 if [ "$CLEAN" = 1 ]; then
     # A worktree of HEAD shares the object database and carries *nothing* untracked, which is the
@@ -49,7 +54,9 @@ else
     echo "▸ Working tree at $(git rev-parse --short HEAD 2>/dev/null || echo 'not a git tree')"
 fi
 
-echo "▸ $(xcodebuild -version 2>/dev/null | head -1), SDK $(xcrun --sdk macosx --show-sdk-version)"
+TOOLCHAIN_VERSION="$(xcodebuild -version 2>/dev/null | head -1 || true)"
+[ -n "$TOOLCHAIN_VERSION" ] || TOOLCHAIN_VERSION="Xcode unavailable ($DEVELOPER_DIR)"
+echo "▸ $TOOLCHAIN_VERSION, SDK $(xcrun --sdk macosx --show-sdk-version)"
 echo
 
 FAILED=()
@@ -68,7 +75,9 @@ step() {
 
 step "Harnesses"        ./Scripts/run-tests.sh
 step "Delores harness"  ./Scripts/run-delores-tests.sh
+step "Delores geometry" ./Scripts/run-delores-geometry-tests.sh
 step "Upstream drift"   ./Tests/upstream-drift-test.sh
+step "Product boundaries" ./Scripts/check-product-boundaries.sh
 
 # CI skips this harness when its runner's SDK is older than the one the vendored snapshot needs. The
 # guard is kept rather than dropped: this machine has SDK 27 today, and the check is worth running the
@@ -115,7 +124,7 @@ fi
 # check that could not run rather than as a pass — the two node checks are run directly instead of
 # being lost with it.
 if command -v swiftlint >/dev/null; then
-    step "Lint" ./Scripts/lint.sh
+    step "Lint" env TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-$DEVELOPER_DIR}" ./Scripts/lint.sh
 else
     echo "▸ Lint"
     echo "— cannot run: swiftlint is not installed.  brew install swiftlint"

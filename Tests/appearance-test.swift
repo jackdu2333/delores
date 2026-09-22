@@ -57,6 +57,7 @@ struct AppearanceTests {
         dark("cardFill", c.cardFill, is: Color.white.opacity(0.05))
         dark("cardStroke", c.cardStroke, is: Color.white.opacity(0.10))
         dark("glassFrost", c.glassFrost, is: Color.white.opacity(0.05))
+        dark("glassSurfaceScrim", c.glassSurfaceScrim, is: Color.clear)
         dark("dropGuide", c.dropGuide, is: Color.white.opacity(0.35))
         dark("brand", c.brand, is: Color(red: 0.525, green: 0.231, blue: 1.0))
 
@@ -74,7 +75,8 @@ struct AppearanceTests {
             ("controlSurface", c.controlSurface), ("border", c.border),
             ("textPrimary", c.textPrimary), ("textSecondary", c.textSecondary),
             ("textTertiary", c.textTertiary), ("cardFill", c.cardFill),
-            ("cardStroke", c.cardStroke), ("glassFrost", c.glassFrost), ("dropGuide", c.dropGuide),
+            ("cardStroke", c.cardStroke), ("glassFrost", c.glassFrost),
+            ("glassSurfaceScrim", c.glassSurfaceScrim), ("dropGuide", c.dropGuide),
             ("iconPlaceholder", c.iconPlaceholder), ("sheen", c.sheen)
         ] {
             adapts(label, token)
@@ -123,6 +125,16 @@ struct AppearanceTests {
 
         // Frost brightens glass in both, so it is the one token that stays white either side.
         check("frost stays white", components(c.glassFrost, .aqua)[0] == 255)
+        let lightGlassScrim = components(c.glassSurfaceScrim, .aqua)
+        check(
+            "light glass scrim is a 30% white veil",
+            Array(lightGlassScrim.prefix(3)) == [255, 255, 255]
+                && abs(Double(lightGlassScrim[3]) / 255 - 0.30) < 0.01)
+        let linearWhiteVeil = pow((0.30 + 0.055) / 1.055, 2.4)
+        let worstCaseBlackTextContrast = (linearWhiteVeil + 0.05) / 0.05
+        check(
+            "light glass veil improves worst-case contrast over a black menu bar",
+            worstCaseBlackTextContrast > 2.0)
 
         print("# .system hands the choice back to AppKit")
         check("system is nil", AppAppearance.system.nsAppearance == nil)
