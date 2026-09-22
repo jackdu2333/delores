@@ -369,7 +369,8 @@ final class AppSettings {
         {
             deloresCompanionMode = mode
         } else {
-            let mode = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue) ? .delores : .off
+            let mode: DeloresCompanionMode = defaults.bool(
+                forKey: Key.deloresCompanionEnabled.rawValue) ? .delores : .off
             defaults.set(mode.rawValue, forKey: Key.deloresCompanionMode.rawValue)
             deloresCompanionMode = mode
         }
