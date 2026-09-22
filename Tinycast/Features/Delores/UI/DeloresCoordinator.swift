@@ -1,5 +1,8 @@
+import CoreGraphics
+
 @MainActor
 final class DeloresCoordinator {
+    private let settings: AppSettings
     private let context: DeloresContextCoordinator
     private let companion: DeloresCompanionCoordinator
     private let codexPet: DeloresCodexPetWindowProbe
@@ -10,6 +13,7 @@ final class DeloresCoordinator {
     private var hasLaunchedOnce = false
     private var appliedCompanionMode: DeloresCompanionMode?
     init(settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector, aiChat: AIChatCoordinator) {
+        self.settings = settings
         let gate = interactionGate
         let codexPet = DeloresCodexPetWindowProbe()
         let context = DeloresContextCoordinator(
