@@ -241,7 +241,7 @@ DeloresCompanionShell（Model）         ← 不动，但尺寸变更是它的�
 资产生成走 `Scripts/gen-companion-atlas.js`（Node，同 `gen-currencies.js` 家风）：输入源帧
 PNG，输出图集 + `CompanionAtlas.generated.swift`（行列枚举与帧数常量）。生成物不手改，
 且**必须提交**——构建不得依赖 Node。
-Petdex 皮肤的走路行由 `Scripts/gen-companion-petdex.py` 重切：使用全局联合包围盒消除抽搐暴跳，按物种自适应采帧（如柴犬 1/3/5/7、黑猫 0/3/4/7、呆呆鸭 0/1/4/5、鲸鱼豆居中悬浮），idle 等行不动。
+Petdex 皮肤的走路行由 `Scripts/gen-companion-petdex.py` 重切：使用全局联合包围盒消除抽搐暴跳，按物种自适应采帧（如柴犬 1/3/5/7、黑猫 0/3/4/7、咕咕嘎嘎 0/1/4/5、鲸鱼豆居中悬浮），idle 等行不动。
 
 **归属**：`CompanionAtlas.generated.swift` 放 `Features/Delores/Model/`（纯常量，可进 harness）；
 图集 PNG 放 `Tinycast/Resources/`。

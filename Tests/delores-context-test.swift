@@ -1092,6 +1092,17 @@ struct DeloresContextTest {
         require(
             fromBar.frame.minY >= docked.minY && fromBar.frame.maxY <= docked.maxY,
             "the bar itself stays in the visible area")
+        require(DeloresCompanionShell.Kind.allCases.count == 11, "11 companion kinds are defined")
+        require(
+            DeloresCompanionShell.Kind.ddoZvzo.displayName == "ddo-zvzo (crayfish)",
+            "ddoZvzo display name is ddo-zvzo (crayfish)")
+        require(
+            DeloresCompanionShell.Kind.gugugaga.displayName == "Gugugaga",
+            "gugugaga display name is Gugugaga")
+        for kind in DeloresCompanionShell.Kind.allCases {
+            require(!kind.displayName.isEmpty, "companion kind display name must not be empty")
+            require(!kind.resourceName.isEmpty, "companion kind resource name must not be empty")
+        }
     }
 
     private static func testCompanionAnimation() {

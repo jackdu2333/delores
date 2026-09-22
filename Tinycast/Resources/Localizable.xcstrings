@@ -1491,12 +1491,12 @@
         }
       }
     },
-    "ddo-zvzo (little yellow chick)": {
+    "ddo-zvzo (crayfish)": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "ddo-zvzo (呆萌小黄鸡)"
+            "value": "ddo-zvzo (小龙虾)"
           }
         }
       }
@@ -2331,12 +2331,12 @@
         }
       }
     },
-    "Gugugaga (silly duck)": {
+    "Gugugaga": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "咕咕嘎嘎 (呆呆鸭)"
+            "value": "咕咕嘎嘎"
           }
         }
       }
