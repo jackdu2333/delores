@@ -1143,11 +1143,19 @@ struct DeloresContextTest {
         // Ruling 2, rewritten: the pose and the position no longer share a clock. The position is
         // moved on its own, faster beat, and the two rates are whole multiples of each other so the
         // cadence cannot drift.
-        require(DeloresCompanionAnimation.walkFrame == 1.0 / 6.0, "walking is pinned at an ambling 6 fps")
+        require(DeloresCompanionAnimation.walkFrame == 1.0 / 9.0, "walking is pinned at an ambling 9 fps")
         require(DeloresCompanionAnimation.walkStep == 1.0 / 18.0, "the body is moved on a faster beat")
         let movesPerPose = DeloresCompanionAnimation.walkFrame / DeloresCompanionAnimation.walkStep
-        require(abs(movesPerPose - 3) < 0.0001, "a whole number of moves to a drawn pose")
+        require(abs(movesPerPose - 2) < 0.0001, "a whole number of moves to a drawn pose")
         require(DeloresCompanionAnimation.breathDuration == 2.0, "a breath is two seconds across two frames")
+
+        let gaitWeights = (0..<DeloresCompanionAnimation.walkFrameCount).map { frame in
+            (frame == 1 || frame == 3) ? 1.3 : 0.7
+        }
+        let meanWeight = gaitWeights.reduce(0.0, +) / Double(gaitWeights.count)
+        require(abs(meanWeight - 1.0) < 0.0001, "gait weights conserve overall velocity across cycle")
+        let movesPerCycle = Int(movesPerPose) * DeloresCompanionAnimation.walkFrameCount
+        require(movesPerCycle == 8, "exactly 8 position ticks per 4-frame walk cycle")
     }
 
     private static func testInvocationContext() {

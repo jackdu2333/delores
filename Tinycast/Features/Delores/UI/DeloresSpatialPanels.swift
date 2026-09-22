@@ -234,13 +234,11 @@ final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
     override var canBecomeKey: Bool { true }
 
     func present(at center: CGPoint) { move(to: center); orderFrontRegardless() }
-    /// Where the window goes for a body centred on `center`.
-    ///
-    /// Whole points, because the body is pixel art: an origin that is not on a whole point puts a
-    /// fractional number of screen pixels under each authored pixel, and the art then shimmers as it
-    /// moves — the same picture, drawn a little differently every frame.
     private func origin(for center: CGPoint) -> CGPoint {
-        CGPoint(x: (center.x - size.radius).rounded(), y: (center.y - size.radius).rounded())
+        let scale = backingScaleFactor > 0 ? backingScaleFactor : 2.0
+        let x = ((center.x - size.radius) * scale).rounded() / scale
+        let y = ((center.y - size.radius) * scale).rounded() / scale
+        return CGPoint(x: x, y: y)
     }
 
     func move(to center: CGPoint) { setFrameOrigin(origin(for: center)) }

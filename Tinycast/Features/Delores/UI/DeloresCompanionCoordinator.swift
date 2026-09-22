@@ -43,9 +43,7 @@ final class DeloresCompanionCoordinator {
     /// How far off the visible edge the body rides, which is its own radius: a body drawn at the
     /// larger step stands further in, or it would hang off the display.
     private var bodyRadius: CGFloat { settings.deloresCompanionSize.radius }
-    /// How often the body is moved while walking. A rest runs no timer at all, so this is the whole
-    /// of the Companion's walking cost — and it is the *position's* rate, not the pose's: the pose is
-    /// counted out inside it, three of these ticks to one drawn frame.
+    /// How often the body is moved while walking.
     private static var strollStep: TimeInterval { DeloresCompanionAnimation.walkStep }
     /// Monotonic, so a clock change cannot make a rest look overdue or a step look enormous.
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
@@ -83,7 +81,7 @@ final class DeloresCompanionCoordinator {
         else { return nil }
         let loop = loop(on: screen)
         guard !loop.isEmpty else { return nil }
-        var center = companion.center
+        var center = wander?.center ?? companion.center
         let standing = DeloresWindowGeometry.screenContaining(center)
         // Same-display includes the menu bar; `visibleFrame.contains` does not.
         if !DeloresCompanionShell.isOnSameDisplay(
@@ -107,12 +105,13 @@ final class DeloresCompanionCoordinator {
     /// to travel across displays, and an island beside where the body stands is already beside it.
     func bodyAnchor(on screen: NSScreen) -> DeloresCompanionAnchor? {
         guard isRunning, !isHiddenForFullscreen, let companion, companion.isVisible else { return nil }
-        guard let standing = DeloresWindowGeometry.screenContaining(companion.center),
+        let center = wander?.center ?? companion.center
+        guard let standing = DeloresWindowGeometry.screenContaining(center),
             standing.frame == screen.frame
         else { return nil }
         return (
-            companion.center,
-            DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: standing)),
+            center,
+            DeloresCompanionWander.edge(for: center, in: companionBounds(on: standing)),
             bodyRadius
         )
     }
@@ -122,8 +121,9 @@ final class DeloresCompanionCoordinator {
     func applyCompanionSize() {
         guard let companion, companion.isVisible else { return }
         companion.applySize(settings.deloresCompanionSize)
-        guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
-        let landed = DeloresCompanionWander.project(companion.center, into: loop(on: screen))
+        let center = wander?.center ?? companion.center
+        guard let screen = DeloresWindowGeometry.screenContaining(center) else { return }
+        let landed = DeloresCompanionWander.project(center, into: loop(on: screen))
         companion.move(to: landed)
         settle(at: landed, on: screen)
     }
@@ -137,7 +137,9 @@ final class DeloresCompanionCoordinator {
     func holdForShell() {
         shellHolds += 1
         stopWanderTimers()
-        // It is standing still for as long as the shell is up, so it is idle rather than mid-step.
+        walkElapsed = 0
+        walkFrame = 0
+        if let wander { companion?.move(to: wander.center) }
         companion?.rest()
     }
 
@@ -146,10 +148,11 @@ final class DeloresCompanionCoordinator {
         guard shellHolds > 0 else { return }
         shellHolds -= 1
         guard !isHoldingShell else { return }
-        guard isRunning, let companion, companion.isVisible,
-            let screen = DeloresWindowGeometry.screenContaining(companion.center)
+        let center = wander?.center ?? companion?.center
+        guard isRunning, let companion, companion.isVisible, let center,
+            let screen = DeloresWindowGeometry.screenContaining(center)
         else { return }
-        settle(at: companion.center, on: screen)
+        settle(at: center, on: screen)
     }
 
     /// A shell did not fit where the body was standing and the body had to be moved along its edge
@@ -168,13 +171,16 @@ final class DeloresCompanionCoordinator {
             guard interactionGate.claim(.companion) else { return }
             companion.setCaptured(true)
             stopWanderTimers()
-            // Being picked up is not walking: the body stands in the reader's hand.
+            walkElapsed = 0
+            walkFrame = 0
+            if let wander { companion.move(to: wander.center) }
             companion.rest()
         } else {
             companion.setCaptured(false)
             interactionGate.release(.companion)
-            guard isRunning, let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
-            settle(at: companion.center, on: screen)
+            let center = wander?.center ?? companion.center
+            guard isRunning, let screen = DeloresWindowGeometry.screenContaining(center) else { return }
+            settle(at: center, on: screen)
         }
     }
     private func startCompanion() {
@@ -247,11 +253,11 @@ final class DeloresCompanionCoordinator {
         } else if !fullscreen && isHiddenForFullscreen {
             isHiddenForFullscreen = false
             guard let companion else { return }
-            let screen = DeloresWindowGeometry.screenContaining(companion.center)
+            var center = wander?.center ?? companion.center
+            let screen = DeloresWindowGeometry.screenContaining(center)
                 ?? DeloresWindowGeometry.activeScreen()
             guard let screen else { return }
             let bounds = companionBounds(on: screen)
-            var center = companion.center
             if !bounds.insetBy(dx: -1, dy: -1).contains(center) {
                 center = spawnPoint(on: screen)
             }
@@ -295,21 +301,19 @@ final class DeloresCompanionCoordinator {
     /// there at all. Both rows write the keys the Settings pane writes, so this is an entry point to
     /// two settings rather than a configuration surface the body grew of its own.
     private func companionRightClick() {
-        guard let companion, companion.isVisible,
-            let screen = DeloresWindowGeometry.screenContaining(companion.center)
-        else { return }
+        guard let companion, companion.isVisible else { return }
+        holdForShell()
+        let center = wander?.center ?? companion.center
+        guard let screen = DeloresWindowGeometry.screenContaining(center) else { return }
         let anchor = DeloresCompanionMenuController.Anchor(
-            petCenter: companion.center,
+            petCenter: center,
             petFrame: companion.frame,
-            edge: DeloresCompanionWander.edge(for: companion.center, in: companionBounds(on: screen)),
+            edge: DeloresCompanionWander.edge(for: center, in: companionBounds(on: screen)),
             bodyRadius: bodyRadius,
             visibleFrame: screen.visibleFrame)
         let landed = companionMenu.show(
             companionMenuItems(), anchoredTo: anchor, metrics: settings.interfaceSize.metrics)
-        // Held while it is up: the menu hangs off the body, and a body that walked out from under it
-        // would leave it hanging over nothing.
-        holdForShell()
-        guard landed != companion.center else { return }
+        guard landed != center else { return }
         companion.move(to: landed)
     }
 
@@ -365,6 +369,8 @@ final class DeloresCompanionCoordinator {
     }
 
     private func settle(at point: CGPoint, on screen: NSScreen) {
+        walkElapsed = 0
+        walkFrame = 0
         wander = DeloresCompanionWander.settled(
             at: point, in: loop(on: screen), at: now, using: &rng)
         syncWanderTimers()
@@ -373,36 +379,54 @@ final class DeloresCompanionCoordinator {
     private func advanceWander() {
         guard isRunning, !isHiddenForFullscreen, !isHoldingShell, let companion, companion.isVisible, let state = wander
         else { return }
-        guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
+        let center = state.center
+        guard let screen = DeloresWindowGeometry.screenContaining(center) else { return }
         let tick = now
         let elapsed = tick - lastWanderTick
         lastWanderTick = tick
-        // Read from the wander rather than from the window: the window origin is snapped to whole
-        // points for the artwork's sake, and that rounding must not colour which way the body turns.
         let from = state.center
-        let next = DeloresCompanionWander.advance(
-            state, elapsed: elapsed, now: tick, in: loop(on: screen), using: &rng)
-        wander = next
-        companion.move(to: next.center)
-        syncWanderTimers()
-        guard case .strolling = next.phase else { return }
-        // Ruling 3: the facing reads off the step's horizontal component, and a step with none keeps
-        // what it had — a body on a vertical edge must not flip sides every frame.
-        facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
-        // Setting off walks into its first pose rather than waiting a frame for one, and always into
-        // the contact pose: a trip begins with both feet down.
         if case .resting = state.phase {
+            let next = DeloresCompanionWander.advance(
+                state, elapsed: elapsed, now: tick, in: loop(on: screen), using: &rng)
+            wander = next
+            syncWanderTimers()
+            guard case .strolling = next.phase else { return }
             walkElapsed = 0
             walkFrame = 0
+            facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
             companion.step(frame: 0, facing: facing)
+            companion.move(to: next.center)
             return
         }
-        // The pose keeps its own slower clock, counted out of the same ticks that move the body.
+        let currentFrame = walkFrame % DeloresCompanionAnimation.walkFrameCount
+        let isPushOff = (currentFrame == 1 || currentFrame == 3)
+        let gaitWeight: Double = isPushOff ? 1.3 : 0.7
+        let effectiveElapsed = elapsed * gaitWeight
+        let next = DeloresCompanionWander.advance(
+            state, elapsed: effectiveElapsed, now: tick, in: loop(on: screen), using: &rng)
+        wander = next
+        syncWanderTimers()
+        guard case .strolling = next.phase else {
+            walkElapsed = 0
+            walkFrame = 0
+            companion.move(to: next.center)
+            return
+        }
         walkElapsed += elapsed
-        guard walkElapsed >= DeloresCompanionAnimation.walkFrame else { return }
-        walkElapsed -= DeloresCompanionAnimation.walkFrame
-        walkFrame += 1
-        companion.step(frame: walkFrame % DeloresCompanionAnimation.walkFrameCount, facing: facing)
+        if walkElapsed >= DeloresCompanionAnimation.walkFrame {
+            let framesAdvanced = Int(walkElapsed / DeloresCompanionAnimation.walkFrame)
+            walkElapsed = walkElapsed.truncatingRemainder(dividingBy: DeloresCompanionAnimation.walkFrame)
+            walkFrame += framesAdvanced
+        }
+        let displayFrame = walkFrame % DeloresCompanionAnimation.walkFrameCount
+        facing = DeloresCompanionAnimation.facing(from: from, to: next.center, fallback: facing)
+        companion.step(frame: displayFrame, facing: facing)
+        var displayCenter = next.center
+        let isBobbingFrame = displayFrame == 1 || displayFrame == 3
+        if isBobbingFrame, abs(next.center.x - from.x) > 0.0001 {
+            displayCenter.y += 1.5
+        }
+        companion.move(to: displayCenter)
     }
 
     private func handleCompanionPointer(at point: CGPoint) {
@@ -456,9 +480,10 @@ final class DeloresCompanionCoordinator {
     private func relocateCompanion() {
         evaluateFullscreenPresence()
         guard let companion, companion.isVisible else { return }
-        guard let screen = DeloresWindowGeometry.screenContaining(companion.center) else { return }
+        let center = wander?.center ?? companion.center
+        guard let screen = DeloresWindowGeometry.screenContaining(center) else { return }
         // A body on the perimeter is on the boundary of its bounds, which `contains` excludes.
-        guard !companionBounds(on: screen).insetBy(dx: -1, dy: -1).contains(companion.center) else { return }
+        guard !companionBounds(on: screen).insetBy(dx: -1, dy: -1).contains(center) else { return }
         let point = spawnPoint(on: screen)
         companion.move(to: point)
         settle(at: point, on: screen)
