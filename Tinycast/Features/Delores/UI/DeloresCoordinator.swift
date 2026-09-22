@@ -21,7 +21,7 @@ final class DeloresCoordinator {
             interactionGate: gate,
             additionalInteractiveSurfaceHitTest: { [weak codexPet] point in
                 guard settings.deloresCompanionMode == .codex else { return false }
-                codexPet?.containsPet(at: point) == true
+                return codexPet?.containsPet(at: point) == true
             })
         let companion = DeloresCompanionCoordinator(
             settings: settings, interactionGate: gate,
@@ -30,7 +30,7 @@ final class DeloresCoordinator {
             settings: settings, interactionGate: gate,
             additionalIgnoredPoint: { [weak codexPet] point in
                 guard settings.deloresCompanionMode == .codex else { return false }
-                codexPet?.containsPet(at: point) == true
+                return codexPet?.containsPet(at: point) == true
             })
         let divider = DeloresSplitDividerCoordinator(settings: settings, interactionGate: gate)
         snapping.onWindowGeometryChanged = { [weak divider] point in
