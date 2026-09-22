@@ -47,6 +47,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let onStopAnswer: () -> Void
         let onRetryAnswer: () -> Void
         let onFollowUp: (String) -> Void
+        let onContinueInCommand: () -> Void
         let onDismiss: () -> Void
     }
 
@@ -174,6 +175,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onStopAnswer: @escaping () -> Void,
         onRetryAnswer: @escaping () -> Void,
         onFollowUp: @escaping (String) -> Void,
+        onContinueInCommand: @escaping () -> Void,
         onDismiss: @escaping () -> Void,
         companion: DeloresCompanionAnchor? = nil
     ) {
@@ -190,7 +192,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         presented = Presented(
             context: context, actions: actions, metrics: metrics, onAction: onAction,
             onReplaceAnswer: onReplaceAnswer, onStopAnswer: onStopAnswer,
-            onRetryAnswer: onRetryAnswer, onFollowUp: onFollowUp, onDismiss: onDismiss)
+            onRetryAnswer: onRetryAnswer, onFollowUp: onFollowUp,
+            onContinueInCommand: onContinueInCommand, onDismiss: onDismiss)
         // A new selection brings a new conversation, so yesterday's half-typed question goes with it.
         followUpDraft = ""
 
@@ -589,6 +592,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             onStopAnswer: { [weak self] in self?.presented?.onStopAnswer() },
             onRetryAnswer: { [weak self] in self?.presented?.onRetryAnswer() },
             onFollowUp: { [weak self] question in self?.presented?.onFollowUp(question) },
+            onContinueInCommand: { [weak self] in self?.presented?.onContinueInCommand() },
             followUpInput: Binding(
                 get: { [weak self] in self?.followUpDraft ?? "" },
                 set: { [weak self] in self?.followUpDraft = $0 }),

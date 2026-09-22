@@ -112,7 +112,7 @@ enum SettingsSearchCatalog {
 
     static let entries: [SettingsSearchEntry] =
         delores
-        + contextSurface + ai + quickActions
+        + aiAndActions + contextSurface
         + companionSurface
         + commandSurface + applications + systemSettings + systemActions + commands
         + quicklinks + appleShortcuts + fallbacks
@@ -284,8 +284,14 @@ enum SettingsSearchCatalog {
             keywords: ["no results", "empty", "search web", "order", "无结果", "回退"])
     ]
 
-    /// These rows land on `.contextSurface`, which now owns the pane-level entry as well.
-    private static let ai: [SettingsSearchEntry] = [
+    /// Shared AI, model and chat settings land on the Core capabilities pane.
+    private static let aiAndActions: [SettingsSearchEntry] = [
+        .init(
+            pane: .aiAndActions,
+            keywords: [
+                "core", "capabilities", "ai", "actions", "models", "chat", "tools",
+                "核心能力", "人工智能", "动作"
+            ]),
         .init(.aiAI, "Enable AI", keywords: ["chat", "llm"]),
         .init(
             .aiProviders, "Providers",
@@ -316,20 +322,13 @@ enum SettingsSearchCatalog {
             keywords: ["tools", "model context protocol", "stdio"]),
         .init(
             group: .aiCommands, "AI commands",
-            keywords: ["shortcut", "launcher", "chat"])
-    ]
-
-    /// Same as the `ai` block above: the pane-level entry belongs to `.contextSurface`.
-    private static let quickActions: [SettingsSearchEntry] = [
-        .init(
-            .quickActionsQuickActions, "Enable the Context Surface",
-            keywords: ["selected text", "accessibility", "划词", "启用"]),
+            keywords: ["shortcut", "launcher", "chat"]),
         .init(
             .quickActionsModel, "Model",
-            keywords: ["llm", "ai", "default"]),
+            keywords: ["quick actions", "selection", "llm", "ai", "default"]),
         .init(
             .quickActionsTranslate, "Translate to",
-            keywords: ["language", "locale"])
+            keywords: ["quick actions", "language", "locale"])
     ]
 
     private static let fileSearch: [SettingsSearchEntry] = [
@@ -398,6 +397,9 @@ enum SettingsSearchCatalog {
                 "selected text", "bar", "translate", "explain", "summarize", "search",
                 "custom", "划词", "翻译", "解释", "总结", "自定义"
             ]),
+        .init(
+            group: .contextSurfaceEnable, "Enable the Context Surface",
+            keywords: ["selected text", "accessibility", "划词", "启用"]),
         .init(
             group: .contextSurfaceContextBar, "Selection Toolbar",
             keywords: ["rows", "actions", "model", "划词栏"]),

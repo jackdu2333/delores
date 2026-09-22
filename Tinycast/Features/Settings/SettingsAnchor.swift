@@ -41,23 +41,21 @@ extension SettingsAnchor {
 
     static let fallbacksFallbacks = Self(tab: .fallbacks, title: "Fallbacks")
 
-    // These keep their `ai` prefix though the pane merged into `.contextSurface`: the name still
-    // says whose section it is, and renaming would touch five files for no reader-visible gain.
-    static let aiAI = Self(tab: .contextSurface, title: "AI")
-    static let aiProviders = Self(tab: .contextSurface, title: "Providers")
-    static let aiDefault = Self(tab: .contextSurface, title: "Default")
-    static let aiChat = Self(tab: .contextSurface, title: "Chat")
-    static let aiConversations = Self(tab: .contextSurface, title: "Conversations")
-    static let aiSystemPrompt = Self(tab: .contextSurface, title: "System prompt")
-    static let aiInstalledAI = Self(tab: .contextSurface, title: "Installed AI")
-    static let aiAPIConnections = Self(tab: .contextSurface, title: "API Connections")
-    static let aiMCPServers = Self(tab: .contextSurface, title: "MCP Servers")
-    static let aiCommands = Self(tab: .contextSurface, title: "Commands")
+    // These sections belong to the shared Core capability pane, even when one of their consumers is
+    // a Surface. The anchor names preserve the feature vocabulary used by their owning views.
+    static let aiAI = Self(tab: .aiAndActions, title: "AI")
+    static let aiProviders = Self(tab: .aiAndActions, title: "Providers")
+    static let aiDefault = Self(tab: .aiAndActions, title: "Default")
+    static let aiChat = Self(tab: .aiAndActions, title: "Chat")
+    static let aiConversations = Self(tab: .aiAndActions, title: "Conversations")
+    static let aiSystemPrompt = Self(tab: .aiAndActions, title: "System prompt")
+    static let aiInstalledAI = Self(tab: .aiAndActions, title: "Installed AI")
+    static let aiAPIConnections = Self(tab: .aiAndActions, title: "API Connections")
+    static let aiMCPServers = Self(tab: .aiAndActions, title: "MCP Servers")
+    static let aiCommands = Self(tab: .aiAndActions, title: "Commands")
 
-    // Same reason as the `ai` block above: the pane is `.contextSurface` now, the name is not.
-    static let quickActionsQuickActions = Self(tab: .contextSurface, title: "Context Surface")
-    static let quickActionsModel = Self(tab: .contextSurface, title: "Answering model")
-    static let quickActionsTranslate = Self(tab: .contextSurface, title: "Translate")
+    static let quickActionsModel = Self(tab: .aiAndActions, title: "Answering model")
+    static let quickActionsTranslate = Self(tab: .aiAndActions, title: "Translate")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
     static let fileSearchCommands = Self(tab: .fileSearch, title: "Commands")
@@ -83,6 +81,7 @@ extension SettingsAnchor {
 
     /// "Selection Toolbar", not "Context Bar": the bar acts on a selection, and a name that says so
     /// is the one a reader looks for.
+    static let contextSurfaceEnable = Self(tab: .contextSurface, title: "Context Surface")
     static let contextSurfaceContextBar = Self(tab: .contextSurface, title: "Selection Toolbar")
 
     static let companionSurfaceCompanion = Self(tab: .companionSurface, title: "Companion")

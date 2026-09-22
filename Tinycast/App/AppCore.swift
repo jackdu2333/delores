@@ -327,7 +327,8 @@ final class AppCore {
             against: aiSettings.connections, fallback: aiSettings.defaultModel)
         guard let selection = quickActionSettings.model(forActionID: id) ?? aiSettings.defaultModel
         else {
-            throw AIProviderError.unavailable("Choose a model in Settings \u{2192} Quick Actions.")
+            throw AIProviderError.unavailable(
+                L10n.string("Choose a model in Settings → Core → AI & Actions."))
         }
         return try AIProviderFactory.make(
             selection: selection, settings: aiSettings, subscription: chatGPTSubscription,

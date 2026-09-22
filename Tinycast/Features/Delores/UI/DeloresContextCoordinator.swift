@@ -294,6 +294,7 @@ final class DeloresContextCoordinator {
             onStopAnswer: { [weak self] in self?.stopAnswering() },
             onRetryAnswer: { [weak self] in self?.askAgain() },
             onFollowUp: { [weak self] question in self?.followUp(question) },
+            onContinueInCommand: { [weak self] in self?.continueInCommand() },
             onDismiss: { [weak self] in self?.surfaceDismissed() },
             companion: pet)
     }
@@ -470,6 +471,27 @@ final class DeloresContextCoordinator {
         conversation.commitForFollowUp()
         // A follow-up asks about the answer, so it is a model's turn whatever produced that answer.
         answer(action, selection: selection, path: .model, question: asked)
+    }
+
+    /// Hands a finished Context result to Command with both pieces of captured context intact. The
+    /// result card is the only place this escalation is exposed; it is not another Context action.
+    private func continueInCommand() {
+        guard case .selection = context,
+            let (action, selection, _) = lastRun,
+            let current = conversation.current,
+            !current.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+        let prompt = DeloresCommandHandoff.prompt(
+            actionTitle: action.displayTitle,
+            selection: selection,
+            answer: current.answer)
+        let continuing = aiChat.isChatOnScreen
+        releaseSurface()
+        if continuing {
+            _ = aiChat.send(prompt)
+        } else {
+            aiChat.ask(prompt)
+        }
     }
 
     private func cancelAnswer() {

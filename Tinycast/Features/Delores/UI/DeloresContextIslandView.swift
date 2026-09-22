@@ -172,6 +172,8 @@ struct DeloresContextIslandView: View {
     let onRetryAnswer: () -> Void
     /// Asks a further question about this answer, carrying the turn already answered.
     let onFollowUp: (String) -> Void
+    /// Escalates the completed result into the full Command conversation.
+    let onContinueInCommand: () -> Void
     let onDismiss: () -> Void
     /// The question being typed, held above the view rather than in it: the card is rebuilt for every
     /// token of the reply above it, and `@State` here would be emptied each time — mid-sentence.
@@ -208,6 +210,7 @@ struct DeloresContextIslandView: View {
         onStopAnswer: @escaping () -> Void = {},
         onRetryAnswer: @escaping () -> Void = {},
         onFollowUp: @escaping (String) -> Void = { _ in },
+        onContinueInCommand: @escaping () -> Void = {},
         followUpInput: Binding<String> = .constant(""),
         onDismiss: @escaping () -> Void
     ) {
@@ -227,6 +230,7 @@ struct DeloresContextIslandView: View {
         self.onStopAnswer = onStopAnswer
         self.onRetryAnswer = onRetryAnswer
         self.onFollowUp = onFollowUp
+        self.onContinueInCommand = onContinueInCommand
         self.onDismiss = onDismiss
         _followUpInput = followUpInput
         _isPinned = State(initialValue: isPinned)
@@ -554,6 +558,13 @@ struct DeloresContextIslandView: View {
                     answerButton(
                         L10n.string("Replace the selection"), symbol: "text.insert"
                     ) { onReplaceAnswer() }
+                }
+                if !answer.isRunning, answer.failure == nil, let text = answer.text, !text.isEmpty {
+                    answerButton(
+                        L10n.string("Continue in Command"), symbol: "arrow.up.right"
+                    ) { onContinueInCommand() }
+                    .help(L10n.string("Continue asking"))
+                    .accessibilityLabel(L10n.string("Continue asking"))
                 }
             }
         }

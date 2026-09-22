@@ -1,12 +1,10 @@
 import Combine
 import SwiftUI
 
-/// The Context Surface: one pane for everything that answers a selection, in the order it is set up.
+/// The Context Surface: its switch and the action rows that appear for a selection.
 ///
-/// Turn AI on and choose its model, turn the Surface on, then the toolbar's own rows, then the
-/// model and language those rows fall back to, and last the chat sections this Surface never
-/// reads. It used to open on ten AI sections and leave the toolbar — the pane's whole subject —
-/// at the bottom.
+/// Shared AI, model, action-routing and chat settings live in the Core capabilities pane. Keeping
+/// them there prevents this Surface from becoming a second configuration surface for the core.
 ///
 /// The built-in Quick Actions have no list of their own here: the toolbar's rows are the one place
 /// a selection's actions are listed and given a model. The switch lives in this file because it
@@ -25,11 +23,8 @@ struct ContextSurfaceSettingsView: View {
 
     var body: some View {
         Form {
-            AISettingsView()
             switchSection
             contextBarSection
-            QuickActionsSettingsView()
-            AIChatSettingsView()
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.contextSurface)
@@ -52,7 +47,7 @@ struct ContextSurfaceSettingsView: View {
     private var switchSection: some View {
         Section {
             Toggle(isOn: enabledBinding) {
-                SettingsRowTitle(.quickActionsQuickActions, "Enable the Context Surface")
+                SettingsRowTitle(.contextSurfaceEnable, "Enable the Context Surface")
                 Text(
                     L10n.string(
                         "Act on the text you have selected in any app. Delores reads a selection only after a shortcut or a completed selection gesture, then shows the toolbar at the top of the screen."
@@ -74,7 +69,7 @@ struct ContextSurfaceSettingsView: View {
                 }
             }
         } header: {
-            SettingsSectionHeader(.quickActionsQuickActions)
+            SettingsSectionHeader(.contextSurfaceEnable)
         }
     }
 

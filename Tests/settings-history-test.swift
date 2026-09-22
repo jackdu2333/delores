@@ -115,8 +115,8 @@ struct SettingsHistoryTests {
     static func sidebarOrder() {
         expect(
             SettingsSection.allCases.map { String(describing: $0) }
-                == ["delores", "context", "companion", "splitScreen", "searchBox", "system"],
-            "sidebar keeps the product blocks in the intended order, Split Screen after the Surfaces")
+                == ["delores", "core", "context", "companion", "splitScreen", "searchBox", "system"],
+            "sidebar keeps Core capabilities before the Surfaces and Split Screen after them")
     }
 
     static func sidebarCoversEveryPane() {
@@ -161,7 +161,7 @@ struct SettingsHistoryTests {
             ("paste history", .clipboard),
             ("split screen", .splitScreen),
             ("raycast export", .backup),
-            ("mcp", .contextSurface)
+            ("mcp", .aiAndActions)
         ]
         for (query, tab) in cases {
             let found = SettingsSearchCatalog.results(for: query).first

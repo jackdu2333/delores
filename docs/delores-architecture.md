@@ -50,7 +50,8 @@ selection gesture
     → DeloresContextCoordinator
     → Context Island
     ├─ an action press → its own card, streamed on that action's own route
-    └─ a press asking for Chat → AIChatCoordinator → the chat surface in the palette
+    ├─ a completed result → Continue in Command → AIChatCoordinator → the chat surface in the palette
+    └─ a future explicit hand-off action → AIChatCoordinator → the chat surface in the palette
 ```
 
 The island owns its own catalogue. `DeloresContextAction` defines the four shipped rows
@@ -77,7 +78,9 @@ did exactly that, and the four Actions were native Quick Actions keeping their o
 diff/replace semantics. That is no longer the code, and this section used to say it was. What survives
 is the escalation seam: an action whose `kind` is `.ask` grows the island and hands the captured
 selection to `AIChatCoordinator`, and `requiresChatHandoff` is `kind == .ask`. No shipped row is
-`.ask`, so the seam is currently unexercised and kept for a future selection-aware Chat entry.
+`.ask`; the current product entry is the completed result card's **Continue in Command** button,
+which builds a dedicated `DeloresCommandHandoff` prompt so both the selection and the result travel to
+Chat without adding a permanent Context row.
 
 Chat remains an explicit escalation rather than the destination of every press. The handoff
 infrastructure still carries per-turn instructions, provider and guardrails for those future entries.
@@ -154,7 +157,8 @@ island takes key only on demand, an Escape pressed at the bar before that belong
 app — the deliberate cost of not stealing the keyboard over a fresh selection. While the card is
 opening it also cancels the press, because `onAction` does not fire until the growth ends.
 
-The handoff animation is now reserved for the explicit `Ask AI` escalation. Catalog actions
+The handoff animation is now reserved for the result card's explicit **Continue in Command** escalation.
+Catalog actions
 (translate / explain / summarize / search, and any custom row) execute in the Context Surface's own card. They do not
 leave through the Quick Action admission path, and they do not open Chat.
 
@@ -197,8 +201,9 @@ drew the same line: a pinned panel there still answered Escape.
 **The chat hand-off joins a chat that is already on screen instead of starting over.** A chat the
 reader can see is a conversation, and replacing it would take away the answer they were reading.
 `AIChatCoordinator.isChatOnScreen` reports the fact; the choice stays with `DeloresContextCoordinator`.
-No catalog row reaches this today — 问 AI was retired as a duplicate of 解释 — so what follows is the
-behaviour of a live seam rather than of a button, kept because it is the island's only route into Chat.
+The result card is the only current button that reaches Chat. 问 AI was retired as a duplicate of 解释,
+and no permanent catalog row replaces it. `DeloresCommandHandoff` carries the captured selection and
+the completed answer as context, while a Chat already on screen receives the same prompt as another turn.
 
 ## Asking again
 
@@ -351,7 +356,7 @@ including items outside this document's scope, is kept in [delores-backlog.md](d
 | Per-action route for a Context Surface action that no Quick Action backs | `AppCore.quickActionProvider(forActionID:)`, `QuickActionSettingsStore.model(forActionID:)` **and now `modelOverride(forActionID:)` / `setModelOverride(_:forActionID:)`**, `QuickActionCoordinator.provider(forActionID:)` | One small integration seam. Id-keyed, so a per-action model binding survives a catalog Delores owns; `quickActionProvider(for:)` and `model(for:)` now delegate to these, so no behaviour moved. The two by-id accessors were added when the bar's rows got a settings section of their own — the read existed, the write did not, and `setModelOverride(_:for:)` cannot serve an id like `explain` that no `QuickAction` can be made from |
 | Reader-replaceable per-action prompt, reached by id | `QuickActionCoordinator.instructionOverride(forActionID:)`, `QuickActionSettings.instructionOverride(forActionID:)` | The Context Surface applies it to any catalog row whose id is also a `BuiltInQuickAction`, so a prompt rewritten in Settings reaches the bar. Id-keyed for the same reason the model route is: the two catalogues overlap without agreeing. `provider(for:)` is **still unreferenced** — delete them the next time the chat handoff is designed and they remain unused |
 | Custom Quick Actions on the Context Surface | `QuickActionCoordinator.customQuickActionRows`, `DeloresContextAction.available(aiEnabled:customActions:)`, `ContextSurfaceSettingsView` | Settings writes them through the same store Quick Actions uses; the island only copies. The row's entry id is its binding key, so a model bound in Settings survives the trip |
-| Explicit Ask AI entry carrying the current selection | `AIChatCoordinator` | One small integration seam; selection-aware prompt/provider seams remain available for a future richer handoff |
+| Result-card Continue in Command handoff | `DeloresCommandHandoff`, `DeloresContextCoordinator`, `AIChatCoordinator` | One small integration seam; the CTA carries the selected text and completed answer without adding a Context row |
 | Palette dismissal while the reader holds a pinned Context Surface | `Palette/PaletteWindowController.swift` | One guarded branch in `windowDidResignKey`, scoped to `AppCore.isHoldingPinnedContext` |
 | App lifecycle wiring | `AppCore`, `DeloresCoordinator` | One small integration seam |
 | Own-surface event admission | `OwnSurfaceHitPolicy`, `OwnSurfaceHitTester`, `DeloresSurfaceInteractionGate` | Explicitly marked interactive surfaces only; ordinary windows such as Settings stay out, pass-through overlays remain transparent, and one gesture belongs to one surface |

@@ -16,6 +16,17 @@ Delores 是一个核心长出的三张脸。用户打开设置时问的是「**�
 **改造方向：让侧边栏成为产品定位的镜像。** 三个 Surface 升为一级分组，
 产品总览排在最前，能力与系统归入下方。
 
+## 当前实施状态（2026-09-22）
+
+本轮已把共享能力集中到 **Core Capabilities → AI & Actions**：AI、模型路由、Quick Actions、
+Chat、MCP 和相关命令共用一个 `Form`，Context Surface 只保留自身开关与 Selection Toolbar。
+当前侧边栏顺序为：Overview、Core Capabilities、Context Surface、Companion Surface、Split Screen、
+Search Box Settings、System。
+
+Action × Surface 已建立可执行矩阵：Context 展示轻量主动作，Command 承接完整能力，Companion
+只做入口与 hand-off。Ask AI 不进入常驻动作目录，只在已完成的结果卡片中显示 **在 Command 中继续**。
+Companion 不增加独立菜单栏图标。
+
 ---
 
 ## 诊断
@@ -46,10 +57,11 @@ Delores 是一个核心长出的三张脸。用户打开设置时问的是「**�
 ### D3 — 一个 Surface 的开关与配置分居两地（定位层）
 
 Context Surface 的 opt-in 边界是 `quickActionsEnabled`（`delores-architecture.md` 明确记载
-"is still the opt-in boundary for the Context Surface"），它住在 **Quick Actions pane**；
-而它的行目录、每行的模型绑定住在 **Delores pane** 的 `contextBarSection`。
+"is still the opt-in boundary for the Context Surface"），它现在住在 **Context Surface pane**；
+它的行目录也在 **Context Surface pane** 的 `contextBarSection`，共享 AI/模型路由则归入
+**Core Capabilities → AI & Actions**。
 
-后果：用户要开 Context Surface 得去「快捷操作」，要配它的行得去「Delores」。
+结果：用户在 Context Surface 找到开关和动作栏，在 Core 能力区找到跨 Surface 复用的模型与 AI 配置。
 
 > **注意**：文档同时记载「A separate Context switch should only appear when the product
 > needs independent control, so the consent semantics do not split prematurely」。
@@ -109,12 +121,9 @@ Context Surface 的 opt-in 边界是 `quickActionsEnabled`（`delores-architectu
 | | 快捷指令 | `appleShortcuts` |
 | **Context Surface** | 划词栏 | `delores` 的 `contextBarSection` + Context 的 opt-in 入口 |
 | **Companion Surface** | 陪伴者 | `delores` 的 `companionSection` |
-| **能力** | 窗口摆放 | `windowManagement` + `delores` 的 `windowSection` |
-| | AI | `ai` |
-| | 快捷操作 | `quickActions` |
-| | 剪贴板 | `clipboard` |
-| | 笔记 | `notes` |
-| | 文件搜索与导航 | `fileSearch` + `navigation` |
+| **Core Capabilities** | AI 与操作 | `ai` + `quickActions`，共享一处配置 |
+| **Split Screen** | 分屏 | `windowManagement` 的保留能力 |
+| **Search Box Settings** | 搜索框及其扩展 | Command Surface 的搜索、应用、系统动作、快捷链接、剪贴板、笔记、文件搜索与导航 |
 | **系统** | 权限 | `permissions` |
 | | 备份 | `backup` |
 | | 关于 | `about` |
@@ -163,15 +172,13 @@ Context Surface 的 opt-in 边界是 `quickActionsEnabled`（`delores-architectu
 - **验证**：同阶段 2，另需人工确认没有设置项在搬迁中丢失。
 - **风险**：中高。涉及跨 pane 搬迁设置项，**建议先列清单再动手**。
 
-### 阶段 4 — Context 开关入口归位（需产品决策）
+### 阶段 4 — Context 开关入口归位（已执行）
 
 - **目标**：让 Context Surface 的 opt-in 开关在 Context pane 里可触达。
 - **约束**：**不新增独立开关**。既有决策是不提前拆 consent 语义。
-- **做法（二选一，需拍板）**：
-  - A：Context pane 显示开关的**只读状态**，并提供跳转到 Quick Actions pane 的入口；
-  - B：Context pane 内嵌一个绑定到同一个 `quickActionsEnabled` 的 `Toggle`
+- **已执行做法**：Context pane 内嵌一个绑定到同一个 `quickActionsEnabled` 的 `Toggle`
     （同一个 key，不产生第二个开关，但两处可写）。
-- **风险**：产品决策，不是实现问题。**不要在没有明确指令的情况下自行选择。**
+- **结果**：共享 AI/模型/Quick Actions/Chat 配置已移入 Core capabilities pane；Context 只保留自身开关与动作栏。
 
 ---
 
@@ -224,19 +231,20 @@ Scripts/check-settings-search.js（lint.sh 调用）
 改为：**窗口吸附独立成自己的 pane（`.windowSnapping`），与 `.windowManagement` 同属「能力」分组并相邻。**
 产品目标（一个能力集中在一处）达成，上游边界不动。
 
-### 最终信息架构
+### 当前信息架构（2026-09-22）
 
 | 分组 | panes |
 | --- | --- |
 | Delores | Overview |
-| Command Surface | Command Surface、Applications、System Settings、System Actions、Commands、Quicklinks、Apple Shortcuts、Fallbacks |
+| Core Capabilities | AI & Actions |
 | Context Surface | Context Surface |
 | Companion Surface | Companion Surface |
-| Capabilities | Window Management、Window Snapping、AI、Quick Actions、Clipboard、Notes、File Search、Navigation |
+| Split Screen | Split Screen |
+| Search Box Settings | Search Box、Applications、System Settings、System Actions、Commands、Quicklinks、Apple Shortcuts、Fallbacks、Clipboard、Notes、File Search、Navigation |
 | System | General、Permissions、Backup、About |
 
-23 个 pane。（原 19 个；新增 5 个：Overview 复用 `.delores`、`.commandSurface`、
-`.contextSurface`、`.companionSurface`、`.windowSnapping`；删除 1 个：原 `.delores` 三合一视图。）
+21 个 pane；共享 AI、模型和 Quick Actions 配置集中在 `aiAndActions`，Context 不再承载这些共享
+区块，Companion 仍没有独立菜单栏入口。
 
 ### 改动清单
 
@@ -257,12 +265,13 @@ Scripts/check-settings-search.js（lint.sh 调用）
 | 改本地化 | `Resources/Localizable.xcstrings`（**+162 行纯追加，0 删除**） |
 | 重新生成 | `Tinycast.xcodeproj/project.pbxproj`（20 增 4 删） |
 
-**`CommandCatalog.swift` 的 `ownedCommands` 未改动** —— 三个新 pane 都不拥有 launcher 命令。
+**`CommandCatalog.swift` 的 `ownedCommands` 已随 Core pane 更新** —— AI Chat 与 Quick Actions 命令由
+`aiAndActions` 统一拥有，Context 不再承载共享命令。
 
 ### 阶段 4 的决定
 
 由 jackdu 拍板为「**面板内直接开关**」：Context Surface pane 内放一个绑定**同一个
-`quickActionsEnabled`** 的 `Toggle`，与 Quick Actions pane 是同一个开关的两个入口，
+`quickActionsEnabled`** 的 `Toggle`，与 Core capabilities pane 共享同一个开关语义，
 不新增开关、不拆分 consent 语义。两处状态由 `@Bindable` 自动同步。
 
 ### 验证结果（本机 CommandLineTools，无 Xcode）
@@ -282,8 +291,8 @@ Scripts/check-settings-search.js（lint.sh 调用）
 
 - **app target 编译**：`xcode-select -p` 指向 `/Library/Developer/CommandLineTools`，无 Xcode，
   **无法编译 app target**。因此以下无法确证，需要一台有 Xcode 的机器补做：
-  - 界面实际渲染（侧边栏六分组、总览页三行、开关与禁用态）
-  - `Toggle` 在两处（Context Surface / Quick Actions）的状态同步
+  - 界面实际渲染（侧边栏七分组、Core/Context 页面、开关与禁用态）
+  - `Toggle` 在两处（Context Surface / Core）的状态同步
   - `SettingsRow` 包在 `Button` 里点击跳转的命中区域
 - **格式**：`SettingsAnchor.swift` 有 1 处既有空行（第 96–97 行两个连续空行，位于
   `clipboardDisabledApplications` 与 `permissionsAccessibility` 之间）。**非本次引入，按
@@ -294,7 +303,3 @@ Scripts/check-settings-search.js（lint.sh 调用）
 ### 后续待办
 
 1. 在有 Xcode 的机器上 `xcodebuild … -scheme Delores -configuration Debug build` 并肉眼验收。
-2. 更新 `docs/delores-architecture.md` 的 ownership 表：`SettingsTab` / `SettingsAnchor` /
-   `SettingsDetailView` / `SettingsSearchCatalog` 四个接缝的说明需要反映新的 pane 集合。
-3. `docs/` 与 `website/` 里描述设置侧边栏的页面需要跟进（若有）。
-

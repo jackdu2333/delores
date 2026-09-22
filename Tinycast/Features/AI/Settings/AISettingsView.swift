@@ -19,7 +19,7 @@ struct AISettingsView: View {
     var body: some View {
         @Bindable var appSettings = appSettings
         @Bindable var settings = settings
-        // A `Group`, not a `Form`: the Context Surface pane owns the one `Form` these are composed into.
+        // A `Group`, not a `Form`: the Core capabilities pane owns the one `Form` these compose into.
         return Group {
             Section {
                 Toggle(isOn: $appSettings.aiEnabled) {
@@ -553,11 +553,9 @@ private struct AIConnectionRow: View {
     }
 }
 
-/// Chat, its prompt, the launcher commands and MCP: the AI surface the selection toolbar never reads.
+/// Chat, its prompt, the launcher commands and MCP: shared AI capabilities used by several surfaces.
 ///
-/// Its own view so the pane can put the toolbar above them. They used to sit inside
-/// `AISettingsView`, which composes as one block and so could only be wholly before the toolbar or
-/// wholly after it — and "wholly before" is what buried the toolbar under ten AI sections.
+/// Its own view so the Core capabilities pane can keep the shared configuration in one Form.
 struct AIChatSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AISettingsStore.self) private var settings
@@ -565,7 +563,7 @@ struct AIChatSettingsView: View {
 
     var body: some View {
         Group {
-            FeatureCommandsSection(owner: .contextSurface, anchor: .aiCommands)
+            FeatureCommandsSection(owner: .aiAndActions, anchor: .aiCommands)
                 .settingsEnabled(appSettings.aiEnabled)
             Group {
                 chatSection

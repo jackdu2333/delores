@@ -541,6 +541,16 @@
         }
       }
     },
+    "AI & Actions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 与操作"
+          }
+        }
+      }
+    },
     "AI commands": {
       "localizations": {
         "zh-Hans": {
@@ -1207,6 +1217,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "收起结果"
+          }
+        }
+      }
+    },
+    "Continue asking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续追问"
+          }
+        }
+      }
+    },
+    "Continue in Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Command 中继续"
           }
         }
       }
@@ -5191,6 +5221,16 @@
         }
       }
     },
+    "Core Capabilities": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核心能力"
+          }
+        }
+      }
+    },
     "Surfaces": {
       "localizations": {
         "zh-Hans": {
@@ -5517,6 +5557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "刻意与对话的模型分开：一天要按很多次的快捷键，不该每次都计费。Apple Intelligence 就跑在这台 Mac 上，不花钱。它也负责回答划词工具栏里的各行，除非那一行单独指定了模型——那些模型就在下方「划词工具栏」里、紧挨着各自的行设置。%@ 在你给它指定模型之前一直使用 Apple 的翻译器，除非遇到 Apple 不支持的语言对。"
+          }
+        }
+      }
+    },
+    "Choose a model in Settings → Core → AI & Actions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在设置 → 核心能力 → AI 与操作中选择模型。"
           }
         }
       }

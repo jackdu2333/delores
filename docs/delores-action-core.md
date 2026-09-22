@@ -196,10 +196,7 @@ actually meet.
 - Whether 翻译 should stay behind the AI switch now that an unbound one runs on Apple's translator.
   `DeloresContextAction.needsModel` is `kind != .search` today, so 翻译 leaves the bar when the AI
   feature is off even though it would need no model. The switch still gates it until that is decided.
-- Whether a selection-aware **Ask AI** row ships, which is what would put `DeloresContextAction.Kind.ask`
-  back in the bar. The constitution's Surface escalation makes Context → Command → Chat the named path,
-  so the kind, its hand-off card and `AIChatCoordinator.ask(_:instructions:provider:)` all stay wired and
-  tested. Only the instruction builder did not: `QuickActionPrompt.chatInstructions` had no caller in the
-  app, because the hand-off passes `action.message(selection:)` and no instructions at all — so what the
-  chat should be told when a row ships is part of this question rather than a helper waiting to be used.
-  That gap is the thing to fix with the row, not before it.
+- Whether a selection-aware **Ask AI** row ships is resolved: it does not become a permanent Context row.
+  The completed result card exposes **Continue in Command** instead. `DeloresCommandHandoff` carries
+  the selected material and the current answer into `AIChatCoordinator`; `DeloresContextAction.Kind.ask`
+  remains an internal hand-off seam for a future explicit action, not another Context catalogue entry.

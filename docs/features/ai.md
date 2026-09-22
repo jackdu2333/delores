@@ -15,13 +15,13 @@ depends on neither, and Quick Actions carries its own route rather than borrowin
   a streaming reply and drops the transcript, but touches neither the saved conversations in
   `ai-chats.sqlite3` nor a Keychain key. `aiEnabled` is excluded from settings backups like every
   other AI key, so an import can never arm a feature it cannot configure.
-- **Installed model discovery is per-provider.** Settings → AI → Providers keeps Codex, Claude and
+- **Installed model discovery is per-provider.** Settings → Core → AI & Actions → Providers keeps Codex, Claude and
   OpenCode visible with an individual toggle for each, all off by default. Turning one off cancels
   its check, clears its catalog and releases its process; Apple Intelligence is the default route when
   available, and saved API connections stay available.
 - **Every request carries Tinycast's own preamble, and the user's text goes after it.**
   `AIInstructions.compose` builds `AIRequest.instructions`: a fixed preamble that tells the model
-  where it is running and what the app can do, then whatever Settings → AI holds. The preamble
+  where it is running and what the app can do, then whatever Settings → Core → AI & Actions holds. The preamble
   keeps the model a general-purpose assistant — the app facts are reference for when the user asks,
   never a scope limit — and asks for honest comparisons; it does not instruct the model to favour
   Tinycast over anything else. It is not shown in the pane, and `AIPreamble.swift` holds the only
@@ -85,7 +85,7 @@ depends on neither, and Quick Actions carries its own route rather than borrowin
   job: Send (`↵`), or Stop (`↵`) while a response streams — followed by Actions (`⌘K`), which owns
   New Chat. **A conversation outlives the window that showed it, and one place decides for how
   long.** Pop to Root forgets the screen and the query; whether the next summon resumes the
-  transcript is Settings → AI's `Opens to`, applied in `AIChatCoordinator.applyOpenPolicy` on the
+  transcript is Settings → Core → AI & Actions' `Opens to`, applied in `AIChatCoordinator.applyOpenPolicy` on the
   way into `.ai`. That used to be Pop to Root's job by accident — it fires on every hide, so a chat
   never survived Escape — and deciding at open time from a timestamp leaves one clock instead of two
   racing over the same state, and a verdict that still holds after a relaunch. A reply still
@@ -205,7 +205,7 @@ a debug description written for a log, so each case maps to a plain sentence ins
 
 The built-in `AI Chat` launcher command enters `AIScreen`, and carries a bindable global shortcut
 (`HotKeyAction.command(.aiChat)`) that does the same thing from any app; Tab from the launcher is the
-third way in. Settings → AI holds both the recorder and a checkbox for the command's place in launcher
+third way in. Settings → Core → AI & Actions holds both the recorder and a checkbox for the command's place in launcher
 search; the shortcut keeps working while the command is hidden, and does nothing at all while the
 feature is off. The palette search field becomes the single-line composer. The footer pill and
 Return are one action, `activate`: Send, or Stop while a response streams — an empty composer sends
@@ -378,7 +378,7 @@ Settings records a model into `AIConnection.visionModels` when it is added from 
 model added by hand is assumed text-only. A vendor API is assumed to take images; a model that
 doesn't simply returns the provider's error.
 
-Web search is a Settings → AI toggle, `aiWebSearch`, off by default: a prompt reaches a search engine
+Web search is a Settings → Core → AI & Actions toggle, `aiWebSearch`, off by default: a prompt reaches a search engine
 only once the user has opted in.
 It's still excluded from backups — which Mac may send prompts to a search engine is that Mac's call.
 Nothing *guesses* at a capability: images ride on what the model's own catalog said, and a vendor
@@ -459,7 +459,7 @@ width and clipped the search field well short of the button.
 
 ## Settings and backup boundary
 
-Settings → AI is a normal grouped `Form` inside Tinycast's existing Settings window. Its top AI
+Settings → Core → AI & Actions is a normal grouped `Form` inside Tinycast's existing Settings window. Its top AI
 section owns the feature switch and the **Providers → Manage…** action, and **Default model** below
 it picks the app-wide route and its reasoning effort. Provider management opens as a sheet, where
 **Installed AI** reports Codex, Claude and OpenCode separately as checking, ready, sign-in required,

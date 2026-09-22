@@ -9,6 +9,7 @@ struct SettingsDetailView: View {
         Group {
             switch navigation.tab {
             case .delores: DeloresOverviewView()
+            case .aiAndActions: CoreCapabilitiesSettingsView()
             case .commandSurface: CommandSurfaceSettingsView()
             case .contextSurface: ContextSurfaceSettingsView()
             case .companionSurface: CompanionSurfaceSettingsView()

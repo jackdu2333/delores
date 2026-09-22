@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings → AI's MCP half: the switch, the servers, and what each one is doing right now.
+/// The Core capabilities pane's MCP half: the switch, the servers, and their live status.
 struct MCPSettingsSection: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var appSettings

@@ -1,8 +1,8 @@
 import Combine
 import SwiftUI
 
-/// The model that answers the selection toolbar, and the language it translates to; composed into
-/// the pane that owns them.
+/// The model that answers action rows, and the language it translates to; composed into the Core
+/// capabilities pane that owns shared routing.
 ///
 /// It no longer lists the built-in Quick Actions, and no longer carries the switch: the toolbar's
 /// own rows are the one list of what a selection can do, and the switch belongs to the pane, which
@@ -14,7 +14,7 @@ struct QuickActionsSettingsView: View {
     @Environment(AISettingsStore.self) private var aiSettings
 
     var body: some View {
-        // A `Group`, not a `Form`: the Context Surface pane owns the one `Form` these compose into.
+        // A `Group`, not a `Form`: the Core capabilities pane owns the one `Form` these compose into.
         Group {
             modelSection
             languageSection

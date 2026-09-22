@@ -47,7 +47,7 @@
 | --- | --- | --- |
 | **Translate 一个 id 两个 backend** | 2026-09-17 已拍板（`delores-action-core.md` §Translate），**代码未落地** | `QuickActionRunner` 仍是 `builtInAction == .summarize` 的 enum 分支；「绑定了路由就用路由，否则用框架」未实现；同名 summarize 双上限（512 vs `min(count/3,512)`）仍并存 |
 | **步骤 4：Tinycast 四 case → 四 definition** | 未决（依赖上一项） | `delores-action-core.md` §The order 第 4 步 |
-| **Ask AI（selection-aware Chat 入口）** | seam 已建、无 row 使用——有意保留 | `.ask` 分支在 `DeloresContextCoordinator.run`；catalog 四行无一是 `.ask`（`ContextAction.swift`）；启用与否待产品拍板 |
+| **Ask AI（selection-aware Chat 入口）** | 已落地为结果卡片 CTA | 完成结果后只显示「在 Command 中继续」；`DeloresCommandHandoff` 携带选中文本与当前答案进入 Chat；Context catalog 仍保持四行，无常驻 `.ask` row |
 | **fixGrammar / rewrite 回不回 Context bar** | 未决产品问题 | `delores-action-core.md` §What this document does not decide |
 | **explain / search 上不上 Command Surface** | 未决（Phase C） | 同上 |
 

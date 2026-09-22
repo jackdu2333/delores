@@ -74,6 +74,18 @@ struct DeloresContextTest {
             actions.allSatisfy { !$0.title.isEmpty },
             "every action carries a title for its pill")
 
+        require(
+            actions.allSatisfy {
+                DeloresActionSurfaceMatrix.visibility(for: $0, on: .context) == .primary
+            },
+            "the Context catalogue contains only primary actions")
+        require(
+            DeloresActionSurfaceMatrix.visibility(for: actions[0], on: .command) == .available,
+            "the Command surface treats a shared action as available rather than duplicating its card")
+        require(
+            DeloresActionSurfaceMatrix.visibility(for: actions[0], on: .companion) == .handoff,
+            "the Companion never owns an action catalogue")
+
         require(actions.allSatisfy(\.isEnabled), "every default action is switched on")
 
         require(
@@ -100,6 +112,22 @@ struct DeloresContextTest {
         require(
             handOff.progress == .openingChat,
             "the hand-off card says what it is doing rather than naming the action")
+        require(
+            DeloresActionSurfaceMatrix.visibility(for: handOff, on: .context) == .resultCard,
+            "Ask AI is visible in a completed result card rather than as a Context row")
+        require(
+            DeloresActionSurfaceMatrix.visibility(for: handOff, on: .command) == .primary,
+            "Ask AI's destination is the Command surface")
+        require(
+            DeloresCommandHandoff.prompt(
+                actionTitle: "Explain", selection: "selected", answer: "answered")
+                .contains("<context-selection>\nselected\n</context-selection>"),
+            "the Command hand-off preserves the captured selection")
+        require(
+            DeloresCommandHandoff.prompt(
+                actionTitle: "Explain", selection: "selected", answer: "answered")
+                .contains("<context-answer>\nanswered\n</context-answer>"),
+            "the Command hand-off preserves the Context result")
         require(
             DeloresContextAction.catalog.allSatisfy { $0.progress == .running },
             "a row answered in the card reports itself rather than the hand-off")

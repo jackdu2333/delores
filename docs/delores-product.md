@@ -272,6 +272,23 @@ Surface-specific presentation is good.
 
 Surface-specific duplicate capability implementations are not.
 
+### Action × Surface visibility matrix
+
+| Action family | Context Surface | Command Surface | Companion Surface |
+| --- | --- | --- | --- |
+| Translate / Explain / Summarize / Search | Primary action row and local result | Only where Command has a deliberate entry; never a duplicate Context card | Handoff only; no action catalogue |
+| Custom actions | Primary action row when enabled | Available through shared Quick Action commands | Handoff only; no action catalogue |
+| Ask AI / continue a result | **Result-card escalation only** | Primary destination | Handoff only |
+
+The matrix is a visibility rule, not three implementations of the same capability. In particular,
+**Ask AI is not a permanent Context row**: it appears only after a result exists, where the user has
+enough evidence to decide whether the task deserves a larger conversation. The Companion remains an
+ambient entry point and does not gain a separate menu-bar icon.
+
+Settings follows the same boundary: **Core Capabilities → AI & Actions** owns shared AI, model,
+action-routing, Chat and MCP configuration; Context and Companion panes own only their local entry and
+presentation choices.
+
 ---
 
 ## Context first, Surface second
@@ -361,6 +378,10 @@ Examples of valid escalation:
 * the user wants to change models while exploring an answer;
 * tools or web search become necessary;
 * the task requires history, attachments or several turns.
+
+The concrete Context affordance for this escalation is the completed result card's **Continue in
+Command** action. It carries the selected material and the current answer into Chat; there is no
+permanent Ask AI row competing with the four lightweight Context actions.
 
 Examples that should normally remain in Context:
 

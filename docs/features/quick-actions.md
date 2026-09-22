@@ -2,7 +2,7 @@
 
 Act on whatever text is selected, in whatever app is frontmost. Four are shipped: Fix Grammar,
 Rewrite, Translate and Summarize, each with its own bindable shortcut **and its own launcher command**,
-both listed in **Settings → Quick Actions**. Three go through the AI provider layer; Translate goes to
+both listed in **Settings → Core → AI & Actions**. Three go through the AI provider layer; Translate goes to
 Apple's own translator, and to a model only when the reader binds one to that id. The result either
 replaces the selection or arrives in a floating panel, per action.
 

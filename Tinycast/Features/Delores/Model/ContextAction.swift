@@ -5,7 +5,7 @@ import Foundation
 /// A catalog row rather than a case in a switch. The toolbar this island came from had five actions
 /// of its own, and two of the four kept — 解释 and 搜索 — have no Quick Action behind them at all, so wrapping
 /// `BuiltInQuickAction` could not express the set the reader asked for. Keeping it as data is also
-/// what lets the Actions pane reorder, retitle and re-prompt a row without a new enum case, and what
+/// what lets the Core capabilities pane reorder, retitle and re-prompt a row without a new enum case, and what
 /// lets a per-action model binding be keyed by `id` across both surfaces.
 struct DeloresContextAction: Hashable, Identifiable, Sendable {
     /// How the action gets its answer. The two that do not call a model are the reason this is data:
@@ -88,6 +88,45 @@ struct DeloresContextAction: Hashable, Identifiable, Sendable {
     }
 
     var progress: Progress { kind == .ask ? .openingChat : .running }
+}
+
+/// The product surface an action can appear in. The action remains shared; this only describes how
+/// each surface should expose it.
+enum DeloresActionSurface: String, CaseIterable, Hashable, Sendable {
+    case context
+    case command
+    case companion
+}
+
+/// Visibility is deliberately more precise than a Boolean: a result-card escalation is visible,
+/// but it is not another row in the Context catalogue.
+enum DeloresActionVisibility: String, Hashable, Sendable {
+    case primary
+    case available
+    case resultCard
+    case handoff
+    case hidden
+}
+
+/// One executable product contract for Action × Surface presentation.
+enum DeloresActionSurfaceMatrix {
+    static func visibility(
+        for action: DeloresContextAction,
+        on surface: DeloresActionSurface
+    ) -> DeloresActionVisibility {
+        if action.kind == .ask {
+            switch surface {
+            case .context: return .resultCard
+            case .command: return .primary
+            case .companion: return .handoff
+            }
+        }
+        switch surface {
+        case .context: return .primary
+        case .command: return .available
+        case .companion: return .handoff
+        }
+    }
 }
 
 // MARK: - The catalog
@@ -186,6 +225,8 @@ extension DeloresContextAction {
         let rows = catalog + customActions.map(Self.init(_:))
         return rows.filter { action in
             guard action.isEnabled else { return false }
+            guard DeloresActionSurfaceMatrix.visibility(for: action, on: .context) == .primary
+            else { return false }
             return aiEnabled || !action.needsModel
         }
     }
