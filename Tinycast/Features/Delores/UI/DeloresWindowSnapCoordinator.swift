@@ -7,6 +7,7 @@ final class DeloresWindowSnapCoordinator {
     private var snapMonitor: Any?
     private var snapIsland: DeloresSnapIslandPanel?
     private var snapMonitorStart = CGPoint.zero
+    private var snapStartedOnIgnoredSurface = false
     private var snapCandidate: SnapCandidate?
     /// Whether the candidate still has to be read. Reading it costs a burst of accessibility
     /// calls into the app that was pressed, and a press that never becomes a drag — the
@@ -26,6 +27,7 @@ final class DeloresWindowSnapCoordinator {
     /// an island that slid after a wandering body mid-drag would be a thing chasing the reader
     /// rather than a thing they aimed at.
     private var snapBodyPlacement: DeloresCompanionShell.Placement?
+    private let additionalIgnoredPoint: (@MainActor (CGPoint) -> Bool)?
     var onWindowGeometryChanged: ((CGPoint) -> Void)?
     var onWindowSnapped: ((AXUIElement, DeloresSnapSlot, CGRect, NSScreen) -> Void)?
     private static let snapDragThreshold: CGFloat = 8
@@ -33,7 +35,14 @@ final class DeloresWindowSnapCoordinator {
     private static let snapIslandRevealInset: CGFloat = 110
     private static let snapTopCenterTriggerWidth: CGFloat = 660
     private struct SnapCandidate { let window: AXUIElement; let app: NSRunningApplication; let initialFrame: CGRect }
-    init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate) { self.settings = settings; self.interactionGate = interactionGate }
+    init(
+        settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate,
+        additionalIgnoredPoint: (@MainActor (CGPoint) -> Bool)? = nil
+    ) {
+        self.settings = settings
+        self.interactionGate = interactionGate
+        self.additionalIgnoredPoint = additionalIgnoredPoint
+    }
     func applyEnabled() { settings.deloresWindowSnappingEnabled ? startSnapping() : stopSnapping() }
     func prepareForTermination() { stopSnapping() }
     private func startSnapping() {
@@ -69,6 +78,7 @@ final class DeloresWindowSnapCoordinator {
         snapIsActive = false
         snapBodyPlacement = nil
         snapMonitorStart = .zero
+        snapStartedOnIgnoredSurface = false
         // Only a drag that actually moved a window can have moved a seam, and only a claimed
         // gate means one did. Notifying on every release made the divider walk every window
         // on the screen on the reader's every click — a burst of accessibility traffic into
@@ -93,6 +103,7 @@ final class DeloresWindowSnapCoordinator {
         switch type {
         case .leftMouseDown:
             snapMonitorStart = point
+            snapStartedOnIgnoredSurface = additionalIgnoredPoint?(point) == true
             // The candidate is not read yet: see `snapNeedsCandidate`. Reading it here put
             // accessibility calls into the pressed app before anything knew whether the press
             // was a drag at all.
@@ -100,6 +111,7 @@ final class DeloresWindowSnapCoordinator {
             snapNeedsCandidate = true
             snapIsActive = false
         case .leftMouseDragged:
+            guard !snapStartedOnIgnoredSurface else { return }
             guard hypot(point.x - snapMonitorStart.x, point.y - snapMonitorStart.y) >= Self.snapDragThreshold else { return }
             if snapNeedsCandidate {
                 snapNeedsCandidate = false
@@ -168,6 +180,7 @@ final class DeloresWindowSnapCoordinator {
             }
         case .leftMouseUp:
             defer { releaseSnap() }
+            guard !snapStartedOnIgnoredSurface else { return }
             guard snapIsActive, let candidate = snapCandidate, let snapIsland,
                   let screen = DeloresWindowGeometry.screenContaining(point),
                   let slot = snapIsland.slot(at: point) else { return }

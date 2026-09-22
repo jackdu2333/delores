@@ -50,7 +50,9 @@ final class DeloresCompanionCoordinator {
     init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate, onOpenContext: (() -> Void)? = nil) {
         self.settings = settings; self.interactionGate = interactionGate; self.onOpenContext = onOpenContext
     }
-    func applyEnabled() { settings.deloresCompanionEnabled ? startCompanion() : stopCompanion() }
+    func applyEnabled() {
+        settings.deloresCompanionMode.usesDeloresPet ? startCompanion() : stopCompanion()
+    }
     func prepareForTermination() { stopCompanion() }
     func recordSelection(_ text: String) { currentSelection = text; companion?.play(.glance) }
 
@@ -328,7 +330,7 @@ final class DeloresCompanionCoordinator {
             PopoverMenuItem.chrome(
                 title: "Turn off the companion", icon: .symbol("eye.slash"), startsSection: true,
                 detail: "Bring the menu bar back",
-                action: { [weak self] in self?.settings.deloresCompanionEnabled = false }),
+                action: { [weak self] in self?.settings.deloresCompanionMode = .off }),
         ]
     }
 

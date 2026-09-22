@@ -72,6 +72,7 @@
 		1C81DCEBEFFC1191751135F4 /* PalettePlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802BD2F4CC057228F2528217 /* PalettePlacement.swift */; };
 		1CA10DE219BAB97BFC29E54A /* SettingsSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D29ADBBE565419B1E98281 /* SettingsSidebarView.swift */; };
 		1D79D5385578F8BB2285E594 /* QuicklinkArgumentsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2FF20C8537905F65AEF2EB /* QuicklinkArgumentsRow.swift */; };
+		1D8DC2B3DB359DC0FECAC7EE /* CompanionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F557E8ED7A16335B11F36C8 /* CompanionMode.swift */; };
 		1DB701461C947B309A69F0B2 /* DeloresDividerGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750D567E636CD0AD3D70F204 /* DeloresDividerGeometry.swift */; };
 		1DCD098ECB857BC39B81A8EC /* CustomQuickActionEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 285900BC454E62D2A0706E39 /* CustomQuickActionEditorSheet.swift */; };
 		1E04684F05DFA84A8B667F20 /* PasteboardFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5C752F98428A767405AD12 /* PasteboardFiles.swift */; };
@@ -387,6 +388,7 @@
 		BD45A99F26C015BF00AC77D5 /* ApplicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289FC415E1D1776DD1C4EB9E /* ApplicationsSettingsView.swift */; };
 		BEAAD72E748375E0039AC90F /* CommandID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164CB3E1BB5B7D87AF8E7023 /* CommandID.swift */; };
 		BF04DEAF1B660EE399B43962 /* UninstallScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A7F606D7F71B6FC0CC6ABC8 /* UninstallScanner.swift */; };
+		BF2BE47CAC0E8D3E102B53B1 /* CodexPetWindowProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBDFE8DB85AAF269DCE5786 /* CodexPetWindowProbe.swift */; };
 		BFC17B1BD5D239E0CCD56DDF /* QuickActionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DBA322BA1F117530075F51 /* QuickActionFailure.swift */; };
 		C05022DE7B77920ECFB177EE /* LauncherItemsTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A79BF0F9B66225E5C38CE /* LauncherItemsTable.swift */; };
 		C0642512B709EF0517ABF4CB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C37CCD024267EB21876C7E9 /* AppDelegate.swift */; };
@@ -565,6 +567,7 @@
 		1DE1B6753513C787B3FFE423 /* AIConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConnection.swift; sourceTree = "<group>"; };
 		1E82DD04042376EBDEF3E84C /* CodexTurnRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexTurnRunner.swift; sourceTree = "<group>"; };
 		1E95EA1EBD6E4B5ECE149FA0 /* ChatSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSession.swift; sourceTree = "<group>"; };
+		1F557E8ED7A16335B11F36C8 /* CompanionMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionMode.swift; sourceTree = "<group>"; };
 		1F84CC7876A495616C52D5C5 /* AppPickerPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerPopover.swift; sourceTree = "<group>"; };
 		201FCD08ACA933378876385B /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		209D951FDD587A040F1F76F3 /* PaletteWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteWindowController.swift; sourceTree = "<group>"; };
@@ -764,6 +767,7 @@
 		7F2ACA386B0BDC8E32E8107A /* WindowMover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowMover.swift; sourceTree = "<group>"; };
 		7F64F4362989516482853CDB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		7F84B7743B803F55C41D5C4A /* NotesRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesRepository.swift; sourceTree = "<group>"; };
+		7FBDFE8DB85AAF269DCE5786 /* CodexPetWindowProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexPetWindowProbe.swift; sourceTree = "<group>"; };
 		7FDB7BD7AB45EAD1A11FFFC4 /* AXWindowAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXWindowAccess.swift; sourceTree = "<group>"; };
 		7FDD56C6B0A9C9385C40B147 /* CompanionAtlas-duck.generated.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "CompanionAtlas-duck.generated.png"; sourceTree = "<group>"; };
 		802BD2F4CC057228F2528217 /* PalettePlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PalettePlacement.swift; sourceTree = "<group>"; };
@@ -1699,6 +1703,7 @@
 				C685F41F1573D32C3FF59159 /* CompanionAnimation.swift */,
 				C01F57ADD9C5610D4DD87825 /* CompanionAtlas.generated.swift */,
 				E0C1F85F1016AE8AFDCFD464 /* CompanionLoop.swift */,
+				1F557E8ED7A16335B11F36C8 /* CompanionMode.swift */,
 				FDEEB5A19DDC8B3B15421548 /* CompanionShell.swift */,
 				FF4CF981B5248DA1660CFAAD /* CompanionWander.swift */,
 				D18D7E6E42E9E78E3C4189DB /* ContextAction.swift */,
@@ -1789,6 +1794,7 @@
 			children = (
 				D0DA6ECD783C30317588E063 /* ActionOutcomeCopy.swift */,
 				5BECC4373E964E89137E271F /* ActionSessionRunner.swift */,
+				7FBDFE8DB85AAF269DCE5786 /* CodexPetWindowProbe.swift */,
 				6E58A8540EC127E187C4BB88 /* OwnSurfaceHitTester.swift */,
 				160A24ECF4A55808BAA720D6 /* SelectionGestureMonitor.swift */,
 				642D6AC054500A6760447167 /* WindowGeometry.swift */,
@@ -2577,6 +2583,7 @@
 				03C41F6394089BAEC7E630D6 /* ClipboardView.swift in Sources */,
 				0F6F56C49B3D2CBA233F12F3 /* CodexAppServerClient.swift in Sources */,
 				688C7D9EE32D3D556184869E /* CodexAppServerProtocol.swift in Sources */,
+				BF2BE47CAC0E8D3E102B53B1 /* CodexPetWindowProbe.swift in Sources */,
 				C4479572F65559306118A9F0 /* CodexTurnRunner.swift in Sources */,
 				AA52F01D3A91899CCEAF7851 /* ColorCard.swift in Sources */,
 				5D77D1868F3F915D3EB99125 /* ColorFormat.swift in Sources */,
@@ -2593,6 +2600,7 @@
 				9C596362466373F9EDC246E3 /* CompanionAnimation.swift in Sources */,
 				14C38441A2444054E5F54F52 /* CompanionAtlas.generated.swift in Sources */,
 				32567201F74DA240FE6F4FA9 /* CompanionLoop.swift in Sources */,
+				1D8DC2B3DB359DC0FECAC7EE /* CompanionMode.swift in Sources */,
 				1AB91DEE2B70BA7C98006486 /* CompanionShell.swift in Sources */,
 				A33C076F0549B7A518F2E616 /* CompanionSurfaceSettingsView.swift in Sources */,
 				DB9D7AAB296CAF448A3990B9 /* CompanionWander.swift in Sources */,

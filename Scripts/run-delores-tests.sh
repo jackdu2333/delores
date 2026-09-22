@@ -26,6 +26,7 @@ swiftc \
     "$ROOT/Tinycast/Features/Delores/Model/AutomaticSelectionCompatibility.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/OwnSurfaceHitPolicy.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionLoop.swift" \
+    "$ROOT/Tinycast/Features/Delores/Model/CompanionMode.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionWander.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionShell.swift" \
     "$ROOT/Tinycast/Features/Delores/Model/CompanionAtlas.generated.swift" \

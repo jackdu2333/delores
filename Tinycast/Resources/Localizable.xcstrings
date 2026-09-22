@@ -1891,6 +1891,56 @@
         }
       }
     },
+    "Desktop companion mode": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌宠模式"
+          }
+        }
+      }
+    },
+    "Choose which desktop pet anchors Delores on your screen.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择由哪一个桌宠作为 Delores 的屏幕锚点。"
+          }
+        }
+      }
+    },
+    "Delores desktop pet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delores 桌宠"
+          }
+        }
+      }
+    },
+    "Codex desktop pet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex 桌宠"
+          }
+        }
+      }
+    },
+    "Codex mode uses the Codex pet as an external anchor; hidden pets fall back to the menu bar.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex 模式会把 Codex 桌宠作为外部视觉锚点；桌宠隐藏时，Delores 会回退到菜单栏。"
+          }
+        }
+      }
+    },
     "Enable File Search": {
       "localizations": {
         "zh-Hans": {

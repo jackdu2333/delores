@@ -413,8 +413,8 @@ enum SettingsSearchCatalog {
             pane: .companionSurface,
             keywords: ["companion", "pet", "desktop", "presence", "桌宠", "桌面伙伴"]),
         .init(
-            .companionSurfaceCompanion, "Enable desktop companion",
-            keywords: ["pet", "presence", "companion"])
+            .companionSurfaceCompanion, "Desktop companion mode",
+            keywords: ["pet", "presence", "companion", "Codex", "Delores"])
     ]
 
     /// Window placement that answers a gesture rather than a summon; not a Surface of its own.

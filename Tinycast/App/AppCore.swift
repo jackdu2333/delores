@@ -367,7 +367,7 @@ final class AppCore {
         track(
             {
                 _ = $0.quickActionsEnabled
-                _ = $0.deloresCompanionEnabled
+                _ = $0.deloresCompanionMode
                 _ = $0.deloresWindowSnappingEnabled
                 _ = $0.deloresSplitDividerEnabled
             },

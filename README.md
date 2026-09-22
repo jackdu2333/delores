@@ -52,7 +52,7 @@ Delores (1 Core)
 
 ### 2. Companion Surface —— 灵动生机的桌面数字桌宠
 
-你希望助手在手边陪伴却不打扰？可选开启桌面 Companion。它以经典复古像素艺术形态在屏幕边缘静谧巡游，感知全屏自动退让避让，右键随时切换 11 款精选形态或召回 Context 岛。
+你希望助手在手边陪伴却不打扰？可选开启桌面 Companion。你可以在 Delores 桌宠与 Codex 桌宠之间二选一：前者以经典复古像素艺术形态在屏幕边缘静谧巡游，后者作为 Delores 的外部视觉锚点，让划词工具栏与窗口分屏岛从 Codex 桌宠旁边出现；Codex 桌宠隐藏时自动回到菜单栏。
 
 <p align="center">
   <img src="docs/assets/companion-and-dock.png" alt="Delores Companion 桌面桌宠与侧边停靠栏" width="180" />

@@ -33,6 +33,8 @@ enum AppSettingsKey: String, CaseIterable {
     case menuSearchDisabledApps = "menuSearchDisabledApps"
     case menuSearchShowsAppleMenu = "menuSearchShowsAppleMenu"
     case windowGap = "windowManagementGap"
+    case deloresCompanionMode = "deloresCompanionMode"
+    // Kept only so an older install can be read once when the mode is initialized.
     case deloresCompanionEnabled = "deloresCompanionEnabled"
     case deloresCompanionSize = "deloresCompanionSize"
     case deloresCompanionKind = "deloresCompanionKind"

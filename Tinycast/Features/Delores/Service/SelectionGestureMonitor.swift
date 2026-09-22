@@ -15,17 +15,23 @@ final class SelectionGestureMonitor {
     var onGesture: Handler?
 
     private let shouldIgnorePoint: @MainActor (CGPoint) -> Bool
+    private let shouldIgnoreStartPoint: (@MainActor (CGPoint) -> Bool)?
     private var mouseDownMonitor: Any?
     private var mouseUpMonitor: Any?
     private var pendingCapture: Task<Void, Never>?
     private var mouseDownPoint: CGPoint = .zero
     private var hasMouseDown = false
+    private var startedOnIgnoredSurface = false
     private var lastMouseUpPoint: CGPoint = .zero
     private var lastMouseUpUptime = -Double.infinity
     private(set) var isRunning = false
 
-    init(shouldIgnorePoint: @escaping @MainActor (CGPoint) -> Bool) {
+    init(
+        shouldIgnorePoint: @escaping @MainActor (CGPoint) -> Bool,
+        shouldIgnoreStartPoint: (@MainActor (CGPoint) -> Bool)? = nil
+    ) {
         self.shouldIgnorePoint = shouldIgnorePoint
+        self.shouldIgnoreStartPoint = shouldIgnoreStartPoint
     }
 
     isolated deinit {
@@ -67,6 +73,7 @@ final class SelectionGestureMonitor {
         lastMouseUpPoint = .zero
         lastMouseUpUptime = -Double.infinity
         hasMouseDown = false
+        startedOnIgnoredSurface = false
         isRunning = false
     }
 
@@ -74,6 +81,7 @@ final class SelectionGestureMonitor {
         guard isRunning else { return }
         mouseDownPoint = point
         hasMouseDown = true
+        startedOnIgnoredSurface = shouldIgnoreStartPoint?(point) == true
     }
 
     private func recordMouseUp(at point: CGPoint, uptime: TimeInterval) {
@@ -95,7 +103,9 @@ final class SelectionGestureMonitor {
         lastMouseUpPoint = point
         lastMouseUpUptime = uptime
 
-        guard let gestureKind, !shouldIgnorePoint(point) else { return }
+        let ignored = startedOnIgnoredSurface || shouldIgnorePoint(point)
+        startedOnIgnoredSurface = false
+        guard let gestureKind, !ignored else { return }
 
         pendingCapture?.cancel()
         pendingCapture = Task { @MainActor [weak self] in

@@ -106,8 +106,10 @@ enum SettingsBackupCoverage {
         AppSettingsKey.quickActionLanguage.rawValue:
             "Follows the language the person at this Mac reads, not the one who wrote the backup.",
         AppSettingsKey.deloresCompanionEnabled.rawValue:
-            "Starts a pet that watches the pointer and every window move, so it is consent to a "
-            + "resident monitor and never something an import may switch on.",
+            "Legacy setting retained only to migrate older installs; it is not restored from a backup.",
+        AppSettingsKey.deloresCompanionMode.rawValue:
+            "Chooses a resident pet or an external Codex overlay, so an import must not change the "
+            + "interactive surface a Mac starts watching.",
         AppSettingsKey.deloresWindowSnappingEnabled.rawValue:
             "Watches window drags across this Mac's displays; a flag that grants a capability is "
             + "never carried by a backup.",

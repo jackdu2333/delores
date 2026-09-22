@@ -80,6 +80,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// edge to make room. The Companion owns its own window, so it is the only thing that can move
     /// it; without this the two would drift apart on screen.
     var onCompanionRelocated: ((CGPoint, DeloresCompanionEdge) -> Void)?
+    /// A Codex pet is owned by another app, so our shell may clamp without moving its anchor.
+    private var companionCanRelocate = true
 
     /// Told that the wait is the Companion's, and that it is over. The bar steps aside and the body
     /// says what it would have said; the answer arrives back here either way.
@@ -177,12 +179,14 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onFollowUp: @escaping (String) -> Void,
         onContinueInCommand: @escaping () -> Void,
         onDismiss: @escaping () -> Void,
-        companion: DeloresCompanionAnchor? = nil
+        companion: DeloresCompanionAnchor? = nil,
+        companionCanRelocate: Bool = true
     ) {
         dismiss(notifying: false)
 
         screen = context.screen
         companionAnchor = companion
+        self.companionCanRelocate = companionCanRelocate
         selectionText = context.text
         answer = nil
         isCardCollapsed = false
@@ -339,6 +343,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         barLengthWithExits = 0
         barIsVertical = false
         barAtLeadingEdge = true
+        companionCanRelocate = true
         lastMode = .actions
         closing.delegate = nil
         closing.onEscape = nil
@@ -730,7 +735,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         }
         let placement = DeloresCompanionShell.planBarOpening(
             petCenter: pet.center, edge: pet.edge, shellSize: size,
-            visibleFrame: screen.visibleFrame, bodyRadius: pet.radius)
+            visibleFrame: screen.visibleFrame, bodyRadius: pet.radius,
+            canMovePet: companionCanRelocate)
         adopt(placement)
         return placement.frame
     }
@@ -750,7 +756,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
             collapsedSize: CGSize(
                 width: barWidth,
                 height: barIsVertical ? barLengthWithExits : barHeight),
-            expandedSize: size, visibleFrame: screen.visibleFrame, bodyRadius: pet.radius)
+            expandedSize: size, visibleFrame: screen.visibleFrame, bodyRadius: pet.radius,
+            canMovePet: companionCanRelocate)
         adopt(placement)
         return placement.frame
     }
@@ -758,7 +765,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// The body had to move to make room. The Companion owns its own window, so the most this can do
     /// is say so.
     private func adopt(_ placement: DeloresCompanionShell.Placement) {
-        guard let anchor = companionAnchor,
+        guard companionCanRelocate, let anchor = companionAnchor,
             anchor.center != placement.petCenter || anchor.edge != placement.edge
         else { return }
         companionAnchor = (placement.petCenter, placement.edge, anchor.radius)

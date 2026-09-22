@@ -48,8 +48,8 @@ struct DeloresOverviewView: View {
                     subtitle: L10n.string(
                         "It is simply there, and it never asks you for anything. The moment you remember it, double-click and your last selection comes back."
                     ),
-                    state: settings.deloresCompanionEnabled
-                        ? L10n.string("On") : L10n.string("Off"))
+                    state: settings.deloresCompanionMode == .off
+                        ? L10n.string("Off") : L10n.string("On"))
             } header: {
                 SettingsSectionHeader(.deloresSurfaces)
             } footer: {

@@ -16,6 +16,7 @@ struct DeloresContextTest {
         testOwnSurfaceHitPolicy()
         MainActor.assumeIsolated { testSurfaceInteractionGate() }
         testCompanionLoop()
+        testCompanionMode()
         testCompanionWander()
         testQuickActionAdmission()
         testContextActions()
@@ -849,6 +850,23 @@ struct DeloresContextTest {
                 bundleIdentifier: nil,
                 gesture: .drag),
             "an unnamed app cannot borrow a copy")
+    }
+
+    private static func testCompanionMode() {
+        require(DeloresCompanionMode.allCases.count == 3, "companion mode has three choices")
+        require(DeloresCompanionMode.off != .delores, "off and Delores are distinct modes")
+        require(DeloresCompanionMode.delores != .codex, "Delores and Codex are distinct modes")
+        require(DeloresCompanionMode.codex != .off, "Codex and off are distinct modes")
+        require(DeloresCompanionMode.delores.usesDeloresPet, "Delores mode owns the native pet")
+        require(!DeloresCompanionMode.codex.usesDeloresPet, "Codex mode does not start the native pet")
+        require(!DeloresCompanionMode.off.usesDeloresPet, "off mode does not start the native pet")
+
+        let external = DeloresCompanionShell.planBarOpening(
+            petCenter: CGPoint(x: 30, y: 420), edge: .left,
+            shellSize: CGSize(width: 420, height: 96),
+            visibleFrame: CGRect(x: 0, y: 0, width: 900, height: 900),
+            bodyRadius: 48, canMovePet: false)
+        require(external.petCenter == CGPoint(x: 30, y: 420), "an external pet is never relocated")
     }
 
     private static func testCompanionShell() {

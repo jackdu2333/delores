@@ -35,7 +35,7 @@ Companion 不得因此获得一个新的配置面、一套历史或一个对话�
 重新裁决，而不是在设计层讨论它好不好看。
 
 > 2026-09-18 补记：宠物的右键菜单（改形象 / 关闭宠物）**不是新的配置面**——它只有两件事，
-> 都写 Settings 里已有的键（`deloresCompanionKind`、`deloresCompanionEnabled`），不新增状态、
+> 都写 Settings 里已有的键（`deloresCompanionKind`、`deloresCompanionMode`），不新增状态、
 > 不新增历史、不新增入口，也不引入养成。它是已有两项设置的**另一个入口**，边界未动。
 
 ## 路线裁决

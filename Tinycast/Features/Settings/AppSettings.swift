@@ -217,8 +217,8 @@ final class AppSettings {
         }
     }
 
-    var deloresCompanionEnabled: Bool {
-        didSet { defaults.set(deloresCompanionEnabled, forKey: Key.deloresCompanionEnabled.rawValue) }
+    var deloresCompanionMode: DeloresCompanionMode {
+        didSet { defaults.set(deloresCompanionMode.rawValue, forKey: Key.deloresCompanionMode.rawValue) }
     }
 
     /// How large the Companion is drawn. Two steps only — see `DeloresCompanionShell.Size`, which
@@ -364,7 +364,15 @@ final class AppSettings {
         menuSearchDisabledApps =
             defaults.stringArray(forKey: Key.menuSearchDisabledApps.rawValue) ?? []
         menuSearchShowsAppleMenu = defaults.bool(forKey: Key.menuSearchShowsAppleMenu.rawValue)
-        deloresCompanionEnabled = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue)
+        if let storedMode = defaults.string(forKey: Key.deloresCompanionMode.rawValue),
+            let mode = DeloresCompanionMode(rawValue: storedMode)
+        {
+            deloresCompanionMode = mode
+        } else {
+            let mode = defaults.bool(forKey: Key.deloresCompanionEnabled.rawValue) ? .delores : .off
+            defaults.set(mode.rawValue, forKey: Key.deloresCompanionMode.rawValue)
+            deloresCompanionMode = mode
+        }
         deloresCompanionSize = DeloresCompanionShell.Size(
             rawValue: defaults.integer(forKey: Key.deloresCompanionSize.rawValue)) ?? .regular
         deloresCompanionKind = DeloresCompanionShell.Kind(

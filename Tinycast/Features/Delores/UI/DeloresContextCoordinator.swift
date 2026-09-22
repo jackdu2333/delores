@@ -20,6 +20,8 @@ struct DeloresContextCompanionHosting {
     /// Companion is the only thing on screen while it is handed over, so it is the only thing that
     /// can say an answer is on its way.
     var thinking: (Bool) -> Void
+    /// External pets belong to another app and must not be moved to make room for our shell.
+    var canRelocate: () -> Bool
 }
 
 /// Routes a captured selection to whatever the reader pressed.
@@ -72,7 +74,8 @@ final class DeloresContextCoordinator {
 
     init(
         settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector,
-        aiChat: AIChatCoordinator, interactionGate: DeloresSurfaceInteractionGate
+        aiChat: AIChatCoordinator, interactionGate: DeloresSurfaceInteractionGate,
+        additionalInteractiveSurfaceHitTest: (@MainActor (CGPoint) -> Bool)? = nil
     ) {
         self.settings = settings
         self.quickActions = quickActions
@@ -81,9 +84,12 @@ final class DeloresContextCoordinator {
         self.interactionGate = interactionGate
 
         self.island = DeloresContextIslandController()
-        self.gestureMonitor = SelectionGestureMonitor { point in
-            DeloresOwnSurfaceHitTester.containsInteractiveSurface(at: point)
-        }
+        self.gestureMonitor = SelectionGestureMonitor(
+            shouldIgnorePoint: { point in
+                DeloresOwnSurfaceHitTester.containsInteractiveSurface(at: point)
+                    || additionalInteractiveSurfaceHitTest?(point) == true
+            },
+            shouldIgnoreStartPoint: additionalInteractiveSurfaceHitTest)
         self.gestureMonitor.onGesture = { [weak self] gesture in
             self?.captureSelection(after: gesture)
         }
@@ -275,6 +281,7 @@ final class DeloresContextCoordinator {
         // menu bar otherwise. The body is asked where it is standing before the bar is built,
         // because the bar's own size is what decides whether the body then has to move.
         let pet = companionHosting?.anchor(screen.visibleFrame)
+        let canRelocatePet = companionHosting?.canRelocate() ?? true
         island.onCompanionRelocated = { [weak self] center, edge in
             self?.companionHosting?.relocate(center, edge)
         }
@@ -296,7 +303,7 @@ final class DeloresContextCoordinator {
             onFollowUp: { [weak self] question in self?.followUp(question) },
             onContinueInCommand: { [weak self] in self?.continueInCommand() },
             onDismiss: { [weak self] in self?.surfaceDismissed() },
-            companion: pet)
+            companion: pet, companionCanRelocate: canRelocatePet)
     }
 
     private func run(_ action: DeloresContextAction) {

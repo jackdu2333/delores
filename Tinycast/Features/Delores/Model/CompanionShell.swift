@@ -179,17 +179,19 @@ enum DeloresCompanionShell {
         edge: DeloresCompanionEdge,
         shellSize: CGSize,
         visibleFrame: CGRect,
-        bodyRadius: CGFloat
+        bodyRadius: CGFloat,
+        canMovePet: Bool = true
     ) -> Placement {
-        let resolvedEdge = edgeForOpeningBar(
-            current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+        let resolvedEdge = canMovePet
+            ? edgeForOpeningBar(current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+            : edge
         var center = petCenter
-        if resolvedEdge != edge {
+        if canMovePet, resolvedEdge != edge {
             center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
         }
         return placeShell(
             petCenter: center, edge: resolvedEdge, shellSize: shellSize,
-            visibleFrame: visibleFrame, bodyRadius: bodyRadius)
+            visibleFrame: visibleFrame, bodyRadius: bodyRadius, canMovePet: canMovePet)
     }
 
     /// A snap island: grown out of the body's inward side too, with its long axis along the edge the
@@ -225,18 +227,20 @@ enum DeloresCompanionShell {
         collapsedSize: CGSize,
         expandedSize: CGSize,
         visibleFrame: CGRect,
-        bodyRadius: CGFloat
+        bodyRadius: CGFloat,
+        canMovePet: Bool = true
     ) -> Placement {
-        let resolvedEdge = edgeForOpeningBar(
-            current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+        let resolvedEdge = canMovePet
+            ? edgeForOpeningBar(current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
+            : edge
         var center = petCenter
-        if resolvedEdge != edge {
+        if canMovePet, resolvedEdge != edge {
             center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
         }
         var frame = hangDownFrame(
             petCenter: center, edge: resolvedEdge,
             collapsedSize: collapsedSize, expandedSize: expandedSize, bodyRadius: bodyRadius)
-        if resolvedEdge == .left || resolvedEdge == .right {
+        if canMovePet && (resolvedEdge == .left || resolvedEdge == .right) {
             let overflowBottom = visibleFrame.minY - frame.minY
             if overflowBottom > 0 {
                 center = snapCenter(
@@ -259,7 +263,8 @@ enum DeloresCompanionShell {
         edge: DeloresCompanionEdge,
         shellSize: CGSize,
         visibleFrame: CGRect,
-        bodyRadius: CGFloat
+        bodyRadius: CGFloat,
+        canMovePet: Bool = true
     ) -> Placement {
         // Stand where the body is. Snapping into `visibleFrame` first would fetch a body off the
         // menu bar — the same mistake `planIslandOpening` already stopped making.
@@ -268,30 +273,32 @@ enum DeloresCompanionShell {
             petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
             edge: edge, shellSize: shellSize)
 
-        switch edge {
-        case .top, .bottom:
-            let overflowLeft = visibleFrame.minX - frame.minX
-            let overflowRight = frame.maxX - visibleFrame.maxX
-            var shift: CGFloat = 0
-            if overflowLeft > 0 { shift += overflowLeft }
-            if overflowRight > 0 { shift -= overflowRight }
-            if shift != 0 {
-                center = CGPoint(x: center.x + shift, y: center.y)
-                frame = inwardFrame(
-                    petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
-                    edge: edge, shellSize: shellSize)
-            }
-        case .left, .right:
-            let overflowBottom = visibleFrame.minY - frame.minY
-            let overflowTop = frame.maxY - visibleFrame.maxY
-            var shift: CGFloat = 0
-            if overflowBottom > 0 { shift += overflowBottom }
-            if overflowTop > 0 { shift -= overflowTop }
-            if shift != 0 {
-                center = CGPoint(x: center.x, y: center.y + shift)
-                frame = inwardFrame(
-                    petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
-                    edge: edge, shellSize: shellSize)
+        if canMovePet {
+            switch edge {
+            case .top, .bottom:
+                let overflowLeft = visibleFrame.minX - frame.minX
+                let overflowRight = frame.maxX - visibleFrame.maxX
+                var shift: CGFloat = 0
+                if overflowLeft > 0 { shift += overflowLeft }
+                if overflowRight > 0 { shift -= overflowRight }
+                if shift != 0 {
+                    center = CGPoint(x: center.x + shift, y: center.y)
+                    frame = inwardFrame(
+                        petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
+                        edge: edge, shellSize: shellSize)
+                }
+            case .left, .right:
+                let overflowBottom = visibleFrame.minY - frame.minY
+                let overflowTop = frame.maxY - visibleFrame.maxY
+                var shift: CGFloat = 0
+                if overflowBottom > 0 { shift += overflowBottom }
+                if overflowTop > 0 { shift -= overflowTop }
+                if shift != 0 {
+                    center = CGPoint(x: center.x, y: center.y + shift)
+                    frame = inwardFrame(
+                        petVisible: circleFrame(center: center, bodyRadius: bodyRadius),
+                        edge: edge, shellSize: shellSize)
+                }
             }
         }
 

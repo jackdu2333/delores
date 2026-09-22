@@ -31,12 +31,12 @@ anyway. They have no place to be and nothing of their own to say.
   geometry, the pointer physics and the Escape order all match the vendored reference, which was
   re-read from source and rendered to check rather than assumed. What it still carries itself is its
   own catalogue, prompts and streaming — see below.
-- **Companion** — running, not vendored: wander, hover, click grammar, and a double-click that reopens
-  the last selection's Context Surface. A right-click on the body opens the menu that is about the body
-  itself: which creature it is, and whether it is there at all. Both of its rows write the two keys the
-  Companion pane already owns, so the body gains an entry point to existing settings rather than a
-  configuration surface of its own. It currently shares one coordinator with two capabilities it has
-  nothing to do with; separating them is the next structural step.
+- **Companion** — either the running Delores pet or the Codex pet as an external visual anchor, never
+  both. Delores mode owns wander, hover, click grammar, and a double-click that reopens the last
+  selection's Context Surface. Codex mode never starts the native pet: the Context toolbar and Spatial
+  snap island may grow from a uniquely identified Codex overlay, and fall back to the menu bar/top
+  centre when Codex's pet is hidden or ambiguous. The Codex renderer remains untouched; the bridge uses
+  WindowServer metadata only.
 
 The gap between the surfaces and the core, measured against both catalogues, is written up in
 [delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,
@@ -250,7 +250,9 @@ starting. The vessel shape is clipped once at the root so the card and strip sha
 ## Phase 1.5 boundary
 
 `AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface
-implementation and is where Surface arbitration lives.
+implementation and is where Surface arbitration lives. `deloresCompanionMode` is the one mutually
+exclusive choice for the Companion: `.off`, `.delores`, or `.codex`; the old boolean is read only once
+to migrate an existing install.
 
 Selection gesture admission uses a window snapshot policy: only visible windows that accept mouse
 events block selection detection. HUDs and drop guides remain pass-through. Quick Action admission
@@ -271,6 +273,8 @@ selection, and Spatial reads a drag as a window move or a seam resize. `DeloresS
   about it a beat later, so letting go has to keep covering the gesture rather than reopening it.
 - Only one surface can hold the gate at a time, and a release from a surface that no longer holds it
   is ignored, so a late `mouseUp` cannot free someone else's gesture.
+- A drag that starts on the Codex pet is ignored by both selection and window-snap admission. A normal
+  window drag that ends over the Codex pet still belongs to Spatial and opens the same snap island.
 
 Unit-tested in `Tests/delores-context-test.swift`. The gate covers input admission; it does not
 replace the per-surface hit testing above.
@@ -279,9 +283,8 @@ replace the per-surface hit testing above.
 
 ### Spatial / Companion (Delores-owned)
 
-`DeloresCoordinator` holds four children: `DeloresContextCoordinator`, `DeloresCompanionCoordinator`,
-`DeloresWindowSnapCoordinator`, and `DeloresSplitDividerCoordinator`. They share one
-`DeloresSurfaceInteractionGate`. `AppCore` observes the four persisted switches
+`DeloresCoordinator` holds the Context, native Companion, Codex window probe, window snap and split
+divider children. They share one `DeloresSurfaceInteractionGate`. `AppCore` observes the four persisted switches
 (`quickActionsEnabled` plus Companion / snapping / divider) and calls `applyEnabled()`, which starts
 or stops each child independently.
 
