@@ -11,6 +11,10 @@ command -v swiftlint >/dev/null || {
 
 [ "${1:-}" = "--fix" ] && swiftlint --fix --quiet
 
+if [ -z "${DYLD_FRAMEWORK_PATH:-}" ] && [ -d /Library/Developer/CommandLineTools/usr/lib ]; then
+    export DYLD_FRAMEWORK_PATH="/Library/Developer/CommandLineTools/usr/lib"
+fi
+
 # CI sets SWIFTLINT_REPORTER=github-actions-logging so violations land inline on the PR diff.
 if ! swiftlint lint --quiet ${SWIFTLINT_REPORTER:+--reporter "$SWIFTLINT_REPORTER"}; then
     echo
