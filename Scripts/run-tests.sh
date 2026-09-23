@@ -115,7 +115,8 @@ run() {
 
 L=Tinycast/Features/Launcher/Model
 run slow -O fuzz-test      $L/SearchRelevance.swift $L/ScriptRomanization.swift \
-                           $L/EntryNaming.swift $L/LauncherOrder.swift
+                           $L/EntryNaming.swift $L/LauncherRankingStore.swift \
+                           $L/LauncherOrder.swift
 run slow -O corpus-test    $L/SearchRelevance.swift $L/ScriptRomanization.swift \
                            $L/EntryNaming.swift $L/LauncherOrder.swift \
                            $L/LauncherRankingStore.swift
@@ -134,7 +135,12 @@ run index file-search-performance Tinycast/Platform/Signposts.swift \
                            $L/SearchRelevance.swift \
                            Tinycast/Features/FileSearch/Model/*.swift \
                            Tinycast/Features/FileSearch/Service/FileSearchService.swift
-run ranking-test           $L/SearchRelevance.swift $L/LauncherRankingStore.swift
+run ranking-test           $L/SearchRelevance.swift $L/ScriptRomanization.swift \
+                           $L/EntryNaming.swift $L/LauncherRankingStore.swift \
+                           $L/LauncherOrder.swift
+run launcher-suggestions-test $L/SearchRelevance.swift $L/ScriptRomanization.swift \
+                              $L/LauncherRankingStore.swift $L/LauncherOrder.swift \
+                              $L/LauncherSuggestions.swift
 run scopes-test            $L/SearchScopes.swift
 run app-name-test          Tinycast/Platform/AppDisplayName.swift \
                            Tinycast/Platform/BundleLocalization.swift \

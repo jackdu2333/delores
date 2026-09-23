@@ -39,6 +39,16 @@ final class MenuSearchCoordinator {
             Task { await self.reportPermissionFailure() }
             return
         }
+        paletteCoordinator.togglePalette(mode: .menuSearch)
+    }
+
+    /// Hiding clears the snapshot, so every opening has to walk the front app's menu again.
+    func load() {
+        guard settings.navigationEnabled else { return }
+        guard Permissions.ensureAccessibility() else {
+            Task { await self.reportPermissionFailure() }
+            return
+        }
         let app = paletteCoordinator.targetApp
         frozenApp = app
         if let url = app?.bundleURL {
@@ -66,7 +76,6 @@ final class MenuSearchCoordinator {
         case .excluded, .selfTarget, .menuLess, .noApplication:
             session.present(target: target, snapshot: [])
         }
-        paletteCoordinator.togglePalette(mode: .menuSearch)
     }
 
     func activate(_ item: MenuSearchItem) {

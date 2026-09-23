@@ -292,6 +292,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   and run it: Escape returns to the launcher **with the query still typed and the row still
   selected**, and the next press clears it. The same screen from its own global hotkey hides the
   palette instead, and shows its own header icon rather than a back chevron
+- With Navigation on and a short Pop to Root Search delay, hide then quickly reopen Search Menu Bar
+  Items or Switch Windows: the restored screen reloads the front app's menu or current windows, rather
+  than showing an empty snapshot
 - ⌘⎋ from any depth lands on an empty root search with the window still open — **must be checked on
   a real keyboard**: macOS claims the chord, so `CommandEscapeTap` is the only thing that delivers it
   and it needs Accessibility granted to the running build. With the palette closed, ⌘⎋ still does
@@ -309,7 +312,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   consumes and the caret keeps everywhere else
 - The highlight always sits on the row the footer pill describes
 - With a calculation typed, the calculator card is first and is selected first
-- Section headers appear in order: Favorites, Applications, System Settings, Quicklinks and System Actions
+- Empty-query headers appear in order: Favorites, Suggestions, Applications, System Settings,
+  Quicklinks and System Actions; turning suggestions off removes only that section
   (no retired Window Management or Window Layouts index)
 - With a non-ASCII input source active, ⌘K opens Actions; ↑/↓ move it, ↵ activates, Escape closes it
 - While a menu is open, typing does **not** change the query and the caret is hidden
@@ -338,7 +342,13 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Icons render with no placeholder flash on reopen, and Settings ▸ Applications scrolls without hitching,
   even with the scrollbar thumb dragged from end to end in under a second
 - An app removed since the last open drops out after a reopen
-- Learned ranking still surfaces your habitual result for a short query
+- An exact display-name hit survives a heavily used weaker match; a remembered exact query term
+  steers an otherwise unprotected result
+- With the field empty, Favorites stay user-ordered; Suggestions prefer fresh installs, then recently
+  used entries without a hotkey, then built-ins without a hotkey or user alias
+- Search Box Settings ▸ Search can hide Suggestions and change search sensitivity; both survive a
+  backup round trip
+- Low sensitivity keeps a loose subsequence query that High filters
 
 ### Hotkeys
 
@@ -348,6 +358,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A conflicting binding is rejected and names its current owner
 - A double-tap binding fires; Hyper Key remaps and its status dot is green
 - Every binding survives quit and relaunch
+- Removing an app with a per-app shortcut eventually releases its chord once AppIndex and
+  LaunchServices both stop resolving the bundle; excluding an installed app by search scope does not
+  clear its shortcut
 - `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Clipboard,
   File Search, Quicklinks, AI and the two layout commands
 

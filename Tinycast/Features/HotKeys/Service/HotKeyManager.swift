@@ -39,6 +39,8 @@ final class HotKeyManager {
     private var doubleTaps: [DoubleTapModifier: HotKeyAction] = [:]
     /// Every binding, loaded once in `start()` and written through on change.
     private var bindings: [HotKeyAction: HotKeyBinding] = [:]
+    /// Part of the launcher's Suggestions cache key, since a bound action is already one tap away.
+    private(set) var revision = 0
     @ObservationIgnored private var candidateActionsCache: [HotKeyAction]?
     // Reused: the startup load decodes once per candidate action.
     private let decoder = JSONDecoder()
@@ -54,6 +56,7 @@ final class HotKeyManager {
         prune(key: boundQuickActionKey, live: quickActionIDs) { .quickAction(id: $0) }
         // After the prunes, so a dropped record can't survive in memory this session.
         for action in candidateActions { bindings[action] = storedBinding(for: action) }
+        revision &+= 1
 
         // `register` no-ops on an unbound item, so the fixed catalogs need no index of their own.
         for action in candidateActions { register(action) }
@@ -84,6 +87,15 @@ final class HotKeyManager {
     /// Pruned by `AppleShortcutCoordinator` after a successful read, never here at launch.
     var boundAppleShortcutIDs: [UUID] { boundIDs(key: boundAppleShortcutKey) }
 
+    /// A deleted app takes its Settings row with it, so nothing else could clear its binding.
+    func removeAppBindings(where isUninstalled: (String) -> Bool) {
+        for bundleID in boundBundleIDs where isUninstalled(bundleID) {
+            let action = HotKeyAction.app(bundleID: bundleID)
+            if recordingAction == action { recordingAction = nil }
+            setBinding(nil, for: action)
+        }
+    }
+
     func binding(for action: HotKeyAction) -> HotKeyBinding? { bindings[action] }
 
     private func storedBinding(for action: HotKeyAction) -> HotKeyBinding? {
@@ -108,6 +120,7 @@ final class HotKeyManager {
             bindings[action] = nil
             UserDefaults.standard.removeObject(forKey: action.defaultsKey)
         }
+        revision &+= 1
         // Unregister unconditionally: the previous binding may have been a combo.
         center.unregister(id: action.defaultsKey)
         register(action)

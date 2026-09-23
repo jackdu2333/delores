@@ -105,6 +105,26 @@ enum CommandID: String, CaseIterable, Sendable {
         }
     }
 
+    /// Common descriptions that remain useful until the user has chosen a competing result.
+    var boostedTerms: Set<String> {
+        self == .aiChat ? ["ai", "chat"] : []
+    }
+
+    /// Built-ins that may fill empty-query Suggestions when no recent use has filled them.
+    var suggestionPriority: Int? {
+        switch self {
+        case .aiChat: 90
+        case .clipboardHistory: 80
+        case .searchFiles: 70
+        case .createNote: 60
+        case .switchWindows: 50
+        case .searchMenuItems: 40
+        case .createQuicklink: 30
+        case .searchNotes: 20
+        default: nil
+        }
+    }
+
     /// Query-driven: the typed text is their input, so they are built where offered, never listed.
     var isQueryDriven: Bool {
         self == .openInBrowser

@@ -22,7 +22,9 @@ earliest scope wins).
   over one row is how somebody ends up with Notes on and its shortcut dead. Everything the table does
   not name belongs to Settings › Commands and answers to that switch.
 - **`Model/SearchRelevance.swift` is Foundation-only and pure**, so `fuzz-test` compiles the shipped
-  scorer. It owns `FuzzyMatch`, `SearchAlias` and the cell table.
+  scorer. It owns `FuzzyMatch`, `SearchAlias` and the relevance weights.
+- **`Model/LauncherOrder.swift` owns the launcher comparator**, while `LauncherSuggestions` owns the
+  empty-query candidate policy. Both are pure and tested against their shipped sources.
 - **`Model/EntryNaming.swift` is the only place a name is decided, for every kind alike.** Criteria
   are endless — display name, folder rename, Spotlight alternate, localization, pinyin, bundle id —
   but *trust* levels are not, so ranking is keyed on the role and the match
@@ -67,19 +69,19 @@ Book. Don't reintroduce such a heuristic.
 `AppIndex.start(settings:)` observes `$searchScopes`, so an edit re-indexes immediately; overlapping
 refreshes collapse into a single trailing scan.
 
-`FuzzyMatch.score` is a tiered scorer: exact → prefix → substring / word-start → subsequence with
-consecutive / word-boundary bonuses. `LauncherRankingStore` then adds a bounded, query-specific
-frecency boost (frequency plus decaying recency). The boost can reorder results within a relevance
-tier but cannot make a weaker match kind beat a stronger one. Matching strips invisible Unicode
-format scalars first, since app metadata can contain bidi/zero-width markers before the visible name.
+`FuzzyMatch` classifies exact, prefix, word-start, substring and subsequence matches.
+`SearchRelevance` combines the strongest accepted alias with a bounded shape score.
+`SearchSensitivity` filters weak subsequences before ranking; exact, prefix, word-start and substring
+matches are unaffected. Matching strips invisible Unicode format scalars first, since app metadata
+can contain bidi/zero-width markers before the visible name.
 
 ## Searchable aliases
 
 Every naming criterion an entry carries lowers to one flat list of `SearchAlias` — a string plus a
 `Role` (how far it is trusted) and a `Looseness` (the weakest match it will accept).
 `SearchRelevance.quality` matches each, keeps the strongest, and that becomes the entry's base
-relevance. **Which field produced the string is not an input.** That is the whole design: a user's
-next naming demand is a new producer, not a new rung.
+relevance. The launcher also reads the hit's role and tier separately; they are not flattened into
+one score before its ordering rules run.
 
 | Role | What lands in it | Looseness |
 | --- | --- | --- |
@@ -89,18 +91,14 @@ next naming demand is a new producer, not a new rung.
 | `.owner` | an optional provider label, when a future catalog supplies one | literal |
 | `.technical` | bundle identifier, `CFBundleExecutable` | literal (full id: exact) |
 
-## The score
+## Match relevance and search order
 
 ```
-total = quality + usage
 quality = cell(role, tier) + shape        shape ∈ [0, 99]
-usage   = LauncherRankingStore.usage(…)   usage ∈ [0, 2_999]
 ```
 
-**Every gap in the cell table is denominated in learned picks.** A gap of *g* means the weaker match
-overtakes the stronger one once the user has chosen it often enough that `usage ≥ g`. One gap is a
-firewall, and it is the only thing learning can never cross. That is the contract; the numbers below
-are it, not a tuning parameter.
+Cell values are relevance weights, not a budget of learned picks. The ranker applies explicit
+ordering rules to exact names, user aliases, remembered terms, relevance, frecency and entry kind.
 
 | cell | value | | cell | value |
 | --- | ---: | --- | --- | ---: |
@@ -117,30 +115,22 @@ are it, not a tuning parameter.
 | `translation · wordStart` | 1_700 | | | |
 | `owner · wordStart` | 1_500 | | | |
 
-Read it two ways and both hold: fix a role and walk the tiers, or fix a tier and walk the roles —
-strictly decreasing either way. The cells `Looseness` refuses do not exist, so a literal-only role
-has no subsequence rung and the full bundle id is exact-only.
-
-Three inequalities make the table binding, each asserted in `fuzz-test` over the published constants:
-
-```
-P1 firewall    protectionFloor > poolTop + shapeSpan + maximumUsage    6_500 > 6_198
-P2 cell key    min adjacent gap (100) > shapeSpan (99)
-P3 reachable   poolBottom + maximumUsage > poolTop + shapeSpan         3_599 > 3_199
-```
-
-**P1** is the one absolute guarantee left: an exactly-typed display name or user alias, with nothing
-learned, outranks every weaker match at any usage. **P3** is the point of the redesign — anything the
-index is willing to show can be learned to the top of the unprotected pool.
+The cells `Looseness` refuses do not exist, so a literal-only role has no subsequence rung and the
+full bundle id is exact-only. An exact display-name match and an exact user alias are protected from
+weaker hits, regardless of their frecency. The user's exact alias outranks an exact display-name
+collision.
 
 `shape` orders candidates inside one cell: 60% how much of the name the query covered, 40% how early
 the hit sits (by absolute offset — a hit five characters in is equally deep in any name). For a
 subsequence it is the walk's contiguity score over what a run from index 0 would earn.
 
-What this deliberately gives up: **match-kind dominance below `exact` is gone.** Enough picks put a
-provider-only or subsequence hit above another entry's prefix hit. That impossibility was the bug. A
-`name · exact` collision stays unreachable forever — an installed `Zed.app` always takes `zed` — and
-the escape is a user alias, which is what P1 makes worth having.
+Below that protection, a recent exact search term can steer a result above a better-shaped match.
+Otherwise the ranker compares relevance, frecency, kind priority and a stable localized title order.
+This keeps repeat searches personal without letting a weak match defeat an exact title.
+
+The default search sensitivity is **High**. It accepts subsequences whose match spread reaches 55%
+of a contiguous reference match; **Medium** uses 35%, and **Low** accepts every subsequence. The
+setting lives under Search Box Settings → Search, and is part of the ranking memo key.
 
 Identifier aliases never subsequence-match — reverse-DNS text is a subsequence of nearly every short
 query (`cop` ⊂ `com.apple.Photos`), which would change _which_ apps appear rather than just their
@@ -151,12 +141,11 @@ nothing looser can flood off it.
 
 ## One fold, everywhere
 
-`FuzzyMatch.normalized` is the only text fold in the launcher: NFC precomposition, format scalars
-stripped, then `[.caseInsensitive, .diacriticInsensitive, .widthInsensitive]` with `locale: nil`.
-Matching, learned-ranking keys, alternate-name dedup, category lookup and rename dedup all call it.
-They used to disagree — the ranking store's fold omitted `.widthInsensitive`, so a full-width IME
-query matched one way and was **learned under a key nothing would ever read back**. ASCII text skips
-ICU entirely on a fast scalar check.
+`FuzzyMatch.normalized` is the common text fold: NFC precomposition, format scalars stripped, then
+`[.caseInsensitive, .diacriticInsensitive, .widthInsensitive]` with `locale: nil`. Matching,
+alternate-name dedup, category lookup and rename dedup all use it. `LauncherRankingStore.normalize`
+first converts a non-Latin query to the spaced reading users type, then uses the same fold, so a
+Chinese query and its pinyin form share remembered intent. ASCII text skips ICU on a fast scalar check.
 
 ## Names in the user's language
 
@@ -219,12 +208,12 @@ new `Kind` case gets its category word for free.
 away from a real entry: `System Settings` names both a category and an installed application. That one
 collision is answered rather than avoided — an entry whose display name equals the query joins the
 listing, so the app appears under Applications above the panes. Since slice order is section order
-(`publishEntries`), `categoryListing` is a filter with no sort, and the sectioned view stays 1:1 with the
+(`publishEntries`), `categoryListing` filters then orders by usage, and the sectioned view stays 1:1 with the
 flat selection. Visibility still applies downstream, and no `limit` does, matching the empty query.
 
 `LauncherScreen` therefore separates the two jobs the empty query used to do at once: `showSections`
 draws the headers, `pinsFavorites` pins the Favorites prefix and hands out the ⌘-digit slots. A category
-listing takes the first only. Opening a row from one also records nothing in `LauncherRankingStore` — a
+listing takes the first only. Opening a row from one records global frecency but no search term: a
 category word is not a search for the row that ran, and learning it would rank that row under `s`.
 
 ### Contextual commands
@@ -241,8 +230,8 @@ re-written so `github.com` and `https://…` mean the same thing here as they do
 entry is an ordinary `.command`, so `VisibilityStore` still gates it — Commands off hides the row —
 and its `url` carries the destination instead of the catalog's `tinycast://` placeholder. Nothing
 learns from it and nothing pins it: `LauncherCoordinator.launch` skips `LauncherRankingStore` for a
-contextual row, the way it already skips a category listing, since a pasted URL is not a term any
-row should rank under; and ⇧⌘F and ⇧⌘H are both refused, because a favorite — or a hidden-item key —
+contextual row, since a pasted URL is not a term any row should rank under; and ⇧⌘F and ⇧⌘H are both
+refused, because a favorite — or a hidden-item key —
 the empty query can never resolve is dead state a backup would then carry.
 
 The row prints `AppEntry.subtitle` beside its name — the one field for an entry whose name alone
@@ -361,38 +350,30 @@ in it are in the old one. `.appex` Settings panes carry no Spotlight alternates,
 doesn't ask — it runs the same `BundleLocalization` walk for its own names, and retires its cache
 when either the extensions folder or the language list moves.
 
-Selecting a launcher result records **one row for the submitted query** — `submittedQuery`, named
-so because a table written when the field held one row per *prefix* cannot decode here, which is the
-reset — and recall aggregates every stored query the typed one is a prefix of — so choosing WhatsApp for `wha` still surfaces it under
-`w` and `wh`, at a sixteenth of the rows. The 1,000-record cap therefore holds ~1,000 distinct habits
-rather than ~60.
+Every open from a non-query-driven launcher row records one visit under the entry's
+`preferenceKey`. A typed non-category query also joins the entry's last three distinct search terms;
+opening a category, a favorite slot or a row without text still teaches frecency but adds no term.
+Query-driven browser destinations are not learned. Global per-app hotkeys continue to open through
+their own direct path and are not selection signals.
 
-**The opening list stays alphabetical.** Frecency was tried there and reverted: with the learned
-apps floating to the top and the alphabet resuming below them, the section is sorted by two
-principles with nothing marking the seam, which reads as a scrambled list and moves under the user's
-muscle memory as they use it. Ranking a section needs a labelled group of its own, not a resort in
-place. So nothing is recorded or recalled under `""`, and direct hotkeys and ⌘-digit favorite
-launches still teach nothing either.
+Each visit adds 100 to a score that halves every ten days. Search terms steer results for 408 hours
+after the most recent open; an open without a query refreshes their age without adding a new term.
+Queries are normalized in the same form used for matching, including spaced pinyin for CJK text.
+Learning is one record per entry in `launcher-ranking.json`, rather than a row for every typed
+prefix. The previous per-query array cannot decode as this table and therefore starts empty after
+this change. Backup learning now stores the visit dictionary in the archive's ranking part.
 
-Learned data stays on device in `launcher-ranking.json`; a result that has learned ranking offers a
-per-item reset in its Actions menu, and users can clear all learned ranking in General Settings.
+An empty search is arranged as Favorites, Suggestions and the remaining kind sections. Favorites
+remain user-ordered. Suggestions show up to two apps whose folder-entry date is under five minutes
+old, then recently used entries without their own hotkey, then prioritized built-in commands without
+a user alias or hotkey, up to five total. Favorites, hidden entries and Delores itself are not
+suggested. The section can be disabled in Search Box Settings → Search; usage ordering of the
+remaining list stays enabled.
 
-Rankings are memoized one query deep and keyed by the ranking store's revision, so a launch or reset
-invalidates the cached order. `rank` resolves the whole learned table for a query up front via
-`usage(query:)` — one fold and one clock read per pass, not per candidate.
-
-The frecency curve is bounded but never flat:
-
-```
-frequency  = 2_000 × (1 − (count+1)^−0.30)
-recency    =   700 × exp(−ageDays / 14)
-confidence =   300 × share × min(1, count/3)
-```
-
-`frequency` replaced a `min(3_000, log2(count+1) × 600)` that clipped at exactly 31 uses — the 49th
-launch counted the same as the 31st. `confidence` is what makes prefix recall safe: a habit under
-`zed` has the whole bucket to itself, while the same habit recalled under `z` competes with every
-other `z…` pick, so its override budget collapses on its own.
+The result memo includes ranking and alias revisions, visibility, favorites, hotkey bindings, the
+suggestion toggle and the current minute. That lets frecency age and fresh-install suggestions expire
+without recalculating every view update. A result with learned history offers a per-item reset in its
+Actions menu; Search Box Settings → Search clears all learned history.
 
 ## System actions
 
@@ -404,10 +385,10 @@ global hotkey — hiding the floating palette before any confirmation or value d
 permission-aware failures. With the palette closed it targets the frontmost app, so Hide Others and
 Quit All act on the same window a palette launch would have.
 
-System actions occupy their own launcher section and their own Settings pane. The empty-query publication
-order is applications, System Settings, quicklinks, system actions, then built-in
-commands; the sectioned view filters in that same order so the visible rows remain
-identical to the flat selection index.
+System actions occupy their own launcher section and their own Settings pane. Empty-query results keep
+the launcher's section order — applications, System Settings, quicklinks, Apple Shortcuts, system
+actions, quick actions, then commands — while frecency sorts entries within each section. The
+sectioned view and flat keyboard-selection index use the same order.
 Search, favorites, visibility and learned ranking work through the normal `AppEntry` path, and every
 action is bindable to a global shortcut from Settings › System Actions
 (see [hotkeys.md](hotkeys.md)).

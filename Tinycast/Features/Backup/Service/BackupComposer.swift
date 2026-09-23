@@ -33,10 +33,10 @@ enum BackupComposer {
         if categories.contains(.learning) {
             // From memory, not the files: the ranking store persists asynchronously.
             let encoder = BackupBundle.encoder
-            plan.learning[.ranking] = try? encoder.encode(core.launcherRanking.records)
+            plan.learning[.ranking] = try? encoder.encode(core.launcherRanking.visits)
             plan.learning[.calculator] = try? encoder.encode(core.calcHistory.entries)
             plan.learningRecords =
-                core.launcherRanking.records.count + core.calcHistory.entries.count
+                core.launcherRanking.visits.count + core.calcHistory.entries.count
         }
         return plan
     }

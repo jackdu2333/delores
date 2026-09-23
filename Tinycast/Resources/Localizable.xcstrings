@@ -2161,6 +2161,36 @@
         }
       }
     },
+    "High": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高"
+          }
+        }
+      }
+    },
+    "Low": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中"
+          }
+        }
+      }
+    },
     "Features": {
       "localizations": {
         "zh-Hans": {
@@ -4051,6 +4081,16 @@
         }
       }
     },
+    "Search sensitivity": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索灵敏度"
+          }
+        }
+      }
+    },
     "Search and run the shortcuts you built in the Shortcuts app.": {
       "localizations": {
         "zh-Hans": {
@@ -4337,6 +4377,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "在紧凑模式中显示常用项"
+          }
+        }
+      }
+    },
+    "Show suggestions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示建议"
+          }
+        }
+      }
+    },
+    "Show useful entries while the search field is empty.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索框为空时显示常用或推荐项目。"
+          }
+        }
+      }
+    },
+    "Control how loosely fuzzy matches are accepted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "控制模糊匹配的宽松程度。"
+          }
+        }
+      }
+    },
+    "Suggestions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建议"
           }
         }
       }

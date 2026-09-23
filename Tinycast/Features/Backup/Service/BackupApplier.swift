@@ -86,9 +86,9 @@ enum BackupApplier {
 
     private static func applyLearning(_ bundle: BackupBundle, to core: AppCore) -> Int {
         var applied = 0
-        if let records = bundle.decodeLearning(.ranking, as: [LauncherRankingRecord].self) {
-            core.launcherRanking.replace(records)
-            applied += records.count
+        if let visits = bundle.decodeLearning(.ranking, as: [String: LauncherVisit].self) {
+            core.launcherRanking.replace(visits)
+            applied += visits.count
         }
         if let entries = bundle.decodeLearning(.calculator, as: [CalcHistoryEntry].self) {
             core.calcHistory.replace(entries)

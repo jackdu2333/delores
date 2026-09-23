@@ -104,12 +104,20 @@ struct FuzzTest {
         SearchRelevance.quality(query: query, fields: app(name).fields)
     }
 
-    /// Mirrors AppIndex.rank: strongest field, learned boost, alphabetical tiebreak.
-    /// The shipped fold, so this harness cannot drift from what `AppIndex.rank` does.
+    /// Mirrors AppIndex.rank through the same role-aware matcher and learned query terms.
     static func rank(_ query: String, boosts: [String: Int] = [:]) -> [String] {
         LauncherOrder.ranked(
-            apps, query: FuzzyMatch.Query(query), limit: apps.count, fields: \.fields,
-            usage: { boosts[$0.name] ?? 0 }, name: \.name
+            apps, query: FuzzyMatch.Query(query), sensitivity: .low, limit: apps.count,
+            fields: \.fields,
+            signals: { app in
+                let boost = boosts[app.name] ?? 0
+                return LauncherOrder.Signals(
+                    userAlias: app.userAlias,
+                    usage: LauncherUsage(
+                        frecency: Double(max(1, boost)),
+                        searchTerms: boost > 1 ? [LauncherRankingStore.normalize(query)] : []),
+                    priority: 3, title: app.name)
+            }
         ).map(\.name)
     }
 
@@ -526,22 +534,10 @@ struct FuzzTest {
         check(
             "ranking is deterministic across repeats",
             (0..<50).allSatisfy { _ in rank("s") == rank("s") })
-        // P1: the one gap learning may never close, stated over the published constants.
         check(
-            "P1 an exact name hit survives any rival's habit",
-            SearchRelevance.protectionFloor
-                > SearchRelevance.poolTop + SearchRelevance.shapeSpan + UsageCeiling)
-        check(
-            "P2 shape orders inside a cell and never leaves it",
+            "shape orders inside a relevance cell",
             SearchRelevance.shapeSpan < 100)
-        check(
-            "P3 the weakest shown match is learnable to the top of the pool",
-            SearchRelevance.poolBottom + UsageCeiling
-                > SearchRelevance.poolTop + SearchRelevance.shapeSpan)
     }
-
-    /// Mirrors LauncherRankingStore.maximumUsage; Tests/ranking-test.swift asserts the real one.
-    static let UsageCeiling = SearchRelevance.usageCeiling - 1
 
     // MARK: - Randomized property loop
 
@@ -561,14 +557,12 @@ struct FuzzTest {
         var bandViolations = 0
         var nondeterministic = 0
         var unstableOrder = 0
-        var boostCrossedBand = 0
         var matched = 0
 
         mutating func add(_ other: LoopCounts) {
             bandViolations += other.bandViolations
             nondeterministic += other.nondeterministic
             unstableOrder += other.unstableOrder
-            boostCrossedBand += other.boostCrossedBand
             matched += other.matched
         }
     }
@@ -584,7 +578,7 @@ struct FuzzTest {
                 guard let score = SearchRelevance.quality(folded, fields: fields) else { continue }
                 counts.matched += 1
 
-                // Every score is one cell plus a shape, and usage may never lift it past P1.
+                // Every score is one cell plus a shape.
                 // A query that folds away claims no cell; every real one is a cell plus a shape.
                 if !folded.isEmpty,
                     !cells.contains(where: {
@@ -592,11 +586,6 @@ struct FuzzTest {
                     })
                 {
                     counts.bandViolations += 1
-                }
-                if score < SearchRelevance.protectionFloor,
-                    score + UsageCeiling >= SearchRelevance.protectionFloor
-                {
-                    counts.boostCrossedBand += 1
                 }
                 if SearchRelevance.quality(query: query, fields: fields) != score {
                     counts.nondeterministic += 1
@@ -650,17 +639,14 @@ struct FuzzTest {
             }
             return await group.reduce(into: LoopCounts()) { $0.add($1) }
         }
-        let (bandViolations, nondeterministic, unstableOrder, boostCrossedBand, matched) = (
+        let (bandViolations, nondeterministic, unstableOrder, matched) = (
             counts.bandViolations, counts.nondeterministic, counts.unstableOrder,
-            counts.boostCrossedBand, counts.matched
+            counts.matched
         )
 
         check(
             "every score is one cell plus a shape", bandViolations == 0,
             "\(bandViolations) violations")
-        check(
-            "the max learned usage never crosses the firewall", boostCrossedBand == 0,
-            "\(boostCrossedBand) crossings")
         check("scoring is deterministic", nondeterministic == 0, "\(nondeterministic) mismatches")
         check("rank order is stable", unstableOrder == 0, "\(unstableOrder) unstable")
         check(

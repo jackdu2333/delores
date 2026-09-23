@@ -15,6 +15,9 @@ launcher and a still-recorded shortcut for either does nothing.
   their windows — one level, two AX reads each — where the menu walk descends a tree. A
   `Task.detached` here would buy a "Reading windows…" state nobody would ever see, and cost a
   revision counter to keep superseded sweeps from publishing. `WindowInventory` made the same call.
+- **Every opening sweeps again.** Hiding drops the snapshot and its AX handles; `PaletteCoordinator`
+  calls `WindowSwitchCoordinator.load()` before showing both a direct summon and a restored screen.
+  The restore path checks Accessibility too, and the synchronous sweep cannot steal the target app.
 - **A live `AXUIElement` never leaves the main actor, and never outlives the show.** The pure entry
   carries a `handle`; `WindowSwitchSession` holds the `handle → Element` table `@ObservationIgnored`
   and drops it in `reset()`, which `hidePalette` and every mode change call.

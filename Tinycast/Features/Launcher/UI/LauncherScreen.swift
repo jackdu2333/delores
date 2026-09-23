@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The root search: favorites first, then one section per entry kind, led by the calculator card.
+/// The root search: favorites, suggestions and kind sections, led by the calculator or color card.
 struct LauncherScreen: PaletteScreen {
     let appIndex: AppIndex
     let favorites: FavoritesStore
@@ -26,6 +26,8 @@ struct LauncherScreen: PaletteScreen {
     private let pinsFavorites: Bool
     /// How many of `results` are pinned favorites; zero unless the section shows.
     private let favoriteCount: Int
+    /// How many results after Favorites belong to Suggestions.
+    private let suggestionCount: Int
     /// The `Use "…" with` section, below every result; empty unless something is typed.
     private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
     /// Resolved in `init`: the palette indexes this several times per event, so it can't recompute.
@@ -47,8 +49,9 @@ struct LauncherScreen: PaletteScreen {
         self.openArgumentOptions = openArgumentOptions
         self.scrollToFollow = scrollToFollow
 
-        var results = appIndex.orderedResults(
-            query: vm.query, visibility: visibility, favorites: favorites)
+        let ordered = appIndex.orderedResults(
+            query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys)
+        var results = ordered.entries
         // A typed web address leads: nothing the index holds answers it better.
         if let browser = CommandCatalog.openInBrowser(for: vm.query), visibility.isVisible(browser) {
             results.insert(browser, at: 0)
@@ -65,7 +68,8 @@ struct LauncherScreen: PaletteScreen {
         self.color = color
         self.showSections = pinsFavorites || AppEntry.Kind.named(by: vm.query) != nil
         self.pinsFavorites = pinsFavorites
-        self.favoriteCount = pinsFavorites ? results.prefix(while: favorites.isFavorite).count : 0
+        self.favoriteCount = pinsFavorites ? ordered.favoriteCount : 0
+        self.suggestionCount = pinsFavorites ? ordered.suggestionCount : 0
         if let calc {
             self.rows = [.calc(calc)] + entries
         } else if let color {
@@ -305,25 +309,26 @@ struct LauncherScreen: PaletteScreen {
             !CommandCatalog.isQueryDriven(app), let index = results.firstIndex(of: app)
         else { return false }
         visibility.setItemVisible(false, for: app)
-        select(row: min(index, max(reorderedResults().count - 1, 0)))
+        select(row: min(index, max(reorderedResults().entries.count - 1, 0)))
         return true
     }
 
     /// The list reorders under an action; keep the highlight and the scroll on the row that moved.
     private func follow(_ app: AppEntry) {
-        guard let index = reorderedResults().firstIndex(of: app) else { return }
+        guard let index = reorderedResults().entries.firstIndex(of: app) else { return }
         select(row: index)
     }
 
     /// Highlight a row of the Favorites section, clamped into what the section now holds.
     private func selectFavorite(at index: Int) {
-        let count = reorderedResults().prefix(while: favorites.isFavorite).count
+        let count = reorderedResults().favoriteCount
         select(row: min(max(index, 0), max(count - 1, 0)))
     }
 
     /// Re-read the order the change just invalidated; this warms the key the next render reads.
-    private func reorderedResults() -> [AppEntry] {
-        appIndex.orderedResults(query: vm.query, visibility: visibility, favorites: favorites)
+    private func reorderedResults() -> AppIndex.Results {
+        appIndex.orderedResults(
+            query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys)
     }
 
     private func select(row index: Int) {
@@ -353,6 +358,7 @@ struct LauncherScreen: PaletteScreen {
             results: results,
             selectedRowID: row(at: selection)?.id,
             favoriteCount: favoriteCount,
+            suggestionCount: suggestionCount,
             showSections: showSections,
             scroll: scroll,
             card: leadCard,

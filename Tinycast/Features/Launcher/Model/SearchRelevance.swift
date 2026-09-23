@@ -33,6 +33,7 @@ enum FuzzyMatch {
         /// Folded once too: the subsequence pass needs random access on every candidate.
         fileprivate let characters: [Character]
         var isEmpty: Bool { text.isEmpty }
+        var value: String { text }
 
         init(_ raw: String) {
             text = FuzzyMatch.normalized(raw)
@@ -228,22 +229,15 @@ struct SearchFields: Sendable, Hashable, ExpressibleByArrayLiteral {
 
 /// How well a query fits an entry: every gap below is a pick count, and one gap is a firewall.
 enum SearchRelevance {
-    /// The lowest protected cell. Nothing below it is reachable at any usage.
-    static let protectionFloor = 6_500
-    /// The strongest unprotected cell, and the weakest evidence the index will show at all.
-    static let poolTop = 3_100
-    static let poolBottom = 600
     /// `shape` orders inside one cell and can never leave it.
     static let shapeSpan = 99
-    /// The exclusive bound every usage term must respect, or the firewall stops holding.
-    static let usageCeiling = 3_000
 
     /// The closed table. A new naming criterion picks a role; it never adds a row here.
     static func cell(_ role: SearchAlias.Role, _ tier: FuzzyMatch.Tier) -> Int? {
         switch (role, tier) {
         case (.userAlias, .exact): 7_000
-        case (.name, .exact): protectionFloor
-        case (.userAlias, .prefix): poolTop
+        case (.name, .exact): 6_500
+        case (.userAlias, .prefix): 3_100
         case (.name, .prefix): 3_000
         case (.translation, .exact): 2_700
         case (.owner, .exact): 2_500
@@ -260,7 +254,7 @@ enum SearchRelevance {
         case (.technical, .prefix): 900
         case (.translation, .subsequence): 800
         case (.technical, .wordStart): 700
-        case (.technical, .substring): poolBottom
+        case (.technical, .substring): 600
         // `Looseness` refuses these, so no query can reach them.
         case (.userAlias, _), (.owner, .subsequence), (.technical, .subsequence): nil
         }
@@ -285,9 +279,21 @@ enum SearchRelevance {
 
     /// The folded form: an index folds one query once, not once per entry.
     static func quality(_ query: FuzzyMatch.Query, fields: SearchFields) -> Int? {
-        // Every entry is equally relevant to an empty query, so no alias claims a cell.
         guard !query.isEmpty else { return 0 }
-        var best: Int?
+        return hits(query, fields: fields).map(\.quality).max()
+    }
+
+    struct Hit: Sendable {
+        let alias: SearchAlias
+        let match: FuzzyMatch.Match
+        let quality: Int
+    }
+
+    /// Every accepted field hit, so the launcher can rank signals without flattening trust levels.
+    static func hits(_ query: FuzzyMatch.Query, fields: SearchFields) -> [Hit] {
+        // Every entry is equally relevant to an empty query, so no alias claims a cell.
+        guard !query.isEmpty else { return [] }
+        var result: [Hit] = []
         for alias in fields.aliases {
             guard let match = FuzzyMatch.match(query, candidate: alias.text),
                 alias.looseness.accepts(match.tier)
@@ -296,8 +302,8 @@ enum SearchRelevance {
             let role: SearchAlias.Role =
                 alias.role == .userAlias && !match.tier.isAnchored ? .translation : alias.role
             guard let cell = cell(role, match.tier) else { continue }
-            best = max(best ?? Int.min, cell + shape(match))
+            result.append(Hit(alias: alias, match: match, quality: cell + shape(match)))
         }
-        return best
+        return result
     }
 }

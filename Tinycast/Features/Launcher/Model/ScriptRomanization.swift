@@ -43,6 +43,22 @@ enum ScriptRomanization {
         return readings.filter { !$0.isEmpty && $0 != typedForm(of: name) }
     }
 
+    /// A spaced Latin reading for learning and comparing the query as the user types it.
+    static func latin(_ name: String) -> String? {
+        guard let script = script(of: name) else { return nil }
+        let reading: String? =
+            switch script {
+            case .han: transform(name, .mandarinToLatin)
+            case .japanese: transform(dropping(name, in: hanRanges), .toLatin)
+            case .hangul, .other: transform(name, .toLatin)
+            case .cyrillic: cyrillicReading(of: name)
+            }
+        guard let reading else { return nil }
+        let spaced = reading.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        let folded = FuzzyMatch.normalized(spaced)
+        return folded.isEmpty || folded == FuzzyMatch.normalized(name) ? nil : folded
+    }
+
     /// The first script with a rule of its own, kana before Han so a Japanese title routes right.
     static func script(of name: String) -> Script? {
         var hasHan = false

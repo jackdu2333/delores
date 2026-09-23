@@ -99,5 +99,10 @@ through `SettingsTab.ownedCommands`, so `navigationEnabled` is its switch rather
 Commands; it adds no `AppEntry.Kind` and no `VisibilityStore` category. Rows are not `AppEntry`s, so
 there is no frecency and no learning — ranking is per-query only.
 
+`show()` checks the Navigation switch and Accessibility permission, then toggles the palette.
+`PaletteCoordinator` calls `load()` before presenting every `.menuSearch` screen, including one
+restored during the Pop to Root Search delay. `load()` captures the front app before the palette comes
+forward, checks Accessibility again, and walks a fresh snapshot because hiding resets the session.
+
 The display name is `Search Menu Bar Items` while the raw id stays `command:search-menu-items`, which
 is what keeps a recorded shortcut, an alias and a visibility flag pointing at the same command.

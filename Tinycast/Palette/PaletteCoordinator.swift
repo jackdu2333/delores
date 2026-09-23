@@ -12,6 +12,8 @@ final class PaletteCoordinator {
     private let windowController: PaletteWindowController
     /// Features whose launcher rows are read from outside Tinycast re-read them on each open.
     var onLauncherShown: (() -> Void)?
+    /// Screens backed by another app's state reload on every opening, including a restore.
+    var onScreenOpening: ((PaletteMode) -> Void)?
 
     init(
         palette: PaletteState,
@@ -82,6 +84,8 @@ final class PaletteCoordinator {
             navigate(to: mode)
         }
         if let query { palette.query = query }
+        // Read before showing so the target app is still the app that was in front.
+        onScreenOpening?(palette.mode)
         windowController.show()
         if palette.mode == .fileSearch { fileSearch.search(palette.query) }
         if palette.mode == .menuSearch { menuSearch.filter(palette.query) }

@@ -148,6 +148,18 @@ enum SettingsSearchCatalog {
             .commandSurfaceSearch, "Learned ranking",
             keywords: ["reset", "history", "order", "privacy"]),
         .init(
+            .commandSurfaceSearch, "Show suggestions",
+            keywords: [
+                "frequent", "recent", "recommended", "empty", "root search", "建议", "显示建议",
+                "常用"
+            ]),
+        .init(
+            .commandSurfaceSearch, "Search sensitivity",
+            keywords: [
+                "fuzzy", "strict", "loose", "matching", "typo", "root search", "模糊", "匹配",
+                "灵敏度"
+            ]),
+        .init(
             .commandSurfaceHyperKey, "Hyper Key",
             keywords: ["modifier", "remap", "caps lock", "capslock"]),
         .init(

@@ -49,6 +49,20 @@ struct CommandSurfaceSettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $settings.launcherShowsSuggestions) {
+                    SettingsRowTitle(.commandSurfaceSearch, "Show suggestions")
+                    Text(L10n.string("Show useful entries while the search field is empty."))
+                }
+
+                Picker(selection: $settings.rootSearchSensitivity) {
+                    ForEach(SearchSensitivity.allCases) { sensitivity in
+                        Text(L10n.text(sensitivity.title)).tag(sensitivity)
+                    }
+                } label: {
+                    SettingsRowTitle(.commandSurfaceSearch, "Search sensitivity")
+                    Text(L10n.string("Control how loosely fuzzy matches are accepted."))
+                }
+
                 LabeledContent {
                     Button(L10n.string("Reset…"), role: .destructive) {
                         confirmingRankingReset = true

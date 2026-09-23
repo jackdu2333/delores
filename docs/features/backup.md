@@ -63,6 +63,11 @@ clipboard/images/<uuid>.png
 learning/{ranking,calculator}.json
 ```
 
+`learning/ranking.json` is a dictionary of `LauncherVisit` values keyed by entry preference key. The
+previous per-query array is intentionally not decoded as this shape, so imported old ranking data is
+ignored rather than partially guessed. Search suggestions and sensitivity are ordinary mirrored
+settings and travel with `settings.json`.
+
 A category the user didn't tick has no key in `counts` and no files in the archive, which is how the
 import picker greys a row out instead of importing nothing and saying nothing.
 

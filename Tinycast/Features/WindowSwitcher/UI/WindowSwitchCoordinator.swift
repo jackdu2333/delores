@@ -34,8 +34,17 @@ final class WindowSwitchCoordinator {
             Task { await self.reportPermissionFailure() }
             return
         }
-        session.present(WindowSwitchSweep.snapshot(ranks: WindowZOrder.appRanks()))
         paletteCoordinator.togglePalette(mode: .switchWindows)
+    }
+
+    /// Hiding drops AX handles, so every opening has to sweep the current windows again.
+    func load() {
+        guard settings.navigationEnabled else { return }
+        guard Permissions.ensureAccessibility() else {
+            Task { await self.reportPermissionFailure() }
+            return
+        }
+        session.present(WindowSwitchSweep.snapshot(ranks: WindowZOrder.appRanks()))
     }
 
     func activate(_ entry: WindowSwitchEntry) {
