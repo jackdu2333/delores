@@ -22,11 +22,13 @@ final class DeloresCodexPetWindowProbe {
 
     private struct OverlayMeasurement: Sendable {
         let rect: CGRect
+        let activityRect: CGRect?
         let screenOrigin: CGPoint
     }
 
     private var refreshTask: Task<Void, Never>?
     private var cachedFrame: CGRect?
+    private var cachedActivityFrame: CGRect?
     private var cachedOverlayVisible = false
     private var cachedAt = -Double.infinity
     private var failedRefreshes = 0
@@ -45,6 +47,7 @@ final class DeloresCodexPetWindowProbe {
         refreshTask?.cancel()
         refreshTask = nil
         cachedFrame = nil
+        cachedActivityFrame = nil
         cachedOverlayVisible = false
         cachedAt = -Double.infinity
         failedRefreshes = 0
@@ -65,11 +68,23 @@ final class DeloresCodexPetWindowProbe {
         return frame.insetBy(dx: -12, dy: -12).contains(point)
     }
 
+    func activityFrame(on screen: NSScreen) -> CGRect? {
+        guard let frame = currentActivityFrame, screen.frame.intersects(frame) else { return nil }
+        return frame.intersection(screen.frame)
+    }
+
     private var currentFrame: CGRect? {
         guard cachedOverlayVisible, let cachedFrame, ProcessInfo.processInfo.systemUptime - cachedAt
             <= Self.cachedFrameLifetime
         else { return nil }
         return cachedFrame
+    }
+
+    private var currentActivityFrame: CGRect? {
+        guard cachedOverlayVisible, let cachedActivityFrame,
+            ProcessInfo.processInfo.systemUptime - cachedAt <= Self.cachedFrameLifetime
+        else { return nil }
+        return cachedActivityFrame
     }
 
     private func start() {
@@ -89,6 +104,7 @@ final class DeloresCodexPetWindowProbe {
             failedRefreshes += 1
             if failedRefreshes >= 3 {
                 cachedFrame = nil
+                cachedActivityFrame = nil
                 cachedAt = -Double.infinity
             }
             return
@@ -100,7 +116,16 @@ final class DeloresCodexPetWindowProbe {
             width: measurement.rect.width,
             height: measurement.rect.height)
         cachedOverlayVisible = Self.isVisibleCodexOverlay(at: quartzFrame.midPoint)
-        cachedFrame = AXGeometry(screens: NSScreen.screens).flip(quartzFrame)
+        let geometry = AXGeometry(screens: NSScreen.screens)
+        cachedFrame = geometry.flip(quartzFrame)
+        cachedActivityFrame = measurement.activityRect.map { rect in
+            geometry.flip(
+                CGRect(
+                    x: measurement.screenOrigin.x + rect.minX,
+                    y: measurement.screenOrigin.y + rect.minY,
+                    width: rect.width,
+                    height: rect.height))
+        }
         cachedAt = ProcessInfo.processInfo.systemUptime
     }
 
@@ -167,11 +192,27 @@ final class DeloresCodexPetWindowProbe {
             if (rect.width <= 0 || rect.height <= 0 ||
                 style.display === "none" || style.visibility === "hidden" ||
                 Number(style.opacity) <= 0) return null;
+            const activity =
+                document.querySelector('[class*="ActivityStackViewport"]') ||
+                document.querySelector('[class*="activityPill"]');
+            const activityStyle = activity && getComputedStyle(activity);
+            const activityRect = activity && activityStyle.display !== "none" &&
+                activityStyle.visibility !== "hidden" && Number(activityStyle.opacity) > 0
+                ? activity.getBoundingClientRect()
+                : null;
             return {
                 x: rect.x,
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
+                activity: activityRect && activityRect.width > 0 && activityRect.height > 0
+                    ? {
+                        x: activityRect.x,
+                        y: activityRect.y,
+                        width: activityRect.width,
+                        height: activityRect.height
+                    }
+                    : null,
                 screenX: window.screenX,
                 screenY: window.screenY
             };
@@ -199,10 +240,24 @@ final class DeloresCodexPetWindowProbe {
             let screenX = value["screenX"] as? NSNumber,
             let screenY = value["screenY"] as? NSNumber
         else { return nil }
+        let activityRect: CGRect?
+        if let activity = value["activity"] as? [String: Any],
+            let activityX = activity["x"] as? NSNumber,
+            let activityY = activity["y"] as? NSNumber,
+            let activityWidth = activity["width"] as? NSNumber,
+            let activityHeight = activity["height"] as? NSNumber
+        {
+            activityRect = CGRect(
+                x: activityX.doubleValue, y: activityY.doubleValue,
+                width: activityWidth.doubleValue, height: activityHeight.doubleValue)
+        } else {
+            activityRect = nil
+        }
         return OverlayMeasurement(
             rect: CGRect(
                 x: x.doubleValue, y: y.doubleValue,
                 width: width.doubleValue, height: height.doubleValue),
+            activityRect: activityRect,
             screenOrigin: CGPoint(x: screenX.doubleValue, y: screenY.doubleValue))
     }
 }

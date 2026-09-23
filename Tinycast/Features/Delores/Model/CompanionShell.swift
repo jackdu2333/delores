@@ -132,9 +132,8 @@ enum DeloresCompanionShell {
         return distances.min(by: { $0.1 < $1.1 })?.0 ?? .right
     }
 
-    /// A body riding the bottom edge has nowhere to grow a bar: one grown "inward" from there would
-    /// lie across the middle of the display, which is the part the reader is looking at. It slides
-    /// to whichever vertical edge is nearer and grows from that instead.
+    /// A Delores-owned body on the bottom edge slides to a vertical edge before opening a bar. An
+    /// external body cannot be moved, so its horizontal edge remains the bar's orientation.
     static func edgeForOpeningBar(
         current: DeloresCompanionEdge, petCenter: CGPoint, visibleFrame: CGRect
     ) -> DeloresCompanionEdge {
@@ -142,6 +141,15 @@ enum DeloresCompanionShell {
         let distLeft = petCenter.x - visibleFrame.minX
         let distRight = visibleFrame.maxX - petCenter.x
         return distLeft <= distRight ? .left : .right
+    }
+
+    static func openingEdge(
+        current: DeloresCompanionEdge, petCenter: CGPoint, visibleFrame: CGRect,
+        canMovePet: Bool
+    ) -> DeloresCompanionEdge {
+        canMovePet
+            ? edgeForOpeningBar(current: current, petCenter: petCenter, visibleFrame: visibleFrame)
+            : current
     }
 
     /// The menu bar and Dock of this display are still this display. `visibleFrame.contains` is the
@@ -182,18 +190,51 @@ enum DeloresCompanionShell {
         shellSize: CGSize,
         visibleFrame: CGRect,
         bodyRadius: CGFloat,
-        canMovePet: Bool = true
+        canMovePet: Bool = true,
+        avoidFrame: CGRect? = nil
     ) -> Placement {
-        let resolvedEdge = canMovePet
-            ? edgeForOpeningBar(current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
-            : edge
+        let resolvedEdge = openingEdge(
+            current: edge, petCenter: petCenter, visibleFrame: visibleFrame,
+            canMovePet: canMovePet)
         var center = petCenter
         if canMovePet, resolvedEdge != edge {
             center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
         }
-        return placeShell(
+        let placement = placeShell(
             petCenter: center, edge: resolvedEdge, shellSize: shellSize,
             visibleFrame: visibleFrame, bodyRadius: bodyRadius, canMovePet: canMovePet)
+        guard !canMovePet, resolvedEdge == .bottom || resolvedEdge == .top,
+            let avoidFrame, placement.frame.intersects(avoidFrame)
+        else { return placement }
+
+        let pet = circleFrame(center: center, bodyRadius: bodyRadius)
+        let outwardY = center.y - shellSize.height / 2
+            + (resolvedEdge == .top ? shellGap : -shellGap)
+        let y = min(
+            max(outwardY, visibleFrame.minY),
+            max(visibleFrame.minY, visibleFrame.maxY - shellSize.height))
+        let left = CGRect(
+            x: pet.minX - shellGap - shellSize.width, y: y,
+            width: shellSize.width, height: shellSize.height)
+        let right = CGRect(
+            x: pet.maxX + shellGap, y: y,
+            width: shellSize.width, height: shellSize.height)
+        let candidates = [
+            (left, pet.minX - visibleFrame.minX),
+            (right, visibleFrame.maxX - pet.maxX),
+        ].sorted { $0.1 > $1.1 }
+        let clearAvoidance = avoidFrame.insetBy(dx: -shellGap, dy: -shellGap)
+        if let frame = candidates.first(where: {
+            visibleFrame.contains($0.0) && !$0.0.intersects(clearAvoidance)
+        })?.0 {
+            return Placement(petCenter: center, edge: resolvedEdge, frame: frame)
+        }
+        guard let frame = activityClearFrame(
+            petCenter: center, bodyRadius: bodyRadius, shellSize: shellSize,
+            visibleFrame: visibleFrame,
+            activityFrame: clearAvoidance)
+        else { return placement }
+        return Placement(petCenter: center, edge: resolvedEdge, frame: frame)
     }
 
     /// A snap island: grown out of the body's inward side too, with its long axis along the edge the
@@ -232,9 +273,9 @@ enum DeloresCompanionShell {
         bodyRadius: CGFloat,
         canMovePet: Bool = true
     ) -> Placement {
-        let resolvedEdge = canMovePet
-            ? edgeForOpeningBar(current: edge, petCenter: petCenter, visibleFrame: visibleFrame)
-            : edge
+        let resolvedEdge = openingEdge(
+            current: edge, petCenter: petCenter, visibleFrame: visibleFrame,
+            canMovePet: canMovePet)
         var center = petCenter
         if canMovePet, resolvedEdge != edge {
             center = snapCenter(petCenter, to: resolvedEdge, in: visibleFrame, bodyRadius: bodyRadius)
@@ -378,6 +419,25 @@ enum DeloresCompanionShell {
         if r.minY < bounds.minY { r.origin.y = bounds.minY }
         if r.maxY > bounds.maxY { r.origin.y = bounds.maxY - r.height }
         return r
+    }
+
+    private static func activityClearFrame(
+        petCenter: CGPoint, bodyRadius: CGFloat, shellSize: CGSize,
+        visibleFrame: CGRect, activityFrame: CGRect
+    ) -> CGRect? {
+        let width = min(shellSize.width, visibleFrame.width)
+        let height = min(shellSize.height, visibleFrame.height)
+        let x = min(
+            max(petCenter.x - width / 2, visibleFrame.minX),
+            max(visibleFrame.minX, visibleFrame.maxX - width))
+        let pet = circleFrame(center: petCenter, bodyRadius: bodyRadius)
+        let above = CGRect(
+            x: x, y: activityFrame.maxY + shellGap, width: width, height: height)
+        let below = CGRect(
+            x: x, y: activityFrame.minY - shellGap - height, width: width, height: height)
+        return [above, below].first(where: {
+            visibleFrame.contains($0) && !$0.intersects(activityFrame) && !$0.intersects(pet)
+        })
     }
 }
 

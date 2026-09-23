@@ -58,6 +58,13 @@ final class DeloresCoordinator {
                 }
                 return companion?.anchorForShell(in: visibleFrame)
             },
+            avoidanceFrame: { [weak codexPet] visibleFrame in
+                guard settings.deloresCompanionMode == .codex,
+                    let screen = DeloresWindowGeometry.screenContaining(
+                        CGPoint(x: visibleFrame.midX, y: visibleFrame.midY))
+                else { return nil }
+                return codexPet?.activityFrame(on: screen)
+            },
             relocate: { [weak companion] center, edge in companion?.relocate(to: center, edge: edge) },
             held: { [weak companion] isHeld in
                 guard settings.deloresCompanionMode == .delores else { return }

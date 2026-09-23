@@ -876,6 +876,17 @@ struct DeloresContextTest {
             visibleFrame: CGRect(x: 0, y: 0, width: 900, height: 900),
             bodyRadius: 48, canMovePet: false)
         require(external.petCenter == CGPoint(x: 30, y: 420), "an external pet is never relocated")
+        let visible = CGRect(x: 0, y: 0, width: 900, height: 900)
+        require(
+            DeloresCompanionShell.openingEdge(
+                current: .bottom, petCenter: CGPoint(x: 450, y: 40),
+                visibleFrame: visible, canMovePet: false) == .bottom,
+            "a bottom-edge external pet keeps the toolbar horizontal")
+        require(
+            DeloresCompanionShell.openingEdge(
+                current: .bottom, petCenter: CGPoint(x: 450, y: 40),
+                visibleFrame: visible, canMovePet: true) == .left,
+            "a Delores-owned pet may move to a vertical edge before opening its bar")
     }
 
     private static func testCompanionShell() {
@@ -938,6 +949,43 @@ struct DeloresContextTest {
         require(
             farBottom.edge == .right,
             "a body on the bottom edge takes the nearer vertical edge, whichever that is")
+
+        let externalCenter = CGPoint(x: 720, y: 64)
+        let activity = CGRect(x: 500, y: 130, width: 700, height: 100)
+        let externalBottom = DeloresCompanionShell.planBarOpening(
+            petCenter: externalCenter, edge: .bottom, shellSize: CGSize(width: 420, height: 96),
+            visibleFrame: visible, bodyRadius: r, canMovePet: false, avoidFrame: activity)
+        require(externalBottom.edge == .bottom, "status avoidance never changes the pet's edge")
+        let externalBounds = DeloresCompanionShell.circleFrame(
+            center: externalCenter, bodyRadius: r)
+        require(
+            externalBottom.frame.maxX <= externalBounds.minX - gap
+                || externalBottom.frame.minX >= externalBounds.maxX + gap,
+            "an intersecting Codex activity pill moves the bar to a flank")
+        require(!externalBottom.frame.intersects(activity), "the horizontal bar avoids Codex activity")
+        require(
+            externalBottom.frame.maxY <= visible.maxY
+                && externalBottom.frame.minY >= visible.minY,
+            "the flank placement stays on the display")
+        require(
+            externalBottom.petCenter == externalCenter,
+            "the flank placement never moves the external pet")
+        let narrowDisplay = CGRect(x: 0, y: 0, width: 372, height: 900)
+        let narrowActivity = CGRect(x: 16, y: 130, width: 340, height: 100)
+        let narrowPetCenter = CGPoint(x: 246, y: 64)
+        let narrowPlacement = DeloresCompanionShell.planBarOpening(
+            petCenter: narrowPetCenter, edge: .bottom,
+            shellSize: CGSize(width: 352, height: 96), visibleFrame: narrowDisplay,
+            bodyRadius: r, canMovePet: false, avoidFrame: narrowActivity)
+        require(
+            !narrowPlacement.frame.intersects(narrowActivity),
+            "a narrow display parks the horizontal bar clear of the activity pill")
+        require(
+            narrowDisplay.contains(narrowPlacement.frame),
+            "the clear-row fallback stays inside a narrow display")
+        require(
+            narrowPlacement.petCenter == narrowPetCenter && narrowPlacement.edge == .bottom,
+            "the clear-row fallback keeps the Codex pet fixed on its horizontal edge")
 
         // An opened card hangs from the closed bar's top edge, so the growth is one downward
         // gesture and the bar itself does not move.

@@ -11,6 +11,8 @@ struct DeloresContextCompanionHosting {
     /// Where a shell opened on the display whose visible area is this should hang. Nil sends the bar
     /// to the menu bar — the Companion is off, or its body is not on screen.
     var anchor: (CGRect) -> DeloresCompanionAnchor?
+    /// A visible overlay owned by the external pet's app, kept clear of the Context Surface.
+    var avoidanceFrame: (CGRect) -> CGRect?
     /// A shell did not fit where the body was standing, and the body had to slide along its edge.
     var relocate: (CGPoint, DeloresCompanionEdge) -> Void
     /// A shell hung off the body came on screen, or went away. While one is up the body stands
@@ -261,6 +263,7 @@ final class DeloresContextCoordinator {
     ) {
         guard !AXWindowAccess.isFrontmostAppFullscreen() else { return }
         let (screen, pet) = resolvePresentationScreen(for: point)
+        let avoidanceFrame = pet == nil ? nil : companionHosting?.avoidanceFrame(screen.visibleFrame)
         let selection = SelectionInvocation(
             text: prepared.text,
             targetApplication: InvocationApplication(
@@ -302,7 +305,8 @@ final class DeloresContextCoordinator {
             onFollowUp: { [weak self] question in self?.followUp(question) },
             onContinueInCommand: { [weak self] in self?.continueInCommand() },
             onDismiss: { [weak self] in self?.surfaceDismissed() },
-            companion: pet, companionCanRelocate: canRelocatePet)
+            companion: pet, companionCanRelocate: canRelocatePet,
+            companionAvoidanceFrame: avoidanceFrame)
     }
 
     private func run(_ action: DeloresContextAction) {

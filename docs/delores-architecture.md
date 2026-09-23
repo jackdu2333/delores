@@ -38,8 +38,11 @@ anyway. They have no place to be and nothing of their own to say.
   display even when the selection is on another display; while the pet is visible, snap uses the pet
   rather than the top-centre trigger. Both return to their menu-bar/top-centre fallback when Codex's
   pet is hidden or its local overlay bridge is unavailable. The bridge reads the mascot's live DOM
-  rectangle over Codex's loopback DevTools endpoint at 127.0.0.1:9341, then checks WindowServer to
-  confirm its overlay window is on screen; it does not modify Codex's renderer.
+  rectangle and any visible activity pill over Codex's loopback DevTools endpoint at 127.0.0.1:9341,
+  then checks WindowServer to confirm its overlay window is on screen; it does not modify Codex's
+  renderer. A bottom-edge Codex pet keeps the selection bar horizontal; if a visible activity pill
+  intersects it, the bar moves to a clear flank or, when the display is too narrow, a clear row above
+  or below the pill. The Codex pet itself never moves.
 
 The gap between the surfaces and the core, measured against both catalogues, is written up in
 [delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,

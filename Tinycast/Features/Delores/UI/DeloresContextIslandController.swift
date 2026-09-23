@@ -82,6 +82,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     var onCompanionRelocated: ((CGPoint, DeloresCompanionEdge) -> Void)?
     /// A Codex pet is owned by another app, so our shell may clamp without moving its anchor.
     private var companionCanRelocate = true
+    private var companionAvoidanceFrame: CGRect?
 
     /// Told that the wait is the Companion's, and that it is over. The bar steps aside and the body
     /// says what it would have said; the answer arrives back here either way.
@@ -180,13 +181,15 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         onContinueInCommand: @escaping () -> Void,
         onDismiss: @escaping () -> Void,
         companion: DeloresCompanionAnchor? = nil,
-        companionCanRelocate: Bool = true
+        companionCanRelocate: Bool = true,
+        companionAvoidanceFrame: CGRect? = nil
     ) {
         dismiss(notifying: false)
 
         screen = context.screen
         companionAnchor = companion
         self.companionCanRelocate = companionCanRelocate
+        self.companionAvoidanceFrame = companionAvoidanceFrame
         selectionText = context.text
         answer = nil
         isCardCollapsed = false
@@ -203,9 +206,10 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
 
         let wish = DeloresContextIslandView.preferredSize(for: metrics)
         if let anchor = companionAnchor {
-            let resolved = DeloresCompanionShell.edgeForOpeningBar(
+            let resolved = DeloresCompanionShell.openingEdge(
                 current: anchor.edge, petCenter: anchor.center,
-                visibleFrame: context.screen.visibleFrame)
+                visibleFrame: context.screen.visibleFrame,
+                canMovePet: companionCanRelocate)
             barIsVertical = resolved == .left || resolved == .right
             barAtLeadingEdge = resolved == .left
         } else {
@@ -344,6 +348,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         barIsVertical = false
         barAtLeadingEdge = true
         companionCanRelocate = true
+        companionAvoidanceFrame = nil
         lastMode = .actions
         closing.delegate = nil
         closing.onEscape = nil
@@ -736,7 +741,7 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         let placement = DeloresCompanionShell.planBarOpening(
             petCenter: pet.center, edge: pet.edge, shellSize: size,
             visibleFrame: screen.visibleFrame, bodyRadius: pet.radius,
-            canMovePet: companionCanRelocate)
+            canMovePet: companionCanRelocate, avoidFrame: companionAvoidanceFrame)
         adopt(placement)
         return placement.frame
     }
