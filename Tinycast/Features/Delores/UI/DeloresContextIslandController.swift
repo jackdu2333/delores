@@ -440,27 +440,24 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
     /// run a second action on the same selection without closing this one first.
     func showAnswer(_ next: DeloresContextIslandAnswer, animated: Bool = true) {
         guard isBusy else { return }
+        let wasWaitingForContent = answer?.isRunning == true
         answer = next
         // A fresh press is the reader asking for the card; a reply that lands while they have it
         // collapsed is not, and must not pop it back open over whatever they moved on to reading.
         if next.isRunning { isCardCollapsed = false }
         guard !isCardCollapsed else { return }
-        // The wait is handed to the Companion when there is one to hand it to.
-        //
-        // A card's compact working height is a *horizontal* bar's shape: 78pt under a row of pills.
-        // A strip standing beside the body has its long axis the other way, and the vessel cannot be
-        // shorter than the strip without cutting the strip's own controls off — so the working card
-        // there is the length of the whole strip, a large empty card. Nothing on screen beats the
-        // wrong thing on screen, and the body is already what the reader is looking at.
-        if next.isRunning, companionAnchor != nil {
+        if next.isRunning, companionAnchor != nil, companionCanRelocate {
             beginWaitingOnCompanion()
+            return
+        }
+        if next.isRunning, companionAnchor != nil, !companionCanRelocate, barIsVertical {
+            render(.inlineWorking(next), animated: animated)
             return
         }
         let cameBack = isWaitingOnCompanion
         if cameBack { endWaitingOnCompanion() }
-        // Animated even when the caller asked for none: that request is about one more line of text
-        // arriving in a card already on screen, not about a card arriving out of nothing.
-        render(.result(next), animated: animated || cameBack)
+        let firstContentArrived = wasWaitingForContent && !next.isRunning
+        render(.result(next), animated: animated || cameBack || firstContentArrived)
     }
 
     // MARK: - The wait, handed to the Companion
@@ -642,8 +639,8 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         // Which bar this state draws decides how wide the vessel has to be. A vertical strip asks
         // the same question along its own axis — which column it draws decides how long the vessel
         // has to be.
-        let row = isPinned || mode.opensCard ? barWidthWithExits : barWidth
-        let rowLength = isPinned || mode.opensCard ? barLengthWithExits : barLength
+        let row = isPinned || mode.needsExitControls ? barWidthWithExits : barWidth
+        let rowLength = isPinned || mode.needsExitControls ? barLengthWithExits : barLength
         // The row is drawn at the collapsed bar's width in every state, so a wider row is room the
         // vessel has to hold rather than a reason to move the catalog. See `vesselWidth`.
         let vessel = DeloresContextIslandPlacement.vesselWidth(
@@ -755,6 +752,12 @@ final class DeloresContextIslandController: NSObject, NSWindowDelegate {
         guard let pet = companionAnchor else {
             return DeloresContextIslandPlacement.expandedFrame(
                 keepingTopEdgeOf: anchored, size: size, in: screen)
+        }
+        if !companionCanRelocate, !barIsVertical, let activity = companionAvoidanceFrame {
+            return DeloresCompanionShell.planBarOpening(
+                petCenter: pet.center, edge: pet.edge, shellSize: size,
+                visibleFrame: screen.visibleFrame, bodyRadius: pet.radius,
+                canMovePet: false, avoidFrame: activity).frame
         }
         let placement = DeloresCompanionShell.planExpandedBarOpening(
             petCenter: pet.center, edge: pet.edge,

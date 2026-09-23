@@ -37,7 +37,10 @@ struct DeloresContextIslandAnswer: Equatable {
     var canRetry: Bool { failure != nil || isStopped }
 }
 
-enum DeloresContextIslandMode: Equatable {    case actions
+enum DeloresContextIslandMode: Equatable {
+    case actions
+    /// The selected action is still running; the strip stays put until there is content to open.
+    case inlineWorking(DeloresContextIslandAnswer)
     /// The bar has opened for an answer that arrives on the chat surface instead of in here.
     case handoff(progressTitle: String)
     /// The answer, in the card below the bar. The bar above it stays live: the reader who wanted a
@@ -51,19 +54,34 @@ enum DeloresContextIslandMode: Equatable {    case actions
     }
 
     var answer: DeloresContextIslandAnswer? {
-        guard case .result(let answer) = self else { return nil }
-        return answer
+        switch self {
+        case .inlineWorking(let answer), .result(let answer): answer
+        default: nil
+        }
+    }
+
+    var isInlineWorking: Bool {
+        guard case .inlineWorking(let answer) = self else { return false }
+        return answer.isRunning
     }
 
     /// True while an answer is being generated and no content has arrived yet.
     var isWorking: Bool {
+        if isInlineWorking { return true }
         if let answer, answer.isRunning { return true }
         if handoffTitle != nil { return true }
         return false
     }
 
     /// Whether the panel needs the card frame at all.
-    var opensCard: Bool { answer != nil || handoffTitle != nil }
+    var opensCard: Bool {
+        switch self {
+        case .handoff, .result: true
+        case .actions, .inlineWorking: false
+        }
+    }
+
+    var needsExitControls: Bool { opensCard || isInlineWorking }
 }
 
 /// The press feel for the island's controls.
@@ -190,7 +208,7 @@ struct DeloresContextIslandView: View {
     @State private var didCopy = false
     @State private var didCopyAnswer = false
 
-    private enum Control: Hashable { case copy, pin, collapse, close, copyAnswer, replace }
+    private enum Control: Hashable { case copy, pin, collapse, close, copyAnswer, replace, stop }
 
     init(
         actions: [DeloresContextAction],
@@ -440,7 +458,7 @@ struct DeloresContextIslandView: View {
         // card while a card is open — the answer has its own copy button there — and carrying
         // both groups would grow the row by three controls instead of two, for a button already
         // on screen.
-        if isPinned || mode.opensCard {
+        if isPinned || mode.needsExitControls {
             controlButton(
                 .pin,
                 symbol: isPinned ? "pin.fill" : "pin",
@@ -460,6 +478,12 @@ struct DeloresContextIslandView: View {
                 ) {
                     onCollapseAnswer()
                 }
+            }
+            if mode.isInlineWorking {
+                controlButton(
+                    .stop, symbol: "stop.fill", iconSize: 10,
+                    tint: Theme.Colors.destructive,
+                    help: L10n.string("Stop generating"), action: onStopAnswer)
             }
             controlButton(
                 .close, symbol: "xmark", iconSize: 10, weight: .bold,
@@ -711,6 +735,7 @@ struct DeloresContextIslandView: View {
         // action too, but the bar is where the reader pressed, and a bar that looks identical before
         // and after a press leaves them to work out which of four rows answered.
         let isAnswering = mode.answer?.actionID == action.id
+        let isWaiting = isAnswering && mode.answer?.isRunning == true
         let ink =
             isAnswering
             ? Color.accentColor
@@ -732,8 +757,7 @@ struct DeloresContextIslandView: View {
             Group {
                 if isVertical {
                     VStack(spacing: metrics.scaled(1)) {
-                        Image(systemName: action.symbol)
-                            .font(.system(size: metrics.scaled(13), weight: weight))
+                        actionSymbol(action, isWaiting: isWaiting, size: 13, weight: weight)
                         Text(action.displayTitle)
                             .font(.system(size: metrics.scaled(10), weight: weight))
                             .lineLimit(1)
@@ -741,8 +765,7 @@ struct DeloresContextIslandView: View {
                     .frame(maxWidth: .infinity)
                 } else {
                     HStack(spacing: metrics.spacing.xs) {
-                        Image(systemName: action.symbol)
-                            .font(.system(size: metrics.scaled(12), weight: weight))
+                        actionSymbol(action, isWaiting: isWaiting, size: 12, weight: weight)
                         Text(action.displayTitle)
                             .font(.system(size: metrics.scaled(12), weight: weight))
                             .lineLimit(1)
@@ -782,6 +805,22 @@ struct DeloresContextIslandView: View {
             hoveredActionID = Self.resolvedHover(inside, current: hoveredActionID, id: action.id)
         }
         .accessibilityLabel(action.displayTitle)
+        .accessibilityValue(isWaiting ? L10n.string("Generating…") : "")
+    }
+
+    @ViewBuilder
+    private func actionSymbol(
+        _ action: DeloresContextAction, isWaiting: Bool, size: CGFloat, weight: Font.Weight
+    ) -> some View {
+        if isWaiting {
+            ProgressView()
+                .controlSize(.mini)
+                .tint(Color.accentColor)
+                .frame(width: metrics.scaled(size), height: metrics.scaled(size))
+        } else {
+            Image(systemName: action.symbol)
+                .font(.system(size: metrics.scaled(size), weight: weight))
+        }
     }
 
     private var copyButton: some View {

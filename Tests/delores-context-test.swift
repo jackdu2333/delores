@@ -970,6 +970,16 @@ struct DeloresContextTest {
         require(
             externalBottom.petCenter == externalCenter,
             "the flank placement never moves the external pet")
+        let waitingCard = DeloresCompanionShell.planBarOpening(
+            petCenter: externalCenter, edge: .bottom,
+            shellSize: CGSize(width: 420, height: 78), visibleFrame: visible,
+            bodyRadius: r, canMovePet: false, avoidFrame: activity)
+        require(
+            !waitingCard.frame.intersects(activity),
+            "the compact Codex waiting card also stays clear of its activity pill")
+        require(
+            waitingCard.petCenter == externalCenter,
+            "the compact waiting card never moves the external pet")
         let narrowDisplay = CGRect(x: 0, y: 0, width: 372, height: 900)
         let narrowActivity = CGRect(x: 16, y: 130, width: 340, height: 100)
         let narrowPetCenter = CGPoint(x: 246, y: 64)

@@ -42,7 +42,9 @@ anyway. They have no place to be and nothing of their own to say.
   then checks WindowServer to confirm its overlay window is on screen; it does not modify Codex's
   renderer. A bottom-edge Codex pet keeps the selection bar horizontal; if a visible activity pill
   intersects it, the bar moves to a clear flank or, when the display is too narrow, a clear row above
-  or below the pill. The Codex pet itself never moves.
+  or below the pill. While an action runs, a horizontal bar keeps a compact working card visible; a
+  vertical bar marks the active action inline. Both open the answer card when content first arrives,
+  and a horizontal card avoids the visible activity pill too. The Codex pet itself never moves.
 
 The gap between the surfaces and the core, measured against both catalogues, is written up in
 [delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,
