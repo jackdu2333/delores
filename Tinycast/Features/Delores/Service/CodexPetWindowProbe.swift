@@ -1,86 +1,361 @@
 import AppKit
 import CoreGraphics
+import CryptoKit
+import Darwin
+import Foundation
 
-/// Finds the Codex pet without depending on Codex's private renderer messages.
+/// Reads the live mascot rect from Codex's own avatar overlay surface.
 ///
-/// Codex exposes no public action or callback for its pet overlay. WindowServer metadata is the
-/// narrowest bridge available: an on-screen, borderless Codex window that is small enough to be a
-/// pet can be an anchor, while anything ambiguous returns nil and keeps Delores on its menu-bar
-/// fallback.
+/// The mascot is rendered inside a transparent Codex overlay window, not as a small WindowServer
+/// window of its own. The local DevTools endpoint is the narrow bridge that exposes its DOM rect;
+/// every failure remains a safe menu-bar fallback.
 @MainActor
 final class DeloresCodexPetWindowProbe {
-    private static let codexBundleIdentifier = "com.openai.codex"
-    private static let minimumPetSide: CGFloat = 24
-    private static let maximumPetSide: CGFloat = 480
-    private static let maximumPetArea: CGFloat = 180_000
-    private static let snapshotLifetime: TimeInterval = 0.05
-    private var cachedFrames: [CGRect] = []
+    private nonisolated static let devToolsListURL = URL(string: "http://127.0.0.1:9341/json/list")!
+    private nonisolated static let refreshInterval: Duration = .milliseconds(180)
+    private nonisolated static let cachedFrameLifetime: TimeInterval = 0.75
+    private nonisolated static let session: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        return URLSession(configuration: configuration)
+    }()
+
+    private struct OverlayMeasurement: Sendable {
+        let rect: CGRect
+        let screenOrigin: CGPoint
+    }
+
+    private var refreshTask: Task<Void, Never>?
+    private var cachedFrame: CGRect?
+    private var cachedOverlayVisible = false
     private var cachedAt = -Double.infinity
+    private var failedRefreshes = 0
+
+    func applyEnabled(_ enabled: Bool) {
+        if enabled {
+            start()
+        } else {
+            stop()
+        }
+    }
+
+    func stop() {
+        refreshTask?.cancel()
+        refreshTask = nil
+        cachedFrame = nil
+        cachedOverlayVisible = false
+        cachedAt = -Double.infinity
+        failedRefreshes = 0
+    }
 
     func anchor(on screen: NSScreen) -> DeloresCompanionAnchor? {
-        guard let frame = petFrame(on: screen) else { return nil }
-        let radius = max(frame.width, frame.height) / 2
+        guard let frame = currentFrame else { return nil }
+        guard screen.frame.contains(frame.midPoint) else { return nil }
         return (
             center: frame.midPoint,
             edge: DeloresCompanionWander.edge(for: frame.midPoint, in: screen.frame),
-            radius: radius)
+            radius: max(frame.width, frame.height) / 2)
     }
 
     /// A drag that starts here belongs to Codex's pet, not to a window behind it.
     func containsPet(at point: CGPoint) -> Bool {
-        guard let frame = candidateFrames().single else { return false }
+        guard let frame = currentFrame else { return false }
         return frame.insetBy(dx: -12, dy: -12).contains(point)
     }
 
-    private func petFrame(on screen: NSScreen) -> CGRect? {
-        let candidates = candidateFrames().filter {
-            $0.intersects(screen.frame) && screen.frame.contains($0.midPoint)
-        }
-        guard candidates.count == 1 else { return nil }
-        return candidates[0]
+    private var currentFrame: CGRect? {
+        guard cachedOverlayVisible, let cachedFrame, ProcessInfo.processInfo.systemUptime - cachedAt
+            <= Self.cachedFrameLifetime
+        else { return nil }
+        return cachedFrame
     }
 
-    private func candidateFrames() -> [CGRect] {
-        let now = ProcessInfo.processInfo.systemUptime
-        if now - cachedAt < Self.snapshotLifetime { return cachedFrames }
+    private func start() {
+        guard refreshTask == nil else { return }
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                let measurement = await Self.readMeasurement()
+                guard let self else { return }
+                self.update(measurement)
+                try? await Task.sleep(for: Self.refreshInterval)
+            }
+        }
+    }
+
+    private func update(_ measurement: OverlayMeasurement?) {
+        guard let measurement else {
+            failedRefreshes += 1
+            if failedRefreshes >= 3 {
+                cachedFrame = nil
+                cachedAt = -Double.infinity
+            }
+            return
+        }
+        failedRefreshes = 0
+        let quartzFrame = CGRect(
+            x: measurement.screenOrigin.x + measurement.rect.minX,
+            y: measurement.screenOrigin.y + measurement.rect.minY,
+            width: measurement.rect.width,
+            height: measurement.rect.height)
+        cachedOverlayVisible = Self.isVisibleCodexOverlay(at: quartzFrame.midPoint)
+        cachedFrame = AXGeometry(screens: NSScreen.screens).flip(quartzFrame)
+        cachedAt = ProcessInfo.processInfo.systemUptime
+    }
+
+    private static func isVisibleCodexOverlay(at point: CGPoint) -> Bool {
+        let processIDs = Set(
+            NSRunningApplication.runningApplications(
+                withBundleIdentifier: "com.openai.codex"
+            ).map(\.processIdentifier))
+        guard !processIDs.isEmpty else { return false }
         let windows = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
-            ?? []
-        let geometry = AXGeometry(screens: NSScreen.screens)
-        cachedFrames = windows.compactMap { window in
-            guard let pidNumber = window[kCGWindowOwnerPID as String] as? NSNumber,
-                NSRunningApplication(processIdentifier: pidNumber.int32Value)?.bundleIdentifier
-                    == Self.codexBundleIdentifier,
-                let layer = window[kCGWindowLayer as String] as? NSNumber,
-                layer.intValue > 0,
-                let alpha = window[kCGWindowAlpha as String] as? NSNumber,
-                alpha.doubleValue > 0,
-                let onScreen = window[kCGWindowIsOnscreen as String] as? NSNumber,
-                onScreen.boolValue,
-                (window[kCGWindowName as String] as? String ?? "").isEmpty,
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        return windows.contains { window in
+            guard let pid = (window[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
+                processIDs.contains(pid),
+                let layer = (window[kCGWindowLayer as String] as? NSNumber)?.intValue,
+                layer > 0,
+                let alpha = (window[kCGWindowAlpha as String] as? NSNumber)?.doubleValue,
+                alpha > 0,
+                let onScreen = (window[kCGWindowIsOnscreen as String] as? NSNumber)?.boolValue,
+                onScreen,
                 let bounds = window[kCGWindowBounds as String] as? NSDictionary,
-                let cgFrame = CGRect(dictionaryRepresentation: bounds),
-                Self.isPetSized(cgFrame)
-            else { return nil }
-            return geometry.flip(cgFrame)
+                let frame = CGRect(dictionaryRepresentation: bounds)
+            else { return false }
+            return frame.contains(point)
         }
-        cachedAt = now
-        return cachedFrames
     }
 
-    private static func isPetSized(_ frame: CGRect) -> Bool {
-        guard frame.width >= minimumPetSide, frame.height >= minimumPetSide,
-            max(frame.width, frame.height) <= maximumPetSide,
-            frame.width * frame.height <= maximumPetArea
-        else { return false }
+    private nonisolated static func readMeasurement() async -> OverlayMeasurement? {
+        do {
+            let request = URLRequest(url: devToolsListURL, timeoutInterval: 0.75)
+            let (data, response) = try await session.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200,
+                let targets = try JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+            else { return nil }
+
+            for target in targets where target["type"] as? String == "page"
+                && (target["url"] as? String)?.contains("avatar-overlay") == true
+            {
+                guard let webSocketURL = target["webSocketDebuggerUrl"] as? String,
+                    let url = URL(string: webSocketURL),
+                    url.host == "127.0.0.1", url.port == 9341,
+                    let measurement = await readMeasurement(from: url)
+                else { continue }
+                return measurement
+            }
+        } catch {
+            return nil
+        }
+        return nil
+    }
+
+    private nonisolated static func readMeasurement(
+        from url: URL
+    ) async -> OverlayMeasurement? {
+        let expression = """
+        (() => {
+            const element =
+                document.querySelector('[data-avatar-mascot="true"]') ||
+                document.querySelector('[data-avatar-overlay-hit-region="mascot"]');
+            if (!element) return null;
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            if (rect.width <= 0 || rect.height <= 0 ||
+                style.display === "none" || style.visibility === "hidden" ||
+                Number(style.opacity) <= 0) return null;
+            return {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                screenX: window.screenX,
+                screenY: window.screenY
+            };
+        })()
+        """
+        let command: [String: Any] = [
+            "id": 1,
+            "method": "Runtime.evaluate",
+            "params": ["expression": expression, "returnByValue": true],
+        ]
+        guard let commandData = try? JSONSerialization.data(withJSONObject: command),
+            let responseData = await Task.detached(priority: .utility, operation: {
+                DeloresCodexWebSocket.request(url: url, payload: commandData)
+            }).value,
+            let envelope = try? JSONSerialization.jsonObject(with: responseData)
+                as? [String: Any],
+            (envelope["id"] as? NSNumber)?.intValue == 1,
+            let result = envelope["result"] as? [String: Any],
+            let remoteResult = result["result"] as? [String: Any],
+            let value = remoteResult["value"] as? [String: Any],
+            let x = value["x"] as? NSNumber,
+            let y = value["y"] as? NSNumber,
+            let width = value["width"] as? NSNumber,
+            let height = value["height"] as? NSNumber,
+            let screenX = value["screenX"] as? NSNumber,
+            let screenY = value["screenY"] as? NSNumber
+        else { return nil }
+        return OverlayMeasurement(
+            rect: CGRect(
+                x: x.doubleValue, y: y.doubleValue,
+                width: width.doubleValue, height: height.doubleValue),
+            screenOrigin: CGPoint(x: screenX.doubleValue, y: screenY.doubleValue))
+    }
+}
+
+private enum DeloresCodexWebSocket {
+    static func request(url: URL, payload: Data) -> Data? {
+        guard url.scheme == "ws", let host = url.host, let port = url.port else { return nil }
+        let descriptor = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard descriptor >= 0 else { return nil }
+        defer { Darwin.close(descriptor) }
+
+        var timeout = timeval(tv_sec: 0, tv_usec: 700_000)
+        withUnsafePointer(to: &timeout) { pointer in
+            _ = Darwin.setsockopt(
+                descriptor, SOL_SOCKET, SO_RCVTIMEO, pointer,
+                socklen_t(MemoryLayout<timeval>.size))
+            _ = Darwin.setsockopt(
+                descriptor, SOL_SOCKET, SO_SNDTIMEO, pointer,
+                socklen_t(MemoryLayout<timeval>.size))
+        }
+
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = in_port_t(port).bigEndian
+        guard inet_pton(AF_INET, host, &address.sin_addr) == 1 else { return nil }
+        let connected = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.connect(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        guard connected == 0 else { return nil }
+
+        let lineBreak = "\r\n"
+        let key = Data((0..<16).map { _ in UInt8.random(in: .min ... .max) })
+            .base64EncodedString()
+        let acceptSource = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        let expectedAccept = Data(Insecure.SHA1.hash(data: Data(acceptSource.utf8)))
+            .base64EncodedString()
+        let requestLines = [
+            "GET \(url.path) HTTP/1.1",
+            "Host: \(host):\(port)",
+            "Upgrade: websocket",
+            "Connection: Upgrade",
+            "Sec-WebSocket-Key: \(key)",
+            "Sec-WebSocket-Version: 13",
+            "",
+            "",
+        ]
+        let request = Data(requestLines.joined(separator: lineBreak).utf8)
+        guard send(request, on: descriptor),
+            readHandshake(on: descriptor, expectedAccept: expectedAccept),
+            send(frame(payload, opcode: 0x1), on: descriptor)
+        else { return nil }
+        return readTextFrame(on: descriptor)
+    }
+
+    private static func send(_ data: Data, on descriptor: Int32) -> Bool {
+        var offset = 0
+        while offset < data.count {
+            let sent = data.withUnsafeBytes { bytes in
+                Darwin.send(
+                    descriptor, bytes.baseAddress!.advanced(by: offset), data.count - offset, 0)
+            }
+            guard sent > 0 else { return false }
+            offset += sent
+        }
         return true
+    }
+
+    private static func read(_ count: Int, on descriptor: Int32) -> Data? {
+        var data = Data(count: count)
+        var offset = 0
+        while offset < count {
+            let received = data.withUnsafeMutableBytes { bytes in
+                Darwin.recv(descriptor, bytes.baseAddress!.advanced(by: offset), count - offset, 0)
+            }
+            guard received > 0 else { return nil }
+            offset += received
+        }
+        return data
+    }
+
+    private static func readHandshake(on descriptor: Int32, expectedAccept: String) -> Bool {
+        var response = Data()
+        while response.count < 8_192 {
+            guard let byte = read(1, on: descriptor) else { return false }
+            response.append(byte)
+            if response.suffix(4) == Data([13, 10, 13, 10]) {
+                guard let header = String(bytes: response, encoding: .utf8) else { return false }
+                let lines = header.components(separatedBy: "\r\n")
+                guard lines.first?.contains(" 101 ") == true,
+                    let acceptLine = lines.first(where: {
+                        $0.lowercased().hasPrefix("sec-websocket-accept:")
+                    })
+                else { return false }
+                return acceptLine
+                    .split(separator: ":", maxSplits: 1)
+                    .last
+                    .map { $0.trimmingCharacters(in: .whitespaces) == expectedAccept } == true
+            }
+        }
+        return false
+    }
+
+    private static func frame(_ payload: Data, opcode: UInt8) -> Data {
+        var bytes = Data([0x80 | opcode])
+        let mask: [UInt8] = (0..<4).map { _ in UInt8.random(in: .min ... .max) }
+        if payload.count < 126 {
+            bytes.append(0x80 | UInt8(payload.count))
+        } else if payload.count <= Int(UInt16.max) {
+            bytes.append(0x80 | 126)
+            bytes.append(UInt8((payload.count >> 8) & 0xff))
+            bytes.append(UInt8(payload.count & 0xff))
+        } else {
+            return Data()
+        }
+        bytes.append(contentsOf: mask)
+        bytes.append(contentsOf: payload.enumerated().map { index, byte in
+            byte ^ mask[index % mask.count]
+        })
+        return bytes
+    }
+
+    private static func readTextFrame(on descriptor: Int32) -> Data? {
+        while true {
+            guard let header = read(2, on: descriptor) else { return nil }
+            let opcode = header[0] & 0x0f
+            var length = Int(header[1] & 0x7f)
+            if length == 126 {
+                guard let extended = read(2, on: descriptor) else { return nil }
+                length = Int(extended[0]) << 8 | Int(extended[1])
+            } else if length == 127 {
+                return nil
+            }
+
+            let masked = header[1] & 0x80 != 0
+            let mask = masked ? Array(read(4, on: descriptor) ?? Data()) : []
+            guard !masked || mask.count == 4, let payload = read(length, on: descriptor) else {
+                return nil
+            }
+            if opcode == 0x1 {
+                guard masked else { return payload }
+                return Data(payload.enumerated().map { index, byte in
+                    byte ^ mask[index % mask.count]
+                })
+            }
+            if opcode == 0x8 { return nil }
+            if opcode == 0x9, !send(frame(payload, opcode: 0xA), on: descriptor) {
+                return nil
+            }
+        }
     }
 }
 
 private extension CGRect {
     var midPoint: CGPoint { CGPoint(x: midX, y: midY) }
-}
-
-private extension Array where Element == CGRect {
-    var single: CGRect? { count == 1 ? first : nil }
 }

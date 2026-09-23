@@ -155,10 +155,10 @@ enum DeloresCompanionShell {
 
     /// Where a dragged window counts as having been brought to the body. Generous on purpose: a
     /// drag carries a window, not a pointer, and a target the reader has to hit exactly is one
-    /// they will miss. It does not grow with the body — a larger target would start overlapping
-    /// the windows being dragged to it.
-    static func dragHitFrame(center: CGPoint) -> CGRect {
-        let side: CGFloat = 60
+    /// they will miss. It grows with the body so larger external pets remain easy to hit without
+    /// expanding beyond their visible bounds.
+    static func dragHitFrame(center: CGPoint, bodyRadius: CGFloat = 30) -> CGRect {
+        let side = max(60, bodyRadius * 2)
         return CGRect(
             x: center.x - side / 2, y: center.y - side / 2, width: side, height: side)
     }
@@ -169,8 +169,10 @@ enum DeloresCompanionShell {
     /// Separate from `dragHitFrame` because the seam between them is `shellGap` of nothing: a drag
     /// that crosses it in one frame finds no target under it, so the run is torn down there — the
     /// gesture failing at its last step, after the reader had already committed to it.
-    static func dragHoldFrame(bodyCenter: CGPoint, islandFrame: CGRect) -> CGRect {
-        dragHitFrame(center: bodyCenter).union(islandFrame)
+    static func dragHoldFrame(
+        bodyCenter: CGPoint, islandFrame: CGRect, bodyRadius: CGFloat = 30
+    ) -> CGRect {
+        dragHitFrame(center: bodyCenter, bodyRadius: bodyRadius).union(islandFrame)
     }
 
     /// A closed bar: grown from the body's inward side, level with its centre.

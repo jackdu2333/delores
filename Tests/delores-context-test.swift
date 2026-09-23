@@ -1049,6 +1049,11 @@ struct DeloresContextTest {
         require(
             hit.contains(CGPoint(x: 675, y: 400)) && hit.contains(CGPoint(x: 725, y: 400)),
             "the drag hit frame is centred on the body")
+        let largerPetHit = DeloresCompanionShell.dragHitFrame(
+            center: CGPoint(x: 700, y: 400), bodyRadius: 44)
+        require(
+            largerPetHit.width == 88 && largerPetHit.contains(CGPoint(x: 743, y: 400)),
+            "a larger external pet is hit across its visible body")
 
         // The body walks the display's whole frame while a shell is placed against the visible one,
         // and on a display with a Dock the two differ by the Dock. Placing an island from a body

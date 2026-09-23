@@ -102,12 +102,14 @@ final class DeloresCoordinator {
             context.stop()
         }
         appliedCompanionMode = mode
+        codexPet.applyEnabled(mode == .codex)
         context.applyEnabled(); companion.applyEnabled(); snapping.applyEnabled(); divider.applyEnabled()
     }
     var isHoldingPinnedContext: Bool { context.isHoldingPinnedContext }
     func prepareForTermination() {
         context.stop()
         companion.prepareForTermination()
+        codexPet.stop()
         snapping.prepareForTermination()
         divider.prepareForTermination()
         interactionGate.reset()

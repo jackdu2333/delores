@@ -134,7 +134,8 @@ final class DeloresWindowSnapCoordinator {
             // drag is on can be brought to; the reader who has no Companion still has the top.
             let body = companionAnchor?(screen)
             let overBody = body.map {
-                DeloresCompanionShell.dragHitFrame(center: $0.center).contains(point)
+                DeloresCompanionShell.dragHitFrame(
+                    center: $0.center, bodyRadius: $0.radius).contains(point)
             } ?? false
             if overBody, let body, snapBodyPlacement == nil {
                 let layout = SnapIslandGeometry.layout(forEdge: body.edge)
@@ -151,7 +152,8 @@ final class DeloresWindowSnapCoordinator {
                 onTarget =
                     overBody
                     || DeloresCompanionShell.dragHoldFrame(
-                        bodyCenter: body.center, islandFrame: placement.frame
+                        bodyCenter: body.center, islandFrame: placement.frame,
+                        bodyRadius: body.radius
                     ).contains(point)
             } else {
                 onTarget = overBody

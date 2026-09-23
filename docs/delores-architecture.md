@@ -35,8 +35,9 @@ anyway. They have no place to be and nothing of their own to say.
   both. Delores mode owns wander, hover, click grammar, and a double-click that reopens the last
   selection's Context Surface. Codex mode never starts the native pet: the Context toolbar and Spatial
   snap island may grow from a uniquely identified Codex overlay, and fall back to the menu bar/top
-  centre when Codex's pet is hidden or ambiguous. The Codex renderer remains untouched; the bridge uses
-  WindowServer metadata only.
+  centre when Codex's pet is hidden or its local overlay bridge is unavailable. The bridge reads the
+  mascot's live DOM rectangle over Codex's loopback DevTools endpoint at 127.0.0.1:9341, then checks
+  WindowServer to confirm its overlay window is on screen; it does not modify Codex's renderer.
 
 The gap between the surfaces and the core, measured against both catalogues, is written up in
 [delores-action-core.md](delores-action-core.md): what each side has, what the same word means on each,
