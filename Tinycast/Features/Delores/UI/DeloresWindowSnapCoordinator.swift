@@ -18,6 +18,7 @@ final class DeloresWindowSnapCoordinator {
     /// The body's standing point on the display a drag is happening in, if it is standing on that
     /// display at all. Read-only on purpose: a drag must never move the Companion to meet it.
     var companionAnchor: ((NSScreen) -> DeloresCompanionAnchor?)?
+    var topCenterFallbackAllowed: (() -> Bool)?
     /// Told to stand the body still while a drag is over it, and to let it walk again after. The
     /// island is placed from where the body was standing when the drag found it, so a body that kept
     /// walking would hang the island beside a place it had already left.
@@ -168,7 +169,9 @@ final class DeloresWindowSnapCoordinator {
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.showBesideBody(placement, on: screen)
                 snapIsland?.setHoveredSlot(snapIsland?.slot(at: point))
-            } else if isNearTop && (isInCenterTop || snapIsActive) {
+            } else if topCenterFallbackAllowed?() != false
+                && isNearTop && (isInCenterTop || snapIsActive)
+            {
                 snapBodyPlacement = nil
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()

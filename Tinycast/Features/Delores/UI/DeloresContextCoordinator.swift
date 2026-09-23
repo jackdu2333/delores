@@ -260,7 +260,7 @@ final class DeloresContextCoordinator {
         timestamp: Date
     ) {
         guard !AXWindowAccess.isFrontmostAppFullscreen() else { return }
-        let screen = resolveScreen(for: point)
+        let (screen, pet) = resolvePresentationScreen(for: point)
         let selection = SelectionInvocation(
             text: prepared.text,
             targetApplication: InvocationApplication(
@@ -280,7 +280,6 @@ final class DeloresContextCoordinator {
         // Hung off the Companion when the Companion is what the reader is looking at, and off the
         // menu bar otherwise. The body is asked where it is standing before the bar is built,
         // because the bar's own size is what decides whether the body then has to move.
-        let pet = companionHosting?.anchor(screen.visibleFrame)
         let canRelocatePet = companionHosting?.canRelocate() ?? true
         island.onCompanionRelocated = { [weak self] center, edge in
             self?.companionHosting?.relocate(center, edge)
@@ -555,6 +554,29 @@ final class DeloresContextCoordinator {
         let screen = NSScreen.screens.first { $0.frame.contains(point) }
             ?? NSScreen.main
             ?? NSScreen.screens[0]
+        return invocationScreen(for: screen)
+    }
+
+    private func resolvePresentationScreen(
+        for point: CGPoint
+    ) -> (screen: InvocationScreen, pet: DeloresCompanionAnchor?) {
+        var screen = resolveScreen(for: point)
+        var pet = companionHosting?.anchor(screen.visibleFrame)
+        guard settings.deloresCompanionMode == .codex, pet == nil else { return (screen, pet) }
+
+        for candidate in NSScreen.screens {
+            let candidateScreen = invocationScreen(for: candidate)
+            guard candidateScreen.frame != screen.frame,
+                let candidatePet = companionHosting?.anchor(candidateScreen.visibleFrame)
+            else { continue }
+            screen = candidateScreen
+            pet = candidatePet
+            break
+        }
+        return (screen, pet)
+    }
+
+    private func invocationScreen(for screen: NSScreen) -> InvocationScreen {
         let menuBarHeight = max(0, screen.frame.maxY - screen.visibleFrame.maxY)
         let menuBarFrame = CGRect(
             x: screen.frame.minX,

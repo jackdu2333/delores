@@ -31,6 +31,8 @@ final class DeloresCodexPetWindowProbe {
     private var cachedAt = -Double.infinity
     private var failedRefreshes = 0
 
+    var hasVisiblePet: Bool { currentFrame != nil }
+
     func applyEnabled(_ enabled: Bool) {
         if enabled {
             start()

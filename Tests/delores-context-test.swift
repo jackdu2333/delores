@@ -860,6 +860,15 @@ struct DeloresContextTest {
         require(DeloresCompanionMode.delores.usesDeloresPet, "Delores mode owns the native pet")
         require(!DeloresCompanionMode.codex.usesDeloresPet, "Codex mode does not start the native pet")
         require(!DeloresCompanionMode.off.usesDeloresPet, "off mode does not start the native pet")
+        require(
+            !DeloresCompanionMode.codex.allowsTopCenterSnapFallback(codexPetVisible: true),
+            "a visible Codex pet replaces the top-center snap trigger")
+        require(
+            DeloresCompanionMode.codex.allowsTopCenterSnapFallback(codexPetVisible: false),
+            "the top-center snap fallback remains when the Codex pet is unavailable")
+        require(
+            DeloresCompanionMode.delores.allowsTopCenterSnapFallback(codexPetVisible: true),
+            "the Codex-specific fallback policy does not change Delores mode")
 
         let external = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: 30, y: 420), edge: .left,

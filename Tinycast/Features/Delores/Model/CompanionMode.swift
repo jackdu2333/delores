@@ -10,4 +10,8 @@ enum DeloresCompanionMode: String, CaseIterable, Identifiable, Sendable {
     var id: String { rawValue }
 
     var usesDeloresPet: Bool { self == .delores }
+
+    func allowsTopCenterSnapFallback(codexPetVisible: Bool) -> Bool {
+        self != .codex || !codexPetVisible
+    }
 }

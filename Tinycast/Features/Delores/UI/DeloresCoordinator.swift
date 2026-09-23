@@ -33,6 +33,10 @@ final class DeloresCoordinator {
                 return codexPet?.containsPet(at: point) == true
             })
         let divider = DeloresSplitDividerCoordinator(settings: settings, interactionGate: gate)
+        snapping.topCenterFallbackAllowed = { [weak codexPet] in
+            settings.deloresCompanionMode.allowsTopCenterSnapFallback(
+                codexPetVisible: codexPet?.hasVisiblePet == true)
+        }
         snapping.onWindowGeometryChanged = { [weak divider] point in
             divider?.windowGeometryDidChange(at: point)
         }
