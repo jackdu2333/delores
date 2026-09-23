@@ -30,6 +30,15 @@ struct DeloresGeometryTests {
 
     static func snapGeometry() {
         let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let arrangedScreen = CGRect(x: 1440, y: -20, width: 1728, height: 1117)
+        let arrangedVisibleFrame = CGRect(x: 1440, y: 0, width: 1728, height: 1045)
+        let trigger = DeloresSnapTriggerGeometry.revealFrame(
+            screenFrame: arrangedScreen, visibleFrame: arrangedVisibleFrame)
+        let topBand = DeloresSnapTriggerGeometry.topEdgeBand(
+            screenFrame: arrangedScreen, visibleFrame: arrangedVisibleFrame)
+        let narrowScreen = CGRect(x: -420, y: 0, width: 420, height: 800)
+        let narrowTrigger = DeloresSnapTriggerGeometry.revealFrame(
+            screenFrame: narrowScreen, visibleFrame: narrowScreen)
         let gap: CGFloat = 16
         let left = DeloresSnapSlot.left.rect(in: screen, gap: gap)
         let right = DeloresSnapSlot.right.rect(in: screen, gap: gap)
@@ -37,6 +46,25 @@ struct DeloresGeometryTests {
         let side = DeloresSnapSlot.sideWorkspace.rect(in: screen, gap: gap)
         let topLeft = DeloresSnapSlot.topLeft.rect(in: screen, gap: gap)
         let bottomLeft = DeloresSnapSlot.bottomLeft.rect(in: screen, gap: gap)
+
+        expect(trigger.width, 560, "snap reveal zone is narrower than the previous hot zone")
+        expect(trigger.height, 140, "reveal zone includes the menu bar and 88pt of usable display")
+        expect(trigger.midX, arrangedScreen.midX, "snap reveal zone stays centered on each display")
+        expect(narrowTrigger.width, narrowScreen.width, "reveal zone fits a narrow display")
+        expect(trigger.minY, arrangedVisibleFrame.maxY - 88, "reveal zone ends 88pt into the display")
+        expect(trigger.maxY, arrangedScreen.maxY, "reveal zone stops at the physical display top")
+        expect(
+            trigger.contains(CGPoint(x: trigger.midX, y: trigger.minY + 1)),
+            "the centered reveal zone includes its lower interior")
+        expect(
+            !trigger.contains(CGPoint(x: trigger.minX - 1, y: trigger.midY)),
+            "the reveal zone rejects drags outside its horizontal range")
+        expect(
+            !topBand.contains(CGPoint(x: arrangedScreen.midX, y: trigger.minY - 1)),
+            "the top band rejects drags below its reduced depth")
+        expect(
+            topBand.contains(CGPoint(x: arrangedScreen.minX + 1, y: trigger.midY)),
+            "the active top band spans the display after the island opens")
 
         expect(DeloresSnapSlot.left.isLeftOfSeam, "左半槽位应是 Divider 的左侧")
         expect(!DeloresSnapSlot.right.isLeftOfSeam, "右半槽位不应被判为 Divider 左侧")

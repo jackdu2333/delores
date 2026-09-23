@@ -33,10 +33,6 @@ final class DeloresCoordinator {
                 return codexPet?.containsPet(at: point) == true
             })
         let divider = DeloresSplitDividerCoordinator(settings: settings, interactionGate: gate)
-        snapping.topCenterFallbackAllowed = { [weak codexPet] in
-            settings.deloresCompanionMode.allowsTopCenterSnapFallback(
-                codexPetVisible: codexPet?.hasVisiblePet == true)
-        }
         snapping.onWindowGeometryChanged = { [weak divider] point in
             divider?.windowGeometryDidChange(at: point)
         }
@@ -75,21 +71,6 @@ final class DeloresCoordinator {
                 companion?.setThinking(isThinking)
             },
             canRelocate: { settings.deloresCompanionMode == .delores })
-        // A snap island grows out of the body the same way: with the Companion on, a window is
-        // brought to the body itself, and only a display the body is not standing on still has the
-        // top-centre fallback. Read-only — a drag must not move the body to meet it.
-        snapping.companionAnchor = { [weak companion, weak codexPet] screen in
-            if settings.deloresCompanionMode == .codex {
-                return codexPet?.anchor(on: screen)
-            }
-            return companion?.bodyAnchor(on: screen)
-        }
-        // A drag brought to the body stops it: the island is placed from where the body stood when
-        // the drag found it, so it stands there until the drag is over.
-        snapping.onBodyHoldChanged = { [weak companion] isHeld in
-            guard settings.deloresCompanionMode == .delores else { return }
-            if isHeld { companion?.holdForShell() } else { companion?.releaseShell() }
-        }
     }
 
     /// The body is drawn at another step, which changes where it may stand as well as how big it is.

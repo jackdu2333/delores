@@ -161,28 +161,6 @@ enum DeloresCompanionShell {
 
     // MARK: - Shells
 
-    /// Where a dragged window counts as having been brought to the body. Generous on purpose: a
-    /// drag carries a window, not a pointer, and a target the reader has to hit exactly is one
-    /// they will miss. It grows with the body so larger external pets remain easy to hit without
-    /// expanding beyond their visible bounds.
-    static func dragHitFrame(center: CGPoint, bodyRadius: CGFloat = 30) -> CGRect {
-        let side = max(60, bodyRadius * 2)
-        return CGRect(
-            x: center.x - side / 2, y: center.y - side / 2, width: side, height: side)
-    }
-
-    /// The body's own target and the island it grew, as one rect: what a drag may be holding while
-    /// an island is up.
-    ///
-    /// Separate from `dragHitFrame` because the seam between them is `shellGap` of nothing: a drag
-    /// that crosses it in one frame finds no target under it, so the run is torn down there — the
-    /// gesture failing at its last step, after the reader had already committed to it.
-    static func dragHoldFrame(
-        bodyCenter: CGPoint, islandFrame: CGRect, bodyRadius: CGFloat = 30
-    ) -> CGRect {
-        dragHitFrame(center: bodyCenter, bodyRadius: bodyRadius).union(islandFrame)
-    }
-
     /// A closed bar: grown from the body's inward side, level with its centre.
     static func planBarOpening(
         petCenter: CGPoint,
@@ -237,28 +215,6 @@ enum DeloresCompanionShell {
         return Placement(petCenter: center, edge: resolvedEdge, frame: frame)
     }
 
-    /// A snap island: grown out of the body's inward side too, with its long axis along the edge the
-    /// body rides — horizontal above or below the body, vertical beside it. The body may open one
-    /// from the bottom edge, unlike a bar: an island is a preview that lives for the length of a
-    /// drag, not a surface the reader reads from.
-    ///
-    /// Placed off where the body stands, and only then clamped to the display. The body does not
-    /// move for an island — a drag chose a body standing there — so a placement derived from a body
-    /// first snapped *into* the visible frame is a placement for a body that is not there, and it
-    /// leaves the reader a stretch of nothing to cross on the way to the island.
-    static func planIslandOpening(
-        petCenter: CGPoint,
-        edge: DeloresCompanionEdge,
-        islandSize: CGSize,
-        visibleFrame: CGRect,
-        bodyRadius: CGFloat
-    ) -> Placement {
-        let frame = inwardFrame(
-            petVisible: circleFrame(center: petCenter, bodyRadius: bodyRadius),
-            edge: edge, shellSize: islandSize)
-        return Placement(petCenter: petCenter, edge: edge, frame: clamp(frame, to: visibleFrame))
-    }
-
     /// An opened card: the bar stays level with the body's centre and the answer hangs downward from
     /// it.
     ///
@@ -309,8 +265,7 @@ enum DeloresCompanionShell {
         bodyRadius: CGFloat,
         canMovePet: Bool = true
     ) -> Placement {
-        // Stand where the body is. Snapping into `visibleFrame` first would fetch a body off the
-        // menu bar — the same mistake `planIslandOpening` already stopped making.
+        // The body may stand above the usable area, so only the shell is clamped.
         var center = petCenter
         var frame = inwardFrame(
             petVisible: circleFrame(center: center, bodyRadius: bodyRadius),

@@ -414,7 +414,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A confirmation-gated action (Restart, Quit All) confirms, showing the subject's own glyph
 - Volume actions show the volume HUD; everything else shows the message pill
 - Holding a bound hotkey does **not** stack dialogs
-- Dragging a window to the top edge reveals Spatial Snap only during the drag, then dismisses it
+- In Companion-off, Delores-pet and visible Codex-pet modes, Spatial Snap reveals only inside the
+  centered 560pt zone from the screen top to 88pt below `visibleFrame.maxY`; the pet body never opens it
+- After reveal, dragging along the top edge reaches every slot; leaving the top band dismisses Snap
 - Split Divider appears only over a valid seam, clamps both windows together, and rolls back a partial move
 
 ### Notes

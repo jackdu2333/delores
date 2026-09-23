@@ -33,11 +33,11 @@ anyway. They have no place to be and nothing of their own to say.
   own catalogue, prompts and streaming — see below.
 - **Companion** — either the running Delores pet or the Codex pet as an external visual anchor, never
   both. Delores mode owns wander, hover, click grammar, and a double-click that reopens the last
-  selection's Context Surface. Codex mode never starts the native pet: the Context toolbar and Spatial
-  snap island may grow from a uniquely identified Codex overlay. The selection bar follows the pet's
-  display even when the selection is on another display; while the pet is visible, snap uses the pet
-  rather than the top-centre trigger. Both return to their menu-bar/top-centre fallback when Codex's
-  pet is hidden or its local overlay bridge is unavailable. The bridge reads the mascot's live DOM
+  selection's Context Surface. Codex mode never starts the native pet: the Context toolbar may grow
+  from a uniquely identified Codex overlay, while Spatial snap always uses the current display's
+  top-center trigger. The selection bar follows the pet's display even when the selection is on
+  another display; it returns to its menu-bar/top-centre placement when Codex's pet is hidden or its
+  local overlay bridge is unavailable. The bridge reads the mascot's live DOM
   rectangle and any visible activity pill over Codex's loopback DevTools endpoint at 127.0.0.1:9341,
   then checks WindowServer to confirm its overlay window is on screen; it does not modify Codex's
   renderer. A bottom-edge Codex pet keeps the selection bar horizontal; if a visible activity pill
@@ -281,8 +281,8 @@ selection, and Spatial reads a drag as a window move or a seam resize. `DeloresS
   about it a beat later, so letting go has to keep covering the gesture rather than reopening it.
 - Only one surface can hold the gate at a time, and a release from a surface that no longer holds it
   is ignored, so a late `mouseUp` cannot free someone else's gesture.
-- A drag that starts on the Codex pet is ignored by both selection and window-snap admission. A normal
-  window drag that ends over the Codex pet still belongs to Spatial and opens the same snap island.
+- A drag that starts on the Codex pet is ignored by both selection and window-snap admission. A window
+  drag reveals Snap only in the top-center zone; passing over the pet alone never opens the island.
 
 Unit-tested in `Tests/delores-context-test.swift`. The gate covers input admission; it does not
 replace the per-surface hit testing above.
@@ -319,21 +319,14 @@ Runtime ownership has moved to Delores: each coordinator has its own panels and 
 bridging Huaci's managers, and the vendored sources are a behavioural reference plus a regression
 harness.
 
-The old Ghost XOR Companion exclusion is gone. Huaci turned snap and the divider off whenever the pet
-started. Delores treats those as capabilities that can be enabled together; only the live gesture is
-exclusive. With the pet on, dragging a window over its body opens the snap island beside the pet —
-`planIslandOpening` places it with its long axis along the pet's edge, a horizontal island under a
-top/bottom pet and a vertical one beside a left/right pet. The top-center trigger survives only as
-the no-pet fallback: with the pet off, or its body off that screen, the island opens at the top of
-the display as it always did.
-
-Two rules keep that reachable, and both are asserted in `testCompanionShell` rather than watched.
-An island is placed off the body where it actually stands and only then clamped to the display — the
-body is never moved to make room for one, because a drag chose a body standing there. And the body
-plus the island it grew are one target for the whole climb: the seam between them is `shellGap` of
-dead space otherwise, and a drag crossing it in a single frame would take the island down mid-drag.
-The body walks the display's *whole* frame while a shell is placed against the visible one, so those
-two differ by the Dock and the menu bar, which is exactly the gap the first rule closes.
+The Companion, snap and divider remain independently enabled capabilities; only the live gesture is
+exclusive. Snap has one stable trigger in every Companion mode: a 560-point-wide rectangle centred
+horizontally on the current display, from `screen.frame.maxY` down to 88 points below
+`visibleFrame.maxY`. Entering that zone opens the island at top centre. Once open, it stays available
+while the drag remains near the display's top edge so the pointer can reach a slot; the Companion's
+body and visibility do not affect the trigger or island placement. The trigger rectangle is pure
+geometry covered by `delores-geometry-test`; the event-monitor integration remains a manual
+acceptance check.
 
 **Still experimental.** The following are known gaps, not oversights, and none of them is covered by an
 automated test. They are the Spatial half of the story; the full designed-but-unbuilt inventory,

@@ -1,5 +1,25 @@
 import CoreGraphics
 
+enum DeloresSnapTriggerGeometry {
+    static let topCenterWidth: CGFloat = 560
+    static let topEdgeDepth: CGFloat = 88
+
+    static func revealFrame(screenFrame: CGRect, visibleFrame: CGRect) -> CGRect {
+        let topBand = topEdgeBand(screenFrame: screenFrame, visibleFrame: visibleFrame)
+        let width = min(topCenterWidth, topBand.width)
+        return CGRect(
+            x: topBand.midX - width / 2, y: topBand.minY,
+            width: width, height: topBand.height)
+    }
+
+    static func topEdgeBand(screenFrame: CGRect, visibleFrame: CGRect) -> CGRect {
+        let bottom = max(screenFrame.minY, visibleFrame.maxY - topEdgeDepth)
+        return CGRect(
+            x: screenFrame.minX, y: bottom, width: screenFrame.width,
+            height: max(0, screenFrame.maxY - bottom))
+    }
+}
+
 /// Spatial Snap 瞬时展示的槽位；这是能力几何，不是一个产品 Surface。
 enum DeloresSnapSlot: Sendable {
     case left, right, mainWorkspace, sideWorkspace

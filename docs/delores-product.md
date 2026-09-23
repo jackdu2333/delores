@@ -190,6 +190,9 @@ The Companion exists so Delores can be found without first being summoned.
 
 It is an ambient presence, not another workspace.
 
+Window snapping remains a shared capability with one stable entry point: dragging a window to the
+current display's top-center zone. The Companion's position never acts as a split trigger.
+
 Its responsibilities are deliberately small:
 
 * be visible without demanding attention;

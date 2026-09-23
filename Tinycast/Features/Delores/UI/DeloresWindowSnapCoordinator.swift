@@ -15,26 +15,11 @@ final class DeloresWindowSnapCoordinator {
     private var snapNeedsCandidate = false
     private var snapIsActive = false
     private var snapHasClaimedGate = false
-    /// The body's standing point on the display a drag is happening in, if it is standing on that
-    /// display at all. Read-only on purpose: a drag must never move the Companion to meet it.
-    var companionAnchor: ((NSScreen) -> DeloresCompanionAnchor?)?
-    var topCenterFallbackAllowed: (() -> Bool)?
-    /// Told to stand the body still while a drag is over it, and to let it walk again after. The
-    /// island is placed from where the body was standing when the drag found it, so a body that kept
-    /// walking would hang the island beside a place it had already left.
-    var onBodyHoldChanged: ((Bool) -> Void)?
-    private var isHoldingBody = false
-    /// Where an island opened out of the body settled. Made once, when the run begins, and held:
-    /// an island that slid after a wandering body mid-drag would be a thing chasing the reader
-    /// rather than a thing they aimed at.
-    private var snapBodyPlacement: DeloresCompanionShell.Placement?
     private let additionalIgnoredPoint: (@MainActor (CGPoint) -> Bool)?
     var onWindowGeometryChanged: ((CGPoint) -> Void)?
     var onWindowSnapped: ((AXUIElement, DeloresSnapSlot, CGRect, NSScreen) -> Void)?
     private static let snapDragThreshold: CGFloat = 8
     private static let snapWindowThreshold: CGFloat = 20
-    private static let snapIslandRevealInset: CGFloat = 110
-    private static let snapTopCenterTriggerWidth: CGFloat = 660
     private struct SnapCandidate { let window: AXUIElement; let app: NSRunningApplication; let initialFrame: CGRect }
     init(
         settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate,
@@ -56,14 +41,6 @@ final class DeloresWindowSnapCoordinator {
         }
     }
 
-    /// Said once per change rather than once per event: a drag fires these continuously, and every
-    /// frame of it would otherwise restart the body's idle timers.
-    private func holdBody(_ held: Bool) {
-        guard isHoldingBody != held else { return }
-        isHoldingBody = held
-        onBodyHoldChanged?(held)
-    }
-
     private func stopSnapping() {
         if let snapMonitor { NSEvent.removeMonitor(snapMonitor); self.snapMonitor = nil }
         releaseSnap()
@@ -72,12 +49,10 @@ final class DeloresWindowSnapCoordinator {
     /// Everything a snap run leaves behind, cleared in one place so a stop mid-drag cannot leave the
     /// island up or the interaction gate clamped shut.
     private func releaseSnap() {
-        holdBody(false)
         snapIsland?.hide(); snapIsland = nil
         snapCandidate = nil
         snapNeedsCandidate = false
         snapIsActive = false
-        snapBodyPlacement = nil
         snapMonitorStart = .zero
         snapStartedOnIgnoredSurface = false
         // Only a drag that actually moved a window can have moved a seam, and only a claimed
@@ -126,61 +101,21 @@ final class DeloresWindowSnapCoordinator {
                 snapHasClaimedGate = true
             }
             guard let screen = DeloresWindowGeometry.screenContaining(point) else { return }
-            let isNearTop = point.y >= screen.visibleFrame.maxY - Self.snapIslandRevealInset
-            let halfCenterWidth = Self.snapTopCenterTriggerWidth / 2.0
-            let isInCenterTop = abs(point.x - screen.frame.midX) <= halfCenterWidth
+            let revealFrame = DeloresSnapTriggerGeometry.revealFrame(
+                screenFrame: screen.frame, visibleFrame: screen.visibleFrame)
+            let topEdgeBand = DeloresSnapTriggerGeometry.topEdgeBand(
+                screenFrame: screen.frame, visibleFrame: screen.visibleFrame)
 
-            // The body comes first: a window brought to the Companion opens the island out of the
-            // body itself, on whichever edge it stands. Only a body standing on the display the
-            // drag is on can be brought to; the reader who has no Companion still has the top.
-            let body = companionAnchor?(screen)
-            let overBody = body.map {
-                DeloresCompanionShell.dragHitFrame(
-                    center: $0.center, bodyRadius: $0.radius).contains(point)
-            } ?? false
-            if overBody, let body, snapBodyPlacement == nil {
-                let layout = SnapIslandGeometry.layout(forEdge: body.edge)
-                snapBodyPlacement = DeloresCompanionShell.planIslandOpening(
-                    petCenter: body.center, edge: body.edge,
-                    islandSize: layout.size, visibleFrame: screen.visibleFrame,
-                    bodyRadius: body.radius)
-            }
-            // Once it is up, the island and the body it grew from are one target: the seam between
-            // them is the shell gap, and a drag that crossed that in a single frame would find
-            // nothing under it and take the island down on the way.
-            let onTarget: Bool
-            if let placement = snapBodyPlacement, let body {
-                onTarget =
-                    overBody
-                    || DeloresCompanionShell.dragHoldFrame(
-                        bodyCenter: body.center, islandFrame: placement.frame,
-                        bodyRadius: body.radius
-                    ).contains(point)
-            } else {
-                onTarget = overBody
-            }
-            // The body stands still from the moment the drag finds it, not from the moment the
-            // island appears: what makes a drag feel like it slipped is the thing it was aimed at
-            // walking away between the aim and the drop.
-            holdBody(onTarget)
-
-            if let placement = snapBodyPlacement, onTarget {
-                snapIsActive = true
-                snapIsland = snapIsland ?? DeloresSnapIslandPanel()
-                snapIsland?.showBesideBody(placement, on: screen)
-                snapIsland?.setHoveredSlot(snapIsland?.slot(at: point))
-            } else if topCenterFallbackAllowed?() != false
-                && isNearTop && (isInCenterTop || snapIsActive)
-            {
-                snapBodyPlacement = nil
+            let remainsAvailable = snapIsActive
+                ? topEdgeBand.contains(point)
+                : revealFrame.contains(point)
+            if remainsAvailable {
                 snapIsActive = true
                 snapIsland = snapIsland ?? DeloresSnapIslandPanel()
                 snapIsland?.showAtTopCenter(on: screen)
-                let slot = snapIsland?.slot(at: point)
-                snapIsland?.setHoveredSlot(slot)
+                snapIsland?.setHoveredSlot(snapIsland?.slot(at: point))
             } else if snapIsActive {
                 snapIsActive = false
-                snapBodyPlacement = nil
                 snapIsland?.hide()
             }
         case .leftMouseUp:

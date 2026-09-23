@@ -860,16 +860,6 @@ struct DeloresContextTest {
         require(DeloresCompanionMode.delores.usesDeloresPet, "Delores mode owns the native pet")
         require(!DeloresCompanionMode.codex.usesDeloresPet, "Codex mode does not start the native pet")
         require(!DeloresCompanionMode.off.usesDeloresPet, "off mode does not start the native pet")
-        require(
-            !DeloresCompanionMode.codex.allowsTopCenterSnapFallback(codexPetVisible: true),
-            "a visible Codex pet replaces the top-center snap trigger")
-        require(
-            DeloresCompanionMode.codex.allowsTopCenterSnapFallback(codexPetVisible: false),
-            "the top-center snap fallback remains when the Codex pet is unavailable")
-        require(
-            DeloresCompanionMode.delores.allowsTopCenterSnapFallback(codexPetVisible: true),
-            "the Codex-specific fallback policy does not change Delores mode")
-
         let external = DeloresCompanionShell.planBarOpening(
             petCenter: CGPoint(x: 30, y: 420), edge: .left,
             shellSize: CGSize(width: 420, height: 96),
@@ -1063,98 +1053,8 @@ struct DeloresContextTest {
             "an opened card starts where the strip starts along its long axis")
         assertOutside(spine, "open beside a strip")
 
-        // A snap island opens out of the body on whichever edge it stands: horizontal above or
-        // below it, vertical beside it, its long axis always along the edge. Unlike a bar it may
-        // open on the bottom edge — it is a preview for the length of a drag, not a reading
-        // surface, and the bottom of the display is not the middle of it.
-        // The reference's own numbers: a row of four panes in a capsule, and the same four standing
-        // in a column with no capsule around them — a column is only as wide and as tall as its
-        // panes, because a capsule 300-odd tall would cut the end ones to slivers.
-        let wide = CGSize(width: 620, height: 88)
-        let tall = CGSize(width: 140, height: 324)
-        let topIsland = DeloresCompanionShell.planIslandOpening(
-            petCenter: CGPoint(x: 400, y: visible.maxY - r),
-            edge: .top, islandSize: wide, visibleFrame: visible, bodyRadius: r)
-        let topIslandPet = DeloresCompanionShell.circleFrame(center: topIsland.petCenter, bodyRadius: r)
-        require(
-            topIsland.frame.maxY == topIslandPet.minY - gap,
-            "an island on the top edge hangs below the body")
-        require(topIsland.frame.midX == topIslandPet.midX, "an island on a horizontal edge is centred")
-        assertOutside(topIsland, "as an island, on the top edge")
-
-        let bottomIsland = DeloresCompanionShell.planIslandOpening(
-            petCenter: CGPoint(x: 400, y: visible.minY + r),
-            edge: .bottom, islandSize: wide, visibleFrame: visible, bodyRadius: r)
-        let bottomIslandPet = DeloresCompanionShell.circleFrame(center: bottomIsland.petCenter, bodyRadius: r)
-        require(
-            bottomIsland.frame.minY == bottomIslandPet.maxY + gap,
-            "an island on the bottom edge rides above the body, where a bar would have slid away")
-        assertOutside(bottomIsland, "as an island, on the bottom edge")
-
-        let rightIsland = DeloresCompanionShell.planIslandOpening(
-            petCenter: CGPoint(x: visible.maxX - r, y: 400),
-            edge: .right, islandSize: tall, visibleFrame: visible, bodyRadius: r)
-        require(
-            rightIsland.frame.maxX == rightPet.minX - gap,
-            "an island on the right edge grows leftward with the gap between")
-        require(rightIsland.frame.midY == rightPet.midY, "a vertical island is level with the body")
-        assertOutside(rightIsland, "as an island, on the right edge")
-
-        // Too low for a vertical island: the island is clamped to the display and the body stays
-        // where the drag found it. An island never moves the body — the reader aimed at a body
-        // standing there, and one that walked off to make room is a drag that feels like it slipped.
-        let lowIsland = DeloresCompanionShell.planIslandOpening(
-            petCenter: CGPoint(x: visible.maxX - r, y: 60),
-            edge: .right, islandSize: tall, visibleFrame: visible, bodyRadius: r)
-        require(lowIsland.petCenter.y == 60, "an island leaves the body it grew from standing")
-        require(lowIsland.frame.minY == visible.minY, "an island too low for the room is clamped up")
-        assertOutside(lowIsland, "as an island, low on the right edge")
-
-        // What counts as "brought to the body" during a drag is generous, by design.
-        let hit = DeloresCompanionShell.dragHitFrame(center: CGPoint(x: 700, y: 400))
-        require(hit.width == 60 && hit.height == 60, "the drag hit frame is 60pt square")
-        require(
-            hit.contains(CGPoint(x: 675, y: 400)) && hit.contains(CGPoint(x: 725, y: 400)),
-            "the drag hit frame is centred on the body")
-        let largerPetHit = DeloresCompanionShell.dragHitFrame(
-            center: CGPoint(x: 700, y: 400), bodyRadius: 44)
-        require(
-            largerPetHit.width == 88 && largerPetHit.contains(CGPoint(x: 743, y: 400)),
-            "a larger external pet is hit across its visible body")
-
-        // The body walks the display's whole frame while a shell is placed against the visible one,
-        // and on a display with a Dock the two differ by the Dock. Placing an island from a body
-        // snapped into the visible frame therefore puts it a Dock's height above the body it belongs
-        // to — 69pt of dead space on this machine — so the pointer left the target on the way up and
-        // the island was torn down under it. Measured with the real numbers: 1080pt display, 67pt
-        // Dock, a 48pt body.
         let display = CGRect(x: 0, y: 0, width: 1920, height: 1080)
         let docked = CGRect(x: 0, y: 67, width: 1920, height: 983)
-        let onTheFloor = DeloresCompanionShell.planIslandOpening(
-            petCenter: CGPoint(x: 960, y: display.minY + r), edge: .bottom,
-            islandSize: wide, visibleFrame: docked, bodyRadius: r)
-        require(
-            onTheFloor.petCenter.y == display.minY + r,
-            "an island is placed off the body where it stands, not off the visible frame")
-        require(onTheFloor.frame.minY >= docked.minY, "and stays out of the Dock")
-        let hold = DeloresCompanionShell.dragHoldFrame(
-            bodyCenter: onTheFloor.petCenter, islandFrame: onTheFloor.frame)
-        let reachingUp = DeloresCompanionShell.dragHitFrame(center: onTheFloor.petCenter).maxY + 1
-        require(
-            hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: reachingUp)),
-            "the pointer climbs off the body onto the island without leaving the target")
-        require(
-            hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: onTheFloor.frame.maxY - 1)),
-            "and the island's far edge is inside that same target")
-        // A bridge is not a blanket: past the island the drag is off the target again, and a point
-        // beside it is not a hold either — the target is the body and the island, and nothing else.
-        require(
-            !hold.contains(CGPoint(x: onTheFloor.petCenter.x, y: onTheFloor.frame.maxY + 1)),
-            "past the island is off the target")
-        require(
-            !hold.contains(CGPoint(x: onTheFloor.frame.minX - 1, y: onTheFloor.frame.midY)),
-            "beside the island, and off the body, is off the target")
-
         // A body on the menu bar sits outside `visibleFrame` on purpose. Fetching it into that
         // frame — or to the visible-frame midpoint — is the jump a selection used to make.
         require(

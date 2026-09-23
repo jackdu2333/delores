@@ -310,7 +310,6 @@ final class DeloresCompanionPanel: NSPanel, DeloresSelectionBlockingSurface {
 }
 
 final class DeloresSnapIslandPanel: NSPanel, DeloresSelectionBlockingSurface {
-    private(set) var layout: SnapIslandGeometry.Layout = .horizontal
     /// Where the island last settled, so a run already resting there is left alone.
     private var restingFrame: CGRect?
     private var activeScreen: NSScreen?
@@ -333,62 +332,28 @@ final class DeloresSnapIslandPanel: NSPanel, DeloresSelectionBlockingSurface {
         contentView = hosting
     }
     override var canBecomeKey: Bool { false }
-    /// The fallback with no Companion in sight: the island drops into place at the top centre of
-    /// the display, on the reference's own numbers — 14pt over 240ms — and its contents come up on
-    /// a spring inside that. Arriving is most of what makes it read as something that appeared
-    /// *for this drag* rather than as a strip that had been sitting there.
+    /// The island arrives from above so it reads as part of the current drag.
     func showAtTopCenter(on screen: NSScreen) {
-        let layout = SnapIslandGeometry.Layout.horizontal
-        let width = layout.size.width
-        let height = layout.size.height
+        let width = SnapIslandGeometry.size.width
+        let height = SnapIslandGeometry.size.height
         let resting = CGRect(
             x: round(screen.frame.midX - width / 2),
             y: max(screen.visibleFrame.maxY - height - 6, screen.frame.maxY - height - 8),
             width: width, height: height)
-        flyIn(
-            to: resting, layout: layout, screen: screen,
-            from: CGVector(dx: 0, dy: Self.enterSlide))
+        flyIn(to: resting, screen: screen, from: CGVector(dx: 0, dy: Self.enterSlide))
     }
 
-    /// Beside the body a window was brought to, with the island's long axis along the edge the body
-    /// rides. The island comes in from the body's side rather than from above, which is what makes
-    /// it read as having grown out of the body rather than dropped onto the edge.
-    func showBesideBody(_ placement: DeloresCompanionShell.Placement, on screen: NSScreen) {
-        let layout = SnapIslandGeometry.layout(forEdge: placement.edge)
-        let slide = Self.enterSlide
-        let from: CGVector
-        switch placement.edge {
-        case .top: from = CGVector(dx: 0, dy: slide)
-        case .bottom: from = CGVector(dx: 0, dy: -slide)
-        case .left: from = CGVector(dx: -slide, dy: 0)
-        case .right: from = CGVector(dx: slide, dy: 0)
-        }
-        flyIn(to: placement.frame, layout: layout, screen: screen, from: from)
-    }
-
-    /// The one place an arrival is performed: laid out for the layout it lands in, put just off its
-    /// resting place on the side it comes from, then settled onto it.
-    ///
-    /// A run already resting exactly there is not re-flown. Dragging near the top fires repeatedly,
-    /// and restarting the animation on every frame would leave the island permanently mid-arrival.
     private func flyIn(
         to resting: CGRect,
-        layout: SnapIslandGeometry.Layout,
         screen: NSScreen,
         from offset: CGVector
     ) {
-        if isVisible, activeScreen?.frame == screen.frame, self.layout == layout,
-            restingFrame == resting
-        { return }
+        if isVisible, activeScreen?.frame == screen.frame, restingFrame == resting { return }
         activeScreen = screen
-        self.layout = layout
-        // A column is four outlines and nothing else, so the window must not add a ground of its
-        // own: the panel's shadow is drawn around the window's rectangle, which fills the gaps
-        // between the panes and reads as the very slab the outlines were meant to replace.
-        hasShadow = layout == .horizontal
+        hasShadow = true
         restingFrame = resting
-        hosting.rootView = DeloresSnapIslandView(state: state, layout: layout)
-        hosting.frame = CGRect(origin: .zero, size: layout.size)
+        hosting.rootView = DeloresSnapIslandView(state: state)
+        hosting.frame = CGRect(origin: .zero, size: SnapIslandGeometry.size)
         let entered = resting.offsetBy(dx: offset.dx, dy: offset.dy)
         setFrame(entered, display: false)
         alphaValue = 0
@@ -421,9 +386,9 @@ final class DeloresSnapIslandPanel: NSPanel, DeloresSelectionBlockingSurface {
         // rather than in the geometry keeps `rect(for:)` a statement about the layout and leaves
         // the one place that knows about screen space to say so.
         let local = CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y)
-        guard layout.bounds.contains(local) else { return nil }
+        guard SnapIslandGeometry.bounds.contains(local) else { return nil }
         for card in SnapIslandGeometry.Card.allCases {
-            let rect = layout.rect(for: card)
+            let rect = SnapIslandGeometry.rect(for: card)
             guard rect.contains(local) else { continue }
             let ratio = (local.x - rect.minX) / rect.width
             switch card {
@@ -460,52 +425,7 @@ struct SnapIslandGeometry {
         }
     }
 
-    /// Which way the island lays its cards out: a horizontal island on a horizontal edge, a
-    /// vertical one on a vertical edge. The cards themselves never rotate — a card's glyphs are
-    /// drawn for the width the card has either way — only the row they stand in does.
-    enum Layout {
-        case horizontal, vertical
-
-        var size: CGSize {
-            switch self {
-            case .horizontal: return SnapIslandGeometry.size
-            case .vertical: return SnapIslandGeometry.verticalSize
-            }
-        }
-
-        var bounds: CGRect { CGRect(origin: .zero, size: size) }
-
-        func rect(for card: Card) -> CGRect {
-            let index = CGFloat(Card.allCases.firstIndex(of: card) ?? 0)
-            switch self {
-            case .horizontal:
-                return CGRect(
-                    x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
-                    width: cardWidth, height: cardHeight)
-            case .vertical:
-                // No padding: a column is the panes themselves, so a pane's rect *is* its slice of
-                // the island and the first one starts at the island's own edge.
-                return CGRect(
-                    x: 0, y: index * (cardHeight + gap),
-                    width: cardWidth, height: cardHeight)
-            }
-        }
-    }
-
     static let size = CGSize(width: 620, height: 88)
-    /// The vertical island is the four panes and nothing else: no vessel around them, no padding, a
-    /// pane's rect being its own slice of the column.
-    ///
-    /// There is no capsule around it on purpose. A capsule 340 tall has 82pt semicircular ends, and
-    /// a pane is 140 wide — so the top and bottom panes were being cut down to a sliver of glass by
-    /// the very shape that was supposed to be holding them. Where a column cannot be wrapped, the
-    /// panes are the surface: each carries its own glass, and the island is however tall they are.
-    static var verticalSize: CGSize {
-        let count = CGFloat(Card.allCases.count)
-        return CGSize(
-            width: cardWidth,
-            height: count * cardHeight + (count - 1) * gap)
-    }
     static let horizontalPadding: CGFloat = 12
     static let verticalPadding: CGFloat = 8
     static let gap: CGFloat = 12
@@ -517,17 +437,11 @@ struct SnapIslandGeometry {
     /// against its own pane, thin enough to read as an edge of it rather than a line on it.
     static let glyphDividerWidth: CGFloat = 1.4
     static let glyphCornerRadius: CGFloat = 4.5
-    /// The corner of a pane carrying its own ground, which every pane does in a column.
-    static let paneCornerRadius: CGFloat = 10
-
     static func rect(for card: Card) -> CGRect {
-        Layout.horizontal.rect(for: card)
-    }
-
-    /// The layout an island takes beside a body standing on `edge` — the island's long axis
-    /// follows the edge.
-    static func layout(forEdge edge: DeloresCompanionEdge) -> Layout {
-        edge == .left || edge == .right ? .vertical : .horizontal
+        let index = CGFloat(Card.allCases.firstIndex(of: card) ?? 0)
+        return CGRect(
+            x: horizontalPadding + index * (cardWidth + gap), y: verticalPadding,
+            width: cardWidth, height: cardHeight)
     }
 
     static var mainSideSplitRatio: CGFloat {
@@ -548,42 +462,24 @@ final class DeloresSnapIslandState: ObservableObject {
 
 struct DeloresSnapIslandView: View {
     @ObservedObject var state: DeloresSnapIslandState
-    var layout: SnapIslandGeometry.Layout = .horizontal
     @Environment(\.colorScheme) private var colorScheme
 
     private var isDark: Bool { colorScheme == .dark }
 
     var body: some View {
-        Group {
-            switch layout {
-            case .horizontal:
-                cards
-                    .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
-                    .padding(.vertical, SnapIslandGeometry.verticalPadding)
-                    .frame(width: layout.size.width, height: layout.size.height)
-                    .background(
-                        DeloresVisualEffectView(material: .popover, blending: .behindWindow)
-                            .clipShape(Capsule()))
-            case .vertical:
-                // The panes are the island: no vessel, no padding. See `verticalSize`.
-                cards
-                    .frame(width: layout.size.width, height: layout.size.height)
-            }
-        }
-        .scaleEffect(state.isAppearing ? 1 : 0.96)
-        .opacity(state.isAppearing ? 1 : 0)
+        cards
+            .padding(.horizontal, SnapIslandGeometry.horizontalPadding)
+            .padding(.vertical, SnapIslandGeometry.verticalPadding)
+            .frame(width: SnapIslandGeometry.size.width, height: SnapIslandGeometry.size.height)
+            .background(
+                DeloresVisualEffectView(material: .popover, blending: .behindWindow)
+                    .clipShape(Capsule()))
+            .scaleEffect(state.isAppearing ? 1 : 0.96)
+            .opacity(state.isAppearing ? 1 : 0)
     }
 
-    /// The same four cards either way — a card's glyphs are drawn for its width, never rotated —
-    /// only the row they stand in turns with the edge.
-    @ViewBuilder
     private var cards: some View {
-        switch layout {
-        case .horizontal:
-            HStack(spacing: SnapIslandGeometry.gap) { islandCards }
-        case .vertical:
-            VStack(spacing: SnapIslandGeometry.gap) { islandCards }
-        }
+        HStack(spacing: SnapIslandGeometry.gap) { islandCards }
     }
 
     @ViewBuilder
@@ -705,24 +601,6 @@ struct DeloresSnapIslandView: View {
         }
         .frame(width: size.width, height: size.height)
         .frame(width: geometry.cardWidth, height: geometry.cardHeight)
-        // A column has no vessel, so each pane carries its own ground. Glass on its own is not
-        // enough there: over a bright window every edge in these cards is a pale line on pale, and
-        // the panes are the only thing telling the reader where the window is about to land.
-        .background(
-            Group {
-                if layout == .vertical {
-                    DeloresVisualEffectView(material: .popover, blending: .behindWindow)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: geometry.paneCornerRadius, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(
-                                cornerRadius: geometry.paneCornerRadius, style: .continuous)
-                                .fill(
-                                    Color(nsColor: .windowBackgroundColor)
-                                        .opacity(isDark ? 0.34 : 0.44)))
-                }
-            })
     }
 
     @ViewBuilder
