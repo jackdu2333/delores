@@ -190,6 +190,18 @@ The Companion exists so Delores can be found without first being summoned.
 
 It is an ambient presence, not another workspace.
 
+The Companion's body may be native or anchored. The native body is Delores' own pixel pet. An
+anchored body is another application's mature desktop pet — Codex' today — serving as Delores'
+external visual anchor: the selection toolbar grows beside it and follows its display, and Delores
+never moves or modifies the anchored pet. One body at a time: an anchor replaces the native pet
+rather than joining it, and when the anchor is hidden or its bridge is unavailable the toolbar
+returns to the menu bar, its ordinary home.
+
+Anchoring is a deliberate single-application integration, not a mechanism waiting to be
+generalized. Codex already earned its place on the reader's desktop; Delores borrows that presence
+to deliver the selection toolbar where the reader already looks, instead of asking them to host a
+second pet. Admitting any other anchor is a product decision of its own, made the way this one was.
+
 Window snapping remains a shared capability with one stable entry point: dragging a window to the
 current display's top-center zone. The Companion's position never acts as a split trigger.
 

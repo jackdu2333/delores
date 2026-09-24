@@ -15,7 +15,9 @@ _Avoid_: Launcher、万能窗口
 
 **Context Surface**：用户已经选中文字或其他对象后，围绕该对象提供最小操作入口的交互形态。
 它存在于屏幕顶部，出现的理由是「我已经选好了东西」。
-_Avoid_: 划词工具栏、快捷菜单
+两层命名：领域讨论与代码层用 Context Surface；用户可见文案（Settings、菜单栏）统一用
+「划词工具栏 / Selection Toolbar」。这是同一形态的两层名字，不是两个概念。
+_Avoid_: 在用户文案里使用 Context Surface；在领域讨论里说「上下文工具栏」；快捷菜单
 
 **Companion Surface**：不需要被召唤、平时就待在桌面上的一点点存在感，让 Delores 随手指得到。
 它的职责是「被找到」——看一眼、回到最近一次选区、把用户送去真正干活的 Surface。
