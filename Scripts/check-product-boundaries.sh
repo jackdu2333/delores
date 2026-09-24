@@ -43,6 +43,14 @@ check_present "retired Window Management doc is archived" '^# Archived: Window M
     docs/features/window-management.md
 check_present "retired Window Layout doc is archived" '^# Archived: Window Layouts' \
     docs/features/window-layouts.md
+check_present "constitution carries the action-surface visibility matrix" \
+    '^### Action × Surface visibility matrix' docs/delores-product.md
+check_present "vocabulary pins the two-layer selection-toolbar naming" \
+    '「划词工具栏 / Selection Toolbar」' CONTEXT.md
+check_present "Settings user copy uses the vocabulary name" \
+    '"Selection Toolbar"' Tinycast/Resources/Localizable.xcstrings
+check_present "the translated Settings name matches the vocabulary" \
+    '"value": "划词工具栏"' Tinycast/Resources/Localizable.xcstrings
 
 if [ "$failures" -gt 0 ]; then
     printf '\n%d product-boundary check(s) failed\n' "$failures" >&2
