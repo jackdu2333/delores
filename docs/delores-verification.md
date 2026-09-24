@@ -320,6 +320,7 @@ pet mode in `Companion & Windows` and watch it. What to look for:
 | Drag a window onto a pet standing on the bottom edge, with the Dock showing | The island appears immediately above the pet, and the pointer can climb onto it without the island vanishing on the way. Before this was fixed the island was placed a Dock's height above the body — 69pt of dead space on the 1920×1080 display here, and on a pet riding the Dock's own top the placement lifted it 24pt as well — so the drag left the target on the way up and the run was torn down under it |
 | Change the display arrangement while it is walking | It stays on screen. It must not jump to the right-hand edge at mid-height, which is what a screen change used to do |
 | Enter a full-screen space (video, slides) | The body hides while the frontmost window is full screen and comes back when it leaves. `39d99893` added the suppression this row used to record as an accepted gap |
+| Type in a document while the body is walking | It stands still while the keys are going, and sets off again about two seconds after they stop, resuming the trip it was frozen in. `CGEventSource.secondsSinceLastEventType` is the signal — state, not events, so no permission the Companion did not already run under |
 | Select Codex pet mode while the Codex pet is hidden, or while its loopback overlay bridge is unavailable | The native Delores pet stays off; selection and window-snap fall back to the menu bar/top-centre affordance, with no Codex main window treated as a pet |
 | Show the Codex pet, then select text on either display or drag a window onto it | The Context toolbar grows beside the Codex pet, including when the selection is on the other display; the top-centre snap trigger is suppressed while the Codex pet is visible, and the existing Snap Island grows beside it. A drag that starts on the Codex pet is ignored by Delores. If the pet cannot be uniquely resolved, the safe fallback above wins |
 | Focus the Companion with VoiceOver and press it | The sprite body exposes a localized button label and its press action reopens the last selection, or shows the existing empty-selection reaction |
@@ -335,8 +336,6 @@ what the manual pass above has to cover.
 - The top edge is still inside the wander's range, so the companion can occupy the same strip as the
   Context Island and the snap island. The collision itself is now decided rather than open: both
   surfaces grow out of the pet beside its body, so the strip is shared by design, not contested.
-- Pausing while the reader is typing is not implemented. The signal it would use,
-  `CGEventSource.secondsSinceLastEventType`, needs no new permission.
 - The Companion now exposes a localized accessibility button label and press action. It still has no
   menu-bar entry; that remains a product decision, and the body menu itself remains pointer-only.
 - Its reactions drop back to the idle pose on their own — `react` writes the idle frame first, so a

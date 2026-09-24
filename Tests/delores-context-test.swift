@@ -1420,6 +1420,25 @@ struct DeloresContextTest {
                 isOnEdge(tightState.center, in: tight),
                 "a tiny display still keeps the body on its edge")
         }
+
+        // The typing pause is judged from one number, so the number is all there is to assert.
+        require(
+            !DeloresCompanionWander.readerIsTyping(secondsSinceLastKey: -1),
+            "a source with no keypress on record is not typing")
+        require(
+            DeloresCompanionWander.readerIsTyping(secondsSinceLastKey: 0),
+            "a keypress this instant is typing")
+        require(
+            DeloresCompanionWander.readerIsTyping(
+                secondsSinceLastKey: DeloresCompanionWander.typingPauseInterval - 0.01),
+            "keypresses inside the window count as typing")
+        require(
+            !DeloresCompanionWander.readerIsTyping(
+                secondsSinceLastKey: DeloresCompanionWander.typingPauseInterval),
+            "the window's far edge belongs to the idle side")
+        require(
+            !DeloresCompanionWander.readerIsTyping(secondsSinceLastKey: 3600),
+            "an idle keyboard does not hold the body still")
     }
 
     private static func isOnEdge(_ point: CGPoint, in bounds: CGRect, tolerance: CGFloat = 0.001) -> Bool {

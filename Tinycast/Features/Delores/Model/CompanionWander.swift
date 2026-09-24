@@ -57,6 +57,19 @@ enum DeloresCompanionWander {
     /// across the display.
     static let maximumStep: TimeInterval = 0.25
 
+    /// How recently a keypress must have landed for the reader to count as typing. Long enough to
+    /// carry a pause between sentences, short enough that the body is not still through a coffee.
+    static let typingPauseInterval: TimeInterval = 2
+
+    /// Whether the reader counts as typing, judged from how long ago their last keypress was.
+    ///
+    /// The clock is the caller's, like every other time this type is handed. The negative answer
+    /// is the event source reporting no keypress on record, which is the idle side: a machine that
+    /// has never been typed on is not being typed on.
+    static func readerIsTyping(secondsSinceLastKey: TimeInterval) -> Bool {
+        secondsSinceLastKey >= 0 && secondsSinceLastKey < typingPauseInterval
+    }
+
     /// Every arrival — a start, a drop, a screen change — begins here: still, on the loop.
     static func settled(
         at center: CGPoint, in loop: DeloresCompanionLoop, at now: TimeInterval,

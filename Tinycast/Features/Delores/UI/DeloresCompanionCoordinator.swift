@@ -14,6 +14,7 @@ final class DeloresCompanionCoordinator {
     private var isHiddenForFullscreen = false
     private var strollTimer: Timer?
     private var wakeTimer: Timer?
+    private var typingWatchTimer: Timer?
     private var companion: DeloresCompanionPanel?
     private let companionMenu = DeloresCompanionMenuController()
     private var currentSelection = ""
@@ -40,6 +41,9 @@ final class DeloresCompanionCoordinator {
     var onOpenContext: (() -> Void)?
     private static let companionDwellDuration: TimeInterval = 0.25
     private static let companionLeaveDuration: TimeInterval = 0.9
+    /// How often the typing pause is re-checked once the body has stood still for it. The walk's
+    /// own timers are stopped for the pause, so something has to notice the typing ended.
+    private static let typingWatchStep: TimeInterval = 0.5
     /// How far off the visible edge the body rides, which is its own radius: a body drawn at the
     /// larger step stands further in, or it would hang off the display.
     private var bodyRadius: CGFloat { settings.deloresCompanionSize.radius }
@@ -341,6 +345,8 @@ final class DeloresCompanionCoordinator {
         guard isRunning, !isHoldingShell, let wander else {
             stopWanderTimers(); companion?.rest(); return
         }
+        // The single arming point, so nowhere arms a walk while the reader is typing.
+        guard !readerIsTyping() else { pauseWanderForTyping(); return }
         switch wander.phase {
         case .strolling:
             wakeTimer?.invalidate(); wakeTimer = nil
@@ -368,6 +374,36 @@ final class DeloresCompanionCoordinator {
     private func stopWanderTimers() {
         strollTimer?.invalidate(); strollTimer = nil
         wakeTimer?.invalidate(); wakeTimer = nil
+        typingWatchTimer?.invalidate(); typingWatchTimer = nil
+    }
+
+    /// Whether the reader is typing. CGEventSource reports how long ago the last keypress landed
+    /// rather than the keys themselves, so it observes no events and needs no permission the
+    /// Companion does not already run under.
+    private func readerIsTyping() -> Bool {
+        DeloresCompanionWander.readerIsTyping(
+            secondsSinceLastKey: CGEventSource.secondsSinceLastEventType(
+                .combinedSessionState, eventType: .keyDown))
+    }
+
+    /// The body stands still while the reader types, wherever it was — a pet strolling the menu
+    /// bar while a sentence is being written reads as a distraction, not a companion. The wander
+    /// state is left alone, so the body resumes the very trip it was frozen in.
+    private func pauseWanderForTyping() {
+        stopWanderTimers()
+        companion?.rest()
+        let timer = Timer(timeInterval: Self.typingWatchStep, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.watchForTypingEnd() }
+        }
+        typingWatchTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    /// The typing has ended, so the body may walk again.
+    private func watchForTypingEnd() {
+        guard !readerIsTyping() else { return }
+        typingWatchTimer?.invalidate(); typingWatchTimer = nil
+        syncWanderTimers()
     }
 
     private func settle(at point: CGPoint, on screen: NSScreen) {
@@ -381,6 +417,8 @@ final class DeloresCompanionCoordinator {
     private func advanceWander() {
         guard isRunning, !isHiddenForFullscreen, !isHoldingShell, let companion, companion.isVisible, let state = wander
         else { return }
+        // The timers call here without passing through sync, so the pause is guarded at the gate too.
+        guard !readerIsTyping() else { pauseWanderForTyping(); return }
         let center = state.center
         guard let screen = DeloresWindowGeometry.screenContaining(center) else { return }
         let tick = now

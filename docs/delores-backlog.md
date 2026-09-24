@@ -22,9 +22,12 @@
 >   localized label and VoiceOver press action; the menu-bar entry remains a product decision.
 > - **Spatial geometry regression harness** — Snap and Divider geometry now share pure models and
 >   `Scripts/run-delores-geometry-tests.sh` measures the seam, gap, clamp and ratio rules.
+> - **Companion pauses while the reader types** (item 5) — `DeloresCompanionWander.readerIsTyping`
+>   decides from `CGEventSource.secondsSinceLastEventType` state, the coordinator freezes and
+>   resumes the wander around it, and the boundary is asserted in `delores-context-test`.
 >
 > Still open at that snapshot, re-checked at `b0270ede`: the card-header model selector, the collapsible
-> thinking block, the keyboard-idle wander pause, the Companion's menu-bar entry, and the public release
+> thinking block, the Companion's menu-bar entry, and the public release
 > channel. The later landed updates above supersede the corresponding label and glass rows.
 
 > 快照时间：2026-09-18 00:02，基线 `39f5d13`（工作树含未提交的 Companion Shell WIP）。
