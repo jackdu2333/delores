@@ -5,9 +5,21 @@ struct MenuBarLabel: View {
     let appName: String
 
     var body: some View {
-        Image("DeloresMenuBarIcon")
+        @Bindable var settings = AppCore.shared.settings
+        return Image("DeloresMenuBarIcon")
             .renderingMode(.template)
             .accessibilityLabel(appName)
+            .contextMenu {
+                Picker(
+                    L10n.string("Desktop companion mode"),
+                    selection: $settings.deloresCompanionMode)
+                {
+                    Text(L10n.string("Off")).tag(DeloresCompanionMode.off)
+                    Text(L10n.string("Delores desktop pet")).tag(DeloresCompanionMode.delores)
+                    Text(L10n.string("Codex desktop pet")).tag(DeloresCompanionMode.codex)
+                }
+                .pickerStyle(.menu)
+            }
     }
 }
 
