@@ -5,31 +5,37 @@ final class DeloresCoordinator {
     private let settings: AppSettings
     private let context: DeloresContextCoordinator
     private let companion: DeloresCompanionCoordinator
+    private let companionMode: @MainActor () -> DeloresCompanionMode
     private let codexPet: DeloresCodexPetWindowProbe
     private let snapping: DeloresWindowSnapCoordinator
     private let divider: DeloresSplitDividerCoordinator
     private let interactionGate = DeloresSurfaceInteractionGate()
     /// Whether the launch call has already been made, so only that one waits.
-    private var hasLaunchedOnce = false
+    private var startupDelayScheduled = false
+    private var startupDelayFinished = false
     private var appliedCompanionMode: DeloresCompanionMode?
     init(settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector, aiChat: AIChatCoordinator) {
         self.settings = settings
         let gate = interactionGate
         let codexPet = DeloresCodexPetWindowProbe()
+        let companionMode: @MainActor () -> DeloresCompanionMode = { [weak codexPet] in
+            settings.deloresCompanionMode.resolved(
+                codexPetEnabled: codexPet?.isCodexPetEnabled ?? false)
+        }
         let context = DeloresContextCoordinator(
             settings: settings, quickActions: quickActions, injector: injector, aiChat: aiChat,
-            interactionGate: gate,
+            interactionGate: gate, companionMode: companionMode,
             additionalInteractiveSurfaceHitTest: { [weak codexPet] point in
-                guard settings.deloresCompanionMode == .codex else { return false }
+                guard companionMode() == .codex else { return false }
                 return codexPet?.containsPet(at: point) == true
             })
         let companion = DeloresCompanionCoordinator(
-            settings: settings, interactionGate: gate,
+            settings: settings, interactionGate: gate, companionMode: companionMode,
             onOpenContext: { [weak context] in context?.showLastCapturedSelection() })
         let snapping = DeloresWindowSnapCoordinator(
             settings: settings, interactionGate: gate,
             additionalIgnoredPoint: { [weak codexPet] point in
-                guard settings.deloresCompanionMode == .codex else { return false }
+                guard companionMode() == .codex else { return false }
                 return codexPet?.containsPet(at: point) == true
             })
         let divider = DeloresSplitDividerCoordinator(settings: settings, interactionGate: gate)
@@ -40,13 +46,20 @@ final class DeloresCoordinator {
             divider?.registerSnappedWindow(window, slot: slot, rect: rect, screen: screen)
         }
         self.context = context; self.companion = companion; self.codexPet = codexPet
+        self.companionMode = companionMode
         self.snapping = snapping; self.divider = divider
+        codexPet.onAutomaticPetEnabledChange = { [weak self] in
+            guard let self, self.startupDelayFinished,
+                self.settings.deloresCompanionMode == .automatic
+            else { return }
+            self.applyEnabled()
+        }
         context.onSelectionPresented = { [weak companion] text in companion?.recordSelection(text) }
         // The Companion is the bar's other home: with it on, a bar grows out of the body's inward
         // side rather than down out of the menu bar.
         context.companionHosting = DeloresContextCompanionHosting(
             anchor: { [weak companion, weak codexPet] visibleFrame in
-                if settings.deloresCompanionMode == .codex {
+                if companionMode() == .codex {
                     guard let screen = DeloresWindowGeometry.screenContaining(
                         CGPoint(x: visibleFrame.midX, y: visibleFrame.midY))
                     else { return nil }
@@ -55,7 +68,7 @@ final class DeloresCoordinator {
                 return companion?.anchorForShell(in: visibleFrame)
             },
             avoidanceFrame: { [weak codexPet] visibleFrame in
-                guard settings.deloresCompanionMode == .codex,
+                guard companionMode() == .codex,
                     let screen = DeloresWindowGeometry.screenContaining(
                         CGPoint(x: visibleFrame.midX, y: visibleFrame.midY))
                 else { return nil }
@@ -63,38 +76,42 @@ final class DeloresCoordinator {
             },
             relocate: { [weak companion] center, edge in companion?.relocate(to: center, edge: edge) },
             held: { [weak companion] isHeld in
-                guard settings.deloresCompanionMode == .delores else { return }
+                guard companionMode() == .delores else { return }
                 if isHeld { companion?.holdForShell() } else { companion?.releaseShell() }
             },
             thinking: { [weak companion] isThinking in
-                guard settings.deloresCompanionMode == .delores else { return }
+                guard companionMode() == .delores else { return }
                 companion?.setThinking(isThinking)
             },
-            canRelocate: { settings.deloresCompanionMode == .delores })
+            canRelocate: { companionMode() == .delores })
     }
 
     /// The body is drawn at another step, which changes where it may stand as well as how big it is.
     func applyCompanionSize() { companion.applyCompanionSize() }
     func applyCompanionKind() { companion.applyCompanionKind() }
     func applyEnabled() {
+        let selectedMode = settings.deloresCompanionMode
         // The first call is launch, and the main actor is still digesting startup: every mouse
         // event these surfaces install lands on it, and a backlog at launch is paid in the apps
         // the reader clicks into. Give startup a beat before the surfaces go live; a settings
         // change after that still applies immediately.
-        guard hasLaunchedOnce else {
-            hasLaunchedOnce = true
+        guard startupDelayFinished else {
+            codexPet.applyEnabled(selectedMode == .automatic)
+            guard !startupDelayScheduled else { return }
+            startupDelayScheduled = true
             Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(1))
+                self?.startupDelayFinished = true
                 self?.applyEnabled()
             }
             return
         }
-        let mode = settings.deloresCompanionMode
+        codexPet.applyEnabled(selectedMode == .codex || selectedMode == .automatic)
+        let mode = companionMode()
         if let appliedCompanionMode, appliedCompanionMode != mode {
             context.stop()
         }
         appliedCompanionMode = mode
-        codexPet.applyEnabled(mode == .codex)
         context.applyEnabled(); companion.applyEnabled(); snapping.applyEnabled(); divider.applyEnabled()
     }
     var isHoldingPinnedContext: Bool { context.isHoldingPinnedContext }

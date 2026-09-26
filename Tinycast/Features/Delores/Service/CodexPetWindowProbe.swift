@@ -4,11 +4,7 @@ import CryptoKit
 import Darwin
 import Foundation
 
-/// Reads the live mascot rect from Codex's own avatar overlay surface.
-///
-/// The mascot is rendered inside a transparent Codex overlay window, not as a small WindowServer
-/// window of its own. The local DevTools endpoint is the narrow bridge that exposes its DOM rect;
-/// every failure remains a safe menu-bar fallback.
+/// Reads Codex's private pet preference and live mascot geometry via its avatar overlay.
 @MainActor
 final class DeloresCodexPetWindowProbe {
     private nonisolated static let devToolsListURL = URL(string: "http://127.0.0.1:9341/json/list")!
@@ -19,6 +15,11 @@ final class DeloresCodexPetWindowProbe {
         configuration.urlCache = nil
         return URLSession(configuration: configuration)
     }()
+
+    private struct OverlayObservation: Sendable {
+        let petVisibilityPreference: Bool?
+        let measurement: OverlayMeasurement?
+    }
 
     private struct OverlayMeasurement: Sendable {
         let rect: CGRect
@@ -32,8 +33,11 @@ final class DeloresCodexPetWindowProbe {
     private var cachedOverlayVisible = false
     private var cachedAt = -Double.infinity
     private var failedRefreshes = 0
+    private var cachedPetVisibilityPreference: Bool?
+    var onAutomaticPetEnabledChange: (() -> Void)?
 
     var hasVisiblePet: Bool { currentFrame != nil }
+    var isCodexPetEnabled: Bool { cachedPetVisibilityPreference ?? hasVisiblePet }
 
     func applyEnabled(_ enabled: Bool) {
         if enabled {
@@ -51,6 +55,7 @@ final class DeloresCodexPetWindowProbe {
         cachedOverlayVisible = false
         cachedAt = -Double.infinity
         failedRefreshes = 0
+        cachedPetVisibilityPreference = nil
     }
 
     func anchor(on screen: NSScreen) -> DeloresCompanionAnchor? {
@@ -91,25 +96,37 @@ final class DeloresCodexPetWindowProbe {
         guard refreshTask == nil else { return }
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
-                let measurement = await Self.readMeasurement()
-                guard let self else { return }
-                self.update(measurement)
+                let observation = await Self.readObservation()
+                guard !Task.isCancelled, let self else { return }
+                self.update(observation)
                 try? await Task.sleep(for: Self.refreshInterval)
             }
         }
     }
 
-    private func update(_ measurement: OverlayMeasurement?) {
-        guard let measurement else {
+    private func update(_ observation: OverlayObservation?) {
+        let wasEnabled = isCodexPetEnabled
+        guard let observation else {
             failedRefreshes += 1
+            cachedPetVisibilityPreference = nil
             if failedRefreshes >= 3 {
                 cachedFrame = nil
                 cachedActivityFrame = nil
                 cachedAt = -Double.infinity
             }
+            notifyAutomaticPetEnabledChange(from: wasEnabled)
             return
         }
         failedRefreshes = 0
+        cachedPetVisibilityPreference = observation.petVisibilityPreference
+        guard let measurement = observation.measurement else {
+            cachedFrame = nil
+            cachedActivityFrame = nil
+            cachedOverlayVisible = false
+            cachedAt = -Double.infinity
+            notifyAutomaticPetEnabledChange(from: wasEnabled)
+            return
+        }
         let quartzFrame = CGRect(
             x: measurement.screenOrigin.x + measurement.rect.minX,
             y: measurement.screenOrigin.y + measurement.rect.minY,
@@ -127,6 +144,12 @@ final class DeloresCodexPetWindowProbe {
                     height: rect.height))
         }
         cachedAt = ProcessInfo.processInfo.systemUptime
+        notifyAutomaticPetEnabledChange(from: wasEnabled)
+    }
+
+    private func notifyAutomaticPetEnabledChange(from previousValue: Bool) {
+        guard previousValue != isCodexPetEnabled else { return }
+        onAutomaticPetEnabledChange?()
     }
 
     private static func isVisibleCodexOverlay(at point: CGPoint) -> Bool {
@@ -154,7 +177,7 @@ final class DeloresCodexPetWindowProbe {
         }
     }
 
-    private nonisolated static func readMeasurement() async -> OverlayMeasurement? {
+    private nonisolated static func readObservation() async -> OverlayObservation? {
         do {
             let request = URLRequest(url: devToolsListURL, timeoutInterval: 0.75)
             let (data, response) = try await session.data(for: request)
@@ -168,9 +191,9 @@ final class DeloresCodexPetWindowProbe {
                 guard let webSocketURL = target["webSocketDebuggerUrl"] as? String,
                     let url = URL(string: webSocketURL),
                     url.host == "127.0.0.1", url.port == 9341,
-                    let measurement = await readMeasurement(from: url)
+                    let observation = await readObservation(from: url)
                 else { continue }
-                return measurement
+                return observation
             }
         } catch {
             return nil
@@ -178,41 +201,58 @@ final class DeloresCodexPetWindowProbe {
         return nil
     }
 
-    private nonisolated static func readMeasurement(
+    private nonisolated static func readObservation(
         from url: URL
-    ) async -> OverlayMeasurement? {
+    ) async -> OverlayObservation? {
         let expression = """
         (() => {
+            let petVisibilityPreference = null;
+            try {
+                const stored = window.localStorage.getItem(
+                    "codex:persisted-atom:avatar-overlay-pet-visible"
+                );
+                if (stored !== null) {
+                    const parsed = JSON.parse(stored);
+                    if (typeof parsed === "boolean") petVisibilityPreference = parsed;
+                }
+            } catch {}
             const element =
                 document.querySelector('[data-avatar-mascot="true"]') ||
                 document.querySelector('[data-avatar-overlay-hit-region="mascot"]');
-            if (!element) return null;
-            const rect = element.getBoundingClientRect();
-            const style = getComputedStyle(element);
-            if (rect.width <= 0 || rect.height <= 0 ||
-                style.display === "none" || style.visibility === "hidden" ||
-                Number(style.opacity) <= 0) return null;
-            const activity =
-                document.querySelector('[class*="ActivityStackViewport"]') ||
-                document.querySelector('[class*="activityPill"]');
-            const activityStyle = activity && getComputedStyle(activity);
-            const activityRect = activity && activityStyle.display !== "none" &&
-                activityStyle.visibility !== "hidden" && Number(activityStyle.opacity) > 0
-                ? activity.getBoundingClientRect()
-                : null;
+            let mascot = null;
+            if (element) {
+                const rect = element.getBoundingClientRect();
+                const style = getComputedStyle(element);
+                if (rect.width > 0 && rect.height > 0 &&
+                    style.display !== "none" && style.visibility !== "hidden" &&
+                    Number(style.opacity) > 0) {
+                    const activity =
+                        document.querySelector('[class*="ActivityStackViewport"]') ||
+                        document.querySelector('[class*="activityPill"]');
+                    const activityStyle = activity && getComputedStyle(activity);
+                    const activityRect = activity && activityStyle.display !== "none" &&
+                        activityStyle.visibility !== "hidden" && Number(activityStyle.opacity) > 0
+                        ? activity.getBoundingClientRect()
+                        : null;
+                    mascot = {
+                        x: rect.x,
+                        y: rect.y,
+                        width: rect.width,
+                        height: rect.height,
+                        activity: activityRect && activityRect.width > 0 && activityRect.height > 0
+                            ? {
+                                x: activityRect.x,
+                                y: activityRect.y,
+                                width: activityRect.width,
+                                height: activityRect.height
+                            }
+                            : null
+                    };
+                }
+            }
             return {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-                activity: activityRect && activityRect.width > 0 && activityRect.height > 0
-                    ? {
-                        x: activityRect.x,
-                        y: activityRect.y,
-                        width: activityRect.width,
-                        height: activityRect.height
-                    }
-                    : null,
+                petVisibilityPreference,
+                mascot,
                 screenX: window.screenX,
                 screenY: window.screenY
             };
@@ -233,32 +273,39 @@ final class DeloresCodexPetWindowProbe {
             let result = envelope["result"] as? [String: Any],
             let remoteResult = result["result"] as? [String: Any],
             let value = remoteResult["value"] as? [String: Any],
-            let x = value["x"] as? NSNumber,
-            let y = value["y"] as? NSNumber,
-            let width = value["width"] as? NSNumber,
-            let height = value["height"] as? NSNumber,
             let screenX = value["screenX"] as? NSNumber,
             let screenY = value["screenY"] as? NSNumber
         else { return nil }
+        let preference = value["petVisibilityPreference"] as? Bool
+        var measurement: OverlayMeasurement?
         let activityRect: CGRect?
-        if let activity = value["activity"] as? [String: Any],
-            let activityX = activity["x"] as? NSNumber,
-            let activityY = activity["y"] as? NSNumber,
-            let activityWidth = activity["width"] as? NSNumber,
-            let activityHeight = activity["height"] as? NSNumber
+        if let mascot = value["mascot"] as? [String: Any],
+            let x = mascot["x"] as? NSNumber,
+            let y = mascot["y"] as? NSNumber,
+            let width = mascot["width"] as? NSNumber,
+            let height = mascot["height"] as? NSNumber
         {
-            activityRect = CGRect(
-                x: activityX.doubleValue, y: activityY.doubleValue,
-                width: activityWidth.doubleValue, height: activityHeight.doubleValue)
-        } else {
-            activityRect = nil
+            if let activity = mascot["activity"] as? [String: Any],
+                let activityX = activity["x"] as? NSNumber,
+                let activityY = activity["y"] as? NSNumber,
+                let activityWidth = activity["width"] as? NSNumber,
+                let activityHeight = activity["height"] as? NSNumber
+            {
+                activityRect = CGRect(
+                    x: activityX.doubleValue, y: activityY.doubleValue,
+                    width: activityWidth.doubleValue, height: activityHeight.doubleValue)
+            } else {
+                activityRect = nil
+            }
+            measurement = OverlayMeasurement(
+                rect: CGRect(
+                    x: x.doubleValue, y: y.doubleValue,
+                    width: width.doubleValue, height: height.doubleValue),
+                activityRect: activityRect,
+                screenOrigin: CGPoint(x: screenX.doubleValue, y: screenY.doubleValue))
         }
-        return OverlayMeasurement(
-            rect: CGRect(
-                x: x.doubleValue, y: y.doubleValue,
-                width: width.doubleValue, height: height.doubleValue),
-            activityRect: activityRect,
-            screenOrigin: CGPoint(x: screenX.doubleValue, y: screenY.doubleValue))
+        return OverlayObservation(
+            petVisibilityPreference: preference, measurement: measurement)
     }
 }
 

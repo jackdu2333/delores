@@ -4,6 +4,7 @@ import SwiftUI
 final class DeloresCompanionCoordinator {
     private let settings: AppSettings
     private let interactionGate: DeloresSurfaceInteractionGate
+    private let companionMode: @MainActor () -> DeloresCompanionMode
     private var companionMonitor: Any?
     private var companionLocalMonitor: Any?
     private var companionDwellTimer: Timer?
@@ -51,11 +52,18 @@ final class DeloresCompanionCoordinator {
     private static var strollStep: TimeInterval { DeloresCompanionAnimation.walkStep }
     /// Monotonic, so a clock change cannot make a rest look overdue or a step look enormous.
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
-    init(settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate, onOpenContext: (() -> Void)? = nil) {
-        self.settings = settings; self.interactionGate = interactionGate; self.onOpenContext = onOpenContext
+    init(
+        settings: AppSettings, interactionGate: DeloresSurfaceInteractionGate,
+        companionMode: @escaping @MainActor () -> DeloresCompanionMode,
+        onOpenContext: (() -> Void)? = nil
+    ) {
+        self.settings = settings
+        self.interactionGate = interactionGate
+        self.companionMode = companionMode
+        self.onOpenContext = onOpenContext
     }
     func applyEnabled() {
-        settings.deloresCompanionMode.usesDeloresPet ? startCompanion() : stopCompanion()
+        companionMode().usesDeloresPet ? startCompanion() : stopCompanion()
     }
     func prepareForTermination() { stopCompanion() }
     func recordSelection(_ text: String) { currentSelection = text; companion?.play(.glance) }

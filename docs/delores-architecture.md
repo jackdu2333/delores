@@ -32,15 +32,19 @@ anyway. They have no place to be and nothing of their own to say.
   re-read from source and rendered to check rather than assumed. What it still carries itself is its
   own catalogue, prompts and streaming — see below.
 - **Companion** — either the running Delores pet or the Codex pet as an external visual anchor, never
-  both. Delores mode owns wander, hover, click grammar, and a double-click that reopens the last
-  selection's Context Surface. Codex mode never starts the native pet: the Context toolbar may grow
+  both. Automatic mode follows Codex's pet visibility preference and resolves to one of those two
+  bodies; if the private preference cannot be read, the visible-pet probe decides. Delores mode owns
+  wander, hover, click grammar, and a double-click that reopens the last selection's Context Surface.
+  Manual Codex mode never starts the native pet: the Context toolbar may grow
   from a uniquely identified Codex overlay, while Spatial snap always uses the current display's
   top-center trigger. The selection bar follows the pet's display even when the selection is on
-  another display; it returns to its menu-bar/top-centre placement when Codex's pet is hidden or its
-  local overlay bridge is unavailable. The bridge reads the mascot's live DOM
-  rectangle and any visible activity pill over Codex's loopback DevTools endpoint at 127.0.0.1:9341,
-  then checks WindowServer to confirm its overlay window is on screen; it does not modify Codex's
-  renderer. A bottom-edge Codex pet keeps the selection bar horizontal; if a visible activity pill
+  another display; in manual Codex mode it returns to its menu-bar/top-centre placement when the pet
+  is hidden or its local overlay bridge is unavailable. The bridge reads the mascot's live DOM
+  rectangle, the private `avatar-overlay-pet-visible` persisted atom when available, and any visible
+  activity pill over Codex's loopback DevTools endpoint at 127.0.0.1:9341, then checks WindowServer to
+  confirm its overlay window is on screen; it does not modify Codex's renderer. The private key is
+  version-specific, so automatic mode falls back to the visible-pet probe when the value is missing
+  or unreadable. A bottom-edge Codex pet keeps the selection bar horizontal; if a visible activity pill
   intersects it, the bar moves to a clear flank or, when the display is too narrow, a clear row above
   or below the pill. While an action runs, a horizontal bar keeps a compact working card visible; a
   vertical bar marks the active action inline. Both open the answer card when content first arrives,
@@ -259,8 +263,8 @@ starting. The vessel shape is clipped once at the root so the card and strip sha
 
 `AppCore` now exposes only `DeloresCoordinator`. The coordinator owns the current Context Surface
 implementation and is where Surface arbitration lives. `deloresCompanionMode` is the one mutually
-exclusive choice for the Companion: `.off`, `.delores`, or `.codex`; the old boolean is read only once
-to migrate an existing install.
+exclusive choice for the Companion: `.off`, `.automatic`, `.delores`, or `.codex`; automatic resolves
+to exactly one pet at runtime, and the old boolean is read only once to migrate an existing install.
 
 Selection gesture admission uses a window snapshot policy: only visible windows that accept mouse
 events block selection detection. HUDs and drop guides remain pass-through. Quick Action admission

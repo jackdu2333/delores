@@ -110,7 +110,7 @@ enum SettingsBackupCoverage {
         AppSettingsKey.deloresCompanionEnabled.rawValue:
             "Legacy setting retained only to migrate older installs; it is not restored from a backup.",
         AppSettingsKey.deloresCompanionMode.rawValue:
-            "Chooses a resident pet or an external Codex overlay, so an import must not change the "
+            "Chooses or detects a resident pet or an external Codex overlay, so an import must not "
             + "interactive surface a Mac starts watching.",
         AppSettingsKey.deloresWindowSnappingEnabled.rawValue:
             "Watches window drags across this Mac's displays; a flag that grants a capability is "

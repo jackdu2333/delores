@@ -14,6 +14,8 @@ struct CompanionSurfaceSettingsView: View {
             Section {
                 Picker(selection: $settings.deloresCompanionMode) {
                     Text(L10n.string("Off")).tag(DeloresCompanionMode.off)
+                    Text(L10n.string("Automatic (follow Codex pet)"))
+                        .tag(DeloresCompanionMode.automatic)
                     Text(L10n.string("Delores desktop pet")).tag(DeloresCompanionMode.delores)
                     Text(L10n.string("Codex desktop pet")).tag(DeloresCompanionMode.codex)
                 } label: {
@@ -22,7 +24,7 @@ struct CompanionSurfaceSettingsView: View {
                 }
                 Text(
                     L10n.string(
-                        "Codex mode uses the Codex pet as an external anchor; hidden pets fall back to the menu bar."
+                        "Automatic follows Codex's pet setting and falls back to visibility detection."
                     ))
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -52,7 +54,9 @@ struct CompanionSurfaceSettingsView: View {
                         )
                     }
                 }
-                .settingsEnabled(settings.deloresCompanionMode == .delores)
+                .settingsEnabled(
+                    settings.deloresCompanionMode == .delores
+                        || settings.deloresCompanionMode == .automatic)
             } header: {
                 SettingsSectionHeader(.companionSurfaceCompanion)
             } footer: {

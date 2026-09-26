@@ -15,6 +15,8 @@ struct MenuBarLabel: View {
                     selection: $settings.deloresCompanionMode)
                 {
                     Text(L10n.string("Off")).tag(DeloresCompanionMode.off)
+                    Text(L10n.string("Automatic (follow Codex pet)"))
+                        .tag(DeloresCompanionMode.automatic)
                     Text(L10n.string("Delores desktop pet")).tag(DeloresCompanionMode.delores)
                     Text(L10n.string("Codex desktop pet")).tag(DeloresCompanionMode.codex)
                 }

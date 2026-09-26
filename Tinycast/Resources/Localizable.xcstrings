@@ -1911,6 +1911,16 @@
         }
       }
     },
+    "Automatic (follow Codex pet)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动跟随 Codex 桌宠"
+          }
+        }
+      }
+    },
     "Delores desktop pet": {
       "localizations": {
         "zh-Hans": {
@@ -1931,12 +1941,12 @@
         }
       }
     },
-    "Codex mode uses the Codex pet as an external anchor; hidden pets fall back to the menu bar.": {
+    "Automatic follows Codex's pet setting and falls back to visibility detection.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codex 模式会把 Codex 桌宠作为外部视觉锚点；桌宠隐藏时，Delores 会回退到菜单栏。"
+            "value": "自动模式跟随 Codex 桌宠开关；无法读取时回退到可见性探测。"
           }
         }
       }

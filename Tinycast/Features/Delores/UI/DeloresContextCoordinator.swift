@@ -37,6 +37,7 @@ final class DeloresContextCoordinator {
     private let island: DeloresContextIslandController
     private let gestureMonitor: SelectionGestureMonitor
     private let interactionGate: DeloresSurfaceInteractionGate
+    private let companionMode: @MainActor () -> DeloresCompanionMode
 
     @ObservationIgnored private var captureTask: Task<Void, Never>?
     @ObservationIgnored private var actionTask: Task<Void, Never>?
@@ -77,6 +78,7 @@ final class DeloresContextCoordinator {
     init(
         settings: AppSettings, quickActions: QuickActionCoordinator, injector: TextInjector,
         aiChat: AIChatCoordinator, interactionGate: DeloresSurfaceInteractionGate,
+        companionMode: @escaping @MainActor () -> DeloresCompanionMode,
         additionalInteractiveSurfaceHitTest: (@MainActor (CGPoint) -> Bool)? = nil
     ) {
         self.settings = settings
@@ -84,6 +86,7 @@ final class DeloresContextCoordinator {
         self.injector = injector
         self.aiChat = aiChat
         self.interactionGate = interactionGate
+        self.companionMode = companionMode
 
         self.island = DeloresContextIslandController()
         self.gestureMonitor = SelectionGestureMonitor(
@@ -566,7 +569,7 @@ final class DeloresContextCoordinator {
     ) -> (screen: InvocationScreen, pet: DeloresCompanionAnchor?) {
         var screen = resolveScreen(for: point)
         var pet = companionHosting?.anchor(screen.visibleFrame)
-        guard settings.deloresCompanionMode == .codex, pet == nil else { return (screen, pet) }
+        guard companionMode() == .codex, pet == nil else { return (screen, pet) }
 
         for candidate in NSScreen.screens {
             let candidateScreen = invocationScreen(for: candidate)

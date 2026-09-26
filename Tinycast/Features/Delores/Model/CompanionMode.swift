@@ -4,10 +4,16 @@
 /// the native Delores pet and the Codex pet bridge by accident.
 enum DeloresCompanionMode: String, CaseIterable, Identifiable, Sendable {
     case off
+    case automatic
     case delores
     case codex
 
     var id: String { rawValue }
 
     var usesDeloresPet: Bool { self == .delores }
+
+    func resolved(codexPetEnabled: Bool) -> Self {
+        guard self == .automatic else { return self }
+        return codexPetEnabled ? .codex : .delores
+    }
 }

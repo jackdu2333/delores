@@ -197,6 +197,9 @@ never moves or modifies the anchored pet. One body at a time: an anchor replaces
 rather than joining it, and when the anchor is hidden or its bridge is unavailable the toolbar
 returns to the menu bar, its ordinary home.
 
+Automatic mode follows Codex's pet visibility setting and resolves to one body at a time. When that
+setting cannot be read, Delores falls back to detecting whether the Codex pet is visibly present.
+
 Anchoring is a deliberate single-application integration, not a mechanism waiting to be
 generalized. Codex already earned its place on the reader's desktop; Delores borrows that presence
 to deliver the selection toolbar where the reader already looks, instead of asking them to host a
