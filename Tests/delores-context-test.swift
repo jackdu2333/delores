@@ -853,7 +853,7 @@ struct DeloresContextTest {
     }
 
     private static func testCompanionMode() {
-        require(DeloresCompanionMode.allCases.count == 3, "companion mode has three choices")
+        require(DeloresCompanionMode.allCases.count == 4, "companion mode has four choices")
         require(DeloresCompanionMode.off != .delores, "off and Delores are distinct modes")
         require(DeloresCompanionMode.delores != .codex, "Delores and Codex are distinct modes")
         require(DeloresCompanionMode.codex != .off, "Codex and off are distinct modes")
