@@ -270,6 +270,16 @@ final class AppSettings {
         didSet { defaults.set(appleShortcutsEnabled, forKey: Key.appleShortcutsEnabled.rawValue) }
     }
 
+    var customCommandsEnabled: Bool {
+        didSet { defaults.set(customCommandsEnabled, forKey: Key.customCommandsEnabled.rawValue) }
+    }
+
+    var customCommandsShowInLauncher: Bool {
+        didSet {
+            defaults.set(customCommandsShowInLauncher, forKey: Key.customCommandsShowInLauncher.rawValue)
+        }
+    }
+
     /// Ask for a new window rather than a tab; off is the macOS default.
     var quicklinkOpensNewWindow: Bool {
         didSet {
@@ -403,6 +413,10 @@ final class AppSettings {
             defaults.object(forKey: Key.quicklinksShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinksShowInLauncher.rawValue)
         appleShortcutsEnabled = defaults.bool(forKey: Key.appleShortcutsEnabled.rawValue)
+        customCommandsEnabled = defaults.bool(forKey: Key.customCommandsEnabled.rawValue)
+        customCommandsShowInLauncher =
+            defaults.object(forKey: Key.customCommandsShowInLauncher.rawValue) == nil
+            || defaults.bool(forKey: Key.customCommandsShowInLauncher.rawValue)
         quicklinkOpensNewWindow = defaults.bool(forKey: Key.quicklinkOpensNewWindow.rawValue)
         quicklinkSelectionFallback =
             defaults.string(forKey: Key.quicklinkSelectionFallback.rawValue)

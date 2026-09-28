@@ -83,7 +83,7 @@ feature's doc, under its own `## Invariants`.
   carried by a backup: capability-backed settings stay excluded so an import cannot silently enable
   keystroke delivery or another permission-gated feature.
 - **Retired capabilities stay outside the active target.** Raycast Extensions, Snippets,
-  Calendar/Meeting/Camera, Custom Commands, Updates, Notes, Support reminders, the Emoji picker
+  Calendar/Meeting/Camera, Updates, Notes, Support reminders, the Emoji picker
   and Clipboard OCR live under `Packs/LegacyFeatures/`; active code must not import their types,
   resources or permissions. If a future standalone pack is restored, its views, services and tests
   stay owned by that pack rather than being added back to `DesignSystem/` or the Delores core.

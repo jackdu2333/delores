@@ -5840,6 +5840,396 @@
           }
         }
       }
+    },
+    "Custom Commands": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义命令"
+          }
+        }
+      }
+    },
+    "Custom Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义命令"
+          }
+        }
+      }
+    },
+    "Run Shell Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行终端命令"
+          }
+        }
+      }
+    },
+    "Enable custom commands": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用自定义命令"
+          }
+        }
+      }
+    },
+    "Commands run with your user account in /bin/zsh, so use full executable paths.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令将以当前用户身份在 /bin/zsh 中运行，请使用可执行文件的完整路径。"
+          }
+        }
+      }
+    },
+    "Find your commands in launcher search.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在搜索框中查找你保存的命令。"
+          }
+        }
+      }
+    },
+    "Add one to make it searchable from the launcher.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加命令后，即可在搜索框中找到它。"
+          }
+        }
+      }
+    },
+    "Add Custom Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加自定义命令"
+          }
+        }
+      }
+    },
+    "Edit Custom Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑自定义命令"
+          }
+        }
+      }
+    },
+    "Import Raycast Scripts": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入 Raycast 脚本"
+          }
+        }
+      }
+    },
+    "Name your command and optionally add an alias or shortcut. Import Raycast scripts from a folder.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为命令命名，也可添加别名或快捷键。导入时选择 Raycast 脚本文件夹，每个脚本会成为一条命令。"
+          }
+        }
+      }
+    },
+    "Edit Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑命令"
+          }
+        }
+      }
+    },
+    "Delete Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除命令"
+          }
+        }
+      }
+    },
+    "Delete %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除 %@"
+          }
+        }
+      }
+    },
+    "Sleep Displays": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭显示器"
+          }
+        }
+      }
+    },
+    "Example: /usr/bin/pmset displaysleepnow": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示例：/usr/bin/pmset displaysleepnow"
+          }
+        }
+      }
+    },
+    "Run In": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行目录"
+          }
+        }
+      }
+    },
+    "Home folder": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个人文件夹"
+          }
+        }
+      }
+    },
+    "The folder the command starts in. Leave empty for your home folder.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令启动时所在的文件夹；留空则使用个人文件夹。"
+          }
+        }
+      }
+    },
+    "Choose the folder this command runs in.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择命令运行时所在的文件夹。"
+          }
+        }
+      }
+    },
+    "Argument name": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "参数名称"
+          }
+        }
+      }
+    },
+    "Optional": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选"
+          }
+        }
+      }
+    },
+    "Remove this argument": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除此参数"
+          }
+        }
+      }
+    },
+    "Add one to be asked for a value before the command runs.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加参数后，运行命令前会要求输入。"
+          }
+        }
+      }
+    },
+    "Asked for in order, then passed to the command as $1, $2 …": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按顺序输入，并以 $1、$2 等位置参数传给命令。"
+          }
+        }
+      }
+    },
+    "Load shell environment": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加载 Shell 环境"
+          }
+        }
+      }
+    },
+    "Resolves aliases, functions and PATH. Slower to start.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取别名、函数和 PATH，启动会更慢。"
+          }
+        }
+      }
+    },
+    "Needs confirmation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行前确认"
+          }
+        }
+      }
+    },
+    "Ask before running this command.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行此命令前先询问。"
+          }
+        }
+      }
+    },
+    "Show confirmation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示完成提示"
+          }
+        }
+      }
+    },
+    "Confirm on screen after the command succeeds.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令成功后显示提示。"
+          }
+        }
+      }
+    },
+    "Show output": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示输出"
+          }
+        }
+      }
+    },
+    "Open a window with everything the command printed when it finishes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开窗口显示命令输出。"
+          }
+        }
+      }
+    },
+    "Import shell commands?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入终端命令？"
+          }
+        }
+      }
+    },
+    "Automatic": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动"
+          }
+        }
+      }
+    },
+    "Custom": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义"
+          }
+        }
+      }
+    },
+    "Choose": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择"
+          }
+        }
+      }
+    },
+    "Arguments": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "参数"
+          }
+        }
+      }
+    },
+    "Import %lld shell commands? Add only commands you trust.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此备份包含 %lld 条终端命令。仅导入你信任的命令。Delores 不会自动启用自定义命令。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

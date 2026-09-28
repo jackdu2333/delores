@@ -6,6 +6,7 @@ struct SettingsBackup: Codable {
     var settings: SettingsData?
     var hotkeys: HotkeyBackup?
     var quicklinks: [Quicklink]?
+    var customCommands: [CustomCommand]?
     var favoriteApps: [String]?
     var hiddenLauncherItems: [String]?
     var hiddenLauncherKinds: [String]?
@@ -50,6 +51,7 @@ struct SettingsBackup: Codable {
         var windowGap: Int?
         var quicklinksEnabled: Bool?
         var quicklinksShowInLauncher: Bool?
+        var customCommandsShowInLauncher: Bool?
         var quicklinkOpensNewWindow: Bool?
         var quicklinkSelectionFallback: String?
         var quicklinkConfirmsBeforeDelete: Bool?
@@ -70,6 +72,7 @@ struct SettingsBackup: Codable {
         var panes: [String: HotKeyBinding]?
         var systemActions: [String: HotKeyBinding]?
         var quicklinks: [String: HotKeyBinding]?
+        var customCommands: [String: HotKeyBinding]?
     }
 
     /// A tally of what an import touched, for user-facing confirmation.
@@ -80,6 +83,7 @@ struct SettingsBackup: Codable {
         var hiddenItems = 0
         var aliases = 0
         var quicklinks = 0
+        var customCommands = 0
     }
 }
 
@@ -125,6 +129,7 @@ extension SettingsBackup {
             windowGap: s.windowGap,
             quicklinksEnabled: s.quicklinksEnabled,
             quicklinksShowInLauncher: s.quicklinksShowInLauncher,
+            customCommandsShowInLauncher: s.customCommandsShowInLauncher,
             quicklinkOpensNewWindow: s.quicklinkOpensNewWindow,
             quicklinkSelectionFallback: s.quicklinkSelectionFallback.rawValue,
             quicklinkConfirmsBeforeDelete: s.quicklinkConfirmsBeforeDelete,
@@ -155,9 +160,14 @@ extension SettingsBackup {
             uniqueKeysWithValues: hk.boundQuicklinkIDs.compactMap { id in
                 hk.binding(for: .quicklink(id: id)).map { (id.uuidString.lowercased(), $0) }
             })
+        hotkeys.customCommands = Dictionary(
+            uniqueKeysWithValues: hk.boundCustomCommandIDs.compactMap { id in
+                hk.binding(for: .customCommand(id: id)).map { (id.uuidString.lowercased(), $0) }
+            })
         backup.hotkeys = hotkeys
 
         backup.quicklinks = core.quicklinks.quicklinks
+        backup.customCommands = core.customCommands.commands
         backup.favoriteApps = core.favorites.keys
         backup.hiddenLauncherItems = Array(core.visibility.hiddenItemKeys)
         backup.hiddenLauncherKinds = Array(core.visibility.disabledKinds)
@@ -172,6 +182,9 @@ extension SettingsBackup {
         // Before the hotkeys, so a restored binding has its quicklink to attach to.
         if let quicklinks {
             summary.quicklinks = core.quicklinkCoordinator.replaceQuicklinks(quicklinks)
+        }
+        if let customCommands {
+            summary.customCommands = core.customCommandCoordinator.replaceCustomCommands(customCommands)
         }
         if let hotkeys { summary.hotkeys = applyHotkeys(hotkeys, to: core) }
         if let favoriteApps {
@@ -331,6 +344,10 @@ extension SettingsBackup {
             settings.quicklinksShowInLauncher = flag
             count += 1
         }
+        if let flag = s.customCommandsShowInLauncher {
+            settings.customCommandsShowInLauncher = flag
+            count += 1
+        }
         if let flag = s.appleShortcutsEnabled {
             settings.appleShortcutsEnabled = flag
             count += 1
@@ -385,6 +402,12 @@ extension SettingsBackup {
                 continue
             }
             apply(b, .quicklink(id: id))
+        }
+        for (rawID, b) in hotkeys.customCommands ?? [:] {
+            guard let id = UUID(uuidString: rawID), core.customCommands.command(id: id) != nil else {
+                continue
+            }
+            apply(b, .customCommand(id: id))
         }
         return count
     }

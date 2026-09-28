@@ -104,6 +104,15 @@ final class PaletteCoordinator {
         windowController.hide(restoreFocus: restoreFocus)
     }
 
+    func showArguments(of entry: AppEntry, values: [String: String]) {
+        showPalette(mode: .launcher, seeding: entry.name)
+        palette.argumentEntryID = entry.id
+        for (field, value) in values {
+            palette.commandArguments[PaletteState.argumentKey(entry.id, field)] = value
+        }
+        palette.pendingArgumentEntryID = entry.id
+    }
+
     /// Reset to the root search now rather than after the Pop to Root Search delay.
     func popToRootNow() {
         windowController.popToRootNow()

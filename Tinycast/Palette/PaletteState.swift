@@ -46,6 +46,7 @@ final class PaletteState {
     var commandArguments: [String: String] = [:]
     /// Set when the palette opens to fill one row's fields; the header focuses the first empty one.
     var pendingArgumentEntryID: String?
+    var argumentEntryID: String?
     /// True once ⌘ has been *held*, which numbers the favorite rows. The panel is the only writer.
     private(set) var commandHeld = false
     /// A chord is a tap, so the numbering waits out the tap before it claims the trailing labels.
@@ -135,6 +136,7 @@ final class PaletteState {
         isControlListOpen = false
         commandArguments = [:]
         pendingArgumentEntryID = nil
+        argumentEntryID = nil
         clipboardFilter = .all
         fileSearchFilter = .all
         fileSearchQuickLook = false

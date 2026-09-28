@@ -13,6 +13,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case searchMenuItems = "command:search-menu-items"
     case switchWindows = "command:switch-windows"
     case openInBrowser = "command:open-in-browser"
+    case runShellCommand = "command:run-shell-command"
     case showNotes = "command:show-notes"
     case createNote = "command:create-note"
     case searchNotes = "command:search-notes"
@@ -40,6 +41,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchMenuItems: return "Search Menu Bar Items"
         case .switchWindows: return "Switch Windows"
         case .openInBrowser: return "Open in Browser"
+        case .runShellCommand: return "Run Shell Command"
         case .showNotes: return "Show Notes"
         case .createNote: return "Create Note"
         case .searchNotes: return "Search Notes"
@@ -69,6 +71,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchMenuItems: return "menubar.rectangle"
         case .switchWindows: return "macwindow.on.rectangle"
         case .openInBrowser: return "globe"
+        case .runShellCommand: return "terminal"
         case .showNotes: return "text.page"
         case .createNote: return "note.text.badge.plus"
         case .searchNotes: return "text.magnifyingglass"
@@ -127,7 +130,7 @@ enum CommandID: String, CaseIterable, Sendable {
 
     /// Query-driven: the typed text is their input, so they are built where offered, never listed.
     var isQueryDriven: Bool {
-        self == .openInBrowser
+        self == .openInBrowser || self == .runShellCommand
     }
 
     /// A chord carries no query, and none should be able to terminate the app outright.

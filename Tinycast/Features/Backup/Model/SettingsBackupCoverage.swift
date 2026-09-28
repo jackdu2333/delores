@@ -35,6 +35,7 @@ enum SettingsBackupCoverage {
         "windowGap": .windowGap,
         "quicklinksEnabled": .quicklinksEnabled,
         "quicklinksShowInLauncher": .quicklinksShowInLauncher,
+        "customCommandsShowInLauncher": .customCommandsShowInLauncher,
         "quicklinkOpensNewWindow": .quicklinkOpensNewWindow,
         "quicklinkSelectionFallback": .quicklinkSelectionFallback,
         "quicklinkConfirmsBeforeDelete": .quicklinkConfirmsBeforeDelete,
@@ -51,6 +52,8 @@ enum SettingsBackupCoverage {
 
     /// Keys kept out of a backup on purpose, each with the reason it has to stay out.
     static let deliberatelyExcluded: [String: String] = [
+        AppSettingsKey.customCommandsEnabled.rawValue:
+            "Running user-authored shell code is a capability enabled only on this Mac.",
         AppSettingsKey.palettePosition.rawValue:
             "Machine-local geometry: every entry names a display this Mac has, and no other one.",
         AppSettingsKey.notesDirectoryPath.rawValue:

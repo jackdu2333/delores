@@ -197,7 +197,7 @@ Tinycast/
   Assets.xcassets/  the app icon and the bundled image sets some catalog symbols resolve to
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
-    Launcher/ Clipboard/ Calculator/ FileSearch/ MenuSearch/ QuickActions/
+    Launcher/ Clipboard/ Calculator/ FileSearch/ MenuSearch/ QuickActions/ CustomCommands/
     Quicklinks/ Uninstall/ SystemActions/ HotKeys/ Backup/ AppleShortcuts/ MCP/
     WindowManagement/ WindowSwitcher/ TextInjection/ Onboarding/ AI/
     Notes/          plain Markdown in one floating editor, with its own switcher; upstream-owned
@@ -211,7 +211,7 @@ Tests/              the standalone harnesses, one Swift file each
 Scripts/            run-tests.sh, the data and companion-atlas generators, packaging, signing,
                     formatting, editor setup and the lint checks
 
-Packs/LegacyFeatures/  parked Extensions, Snippets, Calendar/Camera, Custom Commands, Emoji,
+Packs/LegacyFeatures/  parked Extensions, Snippets, Calendar/Camera, Emoji,
                       Clipboard OCR, Updates and Support reminders
 ```
 

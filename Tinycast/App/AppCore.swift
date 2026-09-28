@@ -9,6 +9,7 @@ final class AppCore {
     let launcherRanking: LauncherRankingStore
     let appIndex: AppIndex
     let quicklinks = QuicklinkStore()
+    let customCommands = CustomCommandStore()
     let clipboardStore = ClipboardStore()
     let clipboardManager: ClipboardManager
     let textInjector: TextInjector
@@ -56,6 +57,13 @@ final class AppCore {
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
         core: self)
 
+    @ObservationIgnored private(set) lazy var customCommandCoordinator = CustomCommandCoordinator(
+        store: customCommands, settings: settings, appIndex: appIndex,
+        paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
+        hotKeys: hotKeys, favorites: favorites, visibility: visibility,
+        ranking: launcherRanking, aliases: aliases,
+        activationPolicy: activationPolicy, core: self)
+
     @ObservationIgnored private(set) lazy var paletteCoordinator = PaletteCoordinator(
         palette: palette, settings: settings, appIndex: appIndex,
         fileSearch: fileSearch, menuSearch: menuSearch, windowSwitch: windowSwitch,
@@ -92,6 +100,7 @@ final class AppCore {
         settingsCoordinator: settingsCoordinator,
         systemActionCoordinator: systemActionCoordinator,
         quicklinkCoordinator: quicklinkCoordinator,
+        customCommandCoordinator: customCommandCoordinator,
         fileSearchCoordinator: fileSearchCoordinator,
         menuSearchCoordinator: menuSearchCoordinator,
         windowSwitchCoordinator: windowSwitchCoordinator,
@@ -181,6 +190,10 @@ final class AppCore {
             customQuickActions.load()
             quickActionCoordinator.applyEnabled()
             deloresCoordinator.applyEnabled()
+            customCommands.onChange = { [weak self] _ in
+                self?.customCommandCoordinator.applyCustomCommandsPresence()
+            }
+            customCommandCoordinator.applyCustomCommandsPresence()
             quicklinks.onChange = { [weak self] _ in
                 self?.quicklinkCoordinator.applyQuicklinksPresence()
             }
@@ -219,6 +232,9 @@ final class AppCore {
             hotKeys.onRunQuickAction = { [weak self] id in
                 self?.quickActionCoordinator.run(id: id)
             }
+            hotKeys.onRunCustomCommand = { [weak self] id in
+                self?.customCommandCoordinator.runCustomCommand(id: id)
+            }
             hotKeys.onRunAppleShortcut = { [weak self] id in
                 self?.appleShortcutCoordinator.run(id: id)
             }
@@ -237,6 +253,7 @@ final class AppCore {
                 self?.systemActionCoordinator.presentSystemActionFailure(id: id, failure: failure)
             }
             hotKeys.start(
+                customCommandIDs: Set(customCommands.commands.map(\.id)),
                 quicklinkIDs: Set(quicklinks.quicklinks.map(\.id)),
                 quickActionIDs: Set(customQuickActions.actions.map(\.id)))
             // Keeps running while Carbon pauses: the recorder needs its rewritten flags.
@@ -255,6 +272,7 @@ final class AppCore {
     /// Clicking the Dock icon: raise whichever window is already open, else summon the launcher.
     func handleReopen() {
         if settingsCoordinator.focusExisting() { return }
+        if customCommandCoordinator.focusOutputWindow() { return }
         if onboardingCoordinator.focusExisting() { return }
         paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
     }
@@ -275,6 +293,8 @@ final class AppCore {
             return quicklinks.quicklink(id: id)?.name
         case .quickAction(let id):
             return customQuickActions.action(id: id)?.name
+        case .customCommand(let id):
+            return customCommands.command(id: id)?.name
         case .appleShortcut(let id):
             return appleShortcutCoordinator.name(of: id)
         case .togglePalette, .command, .systemAction:
@@ -350,6 +370,11 @@ final class AppCore {
     // MARK: - Feature switches
 
     private func observeFeatureSwitches() {
+        track(
+            {
+                _ = $0.customCommandsEnabled
+                _ = $0.customCommandsShowInLauncher
+            }, reproject: { $0.customCommandCoordinator.applyCustomCommandsPresence() })
         track(
             {
                 _ = $0.quicklinksEnabled

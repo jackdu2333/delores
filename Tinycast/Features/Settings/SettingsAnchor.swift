@@ -30,6 +30,7 @@ extension SettingsAnchor {
     static let systemActionsSystemActions = Self(tab: .systemActions, title: "System Actions")
 
     static let commandsCommands = Self(tab: .commands, title: "Commands")
+    static let commandsCustomCommands = Self(tab: .commands, title: "Custom Commands")
 
     static let quicklinksQuicklinks = Self(tab: .quicklinks, title: "Quicklinks")
     static let quicklinksCommands = Self(tab: .quicklinks, title: "Commands")

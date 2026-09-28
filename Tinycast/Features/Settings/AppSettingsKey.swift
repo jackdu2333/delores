@@ -48,6 +48,8 @@ enum AppSettingsKey: String, CaseIterable {
     case quicklinkSelectionFallback = "quicklinkSelectionFallback"
     case quicklinkConfirmsBeforeDelete = "quicklinkConfirmsBeforeDelete"
     case appleShortcutsEnabled = "appleShortcutsEnabled"
+    case customCommandsEnabled = "customCommandsEnabled"
+    case customCommandsShowInLauncher = "customCommandsShowInLauncher"
     case aiEnabled = "aiEnabled"
     case aiInstalledProviders = "aiInstalledProviders"
     case aiConnections = "aiConnections"

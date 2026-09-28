@@ -8,6 +8,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case quickAction
         case systemAction
         case quicklink
+        case customCommand
         case appleShortcut
 
         var descriptor: KindDescriptor {
@@ -42,6 +43,11 @@ struct AppEntry: Identifiable, Hashable, Sendable {
                     label: "Quicklink", sectionTitle: "Quicklinks",
                     openVerb: "Open Quicklink", canHideFromSearch: false,
                     canRevealInFinder: false, isSymbolIcon: true, rankPriority: 2)
+            case .customCommand:
+                return KindDescriptor(
+                    label: "Custom Command", sectionTitle: "Custom Commands",
+                    openVerb: "Run Command", canHideFromSearch: true,
+                    canRevealInFinder: false, isSymbolIcon: true, rankPriority: 3)
             case .appleShortcut:
                 // File-backed so every row draws the Shortcuts app's own icon.
                 return KindDescriptor(
@@ -136,6 +142,8 @@ struct AppEntry: Identifiable, Hashable, Sendable {
             return SystemActionCatalog.action(forEntryID: id).map { .systemAction(id: $0.id) }
         case .quicklink:
             return Quicklink.id(fromEntryID: id).map { .quicklink(id: $0) }
+        case .customCommand:
+            return CustomCommand.id(fromEntryID: id).map { .customCommand(id: $0) }
         case .appleShortcut:
             return AppleShortcut.id(fromEntryID: id).map { .appleShortcut(id: $0) }
         default:
@@ -160,6 +168,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
     private var kindSymbol: String {
         switch kind {
         case .quicklink: return Quicklink.sfSymbol
+        case .customCommand: return CustomCommand.sfSymbol
         case .command: return CommandCatalog.command(for: self)?.sfSymbol ?? "questionmark"
         case .quickAction:
             return CommandCatalog.command(for: self)?.sfSymbol ?? CustomQuickAction.sfSymbol
@@ -179,6 +188,13 @@ struct AppEntry: Identifiable, Hashable, Sendable {
 }
 
 extension AppEntry {
+    init(_ command: CustomCommand) {
+        self.init(
+            id: command.entryID, name: command.name,
+            url: URL(string: "tinycast://custom-command/" + command.id.uuidString)!,
+            bundleID: nil, kind: .customCommand, symbolName: command.iconSymbol)
+    }
+
     /// The one row a custom Quick Action draws, wherever it is offered from.
     init(_ action: CustomQuickAction) {
         self.init(
@@ -223,7 +239,7 @@ extension AppEntry.Kind {
 final class AppIndex {
     private(set) var apps: [AppEntry] = []
     private static let sectionOrder: [AppEntry.Kind] = [
-        .application, .systemSettings, .quicklink, .appleShortcut, .systemAction, .quickAction,
+        .application, .systemSettings, .quicklink, .appleShortcut, .systemAction, .customCommand, .quickAction,
         .command
     ]
 
@@ -269,6 +285,7 @@ final class AppIndex {
     private var discoveredEntries: [AppEntry] = []
     private var quicklinkEntries: [AppEntry] = []
     private var appleShortcutEntries: [AppEntry] = []
+    private var customCommandEntries: [AppEntry] = []
     private var customQuickActionEntries: [AppEntry] = []
     /// The catalog's commands a disabled feature hides; the Commands slice is recomputed from it.
     private var hiddenCommands: Set<CommandID> = []
@@ -341,6 +358,15 @@ final class AppIndex {
     func setAppleShortcuts(_ entries: [AppEntry]) {
         guard entries != appleShortcutEntries else { return }
         appleShortcutEntries = entries
+        publishEntries()
+    }
+
+    func setCustomCommands(_ commands: [CustomCommand]) {
+        let entries = commands.filter(\.isEnabled)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            .map(AppEntry.init)
+        guard entries != customCommandEntries else { return }
+        customCommandEntries = entries
         publishEntries()
     }
 
@@ -459,7 +485,7 @@ final class AppIndex {
             discoveredEntries
             + Self.named(
                 quicklinkEntries + appleShortcutEntries + Self.systemActionEntries
-                    + quickActionEntries
+                    + customCommandEntries + quickActionEntries
                     + commandEntries)
         guard updated != apps else { return }
         apps = updated

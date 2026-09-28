@@ -49,16 +49,20 @@ struct LauncherScreen: PaletteScreen {
         self.openArgumentOptions = openArgumentOptions
         self.scrollToFollow = scrollToFollow
 
-        let ordered = appIndex.orderedResults(
-            query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys)
+        let pinned = vm.argumentEntryID.flatMap(core.customCommands.command(entryID:))
+            .map(AppEntry.init).flatMap { $0.name == vm.query ? $0 : nil }
+        let ordered = pinned.map { AppIndex.Results(entries: [$0]) }
+            ?? appIndex.orderedResults(
+                query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys)
         var results = ordered.entries
         // A typed web address leads: nothing the index holds answers it better.
-        if let browser = CommandCatalog.openInBrowser(for: vm.query), visibility.isVisible(browser) {
+        if pinned == nil, let browser = CommandCatalog.openInBrowser(for: vm.query),
+            visibility.isVisible(browser) {
             results.insert(browser, at: 0)
         }
-        let calc = CalcMemo.evaluate(vm.query, rates: currencyRates.rates)
+        let calc = pinned == nil ? CalcMemo.evaluate(vm.query, rates: currencyRates.rates) : nil
         // After the calculator: `#FF5733` is never arithmetic, so the two can't both answer.
-        let color = calc == nil ? ColorValue.parse(vm.query) : nil
+        let color = calc == nil && pinned == nil ? ColorValue.parse(vm.query) : nil
         let fallbacks = core.fallbackCoordinator.entries(for: vm.query)
         let entries = results.map(Row.entry) + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespaces).isEmpty
@@ -131,6 +135,12 @@ struct LauncherScreen: PaletteScreen {
                 placement: .afterQuery, onOpenOptions: openArgumentOptions,
                 onSubmit: { activate(at: selection) })
         }
+        if entry.kind == .customCommand {
+            return CustomCommandArgumentsAccessory.make(
+                command: core.customCommands.command(entryID: entry.id), vm: vm,
+                metrics: core.settings.interfaceSize.metrics, focus: focus,
+                onSubmit: { activate(at: selection) })
+        }
         return nil
     }
 
@@ -139,6 +149,10 @@ struct LauncherScreen: PaletteScreen {
         if entry.kind == .quicklink {
             guard let quicklink = quicklink(for: entry) else { return [:] }
             return QuicklinkArgumentsAccessory.values(for: quicklink, core: core, vm: vm)
+        }
+        if entry.kind == .customCommand {
+            guard let command = core.customCommands.command(entryID: entry.id) else { return [:] }
+            return CustomCommandArgumentsAccessory.values(for: command, vm: vm)
         }
         return [:]
     }

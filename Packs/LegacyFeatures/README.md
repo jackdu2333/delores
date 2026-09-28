@@ -9,7 +9,8 @@ Parked here:
 - `RaycastExtensions/` — the Raycast-compatible JavaScriptCore runtime and extension host.
 - `Snippets/` — keyword listening, Markdown snippets, and snippet-specific UI.
 - `Calendar/` and `Camera/` — calendar/meeting flows and camera preview surfaces.
-- `CustomCommands/` — shell commands, script import, argument forms, and output UI.
+- `CustomCommands/` — superseded snapshot of the shell-command capability restored under
+  `Tinycast/Features/CustomCommands/`; kept for comparison with the original pack.
 - `Updates/` — in-app updater, release feed, installer, and relaunch. Its `Service/ToolRunner.swift` is
   upstream's original, byte for byte; the active target adopted the same helper at
   `Tinycast/Platform/ToolRunner.swift`, where it has since moved on. A restore therefore takes the

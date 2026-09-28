@@ -19,7 +19,22 @@ enum BackupApplier {
         if categories.contains(.configuration), let data = try? Data(contentsOf: bundle.settingsURL),
             let backup = try? SettingsBackup(json: data)
         {
-            summary.settings = backup.apply(to: core)
+            let executableCount = backup.customCommands?.count ?? 0
+            var importCommands = true
+            if executableCount > 0 {
+                importCommands = await core.confirm(
+                    title: L10n.string("Import shell commands?"),
+                    message: L10n.format(
+                        "Import %lld shell commands? Add only commands you trust.",
+                        executableCount),
+                    symbol: CustomCommand.sfSymbol, confirmTitle: L10n.string("Import"),
+                    tone: .neutral, confirmRole: .standard)
+            }
+            if importCommands {
+                summary.settings = backup.apply(to: core)
+            } else {
+                summary.problems.append("Skipped Settings & Shortcuts because shell command import was declined.")
+            }
         }
         if categories.contains(.clipboard) {
             summary.clipboard = await importClipboard(bundle, into: core.clipboardStore)

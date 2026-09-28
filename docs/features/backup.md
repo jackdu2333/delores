@@ -16,6 +16,8 @@ A backup carries four independently selectable categories, ticked on export and 
 - **A flag that grants a capability is never carried by a backup**, whether it is excluded from
   `SettingsBackupCoverage` or kept out of `AppSettings` entirely. Importing a config must not be able
   to grant something the user never granted. This change adds content, never a capability.
+  Saved shell commands and their shortcuts may travel in the configuration, but importing them asks
+  first and never restores `customCommandsEnabled`.
 - **No absolute path may enter a `.delores`.** A clip's `imagePath` names a file on the Mac that wrote
   it, so `BackupClipboardItem` carries a bundle-relative `imageName` instead. `backup-archive-test`
   asserts the produced file contains neither `/Users` nor `/Library` — the analogue of

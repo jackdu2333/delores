@@ -167,6 +167,7 @@ It is the most complete form of Delores and owns the long tail of deliberate tas
 
 * search;
 * commands;
+* one-off shell commands and searchable, user-saved shell commands;
 * application launching;
 * AI conversations;
 * model switching;

@@ -11,6 +11,7 @@ enum HotKeyAction: Hashable, Sendable {
     case systemAction(id: SystemAction.ID)
     case quicklink(id: UUID)
     case quickAction(id: UUID)
+    case customCommand(id: UUID)
     case appleShortcut(id: UUID)
 
     /// The UserDefaults key, and the `HotKeyCenter` registration id: one per action.
@@ -23,6 +24,7 @@ enum HotKeyAction: Hashable, Sendable {
         case .systemAction(let id): "hotkey.systemAction." + id.rawValue
         case .quicklink(let id): "hotkey.quicklink." + id.uuidString.lowercased()
         case .quickAction(let id): "hotkey.quickAction." + id.uuidString.lowercased()
+        case .customCommand(let id): "hotkey.customCommand." + id.uuidString.lowercased()
         case .appleShortcut(let id): "hotkey.appleShortcut." + id.uuidString.lowercased()
         }
     }

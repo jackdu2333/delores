@@ -9,6 +9,7 @@ final class LauncherCoordinator {
     private let settingsCoordinator: SettingsCoordinator
     private let systemActionCoordinator: SystemActionCoordinator
     private let quicklinkCoordinator: QuicklinkCoordinator
+    private let customCommandCoordinator: CustomCommandCoordinator
     private let fileSearchCoordinator: FileSearchCoordinator
     private let menuSearchCoordinator: MenuSearchCoordinator
     private let windowSwitchCoordinator: WindowSwitchCoordinator
@@ -23,6 +24,7 @@ final class LauncherCoordinator {
         settingsCoordinator: SettingsCoordinator,
         systemActionCoordinator: SystemActionCoordinator,
         quicklinkCoordinator: QuicklinkCoordinator,
+        customCommandCoordinator: CustomCommandCoordinator,
         fileSearchCoordinator: FileSearchCoordinator,
         menuSearchCoordinator: MenuSearchCoordinator,
         windowSwitchCoordinator: WindowSwitchCoordinator,
@@ -35,6 +37,7 @@ final class LauncherCoordinator {
         self.settingsCoordinator = settingsCoordinator
         self.systemActionCoordinator = systemActionCoordinator
         self.quicklinkCoordinator = quicklinkCoordinator
+        self.customCommandCoordinator = customCommandCoordinator
         self.fileSearchCoordinator = fileSearchCoordinator
         self.menuSearchCoordinator = menuSearchCoordinator
         self.windowSwitchCoordinator = windowSwitchCoordinator
@@ -73,6 +76,11 @@ final class LauncherCoordinator {
             core.quickActionCoordinator.run(id: id)
             return
         }
+        if app.kind == .customCommand {
+            guard let id = CustomCommand.id(fromEntryID: app.id) else { return }
+            customCommandCoordinator.runCustomCommand(id: id, values: arguments)
+            return
+        }
         if app.kind == .systemAction {
             guard let action = SystemActionCatalog.action(forEntryID: app.id) else { return }
             systemActionCoordinator.runSystemAction(id: action.id)
@@ -96,7 +104,7 @@ final class LauncherCoordinator {
         case .systemSettings:
             guard let bundleID = app.bundleID else { return }
             AppLauncher.openSettingsPane(bundleID: bundleID)
-        case .command, .quickAction, .systemAction, .quicklink,
+        case .command, .quickAction, .customCommand, .systemAction, .quicklink,
             .appleShortcut:
             break  // handled above
         }
@@ -125,7 +133,7 @@ final class LauncherCoordinator {
             menuSearchCoordinator.show()
         case .switchWindows:
             windowSwitchCoordinator.show()
-        case .openInBrowser:
+        case .openInBrowser, .runShellCommand:
             break  // Query-driven: each runs where the typed text is, never through this funnel.
         case .showNotes:
             dismissPalette()

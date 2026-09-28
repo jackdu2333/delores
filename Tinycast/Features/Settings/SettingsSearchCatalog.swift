@@ -249,7 +249,16 @@ enum SettingsSearchCatalog {
             keywords: ["built-in", "launcher", "terminal", "内置"]),
         .init(
             .commandsCommands, "Enable Commands",
-            keywords: ["hide", "visibility"])
+            keywords: ["hide", "visibility"]),
+        .init(
+            .commandsCustomCommands, "Enable custom commands",
+            keywords: ["shell", "script", "terminal", "终端", "脚本"]),
+        .init(
+            .commandsCustomCommands, "Add Custom Command",
+            keywords: ["shell", "script", "new", "自定义命令"]),
+        .init(
+            .commandsCustomCommands, "Import Raycast Scripts",
+            keywords: ["raycast", "script", "import"])
     ]
 
     private static let quicklinks: [SettingsSearchEntry] = [
