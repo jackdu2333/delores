@@ -46,7 +46,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
             case .customCommand:
                 return KindDescriptor(
                     label: "Custom Command", sectionTitle: "Custom Commands",
-                    openVerb: "Run Command", canHideFromSearch: true,
+                    openVerb: "Run Command", canHideFromSearch: false,
                     canRevealInFinder: false, isSymbolIcon: true, rankPriority: 3)
             case .appleShortcut:
                 // File-backed so every row draws the Shortcuts app's own icon.
@@ -192,7 +192,8 @@ extension AppEntry {
         self.init(
             id: command.entryID, name: command.name,
             url: URL(string: "tinycast://custom-command/" + command.id.uuidString)!,
-            bundleID: nil, kind: .customCommand, symbolName: command.iconSymbol)
+            bundleID: nil, kind: .customCommand, settingsOwner: .commands,
+            symbolName: command.iconSymbol)
     }
 
     /// The one row a custom Quick Action draws, wherever it is offered from.
