@@ -60,6 +60,7 @@ struct SettingsBackup: Codable {
         // Safe to carry for the opposite reason — it grants nothing at all, it only says how large
         // something is drawn on this Mac's own screens.
         var companionSize: Int?
+        var calcNumberStyle: String?
         var companionKind: String?
     }
 
@@ -135,6 +136,7 @@ extension SettingsBackup {
             quicklinkConfirmsBeforeDelete: s.quicklinkConfirmsBeforeDelete,
             appleShortcutsEnabled: s.appleShortcutsEnabled,
             companionSize: s.deloresCompanionSize.rawValue,
+            calcNumberStyle: s.calcNumberStyle.rawValue,
             companionKind: s.deloresCompanionKind.rawValue)
 
         let hk = core.hotKeys
@@ -368,6 +370,10 @@ extension SettingsBackup {
         }
         if let raw = s.companionSize, let size = DeloresCompanionShell.Size(rawValue: raw) {
             settings.deloresCompanionSize = size
+            count += 1
+        }
+        if let raw = s.calcNumberStyle, let style = CalcNumberStyle(rawValue: raw) {
+            settings.calcNumberStyle = style
             count += 1
         }
         if let raw = s.companionKind, let kind = DeloresCompanionShell.Kind(rawValue: raw) {

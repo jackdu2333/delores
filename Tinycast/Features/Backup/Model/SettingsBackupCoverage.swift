@@ -41,6 +41,7 @@ enum SettingsBackupCoverage {
         "quicklinkConfirmsBeforeDelete": .quicklinkConfirmsBeforeDelete,
         "appleShortcutsEnabled": .appleShortcutsEnabled,
         "companionSize": .deloresCompanionSize,
+        "calcNumberStyle": .calcNumberStyle,
         "companionKind": .deloresCompanionKind
     ]
 

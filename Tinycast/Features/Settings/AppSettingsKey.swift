@@ -12,6 +12,7 @@ enum AppSettingsKey: String, CaseIterable {
     case hyperKeyQuickPress = "hyperKeyQuickPress"
     case popToRootTimeout = "popToRootTimeout"
     case escapeKeyBehavior = "escapeKeyBehavior"
+    case calcNumberStyle = "calculatorNumberStyle"
     case appearance = "appearance"
     case interfaceSize = "interfaceSize"
     case paletteTransparency = "paletteTransparency"
